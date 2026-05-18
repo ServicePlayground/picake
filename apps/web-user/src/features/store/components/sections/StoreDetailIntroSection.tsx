@@ -10,6 +10,8 @@ import { Toast } from "@/apps/web-user/common/components/toast/Toast";
 import { shortenAddress } from "@/apps/web-user/common/utils/address.util";
 import { useUserLocation } from "@/apps/web-user/common/hooks/useUserLocation";
 import { calculateDistance, formatDistance } from "@/apps/web-user/common/utils/distance.util";
+import { useAuthStore } from "@/apps/web-user/common/store/auth.store";
+import { useLoginSheetStore } from "@/apps/web-user/common/store/login-sheet.store";
 
 interface StoreDetailIntroSectionProps {
   store: StoreInfo;
@@ -25,6 +27,8 @@ export function StoreDetailIntroSection({ store }: StoreDetailIntroSectionProps)
   const { mutate: addLike, isPending: isAddingLike } = useAddStoreLike();
   const { mutate: removeLike, isPending: isRemovingLike } = useRemoveStoreLike();
   const isLikeLoading = isAddingLike || isRemovingLike;
+  const { isAuthenticated } = useAuthStore();
+  const openLoginSheet = useLoginSheetStore((s) => s.openLoginSheet);
 
   const { location: userLocation } = useUserLocation();
   const distance =
@@ -43,6 +47,10 @@ export function StoreDetailIntroSection({ store }: StoreDetailIntroSectionProps)
   };
 
   const handleLikeToggle = () => {
+    if (!isAuthenticated) {
+      openLoginSheet();
+      return;
+    }
     if (isLikeLoading) return;
     setIsLiked(!isLiked);
     if (isLiked) {

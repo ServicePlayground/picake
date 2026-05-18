@@ -49,6 +49,9 @@ export const PATHS = {
   RECENT: "/mypage/recent",
   NOTICE: "/mypage/notice",
   QNA: "/mypage/qna",
+  SETTING: "/mypage/setting",
+  SETTING_ACCOUNT: "/mypage/setting/account",
+  SETTING_NOTIFICATION: "/mypage/setting/notification",
 
   // 알람 페이지
   ALARM: "/alarm",

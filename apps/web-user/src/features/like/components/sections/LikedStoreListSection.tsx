@@ -15,18 +15,26 @@ import { useRemoveStoreLike } from "@/apps/web-user/features/like/hooks/mutation
 import { shortenAddress } from "@/apps/web-user/common/utils/address.util";
 import { useUserLocation } from "@/apps/web-user/common/hooks/useUserLocation";
 import { calculateDistance, formatDistance } from "@/apps/web-user/common/utils/distance.util";
+import { useAuthStore } from "@/apps/web-user/common/store/auth.store";
+import { useLoginSheetStore } from "@/apps/web-user/common/store/login-sheet.store";
 
 export function LikedStoreListSection() {
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const { mutate: addLike } = useAddStoreLike();
   const { mutate: removeLike } = useRemoveStoreLike();
   const { location: userLocation } = useUserLocation();
+  const { isAuthenticated } = useAuthStore();
+  const openLoginSheet = useLoginSheetStore((s) => s.openLoginSheet);
 
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useLikedStores();
 
   const handleLike = (e: React.MouseEvent, store: StoreInfo) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!isAuthenticated) {
+      openLoginSheet();
+      return;
+    }
     if (store.isLiked) {
       removeLike(store.id);
     } else {

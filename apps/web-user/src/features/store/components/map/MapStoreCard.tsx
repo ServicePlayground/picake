@@ -14,6 +14,8 @@ import { useUserLocation } from "@/apps/web-user/common/hooks/useUserLocation";
 import { calculateDistance, formatDistance } from "@/apps/web-user/common/utils/distance.util";
 import { useAddStoreLike } from "@/apps/web-user/features/like/hooks/mutations/useAddStoreLike";
 import { useRemoveStoreLike } from "@/apps/web-user/features/like/hooks/mutations/useRemoveStoreLike";
+import { useAuthStore } from "@/apps/web-user/common/store/auth.store";
+import { useLoginSheetStore } from "@/apps/web-user/common/store/login-sheet.store";
 
 const DEFAULT_IMAGE_WIDTH = 134;
 const DEFAULT_IMAGE_HEIGHT = 100;
@@ -85,6 +87,8 @@ export function MapStoreCardContent({
   const { mutate: addLike, isPending: isAddingLike } = useAddStoreLike();
   const { mutate: removeLike, isPending: isRemovingLike } = useRemoveStoreLike();
   const isLikeLoading = isAddingLike || isRemovingLike;
+  const { isAuthenticated } = useAuthStore();
+  const openLoginSheet = useLoginSheetStore((s) => s.openLoginSheet);
 
   useEffect(() => {
     setIsLiked(store.isLiked ?? false);
@@ -104,6 +108,10 @@ export function MapStoreCardContent({
   const handleLikeToggle = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    if (!isAuthenticated) {
+      openLoginSheet();
+      return;
+    }
     if (isLikeLoading) return;
     const nextLiked = !isLiked;
     setIsLiked(nextLiked);

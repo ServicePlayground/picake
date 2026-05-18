@@ -19,7 +19,7 @@ import { ProductType } from "@/apps/web-user/features/product/types/product.type
 import { ProductDetailSkeleton } from "@/apps/web-user/common/components/skeleton/ProductDetailSkeleton";
 import { useStoreDetail } from "@/apps/web-user/features/store/hooks/queries/useStoreDetail";
 import { useAuthStore } from "@/apps/web-user/common/store/auth.store";
-import { LoginBottomSheet } from "@/apps/web-user/features/auth/components/LoginBottomSheet";
+import { useLoginSheetStore } from "@/apps/web-user/common/store/login-sheet.store";
 
 interface ProductDetailPageProps {
   params: Promise<{ productId: string }>;
@@ -38,12 +38,12 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   const isLikeLoading = isAddingLike || isRemovingLike;
 
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
-  const [isLoginSheetOpen, setIsLoginSheetOpen] = useState(false);
   const { isAuthenticated } = useAuthStore();
+  const openLoginSheet = useLoginSheetStore((s) => s.openLoginSheet);
 
   const handleReservationClick = () => {
     if (!isAuthenticated) {
-      setIsLoginSheetOpen(true);
+      openLoginSheet();
       return;
     }
     setIsBottomSheetOpen(true);
@@ -57,6 +57,10 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   }, [data?.isLiked]);
 
   const handleLikeToggle = () => {
+    if (!isAuthenticated) {
+      openLoginSheet();
+      return;
+    }
     if (isLikeLoading) return;
 
     // 낙관적 업데이트
@@ -181,10 +185,6 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
         onClose={() => setIsBottomSheetOpen(false)}
       />
 
-      <LoginBottomSheet
-        isOpen={isLoginSheetOpen}
-        onClose={() => setIsLoginSheetOpen(false)}
-      />
     </div>
   );
 }

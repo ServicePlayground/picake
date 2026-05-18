@@ -8,6 +8,8 @@ import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 import { Icon } from "@/apps/web-user/common/components/icons";
 import { useAddProductLike } from "@/apps/web-user/features/like/hooks/mutations/useAddProductLike";
 import { useRemoveProductLike } from "@/apps/web-user/features/like/hooks/mutations/useRemoveProductLike";
+import { useAuthStore } from "@/apps/web-user/common/store/auth.store";
+import { useLoginSheetStore } from "@/apps/web-user/common/store/login-sheet.store";
 
 interface ProductListProps {
   products: Product[];
@@ -34,6 +36,8 @@ function ProductItem({ product }: ProductItemProps) {
   const { mutate: addLike, isPending: isAddingLike } = useAddProductLike();
   const { mutate: removeLike, isPending: isRemovingLike } = useRemoveProductLike();
   const isLikeLoading = isAddingLike || isRemovingLike;
+  const { isAuthenticated } = useAuthStore();
+  const openLoginSheet = useLoginSheetStore((s) => s.openLoginSheet);
 
   const handleProductClick = () => {
     router.push(PATHS.PRODUCT.DETAIL(product.id));
@@ -41,6 +45,10 @@ function ProductItem({ product }: ProductItemProps) {
 
   const handleLikeClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    if (!isAuthenticated) {
+      openLoginSheet();
+      return;
+    }
     if (isLikeLoading) return;
     setIsLiked(!isLiked);
     if (isLiked) {

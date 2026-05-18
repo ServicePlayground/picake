@@ -8,6 +8,7 @@ import { ConfirmAlert } from "@/apps/web-user/common/components/alerts/ConfirmAl
 import BuildInfoLogger from "@/apps/web-user/common/components/debug/BuildInfoLogger";
 import { AuthProvider } from "@/apps/web-user/common/components/providers/AuthProvider";
 import { AlarmRealtimeListener } from "@/apps/web-user/features/alarm/components/AlarmRealtimeListener";
+import { LoginBottomSheet } from "@/apps/web-user/features/auth/components/LoginBottomSheet";
 
 interface RootWrapperLayoutProps {
   children: ReactNode;
@@ -27,6 +28,11 @@ export default function RootWrapperLayout({ children }: RootWrapperLayoutProps) 
     if (pathname?.startsWith("/chat")) return { variant: "minimal" };
     if (pathname?.startsWith("/reservation")) return { variant: "minimal" };
     if (pathname === "/alarm") return { variant: "back-title", title: "알림" };
+    if (pathname === "/mypage/setting") return { variant: "back-title", title: "설정" };
+    if (pathname === "/mypage/setting/account")
+      return { variant: "back-title", title: "내 계정 정보" };
+    if (pathname === "/mypage/setting/notification")
+      return { variant: "back-title", title: "알림 설정" };
     if (pathname === "/qa") return { variant: "minimal" };
     if (
       pathname === "/auth/register/google" ||
@@ -56,6 +62,7 @@ export default function RootWrapperLayout({ children }: RootWrapperLayoutProps) 
         <div>{children}</div>
         <Alert />
         <ConfirmAlert />
+        <LoginBottomSheet />
       </div>
     </AuthProvider>
   );
