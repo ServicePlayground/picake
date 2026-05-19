@@ -44,8 +44,6 @@ export function UpcomingOrderCard() {
   const { data, isLoading } = useMyOrders({ type: "UPCOMING" });
   const hasPeeked = useRef(false);
   const hasNavigated = useRef(false);
-  const overscrollTriggered = useRef(false);
-  const moreButtonRef = useRef<HTMLDivElement>(null);
 
   if (isLoading) return <UpcomingOrderCardSkeleton />;
 

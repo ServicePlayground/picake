@@ -50,7 +50,6 @@ export function RefundRequestView({ order }: RefundRequestViewProps) {
       setHolderName(profile.name);
     }
     // holderName을 deps에 넣으면 사용자가 지웠을 때 다시 채워지므로 제외
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.name]);
 
   if (isLeaving) return null;

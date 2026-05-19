@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { MainPageHeader } from "@/apps/web-user/common/components/headers/MainPageHeader";
 import { BottomNav } from "@/apps/web-user/common/components/navigation/BottomNav";
 import { Tabs, Tab } from "@/apps/web-user/common/components/tabs/Tabs";
@@ -9,12 +8,12 @@ import { useLikedProducts } from "@/apps/web-user/features/like/hooks/queries/us
 import { LikedStoreListSection } from "@/apps/web-user/features/like/components/sections/LikedStoreListSection";
 import { LikedProductListSection } from "@/apps/web-user/features/like/components/sections/LikedProductListSection";
 import { useAuthStore, useAuthHasHydrated } from "@/apps/web-user/common/store/auth.store";
-import { LoginBottomSheet } from "@/apps/web-user/features/auth/components/LoginBottomSheet";
+import { useLoginSheetStore } from "@/apps/web-user/common/store/login-sheet.store";
 
 export default function SavedPage() {
   const hasHydrated = useAuthHasHydrated();
   const { isAuthenticated } = useAuthStore();
-  const [isLoginSheetOpen, setIsLoginSheetOpen] = useState(false);
+  const openLoginSheet = useLoginSheetStore((s) => s.openLoginSheet);
 
   return (
     <div className="pb-[60px]">
@@ -23,15 +22,10 @@ export default function SavedPage() {
       {!hasHydrated ? null : isAuthenticated ? (
         <AuthedSavedContent />
       ) : (
-        <UnauthenticatedSavedContent onLoginClick={() => setIsLoginSheetOpen(true)} />
+        <UnauthenticatedSavedContent onLoginClick={openLoginSheet} />
       )}
 
       <BottomNav />
-
-      <LoginBottomSheet
-        isOpen={isLoginSheetOpen}
-        onClose={() => setIsLoginSheetOpen(false)}
-      />
     </div>
   );
 }
