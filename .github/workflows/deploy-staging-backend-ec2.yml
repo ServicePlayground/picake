@@ -426,7 +426,7 @@ jobs:
             echo "🔒 SSL 인증서 상태 (EC2)"
             API_HOST="api-staging.sweetorders.com"
             CERT_FILE="/etc/letsencrypt/live/${API_HOST}/fullchain.pem"
-            if [ -f "$CERT_FILE" ]; then
+            if sudo test -f "$CERT_FILE"; then
               NOT_AFTER=$(sudo openssl x509 -in "$CERT_FILE" -noout -enddate 2>/dev/null | cut -d= -f2)
               EXPIRY_EPOCH=$(date -d "$NOT_AFTER" +%s 2>/dev/null || echo 0)
               NOW_EPOCH=$(date +%s)
@@ -453,12 +453,21 @@ jobs:
             fi
 
             echo ""
-            echo "🏥 백엔드 헬스체크 (localhost)"
-            if curl -sf http://localhost:8080/health; then
-              echo ""
-              echo "✅ localhost:8080 /health 정상"
-            else
-              echo "⚠️ localhost:8080 /health 실패 — PM2 로그 확인: pm2 logs sweet-order-backend --lines 30"
+            echo "🏥 백엔드 헬스체크 (localhost, PM2 기동 대기 포함)"
+            HEALTH_OK=false
+            for i in $(seq 1 30); do
+              if curl -sf http://localhost:8080/health >/tmp/local-health.json 2>/dev/null; then
+                echo "✅ localhost:8080 /health 정상 (${i}회째 시도)"
+                cat /tmp/local-health.json
+                echo ""
+                HEALTH_OK=true
+                break
+              fi
+              echo "  시도 ${i}/30: 아직 기동 중... 2초 후 재시도"
+              sleep 2
+            done
+            if [ "$HEALTH_OK" != true ]; then
+              echo "⚠️ localhost:8080 /health 실패 (60초 대기 후) — PM2 로그 확인: pm2 logs sweet-order-backend --lines 30"
             fi
 
             # 배포 성공 후 오래된 백업 정리 (디스크 사용량에 따라 동적 조정)
@@ -504,16 +513,25 @@ jobs:
           fi
 
           echo ""
-          echo "🏥 HTTPS /health 검증"
-          HTTP_CODE=$(curl -sS -o /tmp/staging-health.json -w "%{http_code}" \
-            --connect-timeout 15 "https://${HOST}/health" || echo "000")
-
-          if [ "$HTTP_CODE" = "200" ]; then
-            echo "✅ https://${HOST}/health → HTTP ${HTTP_CODE}"
-            cat /tmp/staging-health.json
-            echo ""
-          else
-            echo "::error title=HTTPS health check failed::https://${HOST}/health → HTTP ${HTTP_CODE}"
+          echo "🏥 HTTPS /health 검증 (백엔드 기동 대기 포함, 최대 60초)"
+          HEALTH_URL="https://${HOST}/health"
+          HEALTH_OK=false
+          LAST_CODE="000"
+          for i in $(seq 1 30); do
+            LAST_CODE=$(curl -sS -o /tmp/staging-health.json -w "%{http_code}" \
+              --connect-timeout 10 "$HEALTH_URL" 2>/dev/null || echo "000")
+            if [ "$LAST_CODE" = "200" ]; then
+              echo "✅ ${HEALTH_URL} → HTTP 200 (${i}회째 시도)"
+              cat /tmp/staging-health.json
+              echo ""
+              HEALTH_OK=true
+              break
+            fi
+            echo "  시도 ${i}/30: HTTP ${LAST_CODE} — 2초 후 재시도 (PM2/NestJS 기동 중일 수 있음)"
+            sleep 2
+          done
+          if [ "$HEALTH_OK" != true ]; then
+            echo "::error title=HTTPS health check failed::${HEALTH_URL} → HTTP ${LAST_CODE} (60초 대기 후)"
             echo "  SSL 만료, Nginx, PM2 상태를 확인하세요."
             [ -f /tmp/staging-health.json ] && cat /tmp/staging-health.json || true
             exit 1
