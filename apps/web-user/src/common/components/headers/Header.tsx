@@ -269,18 +269,6 @@ export default function Header({ variant = "main", title, onBackClick }: HeaderP
           >
             QA
           </Link>
-          {/* TODO: 테스트용 - 추후 제거 */}
-          <button
-            type="button"
-            onClick={() => {
-              setPreviousResult(overrideResult ?? matchResult);
-              setOverrideResult(null);
-              setAddress("부산광역시 해운대구");
-            }}
-            className="px-3 py-1.5 text-xs font-bold text-blue-400 bg-blue-400/10 border border-blue-400/30 rounded-lg"
-          >
-            부산테스트
-          </button>
           {!isHomeSearchVisible && (
             <button
               onClick={() => router.push(PATHS.SEARCH)}
