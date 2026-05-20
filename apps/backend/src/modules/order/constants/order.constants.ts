@@ -51,6 +51,16 @@ export enum OrderStatus {
   NO_SHOW = "NO_SHOW", // 노쇼
 }
 
+/** 회원 탈퇴를 막는 진행 중 주문 상태 (종료·취소·환불완료·노쇼 제외) */
+export const ORDER_STATUSES_BLOCKING_ACCOUNT_WITHDRAWAL: OrderStatus[] = [
+  OrderStatus.RESERVATION_REQUESTED,
+  OrderStatus.PAYMENT_PENDING,
+  OrderStatus.PAYMENT_COMPLETED,
+  OrderStatus.CONFIRMED,
+  OrderStatus.PICKUP_PENDING,
+  OrderStatus.CANCEL_REFUND_PENDING,
+];
+
 /**
  * 사용자 주문 화면에서 후기 관련 UI 분기용
  */

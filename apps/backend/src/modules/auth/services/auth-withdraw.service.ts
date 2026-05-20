@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "@apps/backend/infra/database/prisma.service";
 import { LoggerUtil } from "@apps/backend/common/utils/logger.util";
 import {
@@ -6,6 +6,7 @@ import {
   AudienceConst,
   AUDIENCE,
 } from "@apps/backend/modules/auth/constants/auth.constants";
+import { ORDER_STATUSES_BLOCKING_ACCOUNT_WITHDRAWAL } from "@apps/backend/modules/order/constants/order.constants";
 
 @Injectable()
 export class AuthWithdrawService {
@@ -29,6 +30,7 @@ export class AuthWithdrawService {
         throw new NotFoundException(AUTH_ERROR_MESSAGES.USER_NOT_FOUND);
       }
 
+      await this.assertNoActiveOrdersForConsumer(accountId);
       await this.prisma.consumer.delete({ where: { id: accountId } });
       return;
     }
@@ -42,6 +44,7 @@ export class AuthWithdrawService {
         throw new NotFoundException(AUTH_ERROR_MESSAGES.USER_NOT_FOUND);
       }
 
+      await this.assertNoActiveOrdersForSeller(accountId);
       await this.prisma.seller.delete({ where: { id: accountId } });
       return;
     }
@@ -73,5 +76,29 @@ export class AuthWithdrawService {
     if (existing.isActive) return false;
     await this.prisma.seller.delete({ where: { id: existing.id } });
     return true;
+  }
+
+  private async assertNoActiveOrdersForConsumer(consumerId: string): Promise<void> {
+    const activeOrderCount = await this.prisma.order.count({
+      where: {
+        consumerId,
+        orderStatus: { in: ORDER_STATUSES_BLOCKING_ACCOUNT_WITHDRAWAL },
+      },
+    });
+    if (activeOrderCount > 0) {
+      throw new BadRequestException(AUTH_ERROR_MESSAGES.WITHDRAW_BLOCKED_ACTIVE_ORDERS);
+    }
+  }
+
+  private async assertNoActiveOrdersForSeller(sellerId: string): Promise<void> {
+    const activeOrderCount = await this.prisma.order.count({
+      where: {
+        orderStatus: { in: ORDER_STATUSES_BLOCKING_ACCOUNT_WITHDRAWAL },
+        store: { sellerId },
+      },
+    });
+    if (activeOrderCount > 0) {
+      throw new BadRequestException(AUTH_ERROR_MESSAGES.WITHDRAW_BLOCKED_ACTIVE_ORDERS);
+    }
   }
 }

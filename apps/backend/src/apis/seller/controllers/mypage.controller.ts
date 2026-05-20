@@ -92,7 +92,7 @@ export class SellerMypageController {
   @ApiOperation({
     summary: "(로그인 필요) 회원 탈퇴",
     description:
-      "로그인한 판매자 계정·스토어·상품 등 연관 데이터를 삭제합니다. 탈퇴 후 동일 OAuth·휴대폰으로 신규 가입할 수 있습니다.",
+      "로그인한 판매자 계정·스토어·상품 등 연관 데이터를 삭제합니다. 탈퇴 후 동일 OAuth·휴대폰으로 신규 가입할 수 있습니다. 스토어에 진행 중인 주문(예약신청·입금대기·입금완료·예약확정·픽업대기·취소환불대기)이 있으면 탈퇴할 수 없습니다.",
   })
   @SwaggerResponse(200, {
     dataExample: createMessageObject(AUTH_SUCCESS_MESSAGES.ACCOUNT_WITHDRAWN),
