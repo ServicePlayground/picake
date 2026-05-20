@@ -421,8 +421,121 @@ jobs:
             echo "✅ 배포 완료!"
             pm2 list
 
+            # SSL 인증서 상태 로그 (EC2 로컬, 배포 성공 후)
+            echo ""
+            echo "🔒 SSL 인증서 상태 (EC2)"
+            API_HOST="api-staging.sweetorders.com"
+            CERT_FILE="/etc/letsencrypt/live/${API_HOST}/fullchain.pem"
+            if sudo test -f "$CERT_FILE"; then
+              NOT_AFTER=$(sudo openssl x509 -in "$CERT_FILE" -noout -enddate 2>/dev/null | cut -d= -f2)
+              EXPIRY_EPOCH=$(date -d "$NOT_AFTER" +%s 2>/dev/null || echo 0)
+              NOW_EPOCH=$(date +%s)
+              DAYS_LEFT=$(( (EXPIRY_EPOCH - NOW_EPOCH) / 86400 ))
+              echo "  도메인: ${API_HOST}"
+              echo "  인증서: ${CERT_FILE}"
+              echo "  만료일: ${NOT_AFTER}"
+              echo "  남은 일수: ${DAYS_LEFT}일"
+              if [ "$DAYS_LEFT" -lt 0 ]; then
+                echo "❌ SSL 인증서 만료됨 — 프론트 Network Error 원인 가능"
+                echo "   조치: sudo certbot renew --nginx && sudo nginx -t && sudo systemctl reload nginx"
+              elif [ "$DAYS_LEFT" -le 14 ]; then
+                echo "⚠️ SSL 인증서 ${DAYS_LEFT}일 후 만료 예정 — 갱신 권장"
+              else
+                echo "✅ SSL 인증서 유효"
+              fi
+            else
+              echo "⚠️ Let's Encrypt 인증서 없음: ${CERT_FILE}"
+            fi
+            if command -v certbot >/dev/null 2>&1; then
+              echo ""
+              echo "  [certbot certificates]"
+              sudo certbot certificates 2>/dev/null | grep -E "Certificate Name|Domains|Expiry Date" || true
+            fi
+
+            echo ""
+            echo "🏥 백엔드 헬스체크 (localhost, PM2 기동 대기 포함)"
+            HEALTH_OK=false
+            for i in $(seq 1 30); do
+              if curl -sf http://localhost:8080/health >/tmp/local-health.json 2>/dev/null; then
+                echo "✅ localhost:8080 /health 정상 (${i}회째 시도)"
+                cat /tmp/local-health.json
+                echo ""
+                HEALTH_OK=true
+                break
+              fi
+              echo "  시도 ${i}/30: 아직 기동 중... 2초 후 재시도"
+              sleep 2
+            done
+            if [ "$HEALTH_OK" != true ]; then
+              echo "⚠️ localhost:8080 /health 실패 (60초 대기 후) — PM2 로그 확인: pm2 logs sweet-order-backend --lines 30"
+            fi
+
             # 배포 성공 후 오래된 백업 정리 (디스크 사용량에 따라 동적 조정)
             USE_PERCENT=$(df / | tail -1 | awk '{print $5}' | sed 's/%//')
             cleanup_old_backups "서버" "~/sweet-order.backup.*" "$USE_PERCENT"
             cleanup_old_backups "DB" "~/db-backup.*.sql.gz" "$USE_PERCENT"
             cleanup_old_backups "DB" "~/db-backup.*.dump" "$USE_PERCENT"
+
+      - name: Verify SSL certificate and HTTPS health
+        if: success()
+        run: |
+          set -euo pipefail
+          HOST="api-staging.sweetorders.com"
+          WARN_DAYS=14
+
+          echo "🔒 SSL 인증서 검증 (외부): https://${HOST}"
+          echo "=============================================="
+
+          EXPIRY=$(echo | openssl s_client -connect "${HOST}:443" -servername "$HOST" 2>/dev/null \
+            | openssl x509 -noout -enddate 2>/dev/null | cut -d= -f2 || true)
+
+          if [ -z "$EXPIRY" ]; then
+            echo "::error title=SSL check failed::${HOST} 인증서 정보를 가져올 수 없습니다."
+            exit 1
+          fi
+
+          EXPIRY_EPOCH=$(date -d "$EXPIRY" +%s)
+          NOW_EPOCH=$(date +%s)
+          DAYS_LEFT=$(( (EXPIRY_EPOCH - NOW_EPOCH) / 86400 ))
+
+          echo "  도메인: ${HOST}"
+          echo "  만료일: ${EXPIRY}"
+          echo "  남은 일수: ${DAYS_LEFT}일"
+
+          if [ "$DAYS_LEFT" -lt 0 ]; then
+            echo "::error title=SSL certificate expired::${HOST} SSL 인증서가 만료되었습니다 (${DAYS_LEFT}일 경과)."
+            echo "  EC2 SSH 후: sudo certbot renew --nginx && sudo nginx -t && sudo systemctl reload nginx"
+            exit 1
+          elif [ "$DAYS_LEFT" -le "$WARN_DAYS" ]; then
+            echo "::warning title=SSL certificate expiring soon::${HOST} SSL 인증서가 ${DAYS_LEFT}일 후 만료됩니다."
+          else
+            echo "✅ SSL 인증서 유효 (${DAYS_LEFT}일 남음)"
+          fi
+
+          echo ""
+          echo "🏥 HTTPS /health 검증 (백엔드 기동 대기 포함, 최대 60초)"
+          HEALTH_URL="https://${HOST}/health"
+          HEALTH_OK=false
+          LAST_CODE="000"
+          for i in $(seq 1 30); do
+            LAST_CODE=$(curl -sS -o /tmp/staging-health.json -w "%{http_code}" \
+              --connect-timeout 10 "$HEALTH_URL" 2>/dev/null || echo "000")
+            if [ "$LAST_CODE" = "200" ]; then
+              echo "✅ ${HEALTH_URL} → HTTP 200 (${i}회째 시도)"
+              cat /tmp/staging-health.json
+              echo ""
+              HEALTH_OK=true
+              break
+            fi
+            echo "  시도 ${i}/30: HTTP ${LAST_CODE} — 2초 후 재시도 (PM2/NestJS 기동 중일 수 있음)"
+            sleep 2
+          done
+          if [ "$HEALTH_OK" != true ]; then
+            echo "::error title=HTTPS health check failed::${HEALTH_URL} → HTTP ${LAST_CODE} (60초 대기 후)"
+            echo "  SSL 만료, Nginx, PM2 상태를 확인하세요."
+            [ -f /tmp/staging-health.json ] && cat /tmp/staging-health.json || true
+            exit 1
+          fi
+
+          echo "=============================================="
+          echo "✅ SSL 및 HTTPS 헬스체크 통과"
