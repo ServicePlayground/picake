@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { AuthModule } from "@apps/backend/modules/auth/auth.module";
 import { AdminAuthController } from "./controllers/auth.controller";
+import { AdminMypageController } from "./controllers/mypage.controller";
 
 /**
  * Admin API 모듈
@@ -9,6 +10,6 @@ import { AdminAuthController } from "./controllers/auth.controller";
  */
 @Module({
   imports: [AuthModule],
-  controllers: [AdminAuthController],
+  controllers: [AdminAuthController, AdminMypageController],
 })
 export class AdminApiModule {}
