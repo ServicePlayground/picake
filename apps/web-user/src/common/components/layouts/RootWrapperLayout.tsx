@@ -9,6 +9,7 @@ import BuildInfoLogger from "@/apps/web-user/common/components/debug/BuildInfoLo
 import { AuthProvider } from "@/apps/web-user/common/components/providers/AuthProvider";
 import { AlarmRealtimeListener } from "@/apps/web-user/features/alarm/components/AlarmRealtimeListener";
 import { LoginBottomSheet } from "@/apps/web-user/features/auth/components/LoginBottomSheet";
+import { PaymentPendingLaunchSheet } from "@/apps/web-user/features/order/components/PaymentPendingLaunchSheet";
 
 interface RootWrapperLayoutProps {
   children: ReactNode;
@@ -63,6 +64,7 @@ export default function RootWrapperLayout({ children }: RootWrapperLayoutProps) 
         <Alert />
         <ConfirmAlert />
         <LoginBottomSheet />
+        <PaymentPendingLaunchSheet />
       </div>
     </AuthProvider>
   );

@@ -8,6 +8,7 @@ interface StoreInquiryBottomSheetProps {
   onClose: () => void;
   kakaoChannelUrl?: string | null;
   instagramUrl?: string | null;
+  phoneNumber?: string | null;
 }
 
 export function StoreInquiryBottomSheet({
@@ -15,6 +16,7 @@ export function StoreInquiryBottomSheet({
   onClose,
   kakaoChannelUrl,
   instagramUrl,
+  phoneNumber,
 }: StoreInquiryBottomSheetProps) {
   return (
     <BottomSheet
@@ -57,6 +59,17 @@ export function StoreInquiryBottomSheet({
               }
             },
             disabled: !instagramUrl,
+          },
+          {
+            icon: { type: "image", src: "/images/contents/talk_phone.png", alt: "전화 문의" },
+            label: "전화 문의",
+            onClick: () => {
+              if (phoneNumber) {
+                window.location.href = `tel:${phoneNumber.replace(/[^0-9+]/g, "")}`;
+                onClose();
+              }
+            },
+            disabled: !phoneNumber,
           },
         ]}
       />
