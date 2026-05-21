@@ -10,6 +10,7 @@ import {
 } from "@apps/backend/modules/auth/constants/auth.constants";
 import { GoogleUserInfo } from "@apps/backend/modules/auth/types/auth.types";
 import { AuthPhoneService } from "@apps/backend/modules/auth/services/auth-phone.service";
+import { AuthWithdrawService } from "@apps/backend/modules/auth/services/auth-withdraw.service";
 import { PhoneUtil } from "@apps/backend/modules/auth/utils/phone.util";
 import { maskDisplayNameForPrivacy } from "@apps/backend/modules/auth/utils/display-name.util";
 import {
@@ -43,6 +44,7 @@ export class AuthGoogleOauthService {
     private readonly jwtUtil: JwtUtil,
     private readonly configService: ConfigService,
     private readonly authPhoneService: AuthPhoneService,
+    private readonly withdrawService: AuthWithdrawService,
   ) {
     this.consumerGoogleClientId = configService.get<string>("GOOGLE_CLIENT_ID")!;
     this.consumerGoogleClientSecret = configService.get<string>("GOOGLE_CLIENT_SECRET")!;
@@ -177,11 +179,16 @@ export class AuthGoogleOauthService {
       userInfo: { googleId, googleEmail },
     } = googleUserInfo;
 
-    const consumer = await this.prisma.consumer.findUnique({
+    let consumer = await this.prisma.consumer.findUnique({
       where: { googleId },
     });
 
     // 1. gooleId로 기존 사용자 조회
+    if (consumer && !consumer.isActive) {
+      await this.withdrawService.purgeIfInactiveConsumer(consumer);
+      consumer = null;
+    }
+
     if (!consumer) {
       // 새 사용자인 경우 -> 휴대폰 인증 필요
       throw new BadRequestException({
@@ -198,11 +205,6 @@ export class AuthGoogleOauthService {
         googleId,
         googleEmail,
       });
-    }
-
-    // 3. 계정 활성 상태 확인
-    if (!consumer.isActive) {
-      throw new BadRequestException(AUTH_ERROR_MESSAGES.ACCESS_TOKEN_ACCOUNT_INACTIVE);
     }
 
     // JWT 발급 및 마지막 로그인 시간 업데이트
@@ -229,11 +231,16 @@ export class AuthGoogleOauthService {
       userInfo: { googleId, googleEmail },
     } = googleUserInfo;
 
-    const seller = await this.prisma.seller.findUnique({
+    let seller = await this.prisma.seller.findUnique({
       where: { googleId },
     });
 
     // 1. gooleId로 기존 사용자 조회
+    if (seller && !seller.isActive) {
+      await this.withdrawService.purgeIfInactiveSeller(seller);
+      seller = null;
+    }
+
     if (!seller) {
       // 새 사용자인 경우 -> 휴대폰 인증 필요
       throw new BadRequestException({
@@ -251,10 +258,6 @@ export class AuthGoogleOauthService {
         googleEmail,
       });
     }
-    if (!seller.isActive) {
-      throw new BadRequestException(AUTH_ERROR_MESSAGES.ACCESS_TOKEN_ACCOUNT_INACTIVE);
-    }
-
     // JWT 발급 및 마지막 로그인 시간 업데이트
     return await this.prisma.$transaction(async (tx) => {
       const tokenPair = await this.jwtUtil.generateTokenPair({
@@ -280,7 +283,7 @@ export class AuthGoogleOauthService {
 
     // 1. 구글 ID 중복 검증 (필수)
     const existing = await this.prisma.consumer.findUnique({ where: { googleId } });
-    if (existing) {
+    if (existing && !(await this.withdrawService.purgeIfInactiveConsumer(existing))) {
       throw new ConflictException(AUTH_ERROR_MESSAGES.GOOGLE_ID_ALREADY_EXISTS);
     }
 
@@ -294,9 +297,13 @@ export class AuthGoogleOauthService {
       throw new BadRequestException(AUTH_ERROR_MESSAGES.PHONE_VERIFICATION_REQUIRED);
     }
 
-    const existingPhone = await this.prisma.consumer.findFirst({
+    let existingPhone = await this.prisma.consumer.findFirst({
       where: { phone: normalizedPhone },
     });
+    if (existingPhone && !existingPhone.isActive) {
+      await this.withdrawService.purgeIfInactiveConsumer(existingPhone);
+      existingPhone = null;
+    }
 
     // 3. 동일 번호 구글 계정 중복 검증
     if (existingPhone?.googleId) {
@@ -347,7 +354,7 @@ export class AuthGoogleOauthService {
 
     // 1. 구글 ID 중복 검증 (필수)
     const existing = await this.prisma.seller.findUnique({ where: { googleId } });
-    if (existing) {
+    if (existing && !(await this.withdrawService.purgeIfInactiveSeller(existing))) {
       throw new ConflictException(AUTH_ERROR_MESSAGES.GOOGLE_ID_ALREADY_EXISTS);
     }
 
@@ -361,9 +368,13 @@ export class AuthGoogleOauthService {
       throw new BadRequestException(AUTH_ERROR_MESSAGES.PHONE_VERIFICATION_REQUIRED);
     }
 
-    const existingPhone = await this.prisma.seller.findFirst({
+    let existingPhone = await this.prisma.seller.findFirst({
       where: { phone: normalizedPhone },
     });
+    if (existingPhone && !existingPhone.isActive) {
+      await this.withdrawService.purgeIfInactiveSeller(existingPhone);
+      existingPhone = null;
+    }
 
     // 3. 동일 번호 구글 계정 중복 검증
     if (existingPhone?.googleId) {

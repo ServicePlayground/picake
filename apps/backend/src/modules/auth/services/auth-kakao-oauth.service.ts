@@ -10,6 +10,7 @@ import {
 } from "@apps/backend/modules/auth/constants/auth.constants";
 import { KakaoUserInfo } from "@apps/backend/modules/auth/types/auth.types";
 import { AuthPhoneService } from "@apps/backend/modules/auth/services/auth-phone.service";
+import { AuthWithdrawService } from "@apps/backend/modules/auth/services/auth-withdraw.service";
 import { PhoneUtil } from "@apps/backend/modules/auth/utils/phone.util";
 import { maskDisplayNameForPrivacy } from "@apps/backend/modules/auth/utils/display-name.util";
 import {
@@ -37,6 +38,7 @@ export class AuthKakaoOauthService {
     private readonly jwtUtil: JwtUtil,
     private readonly configService: ConfigService,
     private readonly authPhoneService: AuthPhoneService,
+    private readonly withdrawService: AuthWithdrawService,
   ) {
     this.kakaoClientId = configService.get<string>("KAKAO_CLIENT_ID")!;
     this.kakaoClientSecret = configService.get<string>("KAKAO_CLIENT_SECRET") ?? "";
@@ -163,9 +165,14 @@ export class AuthKakaoOauthService {
       userInfo: { kakaoId, kakaoEmail },
     } = kakaoUserInfo;
 
-    const consumer = await this.prisma.consumer.findUnique({
+    let consumer = await this.prisma.consumer.findUnique({
       where: { kakaoId },
     });
+
+    if (consumer && !consumer.isActive) {
+      await this.withdrawService.purgeIfInactiveConsumer(consumer);
+      consumer = null;
+    }
 
     if (!consumer) {
       throw new BadRequestException({
@@ -181,10 +188,6 @@ export class AuthKakaoOauthService {
         kakaoEmail,
       });
     }
-    if (!consumer.isActive) {
-      throw new BadRequestException(AUTH_ERROR_MESSAGES.ACCESS_TOKEN_ACCOUNT_INACTIVE);
-    }
-
     return await this.prisma.$transaction(async (tx) => {
       const tokenPair = await this.jwtUtil.generateTokenPair({
         sub: consumer.id,
@@ -203,9 +206,14 @@ export class AuthKakaoOauthService {
       userInfo: { kakaoId, kakaoEmail },
     } = kakaoUserInfo;
 
-    const seller = await this.prisma.seller.findUnique({
+    let seller = await this.prisma.seller.findUnique({
       where: { kakaoId },
     });
+
+    if (seller && !seller.isActive) {
+      await this.withdrawService.purgeIfInactiveSeller(seller);
+      seller = null;
+    }
 
     if (!seller) {
       throw new BadRequestException({
@@ -221,10 +229,6 @@ export class AuthKakaoOauthService {
         kakaoEmail,
       });
     }
-    if (!seller.isActive) {
-      throw new BadRequestException(AUTH_ERROR_MESSAGES.ACCESS_TOKEN_ACCOUNT_INACTIVE);
-    }
-
     return await this.prisma.$transaction(async (tx) => {
       const tokenPair = await this.jwtUtil.generateTokenPair({
         sub: seller.id,
@@ -244,7 +248,7 @@ export class AuthKakaoOauthService {
     const normalizedPhone = PhoneUtil.normalizePhone(phone);
 
     const existing = await this.prisma.consumer.findUnique({ where: { kakaoId } });
-    if (existing) {
+    if (existing && !(await this.withdrawService.purgeIfInactiveConsumer(existing))) {
       throw new ConflictException(AUTH_ERROR_MESSAGES.KAKAO_ID_ALREADY_EXISTS);
     }
 
@@ -257,9 +261,13 @@ export class AuthKakaoOauthService {
       throw new BadRequestException(AUTH_ERROR_MESSAGES.PHONE_VERIFICATION_REQUIRED);
     }
 
-    const existingPhone = await this.prisma.consumer.findFirst({
+    let existingPhone = await this.prisma.consumer.findFirst({
       where: { phone: normalizedPhone },
     });
+    if (existingPhone && !existingPhone.isActive) {
+      await this.withdrawService.purgeIfInactiveConsumer(existingPhone);
+      existingPhone = null;
+    }
 
     if (existingPhone?.kakaoId) {
       throw new ConflictException({
@@ -302,7 +310,7 @@ export class AuthKakaoOauthService {
     const normalizedPhone = PhoneUtil.normalizePhone(phone);
 
     const existing = await this.prisma.seller.findUnique({ where: { kakaoId } });
-    if (existing) {
+    if (existing && !(await this.withdrawService.purgeIfInactiveSeller(existing))) {
       throw new ConflictException(AUTH_ERROR_MESSAGES.KAKAO_ID_ALREADY_EXISTS);
     }
 
@@ -315,9 +323,13 @@ export class AuthKakaoOauthService {
       throw new BadRequestException(AUTH_ERROR_MESSAGES.PHONE_VERIFICATION_REQUIRED);
     }
 
-    const existingPhone = await this.prisma.seller.findFirst({
+    let existingPhone = await this.prisma.seller.findFirst({
       where: { phone: normalizedPhone },
     });
+    if (existingPhone && !existingPhone.isActive) {
+      await this.withdrawService.purgeIfInactiveSeller(existingPhone);
+      existingPhone = null;
+    }
 
     if (existingPhone?.kakaoId) {
       throw new ConflictException({
