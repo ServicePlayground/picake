@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import type { StoreListFilter } from "@/apps/web-user/features/store/types/store.type";
 import { Icon } from "@/apps/web-user/common/components/icons";
 import { DualThumbRangeSlider } from "@/apps/web-user/common/components/sliders";
 import {
   MAP_LIST_SIZE_OPTIONS,
   MAP_LIST_CATEGORY_OPTIONS,
+  MAP_STORE_LIST_FILTER_MODAL_ID,
 } from "@/apps/web-user/features/store/constants/map.constant";
 import type { ProductCategoryType } from "@/apps/web-user/features/product/types/product.type";
 
@@ -113,13 +115,19 @@ const styles = {
 interface MapStoreListFilterProps {
   listFilter?: StoreListFilter;
   onListFilterChange: (filter: StoreListFilter) => void;
+  /** 필터 모달 열림 상태 (지도 목록 시트 제스처 잠금 등) */
+  onPanelOpenChange?: (open: boolean) => void;
 }
 
 // ---------------------------------------------------------------------------
 // 메인 컴포넌트
 // ---------------------------------------------------------------------------
 
-export function MapStoreListFilter({ listFilter, onListFilterChange }: MapStoreListFilterProps) {
+export function MapStoreListFilter({
+  listFilter,
+  onListFilterChange,
+  onPanelOpenChange,
+}: MapStoreListFilterProps) {
   const [panelOpen, setPanelOpen] = useState(false);
   const [draftSizes, setDraftSizes] = useState<string[]>(listFilter?.sizes ?? []);
   const [draftPriceMinScale, setDraftPriceMinScale] = useState(() =>
@@ -131,6 +139,24 @@ export function MapStoreListFilter({ listFilter, onListFilterChange }: MapStoreL
   const [draftCategories, setDraftCategories] = useState<ProductCategoryType[]>(
     listFilter?.productCategoryTypes ?? [],
   );
+
+  useEffect(() => {
+    onPanelOpenChange?.(panelOpen);
+  }, [panelOpen, onPanelOpenChange]);
+
+  useEffect(() => {
+    if (!panelOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setPanelOpen(false);
+    };
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [panelOpen]);
 
   // 패널 열릴 때 현재 필터로 드래프트 동기화
   useEffect(() => {
@@ -279,132 +305,163 @@ export function MapStoreListFilter({ listFilter, onListFilterChange }: MapStoreL
         )}
       </div>
 
-      {panelOpen && (
-        <div
-          className="fixed bottom-0 left-0 right-0 z-[100] mx-auto flex h-[80vh] max-w-[638px] flex-col rounded-t-[20px] bg-white shadow-lg"
-          role="dialog"
-          aria-modal
-          aria-labelledby="filter-panel-title"
-        >
-          <header className={styles.panelHeader}>
-            <h2 id="filter-panel-title" className={styles.panelTitle}>
-              필터
-            </h2>
+      {panelOpen &&
+        typeof document !== "undefined" &&
+        createPortal(
+          <div
+            id={MAP_STORE_LIST_FILTER_MODAL_ID}
+            className="fixed inset-0 z-[100]"
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
+            onTouchCancel={(e) => e.stopPropagation()}
+          >
             <button
               type="button"
-              onClick={() => setPanelOpen(false)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-gray-600"
+              className="absolute inset-0 bg-black/20"
               aria-label="필터 닫기"
+              onClick={() => setPanelOpen(false)}
+            />
+            <div
+              className="absolute bottom-0 left-0 right-0 mx-auto flex h-[80vh] max-w-[638px] flex-col rounded-t-[20px] bg-white shadow-lg"
+              role="dialog"
+              aria-modal
+              aria-labelledby="filter-panel-title"
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+              onTouchStart={(e) => e.stopPropagation()}
+              onTouchMove={(e) => e.stopPropagation()}
+              onTouchEnd={(e) => e.stopPropagation()}
+              onTouchCancel={(e) => e.stopPropagation()}
             >
-              <Icon name="close2" width={24} height={24} />
-            </button>
-          </header>
+              <header className={styles.panelHeader}>
+                <h2 id="filter-panel-title" className={styles.panelTitle}>
+                  필터
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setPanelOpen(false)}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-1 text-gray-600"
+                  aria-label="필터 닫기"
+                >
+                  <Icon name="close2" width={24} height={24} />
+                </button>
+              </header>
 
-          <div className="flex-1 overflow-y-auto pt-6">
-            <section className={`${styles.sectionContent} ${styles.sectionBlock}`}>
-              <h3 className={styles.sectionTitle}>사이즈</h3>
-              <div className="grid grid-cols-2 gap-4">
-                {MAP_LIST_SIZE_OPTIONS.map((size) => {
-                  const checked = draftSizes.includes(size);
-                  return (
-                    <label key={size} className="flex cursor-pointer items-center gap-1.5">
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setDraftSizes((prev) => [...prev, size]);
-                          } else {
-                            setDraftSizes((prev) => prev.filter((s) => s !== size));
-                          }
-                        }}
-                        className="sr-only"
-                        aria-hidden
-                      />
-                      <Icon
-                        name={checked ? "checkboxSmallSelected" : "checkboxSmallDefault"}
-                        width={20}
-                        height={20}
-                        className="shrink-0"
-                        aria-hidden
-                      />
-                      <span className={styles.labelText}>{size}</span>
-                    </label>
-                  );
-                })}
+              <div className="flex-1 overflow-y-auto overscroll-y-contain pt-6">
+                <section className={`${styles.sectionContent} ${styles.sectionBlock}`}>
+                  <h3 className={styles.sectionTitle}>사이즈</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    {MAP_LIST_SIZE_OPTIONS.map((size) => {
+                      const checked = draftSizes.includes(size);
+                      return (
+                        <label key={size} className="flex cursor-pointer items-center gap-1.5">
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setDraftSizes((prev) => [...prev, size]);
+                              } else {
+                                setDraftSizes((prev) => prev.filter((s) => s !== size));
+                              }
+                            }}
+                            className="sr-only"
+                            aria-hidden
+                          />
+                          <Icon
+                            name={checked ? "checkboxSmallSelected" : "checkboxSmallDefault"}
+                            width={20}
+                            height={20}
+                            className="shrink-0"
+                            aria-hidden
+                          />
+                          <span className={styles.labelText}>{size}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </section>
+
+                <section
+                  className={`${styles.sectionContent} ${styles.sectionBlock}`}
+                  style={{ touchAction: "none" }}
+                  onTouchStart={(e) => e.stopPropagation()}
+                  onTouchMove={(e) => e.stopPropagation()}
+                  onTouchEnd={(e) => e.stopPropagation()}
+                  onTouchCancel={(e) => e.stopPropagation()}
+                >
+                  <h3 className={styles.sectionTitle}>가격</h3>
+                  <DualThumbRangeSlider
+                    min={PRICE_SCALE_MIN}
+                    max={PRICE_SCALE_MAX}
+                    valueMin={draftPriceMinScale}
+                    valueMax={draftPriceMaxScale}
+                    onMinChange={setDraftPriceMinScale}
+                    onMaxChange={setDraftPriceMaxScale}
+                    formatLabel={formatPriceLabel}
+                    ariaLabel="가격 범위"
+                    ariaLabelMin="최소 가격"
+                    ariaLabelMax="최대 가격"
+                  />
+                </section>
+
+                <section className={`${styles.sectionContent} pb-6`}>
+                  <h3 className={styles.sectionTitle}>유형</h3>
+                  <div className="flex flex-wrap gap-2 py-1.5">
+                    {MAP_LIST_CATEGORY_OPTIONS.map((opt) => {
+                      const selected = draftCategories.includes(opt.value);
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => {
+                            if (selected) {
+                              setDraftCategories((prev) => prev.filter((c) => c !== opt.value));
+                            } else {
+                              setDraftCategories((prev) => [...prev, opt.value]);
+                            }
+                          }}
+                          className={`${styles.categoryChip} ${
+                            selected ? styles.categoryChipSelected : styles.categoryChipDefault
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </section>
               </div>
-            </section>
 
-            <section className={`${styles.sectionContent} ${styles.sectionBlock}`}>
-              <h3 className={styles.sectionTitle}>가격</h3>
-              <DualThumbRangeSlider
-                min={PRICE_SCALE_MIN}
-                max={PRICE_SCALE_MAX}
-                valueMin={draftPriceMinScale}
-                valueMax={draftPriceMaxScale}
-                onMinChange={setDraftPriceMinScale}
-                onMaxChange={setDraftPriceMaxScale}
-                formatLabel={formatPriceLabel}
-                ariaLabel="가격 범위"
-                ariaLabelMin="최소 가격"
-                ariaLabelMax="최대 가격"
-              />
-            </section>
-
-            <section className={`${styles.sectionContent} pb-6`}>
-              <h3 className={styles.sectionTitle}>유형</h3>
-              <div className="flex flex-wrap gap-2 py-1.5">
-                {MAP_LIST_CATEGORY_OPTIONS.map((opt) => {
-                  const selected = draftCategories.includes(opt.value);
-                  return (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => {
-                        if (selected) {
-                          setDraftCategories((prev) => prev.filter((c) => c !== opt.value));
-                        } else {
-                          setDraftCategories((prev) => [...prev, opt.value]);
-                        }
-                      }}
-                      className={`${styles.categoryChip} ${
-                        selected ? styles.categoryChipSelected : styles.categoryChipDefault
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  );
-                })}
+              <div className={styles.panelFooter} style={{ gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  className={styles.resetButton}
+                  style={{ width: 116, height: 52, gap: 6, fontSize: 16, lineHeight: "22px" }}
+                >
+                  <Icon name="reset" width={20} height={20} className="shrink-0" />
+                  초기화
+                </button>
+                <button
+                  type="button"
+                  onClick={handleApply}
+                  className={styles.applyButton}
+                  style={{
+                    height: 52,
+                    fontSize: 16,
+                    lineHeight: "140%",
+                    background: "var(--primary-or-400, #FF653E)",
+                  }}
+                >
+                  결과보기
+                </button>
               </div>
-            </section>
-          </div>
-
-          <div className={styles.panelFooter} style={{ gap: 8 }}>
-            <button
-              type="button"
-              onClick={handleReset}
-              className={styles.resetButton}
-              style={{ width: 116, height: 52, gap: 6, fontSize: 16, lineHeight: "22px" }}
-            >
-              <Icon name="reset" width={20} height={20} className="shrink-0" />
-              초기화
-            </button>
-            <button
-              type="button"
-              onClick={handleApply}
-              className={styles.applyButton}
-              style={{
-                height: 52,
-                fontSize: 16,
-                lineHeight: "140%",
-                background: "var(--primary-or-400, #FF653E)",
-              }}
-            >
-              결과보기
-            </button>
-          </div>
-        </div>
-      )}
+            </div>
+          </div>,
+          document.body,
+        )}
     </>
   );
 }

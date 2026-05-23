@@ -27,6 +27,7 @@ import {
   MAP_BOUNDS_PADDING,
   KAKAO_PLACES_KEYWORD,
   MAP_MARKER_LABEL_TEXT_SHADOW,
+  MAP_SELECTED_STORE_CARD_BOTTOM,
 } from "@/apps/web-user/features/store/constants/map.constant";
 import {
   escapeHtmlForOverlay,
@@ -39,6 +40,7 @@ import {
   buildMapPlatformStoreStatusOverlayHtml,
   shouldUseDimPlatformMapMarker,
   buildMapPageUrl,
+  buildMapSearchUrlWithOptionalQuery,
   parseMapPickupFilterFromUrlSearchParams,
   MAP_PICKUP_URL_DATE_KEY,
   MAP_PICKUP_URL_PERIOD_KEY,
@@ -69,6 +71,7 @@ export default function MapPage() {
   const [listFilter, setListFilter] = useState<StoreListFilter>({});
   const [pickupFilter, setPickupFilter] = useState<MapPickupFilter | null>(null);
   const [pickupCalendarOpen, setPickupCalendarOpen] = useState(false);
+  const [mapListFilterPanelOpen, setMapListFilterPanelOpen] = useState(false);
 
   /** URL에 픽업이 있으면 상태에 반영 (검색 페이지 등에서 돌아올 때) */
   useEffect(() => {
@@ -146,12 +149,9 @@ export default function MapPage() {
     listSheetStores,
     setListSheetStores,
     listSheetPanelOffset,
-    setListSheetPanelOffset,
     isListSheetPanelDragging,
     listSheetPanelOffsetRef,
-    listSheetPanelMaxOffsetRef,
     getListSheetMaxOffset,
-    getListSheetMiddleOffset,
     openListSheet,
     closeListSheet,
     handlePointerDown: listSheetHandlePointerDown,
@@ -270,6 +270,7 @@ export default function MapPage() {
           isCenteringFromClickRef.current = true;
           map.panTo(position);
         }
+        if (listSheetPanelOffsetRef.current > 0) closeListSheet();
         setSelectedStore(store);
       });
 
@@ -287,7 +288,7 @@ export default function MapPage() {
       });
       platformOverlaysRef.current.push(overlay);
     });
-  }, [getStoresToShow, pickupFilter]);
+  }, [getStoresToShow, pickupFilter, closeListSheet]);
 
   const drawPlatformStoreMarkersRef = useRef(drawPlatformStoreMarkers);
   drawPlatformStoreMarkersRef.current = drawPlatformStoreMarkers;
@@ -495,11 +496,7 @@ export default function MapPage() {
                 : new window.kakao.maps.LatLng(DEFAULT_MAP_CENTER.lat, DEFAULT_MAP_CENTER.lng);
             map.setCenter(center);
           }
-          setListSheetStores(getStoresForListRef.current());
-          const middleOff = getListSheetMiddleOffset();
-          listSheetPanelMaxOffsetRef.current = getListSheetMaxOffset();
-          listSheetPanelOffsetRef.current = middleOff;
-          setListSheetPanelOffset(middleOff);
+          openListSheet({ deferInWebView: true });
         }
       });
     },
@@ -509,10 +506,7 @@ export default function MapPage() {
       updateUserLocationMarker,
       userLocation,
       closeListSheet,
-      getListSheetMaxOffset,
-      getListSheetMiddleOffset,
-      setListSheetStores,
-      setListSheetPanelOffset,
+      openListSheet,
     ],
   );
 
@@ -614,6 +608,7 @@ export default function MapPage() {
   useEffect(() => {
     if (!searchQuery) {
       searchStoresRef.current = null;
+      if (listSheetPanelOffsetRef.current > 0) closeListSheet();
       const map = mapInstanceRef.current;
       if (map) drawPlatformStoreMarkers();
       return;
@@ -649,17 +644,15 @@ export default function MapPage() {
           );
           map.setBounds(bounds, MAP_BOUNDS_PADDING);
         } else {
-          // 검색 결과 0개: 지도 중심만 현재위치 또는 강남구로
-          const center = userLocation
-            ? new window.kakao.maps.LatLng(userLocation.latitude, userLocation.longitude)
-            : new window.kakao.maps.LatLng(DEFAULT_MAP_CENTER.lat, DEFAULT_MAP_CENTER.lng);
+          // 검색 결과 0개: 지도 중심만 현재위치 또는 강남구로 (위치는 ref로 최신값 사용)
+          const loc = userLocationRef.current;
+          const center =
+            loc != null
+              ? new window.kakao.maps.LatLng(loc.latitude, loc.longitude)
+              : new window.kakao.maps.LatLng(DEFAULT_MAP_CENTER.lat, DEFAULT_MAP_CENTER.lng);
           map.setCenter(center);
         }
-        setListSheetStores(getStoresForList());
-        const middleOff = getListSheetMiddleOffset();
-        listSheetPanelMaxOffsetRef.current = getListSheetMaxOffset();
-        listSheetPanelOffsetRef.current = middleOff;
-        setListSheetPanelOffset(middleOff);
+        openListSheet({ deferInWebView: true });
       } catch {
         searchStoresRef.current = null;
       }
@@ -671,15 +664,21 @@ export default function MapPage() {
     searchQuery,
     listFilter,
     pickupFilter,
-    userLocation,
     clearKakaoMarkers,
     drawPlatformStoreMarkers,
-    getListSheetMaxOffset,
-    getListSheetMiddleOffset,
-    getStoresForList,
-    setListSheetStores,
-    setListSheetPanelOffset,
+    openListSheet,
+    closeListSheet,
   ]);
+
+  // 검색 결과 0건 + 위치가 늦게 도착할 때 지도 중심만 이동 (목록 시트 높이는 유지)
+  useEffect(() => {
+    if (!searchQuery || !userLocation) return;
+    const stores = searchStoresRef.current;
+    if (stores === null || stores.length > 0) return;
+    const map = mapInstanceRef.current;
+    if (!map || !window.kakao?.maps) return;
+    map.setCenter(new window.kakao.maps.LatLng(userLocation.latitude, userLocation.longitude));
+  }, [searchQuery, userLocation]);
 
   useEffect(() => {
     if (!mapInstanceRef.current) return;
@@ -774,6 +773,10 @@ export default function MapPage() {
         pickupFilter={pickupFilter}
         onCalendarClick={() => setPickupCalendarOpen(true)}
         onPickupClear={handlePickupClear}
+        onSearchBackClick={() =>
+          router.push(buildMapSearchUrlWithOptionalQuery(searchQuery, pickupFilter))
+        }
+        onSearchCloseClick={() => router.push(buildMapPageUrl(null, pickupFilter))}
       />
 
       <MapPickupDateBottomSheet
@@ -796,7 +799,7 @@ export default function MapPage() {
 
       <button
         type="button"
-        onClick={openListSheet}
+        onClick={() => openListSheet()}
         className="absolute left-1/2 -translate-x-1/2 z-10 flex items-center justify-center bg-white"
         style={{
           bottom: 110,
@@ -824,38 +827,45 @@ export default function MapPage() {
       </button>
 
       {selectedStore && (
-        <div className="absolute z-30" style={{ left: 16, right: 16, bottom: 120 }}>
+        <div
+          className="absolute z-30"
+          style={{ left: 16, right: 16, bottom: MAP_SELECTED_STORE_CARD_BOTTOM }}
+        >
           <MapStoreCard store={selectedStore} />
         </div>
       )}
 
-      <MapListSheetPanel
-        offset={listSheetPanelOffset}
-        expandedToTop={
-          listSheetPanelOffset > 0 && listSheetPanelOffset >= getListSheetMaxOffset() - 1
-        }
-        isDragging={isListSheetPanelDragging}
-        onTouchStart={handleListSheetTouchStart}
-        onTouchMove={handleListSheetTouchMove}
-        onTouchEnd={handleListSheetTouchEnd}
-        onMouseDown={handleListSheetMouseDown}
-        sheetPointerDown={listSheetHandlePointerDown}
-        sheetPointerMove={listSheetHandlePointerMove}
-        sheetPointerUp={listSheetHandlePointerUp}
-      >
-        {listSheetPanelOffset > 0 && (
-          <MapStoreListSection
-            stores={listSheetStores}
-            hideHandle
-            hideSortFilter={false}
-            userLocation={userLocation}
-            sortBy={listSortBy}
-            onSortByChange={setListSortBy}
-            listFilter={listFilter}
-            onListFilterChange={setListFilter}
-          />
-        )}
-      </MapListSheetPanel>
+      {!selectedStore && (
+        <MapListSheetPanel
+          offset={listSheetPanelOffset}
+          expandedToTop={
+            listSheetPanelOffset > 0 && listSheetPanelOffset >= getListSheetMaxOffset() - 1
+          }
+          disableContentGestures={mapListFilterPanelOpen}
+          isDragging={isListSheetPanelDragging}
+          onTouchStart={handleListSheetTouchStart}
+          onTouchMove={handleListSheetTouchMove}
+          onTouchEnd={handleListSheetTouchEnd}
+          onMouseDown={handleListSheetMouseDown}
+          sheetPointerDown={listSheetHandlePointerDown}
+          sheetPointerMove={listSheetHandlePointerMove}
+          sheetPointerUp={listSheetHandlePointerUp}
+        >
+          {listSheetPanelOffset > 0 && (
+            <MapStoreListSection
+              stores={listSheetStores}
+              hideHandle
+              hideSortFilter={false}
+              userLocation={userLocation}
+              sortBy={listSortBy}
+              onSortByChange={setListSortBy}
+              listFilter={listFilter}
+              onListFilterChange={setListFilter}
+              onFilterPanelOpenChange={setMapListFilterPanelOpen}
+            />
+          )}
+        </MapListSheetPanel>
+      )}
 
       <BottomNav />
     </div>

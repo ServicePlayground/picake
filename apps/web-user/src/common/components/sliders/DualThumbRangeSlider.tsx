@@ -151,34 +151,69 @@ export function DualThumbRangeSlider({
     (e.target as HTMLElement).releasePointerCapture?.(e.pointerId);
   }, []);
 
-  const handleTouchStart = useCallback(
-    (e: React.TouchEvent) => {
-      if (e.touches.length !== 1) return;
-      const clientX = e.touches[0]!.clientX;
-      const thumb = getThumbAt(clientX);
-      activeThumbRef.current = thumb;
-      const value = clientXToValue(clientX);
-      if (thumb === "min") {
-        onMinChange(Math.min(value, valueMax));
-      } else {
-        onMaxChange(Math.max(value, valueMin));
-      }
-    },
-    [valueMin, valueMax, getThumbAt, clientXToValue, onMinChange, onMaxChange],
-  );
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const applyValueAtRef = useRef(applyValueAt);
+  const getThumbAtRef = useRef(getThumbAt);
+  const clientXToValueRef = useRef(clientXToValue);
+  const onMinChangeRef = useRef(onMinChange);
+  const onMaxChangeRef = useRef(onMaxChange);
+  const valueMinRef = useRef(valueMin);
+  const valueMaxRef = useRef(valueMax);
+  const minRef = useRef(min);
+  const maxRef = useRef(max);
 
-  const handleTouchMove = useCallback(
-    (e: React.TouchEvent) => {
+  applyValueAtRef.current = applyValueAt;
+  getThumbAtRef.current = getThumbAt;
+  clientXToValueRef.current = clientXToValue;
+  onMinChangeRef.current = onMinChange;
+  onMaxChangeRef.current = onMaxChange;
+  valueMinRef.current = valueMin;
+  valueMaxRef.current = valueMax;
+  minRef.current = min;
+  maxRef.current = max;
+
+  /** React touch 핸들러는 passive라 preventDefault 불가 → 네이티브 리스너로 스크롤·시트 드래그 전파 차단 */
+  useEffect(() => {
+    const el = overlayRef.current;
+    if (!el) return;
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length !== 1) return;
+      e.stopPropagation();
+      const clientX = e.touches[0]!.clientX;
+      const thumb = getThumbAtRef.current(clientX);
+      activeThumbRef.current = thumb;
+      const value = clientXToValueRef.current(clientX);
+      if (thumb === "min") {
+        onMinChangeRef.current(Math.min(value, valueMaxRef.current));
+      } else {
+        onMaxChangeRef.current(Math.max(value, valueMinRef.current));
+      }
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
       if (e.touches.length !== 1 || activeThumbRef.current === null) return;
       e.preventDefault();
-      applyValueAt(e.touches[0]!.clientX);
-    },
-    [applyValueAt],
-  );
+      e.stopPropagation();
+      applyValueAtRef.current(e.touches[0]!.clientX);
+    };
 
-  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
-    if (e.changedTouches.length !== 1) return;
-    activeThumbRef.current = null;
+    const onTouchEnd = (e: TouchEvent) => {
+      e.stopPropagation();
+      activeThumbRef.current = null;
+    };
+
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    el.addEventListener("touchend", onTouchEnd, { passive: true });
+    el.addEventListener("touchcancel", onTouchEnd, { passive: true });
+
+    return () => {
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
+      el.removeEventListener("touchcancel", onTouchEnd);
+    };
   }, []);
 
   const fillLeft = ((valueMin - min) / (max - min)) * 100;
@@ -232,18 +267,30 @@ export function DualThumbRangeSlider({
             tabIndex={-1}
           />
           <div
+            ref={overlayRef}
             className="absolute inset-0 z-[3] cursor-pointer touch-none"
             style={{ touchAction: "none" }}
             aria-hidden
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
-            onPointerLeave={handlePointerUp}
-            onPointerCancel={handlePointerUp}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            onTouchCancel={handleTouchEnd}
+            onPointerDown={(e) => {
+              e.stopPropagation();
+              handlePointerDown(e);
+            }}
+            onPointerMove={(e) => {
+              e.stopPropagation();
+              handlePointerMove(e);
+            }}
+            onPointerUp={(e) => {
+              e.stopPropagation();
+              handlePointerUp(e);
+            }}
+            onPointerLeave={(e) => {
+              e.stopPropagation();
+              handlePointerUp(e);
+            }}
+            onPointerCancel={(e) => {
+              e.stopPropagation();
+              handlePointerUp(e);
+            }}
           />
         </div>
       </div>

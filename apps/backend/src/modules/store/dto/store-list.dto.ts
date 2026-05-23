@@ -33,7 +33,8 @@ import {
  */
 export class GetStoresRequestDto extends PaginationRequestDto {
   @ApiPropertyOptional({
-    description: "검색어 (스토어명 검색)",
+    description:
+      "검색어 (스토어명·해당 스토어 노출·판매 중 상품의 상품명·검색 태그. 태그는 `#` 유무와 관계없이 일치)",
     example: SWAGGER_EXAMPLES.NAME,
   })
   @IsOptional()

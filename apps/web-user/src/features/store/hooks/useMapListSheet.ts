@@ -2,18 +2,19 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import type { StoreInfo } from "@/apps/web-user/features/store/types/store.type";
+import { isWebViewEnvironment } from "@/apps/web-user/common/utils/webview.bridge";
 import {
   LIST_SHEET_HANDLE_HEIGHT,
   LIST_SHEET_OPEN_RATIO,
   LIST_SHEET_BOTTOM_NAV_HEIGHT,
+  getMapLayoutViewportHeight,
 } from "@/apps/web-user/features/store/constants/map.constant";
 
 /** 스냅 단계: 없음(0) / 중간 / 꽉채우기 */
-function getSnapPoints() {
-  if (typeof window === "undefined") return { closed: 0, middle: 400, full: 600 };
-  const middle = Math.round(window.innerHeight * LIST_SHEET_OPEN_RATIO - LIST_SHEET_HANDLE_HEIGHT);
+function getSnapPoints(layoutHeight: number) {
+  const middle = Math.round(layoutHeight * LIST_SHEET_OPEN_RATIO - LIST_SHEET_HANDLE_HEIGHT);
   const full = Math.round(
-    window.innerHeight - LIST_SHEET_BOTTOM_NAV_HEIGHT - LIST_SHEET_HANDLE_HEIGHT,
+    layoutHeight - LIST_SHEET_BOTTOM_NAV_HEIGHT - LIST_SHEET_HANDLE_HEIGHT,
   );
   return { closed: 0, middle, full };
 }
@@ -33,17 +34,14 @@ function nearestAmong(current: number, candidates: number[]): number {
 }
 
 /** 드래그 시작 시 스냅 단계(오프셋 값) + 손 뗐을 때 위치로 스냅할 값 결정 */
-function resolveSnap(current: number, snapAtPointerDown: number): number {
-  const { closed, middle, full } = getSnapPoints();
-  // 꽉채운 상태에서 아래로 조금이라도 내렸으면 → 중간/없음 중 가까운 쪽으로
+function resolveSnap(current: number, snapAtPointerDown: number, layoutHeight: number): number {
+  const { closed, middle, full } = getSnapPoints(layoutHeight);
   if (snapAtPointerDown === full && current < full) {
     return nearestAmong(current, [closed, middle]);
   }
-  // 없음 상태에서 위로 조금이라도 올렸으면 → 중간/꽉채움 중 가까운 쪽으로
   if (snapAtPointerDown === closed && current > closed) {
     return nearestAmong(current, [middle, full]);
   }
-  // 중간 상태에서 아래로 내렸으면 → 없음, 위로 올렸으면 → 꽉채우기
   if (snapAtPointerDown === middle && current < middle) {
     return closed;
   }
@@ -52,6 +50,11 @@ function resolveSnap(current: number, snapAtPointerDown: number): number {
   }
   return nearestAmong(current, [closed, middle, full]);
 }
+
+export type OpenListSheetOptions = {
+  /** 웹뷰에서 레이아웃이 안정된 뒤 열기 (검색 후 목록 시트) */
+  deferInWebView?: boolean;
+};
 
 /**
  * 지도 하단 목록 시트(드래그 패널) 상태 및 제스처 처리
@@ -65,37 +68,60 @@ export function useMapListSheet(getStoresForList: () => StoreInfo[]) {
 
   const listSheetDragStartYRef = useRef<number | null>(null);
   const listSheetDragStartOffsetRef = useRef(0);
-  /** 드래그 시작 시점의 스냅 단계(0 | middle | full) - 손 뗐을 때 “돌아갈 수 있는” 후보 제한용 */
   const listSheetSnapAtPointerDownRef = useRef(0);
   const listSheetPanelMaxOffsetRef = useRef(400);
   const listSheetPanelOffsetRef = useRef(0);
+  /** 시트가 열려 있는 동안 스냅 계산에 쓰는 고정 레이아웃 높이 (웹뷰 높이 변동 방지) */
+  const listSheetLayoutHeightRef = useRef<number | null>(null);
 
-  /** 꽉채우기 오프셋 (드래그 상한) */
+  const ensureListSheetLayoutHeight = useCallback(() => {
+    if (listSheetLayoutHeightRef.current == null) {
+      listSheetLayoutHeightRef.current = getMapLayoutViewportHeight();
+    }
+    return listSheetLayoutHeightRef.current;
+  }, []);
+
   const getListSheetMaxOffset = useCallback(() => {
-    return getSnapPoints().full;
-  }, []);
+    return getSnapPoints(ensureListSheetLayoutHeight()).full;
+  }, [ensureListSheetLayoutHeight]);
 
-  /** 중간단계 오프셋 (목록 열었을 때 기본 높이) */
   const getListSheetMiddleOffset = useCallback(() => {
-    return getSnapPoints().middle;
-  }, []);
+    return getSnapPoints(ensureListSheetLayoutHeight()).middle;
+  }, [ensureListSheetLayoutHeight]);
 
-  const openListSheet = useCallback(() => {
+  const commitOpenListSheet = useCallback(() => {
     const stores = getStoresForList();
     setListSheetStores(stores);
-    const { middle, full } = getSnapPoints();
+    const layoutHeight = ensureListSheetLayoutHeight();
+    const { middle, full } = getSnapPoints(layoutHeight);
     listSheetPanelMaxOffsetRef.current = full;
+    if (Math.abs(listSheetPanelOffsetRef.current - middle) < 1) {
+      return;
+    }
     listSheetPanelOffsetRef.current = middle;
     setListSheetPanelOffset(middle);
-  }, [getStoresForList]);
+  }, [getStoresForList, ensureListSheetLayoutHeight]);
+
+  const openListSheet = useCallback(
+    (options?: OpenListSheetOptions) => {
+      if (options?.deferInWebView && isWebViewEnvironment()) {
+        requestAnimationFrame(() => requestAnimationFrame(commitOpenListSheet));
+        return;
+      }
+      commitOpenListSheet();
+    },
+    [commitOpenListSheet],
+  );
 
   const closeListSheet = useCallback(() => {
+    listSheetLayoutHeightRef.current = null;
     listSheetPanelOffsetRef.current = 0;
     setListSheetPanelOffset(0);
   }, []);
 
   const handlePointerDown = useCallback(
     (clientY: number) => {
+      ensureListSheetLayoutHeight();
       listSheetPanelMaxOffsetRef.current = getListSheetMaxOffset();
       listSheetDragStartYRef.current = clientY;
       listSheetDragStartOffsetRef.current = listSheetPanelOffset;
@@ -107,7 +133,13 @@ export function useMapListSheet(getStoresForList: () => StoreInfo[]) {
       setIsListSheetPanelDragging(true);
       setListSheetStores(getStoresForList());
     },
-    [getListSheetMaxOffset, getListSheetMiddleOffset, listSheetPanelOffset, getStoresForList],
+    [
+      ensureListSheetLayoutHeight,
+      getListSheetMaxOffset,
+      getListSheetMiddleOffset,
+      listSheetPanelOffset,
+      getStoresForList,
+    ],
   );
 
   const handlePointerMove = useCallback((clientY: number) => {
@@ -124,12 +156,13 @@ export function useMapListSheet(getStoresForList: () => StoreInfo[]) {
   const handlePointerUp = useCallback(() => {
     listSheetDragStartYRef.current = null;
     setIsListSheetPanelDragging(false);
+    const layoutHeight = ensureListSheetLayoutHeight();
     const current = listSheetPanelOffsetRef.current;
     const snapAtDown = listSheetSnapAtPointerDownRef.current;
-    const snapped = resolveSnap(current, snapAtDown);
+    const snapped = resolveSnap(current, snapAtDown, layoutHeight);
     listSheetPanelOffsetRef.current = snapped;
     setListSheetPanelOffset(snapped);
-  }, []);
+  }, [ensureListSheetLayoutHeight]);
 
   useEffect(() => {
     listSheetPanelOffsetRef.current = listSheetPanelOffset;

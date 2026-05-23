@@ -45,6 +45,8 @@ interface MapStoreListSectionProps {
   listFilter?: StoreListFilter;
   /** 필터 적용 콜백 */
   onListFilterChange?: (filter: StoreListFilter) => void;
+  /** 지도 목록 필터 모달 열림 상태 */
+  onFilterPanelOpenChange?: (open: boolean) => void;
 }
 
 /** 지도 바텀 시트용 스토어 목록 (옵션에 따라 핸들/정렬·필터/리스트) */
@@ -57,6 +59,7 @@ export function MapStoreListSection({
   onSortByChange,
   listFilter,
   onListFilterChange,
+  onFilterPanelOpenChange,
 }: MapStoreListSectionProps) {
   const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
   const [sortDropdownRect, setSortDropdownRect] = useState<{ top: number; left: number } | null>(
@@ -207,6 +210,7 @@ export function MapStoreListSection({
                 <MapStoreListFilter
                   listFilter={listFilter}
                   onListFilterChange={onListFilterChange}
+                  onPanelOpenChange={onFilterPanelOpenChange}
                 />
               </>
             )}

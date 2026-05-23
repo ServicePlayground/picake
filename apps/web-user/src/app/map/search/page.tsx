@@ -185,8 +185,10 @@ export default function MapSearchPage() {
             )}
             <div className="h-3 w-px shrink-0 bg-[var(--grayscale-gr-100,#EBEBEA)]" aria-hidden />
             {pickupFilter != null ? (
-              <span
-                className="max-w-[min(100%,200px)] shrink-0 truncate"
+              <button
+                type="button"
+                onClick={() => setPickupCalendarOpen(true)}
+                className="max-w-[min(100%,200px)] shrink-0 truncate border-0 p-0 text-left"
                 style={{
                   borderRadius: 4,
                   padding: "2px 4px",
@@ -196,9 +198,10 @@ export default function MapSearchPage() {
                   lineHeight: "140%",
                   color: "var(--primary-or-400, #FF653E)",
                 }}
+                aria-label="픽업 날짜 변경"
               >
                 {formatMapPickupFilterInline(pickupFilter)}
-              </span>
+              </button>
             ) : (
               <button
                 type="button"

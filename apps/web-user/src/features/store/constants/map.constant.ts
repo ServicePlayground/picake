@@ -13,11 +13,33 @@ export const LIST_SHEET_HANDLE_HEIGHT = 32;
 /** 하단 네비 영역 높이(px) - 패널이 채우는 최대 높이 계산용 */
 export const LIST_SHEET_BOTTOM_NAV_HEIGHT = 60;
 
+/** 지도 스토어 선택 카드 — 하단 네비 위 여백(px) */
+export const MAP_STORE_CARD_BOTTOM_GAP = 28;
+
+/** 스토어 선택 시 카드 bottom (목록 시트 핸들 숨김 상태) */
+export const MAP_SELECTED_STORE_CARD_BOTTOM =
+  LIST_SHEET_BOTTOM_NAV_HEIGHT + MAP_STORE_CARD_BOTTOM_GAP;
+
 /** 목록 패널 중간단계: 화면 높이 대비 비율 (0.45 = 45vh) */
 export const LIST_SHEET_OPEN_RATIO = 0.45;
 
+/**
+ * 목록 시트 스냅 높이 계산용 레이아웃 높이(px).
+ * 웹뷰·모바일에서 innerHeight가 일시적으로 작게 잡히는 경우를 줄이기 위해
+ * visualViewport와 innerHeight 중 큰 값을 사용합니다.
+ */
+export function getMapLayoutViewportHeight(): number {
+  if (typeof window === "undefined") return 800;
+  const inner = window.innerHeight;
+  const visual = window.visualViewport?.height ?? 0;
+  return Math.round(Math.max(inner, visual));
+}
+
 /** 지도 bounds 패딩(px) - 검색 결과 전체가 보이도록 할 때 */
 export const MAP_BOUNDS_PADDING = 80;
+
+/** 지도 목록 필터 모달 루트 id (포털·시트 제스처 충돌 방지용) */
+export const MAP_STORE_LIST_FILTER_MODAL_ID = "map-store-list-filter-modal";
 
 /** 지도 마커 라벨(스토어명·미입점·영업 상태) 공통 흰색 외곽선 */
 export const MAP_MARKER_LABEL_TEXT_SHADOW =
