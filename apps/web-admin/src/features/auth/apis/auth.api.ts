@@ -23,10 +23,7 @@ export const authApi = {
   },
 
   register: async (dto: AdminRegisterRequest): Promise<AdminRegisterResponse> => {
-    const response = await adminClient.post<{ data: AdminRegisterResponse }>(
-      "/auth/register",
-      dto,
-    );
+    const response = await adminClient.post<{ data: AdminRegisterResponse }>("/auth/register", dto);
     return response.data.data;
   },
 

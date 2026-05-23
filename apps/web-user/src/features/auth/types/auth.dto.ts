@@ -36,6 +36,10 @@ export interface GoogleRegisterRequestDto {
   googleEmail: string;
   name: string;
   phone: string;
+  agreedToTerms: boolean;
+  agreedToPrivacy: boolean;
+  agreedToThirdParty: boolean;
+  agreedToLocationTerms: boolean;
 }
 
 export interface KakaoRegisterRequestDto {
@@ -43,6 +47,10 @@ export interface KakaoRegisterRequestDto {
   kakaoEmail: string;
   name: string;
   phone: string;
+  agreedToTerms: boolean;
+  agreedToPrivacy: boolean;
+  agreedToThirdParty: boolean;
+  agreedToLocationTerms: boolean;
 }
 
 export interface VerifyPhoneCodeRequestDto {

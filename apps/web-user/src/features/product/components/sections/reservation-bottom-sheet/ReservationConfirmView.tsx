@@ -211,7 +211,11 @@ export function ReservationConfirmView({
       </div>
       <div className="px-5 py-10 flex flex-col">
         <h2 className="mb-[18px] text-sm font-bold text-gray-900">필수 동의 항목</h2>
-        <Checkbox checked={allAgreed} onChange={handleToggleAllAgreements} label="모두 동의합니다" />
+        <Checkbox
+          checked={allAgreed}
+          onChange={handleToggleAllAgreements}
+          label="모두 동의합니다"
+        />
         <div className="border-t border-gray-50 my-3" />
         <div className="flex flex-col gap-2">
           <Checkbox checked={agreePayment} onChange={setAgreePayment} label="결제 방법 확인" />

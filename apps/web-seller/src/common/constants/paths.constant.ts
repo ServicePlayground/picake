@@ -1,3 +1,6 @@
+export { ROUTES } from "@/apps/web-seller/common/constants/route-paths.constant";
+
+import { ROUTES } from "@/apps/web-seller/common/constants/route-paths.constant";
 import { RootPage } from "@/apps/web-seller/pages/Root";
 import { StoreCreatePage } from "@/apps/web-seller/pages/store/Create";
 import { StoreDetailHomePage } from "@/apps/web-seller/pages/store/detail/Home";
@@ -22,43 +25,8 @@ import { FindAccountPage } from "@/apps/web-seller/pages/auth/FindAccount";
 import { GoogleAuthCallbackPage } from "@/apps/web-seller/pages/auth/GoogleAuthCallback";
 import { KakaoAuthCallbackPage } from "@/apps/web-seller/pages/auth/KakaoAuthCallback";
 import { MypageIndexPage } from "@/apps/web-seller/pages/mypage/Index";
-
-export const ROUTES = {
-  ROOT: "/",
-  // 마이페이지
-  MYPAGE: "/mypage",
-  // 스토어 관련 경로
-  STORE_CREATE: "/store/create",
-  STORE_DETAIL_HOME: (storeId: string) => `/stores/${storeId}`,
-  STORE_DETAIL_PRODUCTS: (storeId: string) => `/stores/${storeId}/products`,
-  STORE_DETAIL_PRODUCTS_LIST: (storeId: string) => `/stores/${storeId}/products/list`,
-  STORE_DETAIL_PRODUCTS_CREATE: (storeId: string) => `/stores/${storeId}/products/create`,
-  STORE_DETAIL_PRODUCTS_DETAIL: (storeId: string, productId: string) =>
-    `/stores/${storeId}/products/${productId}`,
-  // STORE_DETAIL_CHAT_LIST: (storeId: string) => `/stores/${storeId}/chat`,
-  // STORE_DETAIL_CHAT_ROOM: (storeId: string, roomId: string) =>
-  //   `/stores/${storeId}/chat/${roomId}`,
-  STORE_DETAIL_FEED_LIST: (storeId: string) => `/stores/${storeId}/feed`,
-  STORE_DETAIL_FEED_CREATE: (storeId: string) => `/stores/${storeId}/feed/create`,
-  STORE_DETAIL_FEED_DETAIL: (storeId: string, feedId: string) =>
-    `/stores/${storeId}/feed/${feedId}`,
-  STORE_DETAIL_ORDERS_LIST: (storeId: string) => `/stores/${storeId}/orders`,
-  STORE_DETAIL_ORDERS_DETAIL: (storeId: string, orderId: string) =>
-    `/stores/${storeId}/orders/${orderId}`,
-  STORE_DETAIL_STATISTICS_ORDERS: (storeId: string) => `/stores/${storeId}/statistics/orders`,
-  STORE_DETAIL_NOTIFICATIONS_LIST: (storeId: string) => `/stores/${storeId}/notifications`,
-  STORE_DETAIL_NOTIFICATIONS_SETTINGS: (storeId: string) =>
-    `/stores/${storeId}/notifications/settings`,
-  STORE_DETAIL_EDIT: (storeId: string) => `/stores/${storeId}/edit`,
-  STORE_DETAIL_CALENDAR: (storeId: string) => `/stores/${storeId}/calendar`,
-  // 인증 관련 경로
-  AUTH: {
-    LOGIN: "/auth/login",
-    FIND_ACCOUNT: "/auth/login/find-account",
-    GOOGLE_REDIRECT_URI: "/auth/login/google",
-    KAKAO_REDIRECT_URI: "/auth/login/kakao",
-  },
-} as const;
+import { TermsOfServicePage } from "@/apps/web-seller/pages/legal/TermsOfService";
+import { PrivacyPolicyPage } from "@/apps/web-seller/pages/legal/PrivacyPolicy";
 
 // 인증 관련 경로 (AdminLayout 밖)
 export const AUTH_ROUTE_CONFIG = [
@@ -66,6 +34,8 @@ export const AUTH_ROUTE_CONFIG = [
   { path: ROUTES.AUTH.FIND_ACCOUNT, element: FindAccountPage },
   { path: ROUTES.AUTH.GOOGLE_REDIRECT_URI, element: GoogleAuthCallbackPage },
   { path: ROUTES.AUTH.KAKAO_REDIRECT_URI, element: KakaoAuthCallbackPage },
+  { path: ROUTES.LEGAL.TERMS_OF_SERVICE, element: TermsOfServicePage },
+  { path: ROUTES.LEGAL.PRIVACY_POLICY, element: PrivacyPolicyPage },
 ] as const;
 
 // 관리자 관련 경로 (AdminLayout 안)

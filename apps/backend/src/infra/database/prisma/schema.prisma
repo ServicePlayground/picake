@@ -49,6 +49,12 @@ model Consumer {
   kakaoId     String? @unique @map("kakao_id")
   kakaoEmail  String? @map("kakao_email")
 
+  /// 약관 동의 타임스탬프 (회원가입 시점 기록 — 법적 증거)
+  agreedToTermsAt        DateTime? @map("agreed_to_terms_at")
+  agreedToPrivacyAt      DateTime? @map("agreed_to_privacy_at")
+  agreedToThirdPartyAt   DateTime? @map("agreed_to_third_party_at")
+  agreedToLocationTermsAt DateTime? @map("agreed_to_location_terms_at")
+
   createdAt   DateTime @default(now()) @map("created_at")
   lastLoginAt DateTime? @map("last_login_at")
 
@@ -88,6 +94,10 @@ model Seller {
 
   /// 판매자 온보딩·검증 단계 (스토어 생성 후 갱신)
   sellerVerificationStatus SellerVerificationStatus @default(REGISTERED) @map("seller_verification_status")
+
+  /// 약관 동의 타임스탬프 (회원가입 시점 기록 — 법적 증거)
+  agreedToTermsAt   DateTime? @map("agreed_to_terms_at")
+  agreedToPrivacyAt DateTime? @map("agreed_to_privacy_at")
 
   createdAt   DateTime @default(now()) @map("created_at")
   lastLoginAt DateTime? @map("last_login_at")

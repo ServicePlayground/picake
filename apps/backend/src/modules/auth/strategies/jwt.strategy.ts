@@ -197,7 +197,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException(AUTH_ERROR_MESSAGES.ACCESS_TOKEN_ACCOUNT_INACTIVE);
     }
     if (admin.isTotpEnabled) {
-      LoggerUtil.log(`JWT 검증 실패: totp_setup_pending 이지만 이미 OTP 활성화됨 - id: ${payload.sub}`);
+      LoggerUtil.log(
+        `JWT 검증 실패: totp_setup_pending 이지만 이미 OTP 활성화됨 - id: ${payload.sub}`,
+      );
       throw new UnauthorizedException(AUTH_ERROR_MESSAGES.ACCESS_TOKEN_INVALID);
     }
 

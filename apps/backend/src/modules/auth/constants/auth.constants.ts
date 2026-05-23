@@ -52,6 +52,7 @@ export const AUTH_ERROR_MESSAGES = {
   /* ------------------------------------------------------------------------------------------------------ */
   AUDIENCE_NOT_AUTHORIZED: "이 API에 사용할 수 있는 인증 토큰이 아닙니다.",
   JWT_TYPE_NOT_ALLOWED_FOR_ROUTE: "이 요청에 사용할 수 없는 토큰입니다.",
+  REQUIRED_TERMS_NOT_AGREED: "필수 약관에 모두 동의해야 회원가입이 가능합니다.",
   WITHDRAW_BLOCKED_ACTIVE_ORDERS:
     "진행 중인 주문이 있어 회원 탈퇴할 수 없습니다. 주문을 완료하거나 취소한 뒤 다시 시도해 주세요.",
 } as const;

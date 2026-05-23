@@ -38,9 +38,7 @@ export default function SettingNotificationPage() {
     <div className="pt-3">
       <NotificationRow label="푸쉬 알림" checked={pushEnabled} onChange={handlePushToggle} />
 
-      {toastMessage && (
-        <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
-      )}
+      {toastMessage && <Toast message={toastMessage} onClose={() => setToastMessage(null)} />}
     </div>
   );
 }

@@ -1,8 +1,5 @@
 import React from "react";
-import {
-  BaseButton,
-  BaseButtonProps,
-} from "@/apps/web-admin/common/components/buttons/BaseButton";
+import { BaseButton, BaseButtonProps } from "@/apps/web-admin/common/components/buttons/BaseButton";
 import { cn } from "@/apps/web-admin/common/utils/classname.util";
 
 interface ButtonProps extends BaseButtonProps {}

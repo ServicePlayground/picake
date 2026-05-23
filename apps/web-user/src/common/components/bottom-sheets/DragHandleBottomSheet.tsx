@@ -150,10 +150,7 @@ export function DragHandleBottomSheet({
 
   return (
     <div
-      className={clsx(
-        "fixed inset-0 bg-black/50 transition-opacity",
-        zIndexClassName ?? "z-50",
-      )}
+      className={clsx("fixed inset-0 bg-black/50 transition-opacity", zIndexClassName ?? "z-50")}
       onClick={handleBackdropClick}
     >
       <div

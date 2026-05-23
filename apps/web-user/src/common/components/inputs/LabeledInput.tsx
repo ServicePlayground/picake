@@ -13,18 +13,7 @@ interface LabeledInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElem
 }
 
 export const LabeledInput = forwardRef<HTMLInputElement, LabeledInputProps>(function LabeledInput(
-  {
-    id,
-    label,
-    className,
-    inputClassName,
-    clearable,
-    onClear,
-    value,
-    onFocus,
-    onBlur,
-    ...rest
-  },
+  { id, label, className, inputClassName, clearable, onClear, value, onFocus, onBlur, ...rest },
   ref,
 ) {
   const [isFocused, setIsFocused] = useState(false);

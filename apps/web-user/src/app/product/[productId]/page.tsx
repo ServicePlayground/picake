@@ -184,7 +184,6 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
         refundCancellationPolicy={data.storeRefundCancellationPolicy}
         onClose={() => setIsBottomSheetOpen(false)}
       />
-
     </div>
   );
 }

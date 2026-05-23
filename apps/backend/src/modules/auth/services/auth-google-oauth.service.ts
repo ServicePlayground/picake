@@ -231,6 +231,12 @@ export class AuthGoogleOauthService {
       userInfo: { googleId, googleEmail },
     } = googleUserInfo;
 
+    if (!googleId) {
+      throw new BadRequestException({
+        message: AUTH_ERROR_MESSAGES.GOOGLE_OAUTH_TOKEN_EXCHANGE_FAILED,
+      });
+    }
+
     let seller = await this.prisma.seller.findUnique({
       where: { googleId },
     });
@@ -277,17 +283,31 @@ export class AuthGoogleOauthService {
    * @throws ConflictException 이미 다른 구글과 연결된 번호 / 동일 번호 비구글 계정 / 이미 존재하는 googleId
    */
   async consumerGoogleRegisterWithPhone(googleRegisterDto: GoogleRegisterRequestDto) {
-    const { googleId, googleEmail, phone, name } = googleRegisterDto;
+    const {
+      googleId,
+      googleEmail,
+      phone,
+      name,
+      agreedToTerms,
+      agreedToPrivacy,
+      agreedToThirdParty,
+      agreedToLocationTerms,
+    } = googleRegisterDto;
     const trimmedName = name.trim();
     const normalizedPhone = PhoneUtil.normalizePhone(phone);
 
-    // 1. 구글 ID 중복 검증 (필수)
+    // 1. 필수 약관 동의 여부 검증
+    if (!agreedToTerms || !agreedToPrivacy || !agreedToThirdParty) {
+      throw new BadRequestException(AUTH_ERROR_MESSAGES.REQUIRED_TERMS_NOT_AGREED);
+    }
+
+    // 3. 구글 ID 중복 검증 (필수)
     const existing = await this.prisma.consumer.findUnique({ where: { googleId } });
     if (existing && !(await this.withdrawService.purgeIfInactiveConsumer(existing))) {
       throw new ConflictException(AUTH_ERROR_MESSAGES.GOOGLE_ID_ALREADY_EXISTS);
     }
 
-    // 2. 휴대폰 인증 상태 확인
+    // 4. 휴대폰 인증 상태 확인
     const isPhoneVerified = await this.authPhoneService.checkPhoneVerificationStatus(
       normalizedPhone,
       AUDIENCE.CONSUMER,
@@ -305,7 +325,7 @@ export class AuthGoogleOauthService {
       existingPhone = null;
     }
 
-    // 3. 동일 번호 구글 계정 중복 검증
+    // 5. 동일 번호 구글 계정 중복 검증
     if (existingPhone?.googleId) {
       throw new ConflictException({
         message: AUTH_ERROR_MESSAGES.PHONE_GOOGLE_ACCOUNT_EXISTS,
@@ -314,7 +334,7 @@ export class AuthGoogleOauthService {
       });
     }
 
-    // 4. 동일 번호 카카오 계정 중복 검증
+    // 6. 동일 번호 카카오 계정 중복 검증
     if (existingPhone?.kakaoId) {
       throw new ConflictException({
         message: AUTH_ERROR_MESSAGES.PHONE_KAKAO_ACCOUNT_EXISTS,
@@ -324,6 +344,7 @@ export class AuthGoogleOauthService {
     }
 
     return await this.prisma.$transaction(async (tx) => {
+      const now = new Date();
       const row = await tx.consumer.create({
         data: {
           googleId,
@@ -332,7 +353,11 @@ export class AuthGoogleOauthService {
           name: trimmedName,
           nickname: buildInitialNicknameFromName(trimmedName),
           isPhoneVerified: true,
-          lastLoginAt: new Date(),
+          lastLoginAt: now,
+          agreedToTermsAt: agreedToTerms ? now : null,
+          agreedToPrivacyAt: agreedToPrivacy ? now : null,
+          agreedToThirdPartyAt: agreedToThirdParty ? now : null,
+          agreedToLocationTermsAt: agreedToLocationTerms ? now : null,
         },
       });
       const tokenPair = await this.jwtUtil.generateTokenPair({
@@ -348,11 +373,17 @@ export class AuthGoogleOauthService {
    * @throws ConflictException 이미 다른 구글과 연결된 번호 / 동일 번호 비구글 계정 / 이미 존재하는 googleId
    */
   async sellerGoogleRegisterWithPhone(googleRegisterDto: GoogleRegisterRequestDto) {
-    const { googleId, googleEmail, phone, name } = googleRegisterDto;
+    const { googleId, googleEmail, phone, name, agreedToTerms, agreedToPrivacy } =
+      googleRegisterDto;
     const trimmedName = name.trim();
     const normalizedPhone = PhoneUtil.normalizePhone(phone);
 
-    // 1. 구글 ID 중복 검증 (필수)
+    // 1. 필수 약관 동의 여부 검증
+    if (!agreedToTerms || !agreedToPrivacy) {
+      throw new BadRequestException(AUTH_ERROR_MESSAGES.REQUIRED_TERMS_NOT_AGREED);
+    }
+
+    // 2. 구글 ID 중복 검증 (필수)
     const existing = await this.prisma.seller.findUnique({ where: { googleId } });
     if (existing && !(await this.withdrawService.purgeIfInactiveSeller(existing))) {
       throw new ConflictException(AUTH_ERROR_MESSAGES.GOOGLE_ID_ALREADY_EXISTS);
@@ -395,6 +426,7 @@ export class AuthGoogleOauthService {
     }
 
     return await this.prisma.$transaction(async (tx) => {
+      const now = new Date();
       const row = await tx.seller.create({
         data: {
           googleId,
@@ -403,8 +435,10 @@ export class AuthGoogleOauthService {
           name: trimmedName,
           nickname: buildInitialNicknameFromName(trimmedName),
           isPhoneVerified: true,
-          lastLoginAt: new Date(),
+          lastLoginAt: now,
           sellerVerificationStatus: "REGISTERED",
+          agreedToTermsAt: agreedToTerms ? now : null,
+          agreedToPrivacyAt: agreedToPrivacy ? now : null,
         },
       });
       const tokenPair = await this.jwtUtil.generateTokenPair({

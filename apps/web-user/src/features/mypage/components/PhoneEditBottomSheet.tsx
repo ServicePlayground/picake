@@ -22,11 +22,7 @@ interface PhoneEditBottomSheetProps {
   onSuccess?: () => void;
 }
 
-export function PhoneEditBottomSheet({
-  isOpen,
-  onClose,
-  onSuccess,
-}: PhoneEditBottomSheetProps) {
+export function PhoneEditBottomSheet({ isOpen, onClose, onSuccess }: PhoneEditBottomSheetProps) {
   const [phone, setPhone] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const [codeExpiresAt, setCodeExpiresAt] = useState<string | null>(null);
@@ -86,8 +82,7 @@ export function PhoneEditBottomSheet({
   };
 
   const isSubmitting = verifyMutation.isPending || changePhoneMutation.isPending;
-  const canSubmit =
-    phoneValid && codeSent && codeValid && remainingSeconds > 0 && !isSubmitting;
+  const canSubmit = phoneValid && codeSent && codeValid && remainingSeconds > 0 && !isSubmitting;
 
   const formatRemaining = (seconds: number) => {
     const m = Math.floor(seconds / 60);

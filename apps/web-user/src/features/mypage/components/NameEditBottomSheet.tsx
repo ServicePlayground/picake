@@ -45,11 +45,7 @@ export function NameEditBottomSheet({
             </Button>
           </span>
           <span className="flex-[2]">
-            <Button
-              variant="primary"
-              onClick={handleSubmit}
-              disabled={!isValid || isSubmitting}
-            >
+            <Button variant="primary" onClick={handleSubmit} disabled={!isValid || isSubmitting}>
               수정
             </Button>
           </span>

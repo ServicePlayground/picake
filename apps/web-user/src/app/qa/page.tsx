@@ -159,9 +159,7 @@ export default function QAPage() {
             </div>
             {locationStatus === "error" && (
               <div className="mt-1">
-                <p className="text-red-400 text-xs">
-                  위치 권한이 거부됐거나 오류가 발생했습니다.
-                </p>
+                <p className="text-red-400 text-xs">위치 권한이 거부됐거나 오류가 발생했습니다.</p>
                 {locationError && (
                   <pre className="mt-2 bg-red-50 border border-red-200 rounded-xl p-3 text-[10px] text-red-700 overflow-x-auto whitespace-pre-wrap break-all">
                     {locationError}

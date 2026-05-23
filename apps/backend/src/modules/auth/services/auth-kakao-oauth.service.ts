@@ -206,6 +206,12 @@ export class AuthKakaoOauthService {
       userInfo: { kakaoId, kakaoEmail },
     } = kakaoUserInfo;
 
+    if (!kakaoId) {
+      throw new BadRequestException({
+        message: AUTH_ERROR_MESSAGES.KAKAO_OAUTH_TOKEN_EXCHANGE_FAILED,
+      });
+    }
+
     let seller = await this.prisma.seller.findUnique({
       where: { kakaoId },
     });
@@ -243,9 +249,23 @@ export class AuthKakaoOauthService {
   }
 
   async consumerKakaoRegisterWithPhone(kakaoRegisterDto: KakaoRegisterRequestDto) {
-    const { kakaoId, kakaoEmail, phone, name } = kakaoRegisterDto;
+    const {
+      kakaoId,
+      kakaoEmail,
+      phone,
+      name,
+      agreedToTerms,
+      agreedToPrivacy,
+      agreedToThirdParty,
+      agreedToLocationTerms,
+    } = kakaoRegisterDto;
     const trimmedName = name.trim();
     const normalizedPhone = PhoneUtil.normalizePhone(phone);
+
+    // 1. 필수 약관 동의 여부 검증
+    if (!agreedToTerms || !agreedToPrivacy || !agreedToThirdParty) {
+      throw new BadRequestException(AUTH_ERROR_MESSAGES.REQUIRED_TERMS_NOT_AGREED);
+    }
 
     const existing = await this.prisma.consumer.findUnique({ where: { kakaoId } });
     if (existing && !(await this.withdrawService.purgeIfInactiveConsumer(existing))) {
@@ -285,6 +305,7 @@ export class AuthKakaoOauthService {
     }
 
     return await this.prisma.$transaction(async (tx) => {
+      const now = new Date();
       const row = await tx.consumer.create({
         data: {
           kakaoId,
@@ -293,7 +314,11 @@ export class AuthKakaoOauthService {
           name: trimmedName,
           nickname: buildInitialNicknameFromName(trimmedName),
           isPhoneVerified: true,
-          lastLoginAt: new Date(),
+          lastLoginAt: now,
+          agreedToTermsAt: agreedToTerms ? now : null,
+          agreedToPrivacyAt: agreedToPrivacy ? now : null,
+          agreedToThirdPartyAt: agreedToThirdParty ? now : null,
+          agreedToLocationTermsAt: agreedToLocationTerms ? now : null,
         },
       });
       const tokenPair = await this.jwtUtil.generateTokenPair({
@@ -305,9 +330,14 @@ export class AuthKakaoOauthService {
   }
 
   async sellerKakaoRegisterWithPhone(kakaoRegisterDto: KakaoRegisterRequestDto) {
-    const { kakaoId, kakaoEmail, phone, name } = kakaoRegisterDto;
+    const { kakaoId, kakaoEmail, phone, name, agreedToTerms, agreedToPrivacy } = kakaoRegisterDto;
     const trimmedName = name.trim();
     const normalizedPhone = PhoneUtil.normalizePhone(phone);
+
+    // 1. 필수 약관 동의 여부 검증
+    if (!agreedToTerms || !agreedToPrivacy) {
+      throw new BadRequestException(AUTH_ERROR_MESSAGES.REQUIRED_TERMS_NOT_AGREED);
+    }
 
     const existing = await this.prisma.seller.findUnique({ where: { kakaoId } });
     if (existing && !(await this.withdrawService.purgeIfInactiveSeller(existing))) {
@@ -347,6 +377,7 @@ export class AuthKakaoOauthService {
     }
 
     return await this.prisma.$transaction(async (tx) => {
+      const now = new Date();
       const row = await tx.seller.create({
         data: {
           kakaoId,
@@ -355,8 +386,10 @@ export class AuthKakaoOauthService {
           name: trimmedName,
           nickname: buildInitialNicknameFromName(trimmedName),
           isPhoneVerified: true,
-          lastLoginAt: new Date(),
+          lastLoginAt: now,
           sellerVerificationStatus: "REGISTERED",
+          agreedToTermsAt: agreedToTerms ? now : null,
+          agreedToPrivacyAt: agreedToPrivacy ? now : null,
         },
       });
       const tokenPair = await this.jwtUtil.generateTokenPair({

@@ -24,17 +24,12 @@ export function OrderStatusNotice({ order }: OrderStatusNoticeProps) {
     /* 입금완료: 판매자 확인 대기 중 안내 */
     case OrderStatus.PAYMENT_COMPLETED:
       return (
-        <InfoNotice
-          className="mt-1 mb-4"
-          message="판매자의 입금 확인 후 예약이 확정됩니다."
-        />
+        <InfoNotice className="mt-1 mb-4" message="판매자의 입금 확인 후 예약이 확정됩니다." />
       );
 
     /* 환불대기: 환불 처리 중 안내 */
     case OrderStatus.CANCEL_REFUND_PENDING:
-      return (
-        <InfoNotice className="mt-1 mb-4" message="환불 완료까지 1-2일 소요될 수 있습니다." />
-      );
+      return <InfoNotice className="mt-1 mb-4" message="환불 완료까지 1-2일 소요될 수 있습니다." />;
 
     /* 예약취소: sellerCancelReason 있을 때만 판매자 취소 안내 표시 (구매자 취소는 아무것도 표시하지 않음) */
     case OrderStatus.CANCEL_COMPLETED:

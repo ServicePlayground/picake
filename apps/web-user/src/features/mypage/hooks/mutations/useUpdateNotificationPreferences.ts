@@ -20,10 +20,10 @@ export function useUpdateNotificationPreferences() {
         "notification-preferences",
       ]);
       if (previous) {
-        queryClient.setQueryData<NotificationPreferences>(
-          ["mypage", "notification-preferences"],
-          { ...previous, ...body },
-        );
+        queryClient.setQueryData<NotificationPreferences>(["mypage", "notification-preferences"], {
+          ...previous,
+          ...body,
+        });
       }
       return { previous };
     },

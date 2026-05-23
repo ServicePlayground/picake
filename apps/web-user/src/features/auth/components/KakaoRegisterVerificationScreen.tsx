@@ -22,6 +22,12 @@ import {
   isValidVerificationCode,
   normalizePhone,
 } from "@/apps/web-user/common/utils/validator.util";
+import {
+  TermsAgreementSection,
+  INITIAL_TERMS_STATE,
+  isRequiredTermsAllChecked,
+  type TermsAgreementState,
+} from "@/apps/web-user/features/auth/components/TermsAgreementSection";
 
 function formatCountdownMmSs(totalSeconds: number): string {
   const s = Math.max(0, Math.floor(totalSeconds));
@@ -57,6 +63,7 @@ export function KakaoRegisterVerificationScreen() {
   const [isCodeSent, setIsCodeSent] = useState(false);
   const [codeExpiresAt, setCodeExpiresAt] = useState<string | null>(null);
   const [countdownTick, setCountdownTick] = useState(0);
+  const [termsState, setTermsState] = useState<TermsAgreementState>(INITIAL_TERMS_STATE);
 
   useEffect(() => {
     const kakaoId = searchParams.get("kakaoId")?.trim();
@@ -147,6 +154,7 @@ export function KakaoRegisterVerificationScreen() {
     if (!validateDisplayName(displayName)) return;
     if (!isCodeSent || remainingSeconds <= 0) return;
     if (!phone || !verificationCode || phoneError || verificationCodeError) return;
+    if (!isRequiredTermsAllChecked(termsState)) return;
 
     const normalized = normalizePhone(phone);
     await verifyPhoneCodeMutation.mutateAsync({
@@ -159,6 +167,10 @@ export function KakaoRegisterVerificationScreen() {
       ...kakaoLoginData,
       phone: normalized,
       name: displayName.trim(),
+      agreedToTerms: termsState.termsOfService,
+      agreedToPrivacy: termsState.privacyPolicy,
+      agreedToThirdParty: termsState.thirdPartyConsent,
+      agreedToLocationTerms: termsState.locationTerms,
     });
   };
 
@@ -177,7 +189,8 @@ export function KakaoRegisterVerificationScreen() {
     isCodeSent &&
     remainingSeconds > 0 &&
     !sendPending &&
-    !actionPending;
+    !actionPending &&
+    isRequiredTermsAllChecked(termsState);
 
   if (booting) {
     return (
@@ -315,6 +328,9 @@ export function KakaoRegisterVerificationScreen() {
             ) : null}
           </div>
         </div>
+
+        {/* 약관 동의 */}
+        <TermsAgreementSection value={termsState} onChange={setTermsState} />
       </div>
 
       <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-100 bg-white px-5 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] pt-3 sm:mx-auto sm:max-w-[640px]">

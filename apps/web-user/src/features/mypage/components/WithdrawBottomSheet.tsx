@@ -4,18 +4,11 @@ import { useEffect, useState } from "react";
 import { BottomSheet } from "@/apps/web-user/common/components/bottom-sheets/BottomSheet";
 import { Button } from "@/apps/web-user/common/components/buttons/Button";
 import { InfoNotice } from "@/apps/web-user/common/components/notice/InfoNotice";
-import {
-  RadioGroup,
-  type RadioOption,
-} from "@/apps/web-user/common/components/inputs/RadioGroup";
+import { RadioGroup, type RadioOption } from "@/apps/web-user/common/components/inputs/RadioGroup";
 import { Modal } from "@/apps/web-user/common/components/modals/Modal";
 import { useWithdraw } from "@/apps/web-user/features/mypage/hooks/mutations/useWithdraw";
 
-type WithdrawReason =
-  | "CAKE_VARIETY"
-  | "ORDER_INCONVENIENT"
-  | "NO_NEEDED_SERVICE"
-  | "OTHER";
+type WithdrawReason = "CAKE_VARIETY" | "ORDER_INCONVENIENT" | "NO_NEEDED_SERVICE" | "OTHER";
 
 const WITHDRAW_REASON_LABELS: Record<WithdrawReason, string> = {
   CAKE_VARIETY: "케이크 종류가 많이 없어서",

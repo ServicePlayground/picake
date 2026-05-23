@@ -26,11 +26,14 @@ function formatCountdownMmSs(totalSeconds: number): string {
 interface PhoneVerificationFormProps {
   onVerificationComplete: (phone: string) => void;
   purpose: PhoneVerificationPurpose;
+  /** false이면 인증 완료 버튼 비활성 (예: 필수 약관 미동의) */
+  canComplete?: boolean;
 }
 
 export default function PhoneVerificationForm({
   onVerificationComplete,
   purpose,
+  canComplete = true,
 }: PhoneVerificationFormProps) {
   const sendPhoneVerificationMutation = useSendPhoneVerification();
   const verifyPhoneCodeMutation = useVerifyPhoneCode();
@@ -111,6 +114,7 @@ export default function PhoneVerificationForm({
   const verifyPending = verifyPhoneCodeMutation.isPending;
 
   const canVerify =
+    canComplete &&
     !!phone &&
     !!verificationCode &&
     !phoneError &&

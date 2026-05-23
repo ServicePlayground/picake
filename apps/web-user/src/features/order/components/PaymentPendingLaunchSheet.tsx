@@ -100,54 +100,55 @@ function LaunchSheetView({
     if (isPending) return;
     setIsConfirmOpen(false);
     // 입금자명: 주문 시 입력한 예약자명 우선, 없으면 프로필 이름
-    const depositorName =
-      order.reservationContactName?.trim() || profile?.name?.trim() || "";
+    const depositorName = order.reservationContactName?.trim() || profile?.name?.trim() || "";
     paymentComplete({ orderId: order.id, depositorName }, { onSuccess: onPaid });
   };
 
   return (
     <>
-    <BottomSheet
-      isOpen
-      onClose={onClose}
-      title="입금 대기 중인 예약이 있어요"
-      footerShadow={false}
-      footer={
-        <div className="flex flex-col gap-2 px-5 py-4">
-          <Button variant="outline" onClick={() => setIsConfirmOpen(true)}>
-            이미 입금했어요
-          </Button>
-          <Button variant="primary" onClick={handleGoPay}>
-            <span className="inline-flex items-center justify-center gap-1">
-              입금하러 가기
-              <Icon name="arrow" width={20} height={20} className="rotate-90" />
-            </span>
-          </Button>
-        </div>
-      }
-    >
-      <div className="px-5 py-8 flex flex-col items-center">
-        {/* 입금 마감 카운트다운 말풍선 */}
-        <div className="relative mb-[30px]">
-          <div className="px-3 py-1 bg-blue-50 rounded-lg">
-            <span className="text-2xl font-bold tabular-nums text-blue-400">{countdown.text}</span>
+      <BottomSheet
+        isOpen
+        onClose={onClose}
+        title="입금 대기 중인 예약이 있어요"
+        footerShadow={false}
+        footer={
+          <div className="flex flex-col gap-2 px-5 py-4">
+            <Button variant="outline" onClick={() => setIsConfirmOpen(true)}>
+              이미 입금했어요
+            </Button>
+            <Button variant="primary" onClick={handleGoPay}>
+              <span className="inline-flex items-center justify-center gap-1">
+                입금하러 가기
+                <Icon name="arrow" width={20} height={20} className="rotate-90" />
+              </span>
+            </Button>
           </div>
-          <span className="absolute left-1/2 top-full -translate-x-1/2 w-0 h-0 border-l-[10px] border-r-[10px] border-t-[14px] border-l-transparent border-r-transparent border-t-blue-50" />
-        </div>
+        }
+      >
+        <div className="px-5 py-8 flex flex-col items-center">
+          {/* 입금 마감 카운트다운 말풍선 */}
+          <div className="relative mb-[30px]">
+            <div className="px-3 py-1 bg-blue-50 rounded-lg">
+              <span className="text-2xl font-bold tabular-nums text-blue-400">
+                {countdown.text}
+              </span>
+            </div>
+            <span className="absolute left-1/2 top-full -translate-x-1/2 w-0 h-0 border-l-[10px] border-r-[10px] border-t-[14px] border-l-transparent border-r-transparent border-t-blue-50" />
+          </div>
 
-        {/* 예약 정보 */}
-        <div className="w-full rounded-lg border border-gray-50 px-5 py-4 flex flex-col gap-2">
-          <LaunchInfoRow label="픽업장소" value={order.storeName} />
-          <LaunchInfoRow label="픽업날짜" value={formatPickupDate(order.pickupDate)} />
-          <LaunchInfoRow label="예약상품" value={productLabel} />
-          <LaunchInfoRow
-            label="총 금액"
-            value={`${order.totalPrice.toLocaleString()}원`}
-            valueBold
-          />
+          {/* 예약 정보 */}
+          <div className="w-full rounded-lg border border-gray-50 px-5 py-4 flex flex-col gap-2">
+            <LaunchInfoRow label="픽업장소" value={order.storeName} />
+            <LaunchInfoRow label="픽업날짜" value={formatPickupDate(order.pickupDate)} />
+            <LaunchInfoRow label="예약상품" value={productLabel} />
+            <LaunchInfoRow
+              label="총 금액"
+              value={`${order.totalPrice.toLocaleString()}원`}
+              valueBold
+            />
+          </div>
         </div>
-      </div>
-    </BottomSheet>
+      </BottomSheet>
 
       <Modal
         isOpen={isConfirmOpen}

@@ -18,6 +18,8 @@ export class SellerMapperUtil {
       sellerVerificationStatus: seller.sellerVerificationStatus,
       createdAt: seller.createdAt,
       lastLoginAt: lastLoginAt ?? seller.lastLoginAt ?? new Date(),
+      agreedToTermsAt: seller.agreedToTermsAt ?? null,
+      agreedToPrivacyAt: seller.agreedToPrivacyAt ?? null,
     };
   }
 }

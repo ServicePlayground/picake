@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, MinLength, MaxLength } from "class-validator";
+import { IsString, IsNotEmpty, IsBoolean, IsOptional, MinLength, MaxLength } from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
 import { Transform } from "class-transformer";
 import { IsValidKoreanPhone } from "@apps/backend/common/decorators/validators.decorator";
@@ -58,4 +58,30 @@ export class GoogleRegisterRequestDto {
   @IsString()
   @IsValidKoreanPhone()
   phone: string;
+
+  @ApiProperty({ description: "서비스 이용약관 동의 여부 (필수)", example: true })
+  @IsBoolean()
+  agreedToTerms: boolean;
+
+  @ApiProperty({ description: "개인정보 처리방침 동의 여부 (필수)", example: true })
+  @IsBoolean()
+  agreedToPrivacy: boolean;
+
+  @ApiProperty({
+    description: "개인정보 제3자 제공 동의 여부 (구매자 필수, 판매자 미사용)",
+    example: true,
+    required: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  agreedToThirdParty?: boolean;
+
+  @ApiProperty({
+    description: "위치기반서비스 이용약관 동의 여부 (구매자 선택, 판매자 미사용)",
+    example: false,
+    required: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  agreedToLocationTerms?: boolean;
 }

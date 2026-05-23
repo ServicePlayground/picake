@@ -127,7 +127,6 @@ export function ProfileEditBottomSheet({
               )}
             </div>
           </div>
-
         </div>
       </BottomSheet>
 

@@ -179,9 +179,10 @@ export default function MypagePage() {
       <section className="mt-8 pb-[60px]">
         <p className="px-5 py-2 text-xs text-gray-500">기타</p>
         {[
-          { label: "서비스 이용약관", href: "/" },
-          { label: "위치정보 이용약관", href: "/" },
-          { label: "개인정보 처리방침", href: "/" },
+          { label: "서비스 이용약관", href: PATHS.LEGAL_TERMS_OF_SERVICE },
+          { label: "위치정보 이용약관", href: PATHS.LEGAL_LOCATION_TERMS },
+          { label: "개인정보 처리방침", href: PATHS.LEGAL_PRIVACY_POLICY },
+          { label: "개인정보 제3자 제공 동의", href: PATHS.LEGAL_THIRD_PARTY_CONSENT },
           { label: "버전정보", href: "/" },
         ].map(({ label, href }) => (
           <LinkListItem key={label} href={href} label={label} />
