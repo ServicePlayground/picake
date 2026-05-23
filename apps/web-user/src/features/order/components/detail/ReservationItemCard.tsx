@@ -2,7 +2,9 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Icon } from "@/apps/web-user/common/components/icons";
+import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 import {
   OrderResponse,
   OrderItemResponse,
@@ -21,14 +23,24 @@ interface ReservationItemCardProps {
   order: OrderResponse;
   item: OrderItemResponse;
   onChangeOptions?: (item: OrderItemResponse) => void;
+  /** 취소 상태에서 "취소 상세" 버튼 숨김 (이미 취소 상세 페이지에서 렌더링할 때 사용) */
+  hideCancelDetailButton?: boolean;
 }
 
-export function ReservationItemCard({ order, item, onChangeOptions }: ReservationItemCardProps) {
+export function ReservationItemCard({
+  order,
+  item,
+  onChangeOptions,
+  hideCancelDetailButton = false,
+}: ReservationItemCardProps) {
+  const router = useRouter();
   const [expanded, setExpanded] = useState(false);
   const thumbnailUrl = item.imageUrls?.[0] || order.productImages?.[0];
+  // 취소/환불 대기 상태에서 흐리게 처리 — 취소 상세 페이지 안에서는 강조해야 하므로 제외
   const isCancelled =
-    order.orderStatus === OrderStatus.CANCEL_REFUND_PENDING ||
-    order.orderStatus === OrderStatus.CANCEL_COMPLETED;
+    !hideCancelDetailButton &&
+    (order.orderStatus === OrderStatus.CANCEL_REFUND_PENDING ||
+      order.orderStatus === OrderStatus.CANCEL_COMPLETED);
 
   return (
     <div className="rounded-xl bg-gray-25 border border-gray-100 overflow-hidden">
@@ -86,12 +98,17 @@ export function ReservationItemCard({ order, item, onChangeOptions }: Reservatio
           }
 
           if (
-            status === OrderStatus.CANCEL_REFUND_PENDING ||
-            status === OrderStatus.CANCEL_COMPLETED
+            (status === OrderStatus.CANCEL_REFUND_PENDING ||
+              status === OrderStatus.CANCEL_COMPLETED) &&
+            !hideCancelDetailButton
           ) {
             return (
               <div className="flex mt-3">
-                <button type="button" className={buttonClass}>
+                <button
+                  type="button"
+                  onClick={() => router.push(PATHS.ORDER.CANCEL_DETAIL(order.id))}
+                  className={buttonClass}
+                >
                   취소 상세
                 </button>
               </div>

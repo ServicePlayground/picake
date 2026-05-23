@@ -19,7 +19,7 @@
     "he": "^1.2.0",
     "isomorphic-dompurify": "~2.26.0",
     "lucide-react": "^0.554.0",
-    "next": "15.5.7",
+    "next": "15.5.18",
     "react": "19.1.2",
     "react-dom": "19.1.2",
     "react-error-boundary": "^6.0.0",

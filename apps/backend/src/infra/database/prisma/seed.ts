@@ -4,11 +4,13 @@ import {
   SellerVerificationStatus,
   StoreBankName,
 } from "./generated/client";
+import * as bcrypt from "bcrypt";
+import { ADMIN_BCRYPT_SALT_ROUNDS } from "@apps/backend/modules/auth/constants/auth.constants";
 
 const prisma = new PrismaClient();
 
 /**
- * 시드용 계정 1쌍 — Consumer / Seller 테이블·JWT aud 분리 구조에 맞춤
+ * 시드용 계정 — Consumer / Seller / Admin 테이블·JWT aud 분리 구조에 맞춤
  */
 const SEED_ACCOUNTS = {
   SELLER: {
@@ -34,6 +36,12 @@ const SEED_ACCOUNTS = {
     GOOGLE_EMAIL: "olo90632951@gmail.com",
     PUSH_NOTIFICATIONS_ENABLED: true,
     CREATED_AT: new Date("2024-01-16T09:15:00Z"),
+  },
+  ADMIN: {
+    USERNAME: "seed_admin",
+    PASSWORD_PLAIN: "SeedAdmin@1234",
+    CREATED_AT: new Date("2024-01-01T00:00:00.000Z"),
+    LAST_LOGIN_AT: new Date("2024-01-01T12:00:00.000Z"),
   },
 };
 
@@ -277,6 +285,38 @@ async function upsertSeedUsers() {
     seller,
     consumers: [consumer],
   };
+}
+
+/**
+ * 관리자(web-admin) 시드 계정을 생성합니다.
+ *
+ * - `username` 기준 존재하면 생성하지 않음 (idempotent)
+ * - 비밀번호는 `ADMIN_BCRYPT_SALT_ROUNDS` 로 해시
+ * - `isTotpEnabled: false`·`totpSecret: null` 유지 — 첫 로그인 후 web-admin에서 Google OTP 등록(필수) 플로우로 진입
+ */
+async function upsertSeedAdmin() {
+  const { USERNAME, PASSWORD_PLAIN, CREATED_AT, LAST_LOGIN_AT } = SEED_ACCOUNTS.ADMIN;
+
+  let admin = await prisma.admin.findUnique({
+    where: { username: USERNAME },
+  });
+
+  if (!admin) {
+    const passwordHash = await bcrypt.hash(PASSWORD_PLAIN, ADMIN_BCRYPT_SALT_ROUNDS);
+    admin = await prisma.admin.create({
+      data: {
+        username: USERNAME,
+        passwordHash,
+        totpSecret: null,
+        isTotpEnabled: false,
+        isActive: true,
+        createdAt: CREATED_AT,
+        lastLoginAt: LAST_LOGIN_AT,
+      },
+    });
+  }
+
+  return admin;
 }
 
 /**
@@ -662,7 +702,7 @@ async function seedStoreFeeds() {
  * 중요!!: ** 스키마가 수정되더라도 ** 기존 데이터 유지되면서 새로운 데이터가 추가/수정되는 방식으로 해야, 실제 배포환경에서 오류가 발생하지 않습니다.
  *
  * 실행 순서:
- * 1. 계정 생성 (구매자 1명 + 판매자 1명, 기존 행은 업데이트하지 않음)
+ * 1. 계정 생성 (구매자 1명 + 판매자 1명 + 관리자 1명, 기존 행은 업데이트하지 않음)
  * 2. 스토어 생성 (2개, 기존 스토어는 업데이트하지 않음)
  * 3. 상품 생성 (100개, 상품이 하나도 없을 때만 생성)
  * 4. 상품 리뷰 생성 (리뷰가 하나도 없을 때만 생성)
@@ -678,13 +718,14 @@ async function seedStoreFeeds() {
  */
 async function main() {
   const { seller, consumers } = await upsertSeedUsers();
+  await upsertSeedAdmin();
   const stores = await upsertStores(seller);
   const products = await upsertProducts(stores);
   const reviewCreatedCount = await seedProductReviews(consumers, products, stores);
   const feedCreatedCount = await seedStoreFeeds();
 
   console.log(
-    `✅ Seed seller + consumer created/retrieved: ${1 + consumers.length} (seller 1 + consumer 1)`,
+    `✅ Seed seller + consumer + admin created/retrieved: ${2 + consumers.length} (seller 1 + consumer 1 + admin 1)`,
   );
   console.log(`✅ Stores created/retrieved: ${stores.length}`);
   console.log(`✅ Products created/retrieved: ${products.length}`);

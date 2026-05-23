@@ -144,6 +144,12 @@ export interface OrderResponse {
   userCancelReason?: string | null;
   sellerNoShowReason?: string | null;
   refundRequestReason?: string | null;
+  sellerCancelRefundPendingReason?: string | null;
+  refundBankName?: string | null;
+  refundBankAccountNumber?: string | null;
+  refundAccountHolderName?: string | null;
+  /** 스토어가 설정한 환불·취소 규정 (주문 시점의 스냅샷) */
+  storeRefundCancellationPolicy?: import("@/apps/web-user/features/store/types/store.type").RefundCancellationPolicy;
   // 후기 UI 상태
   myReviewUiStatus: OrderMyReviewUiStatus;
   linkedProductReviewId?: string | null;

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Icon } from "@/apps/web-user/common/components/icons";
+import { InfoNotice } from "@/apps/web-user/common/components/notice/InfoNotice";
 import { Button } from "@/apps/web-user/common/components/buttons/Button";
 import { SelectTrigger } from "@/apps/web-user/common/components/selectboxs/SelectTrigger";
 import { OrderResponse } from "@/apps/web-user/features/order/types/order.type";
@@ -50,7 +50,6 @@ export function RefundRequestView({ order }: RefundRequestViewProps) {
       setHolderName(profile.name);
     }
     // holderName을 deps에 넣으면 사용자가 지웠을 때 다시 채워지므로 제외
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.name]);
 
   if (isLeaving) return null;
@@ -109,10 +108,7 @@ export function RefundRequestView({ order }: RefundRequestViewProps) {
     <div className="pt-5 pb-[96px]">
       {/* 안내 박스 */}
       <div className="px-5 py-4">
-        <div className="flex items-center gap-2 px-3 py-2.5 rounded-lg bg-gray-50">
-          <Icon name="warning" width={16} height={16} className="text-gray-400" />
-          <p className="text-xs text-gray-900">정확한 환불 정보를 입력해주세요.</p>
-        </div>
+        <InfoNotice message="정확한 환불 정보를 입력해주세요." />
       </div>
 
       <div className="px-5">

@@ -29,13 +29,15 @@ export const PATHS = {
   MAP_SEARCH: "/map/search",
 
   // 저장 페이지
-  SAVED: "/mypage/saved",
+  SAVED: "/saved",
+  MY_SAVED: "/mypage/saved",
 
   // 주문 관련 경로
   ORDER: {
     DETAIL: (orderId: string) => `/order/${orderId}`,
     CANCEL: (orderId: string) => `/order/${orderId}/cancel`,
     CANCEL_REFUND: (orderId: string) => `/order/${orderId}/cancel/refund`,
+    CANCEL_DETAIL: (orderId: string) => `/order/${orderId}/cancel-detail`,
   },
 
   // 마이페이지
@@ -47,6 +49,14 @@ export const PATHS = {
   RECENT: "/mypage/recent",
   NOTICE: "/mypage/notice",
   QNA: "/mypage/qna",
+  SETTING: "/mypage/setting",
+  SETTING_ACCOUNT: "/mypage/setting/account",
+  SETTING_NOTIFICATION: "/mypage/setting/notification",
+  LEGAL_TERMS_OF_SERVICE: "/mypage/legal/terms-of-service",
+  LEGAL_PRIVACY_POLICY: "/mypage/legal/privacy-policy",
+  LEGAL_LOCATION_TERMS: "/mypage/legal/location-terms",
+  LEGAL_THIRD_PARTY_CONSENT: "/mypage/legal/third-party-consent",
+  VERSION: "/mypage/version",
 
   // 알람 페이지
   ALARM: "/alarm",

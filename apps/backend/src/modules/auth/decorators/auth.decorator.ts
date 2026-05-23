@@ -9,13 +9,15 @@ import type { AudienceConst } from "@apps/backend/modules/auth/constants/auth.co
 
 /**
  * @param options.audiences - 허용 JWT aud. 예: 구매자(Consumer) API만 `['consumer']`, 판매자만 `['seller']`
+ * @param options.jwtTypes - 허용 JWT `type` 클레임. 생략 시 액세스 토큰만 (`access`)
  */
 export function Auth(options: {
   isPublic?: boolean;
   isOptionalPublic?: boolean;
   audiences?: AudienceConst[];
+  jwtTypes?: readonly string[];
 }) {
-  const { isPublic, isOptionalPublic, audiences } = options;
+  const { isPublic, isOptionalPublic, audiences, jwtTypes } = options;
 
   // isOptionalPublic이 true이면 isPublic도 자동으로 true로 처리
   const finalIsPublic = isOptionalPublic ? true : (isPublic ?? false);
@@ -24,6 +26,7 @@ export function Auth(options: {
     isPublic: finalIsPublic,
     isOptionalPublic,
     audiences,
+    jwtTypes,
   };
 
   const decorators = [];

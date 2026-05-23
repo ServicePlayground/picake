@@ -1,5 +1,23 @@
 import type { ProductCategoryType } from "@/apps/web-user/features/product/types/product.type";
 
+/** 환불·취소 규정 한 줄 */
+export interface RefundRuleItem {
+  /** 픽업 N일 전 (0=픽업 당일) */
+  daysBeforePickup: number;
+  /** 해당 시점의 환불·취소 조건 */
+  refundDescription: string;
+}
+
+/** 환불·취소 규정 (Store, Product 상세, Order 상세 응답에 포함) */
+export interface RefundCancellationPolicy {
+  rules: RefundRuleItem[];
+}
+
+/** "픽업 당일" / "픽업 N일 전" 라벨 */
+export function formatRefundRulePeriodLabel(daysBeforePickup: number): string {
+  return daysBeforePickup === 0 ? "픽업 당일" : `픽업 ${daysBeforePickup}일 전`;
+}
+
 /** 영업 캘린더 (백엔드 StoreBusinessCalendarDto와 동일) */
 export interface StoreBusinessDayOverride {
   date: string;

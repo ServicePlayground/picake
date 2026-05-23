@@ -5,11 +5,11 @@ import { cn } from "@/apps/web-user/common/lib/utils";
 export const oauthLoginButtonIconClassName = "size-[20px] shrink-0 object-contain";
 
 export const oauthKakaoLoginButtonClassName = cn(
-  "flex h-[52px] w-full items-center justify-center gap-[6px] rounded-[10px] border-0 bg-[#FFEB00] text-[16px] font-bold leading-none text-[var(--grayscale-gr-900,#1F1F1E)]",
+  "flex h-[52px] w-full items-center justify-center gap-[6px] rounded-2lg border-0 bg-[#FFEB00] text-base font-bold leading-none text-gray-900",
 );
 
 export const oauthGoogleLoginButtonClassName = cn(
-  "flex h-[52px] w-full items-center justify-center gap-[6px] rounded-[10px] border border-solid border-[var(--grayscale-gr-100,#EBEBEA)] bg-[var(--grayscale-gr-00,#FFFFFF)] text-[16px] font-bold leading-none text-[var(--grayscale-gr-900,#1F1F1E)]",
+  "flex h-[52px] w-full items-center justify-center gap-[6px] rounded-2lg border border-solid border-gray-100 bg-white text-base font-bold leading-none text-gray-900",
 );
 
 export const OAuthKakaoLoginButton = React.forwardRef<

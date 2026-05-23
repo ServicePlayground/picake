@@ -28,13 +28,15 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: false,
       accessToken: null,
 
-      // 로그인 처리 (Zustand 상태 업데이트 + 앱에 FCM 토큰 업서트 요청)
+      // 로그인 처리 (Zustand 상태 업데이트 + 웹뷰라면 앱에 FCM 토큰 업서트 요청)
       login: (token: string) => {
         set({
           accessToken: token,
           isAuthenticated: true,
         });
-        requestFcmTokenUpsert();
+        if (isWebViewEnvironment()) {
+          requestFcmTokenUpsert();
+        }
       },
 
       // 로그아웃 준비 (웹뷰라면 FCM 토큰 제거 요청, 웹뷰가 아니라면 상태 초기화)

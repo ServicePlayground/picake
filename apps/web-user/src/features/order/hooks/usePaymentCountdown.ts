@@ -3,7 +3,7 @@ import { OrderResponse } from "@/apps/web-user/features/order/types/order.type";
 
 const FALLBACK_PAYMENT_DEADLINE_MS = 12 * 60 * 60 * 1000;
 
-function resolveDeadlineMs(order: OrderResponse): number | null {
+export function resolveDeadlineMs(order: OrderResponse): number | null {
   if (order.paymentPendingDeadlineAt) {
     return new Date(order.paymentPendingDeadlineAt).getTime();
   }

@@ -28,11 +28,13 @@ export interface JwtVerifiedPayload extends JwtPayload {
 export interface AuthenticatedUser extends JwtVerifiedPayload {
   id: string;
   aud: AudienceConst;
-  phone: string;
-  loginType: "google" | "kakao";
-  loginId: string;
+  phone?: string;
+  loginType?: "google" | "kakao";
+  loginId?: string;
   /** aud === "seller" 일 때만 */
   sellerVerificationStatus?: "REGISTERED" | "BUSINESS_VERIFIED";
+  /** aud === "admin" 일 때만 */
+  username?: string;
 }
 
 /**

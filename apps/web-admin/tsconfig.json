@@ -1,0 +1,28 @@
+{
+  // React + Vite 프론트엔드 전용 오버라이드 설정
+  "extends": "../../tsconfig.base.json",
+  // web-user와 동일한 설정
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "es2017"],
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "rootDir": ".",
+    "outDir": "./dist",
+    // Vite가 빌드를 담당하므로 JS 출력 비활성화
+    "noEmit": true,
+    "isolatedModules": true,
+    "jsx": "react-jsx",
+    // TS 확장자 import 허용
+    "allowImportingTsExtensions": true,
+    "useDefineForClassFields": true,
+    "baseUrl": "./src",
+    "paths": {
+      "@/apps/web-admin/*": ["./*"]
+    },
+    "incremental": true,
+    "allowJs": true
+  },
+  "include": ["src/**/*", "vite.config.ts"],
+  "exclude": ["node_modules", "dist"]
+}

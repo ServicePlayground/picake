@@ -14,7 +14,7 @@ const commonSwaggerConfig = (title: string) => {
       예: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9... (Swagger UI가 자동으로 "Bearer "를 추가합니다)
       
       로그인/회원가입 API를 통해 accessToken과 refreshToken을 발급받을 수 있습니다.
-      JWT 페이로드의 aud(consumer | seller)는 앱별로 구분되며, 상대 앱 API에는 사용할 수 없습니다.
+      JWT 페이로드의 aud(consumer | seller | admin)는 앱별로 구분되며, 상대 앱 API에는 사용할 수 없습니다.
       로그인이 필요한 API에는 (로그인 필요) 표시가 되어 있습니다.
       
       Swagger UI 우측 상단의 "Authorize" 버튼을 클릭하여 토큰을 입력하면 모든 API 요청에 자동으로 포함됩니다.
@@ -38,3 +38,5 @@ const commonSwaggerConfig = (title: string) => {
 export const consumerSwaggerConfig = commonSwaggerConfig("Picake - Consumer API");
 
 export const sellerSwaggerConfig = commonSwaggerConfig("Picake - Seller API");
+
+export const adminSwaggerConfig = commonSwaggerConfig("Picake - Admin API");

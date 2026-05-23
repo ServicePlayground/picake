@@ -28,6 +28,14 @@ export interface TimePickerProps {
    * 시간 표기 형식 ('12h': 오전/오후, '24h': 24시간제, 기본값: '12h')
    */
   timeFormat?: "12h" | "24h";
+  /**
+   * 표시할 시간의 시작 분(0~1440, inclusive). 정의되면 이 값 미만의 슬롯은 노출하지 않음.
+   */
+  minTimeMinutes?: number;
+  /**
+   * 표시할 시간의 종료 분(0~1440, exclusive). 정의되면 이 값 이상의 슬롯은 노출하지 않음.
+   */
+  maxTimeMinutes?: number;
 }
 
 interface TimeSlot {
@@ -92,12 +100,23 @@ export const TimePicker: React.FC<TimePickerProps> = ({
   interval = 30,
   disabledTimes = [],
   timeFormat = "12h",
+  minTimeMinutes,
+  maxTimeMinutes,
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [isScrolling, setIsScrolling] = useState(false);
 
-  // 시간 슬롯 생성
-  const timeSlots = useMemo(() => generateTimeSlots(interval, timeFormat), [interval, timeFormat]);
+  // 시간 슬롯 생성 (영업 시간 범위가 정의되면 그 범위 밖 슬롯은 제외)
+  const timeSlots = useMemo(() => {
+    const all = generateTimeSlots(interval, timeFormat);
+    if (minTimeMinutes == null && maxTimeMinutes == null) return all;
+    return all.filter((slot) => {
+      const slotMinutes = slot.hour * 60 + slot.minute;
+      if (minTimeMinutes != null && slotMinutes < minTimeMinutes) return false;
+      if (maxTimeMinutes != null && slotMinutes >= maxTimeMinutes) return false;
+      return true;
+    });
+  }, [interval, timeFormat, minTimeMinutes, maxTimeMinutes]);
 
   // 비활성화된 시간 목록을 정규화 (hour, minute 형태로)
   const normalizedDisabledTimes = useMemo(() => {

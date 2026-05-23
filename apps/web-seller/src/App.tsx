@@ -11,11 +11,13 @@ import { ErrorBoundaryProvider } from "./common/components/providers/ErrorBounda
 import { QueryProvider } from "./common/components/providers/QueryProvider";
 import { LoadingFallback } from "./common/components/fallbacks/LoadingFallback";
 import { Alert } from "./common/components/alerts/Alert";
+import BuildInfoLogger from "./common/components/debug/BuildInfoLogger";
 
 const App: React.FC = () => {
   return (
     <ErrorBoundaryProvider>
       <QueryProvider>
+        <BuildInfoLogger />
         <Router>
           <Alert />
           <Suspense fallback={<LoadingFallback />}>

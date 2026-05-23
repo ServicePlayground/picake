@@ -5,6 +5,7 @@ import {
   CakeSizeOption,
   ProductType,
 } from "@/apps/web-user/features/product/types/product.type";
+import { useMypageProfile } from "@/apps/web-user/features/mypage/hooks/queries/useMypageProfile";
 
 interface UseReservationBottomSheetProps {
   isOpen: boolean;
@@ -78,6 +79,27 @@ export function useReservationBottomSheet({
   const [isDateChangeModalOpen, setIsDateChangeModalOpen] = useState(false);
   const [deleteTargetIndex, setDeleteTargetIndex] = useState<number | null>(null);
 
+  // ========================================
+  // 예약자 정보 (confirm 단계에서 입력 — 시트 열릴 때 사용자 정보로 1회 prefill)
+  // ========================================
+  const { data: profile } = useMypageProfile();
+  const [reserverName, setReserverName] = useState("");
+  const [reserverPhone, setReserverPhone] = useState("");
+  const hasPrefilledReserverRef = useRef(false);
+
+  // ========================================
+  // 필수 동의 상태 (confirm 단계)
+  // ========================================
+  const [agreePayment, setAgreePayment] = useState(false);
+  const [agreeRefund, setAgreeRefund] = useState(false);
+  const [agreeOptionChange, setAgreeOptionChange] = useState(false);
+  const allAgreed = agreePayment && agreeRefund && agreeOptionChange;
+  const handleToggleAllAgreements = (next: boolean) => {
+    setAgreePayment(next);
+    setAgreeRefund(next);
+    setAgreeOptionChange(next);
+  };
+
   // 파일 업로드 input ref
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -104,8 +126,23 @@ export function useReservationBottomSheet({
       setIsAddingFromConfirm(false);
       setIsEditingFromConfirm(false);
       setDateSelectionSignal(0);
+      setReserverName("");
+      setReserverPhone("");
+      hasPrefilledReserverRef.current = false;
+      setAgreePayment(false);
+      setAgreeRefund(false);
+      setAgreeOptionChange(false);
     }
   }, [isOpen]);
+
+  // 시트 열릴 때 사용자 정보로 예약자명/번호 1회 prefill
+  useEffect(() => {
+    if (isOpen && profile && !hasPrefilledReserverRef.current) {
+      setReserverName(profile.name ?? "");
+      setReserverPhone(profile.phone ?? "");
+      hasPrefilledReserverRef.current = true;
+    }
+  }, [isOpen, profile]);
 
   // 이미지 URL 정리
   useEffect(() => {
@@ -373,6 +410,22 @@ export function useReservationBottomSheet({
     setLetteringMessage,
     requestMessage,
     setRequestMessage,
+
+    // Reserver Info
+    reserverName,
+    setReserverName,
+    reserverPhone,
+    setReserverPhone,
+
+    // Agreements
+    agreePayment,
+    setAgreePayment,
+    agreeRefund,
+    setAgreeRefund,
+    agreeOptionChange,
+    setAgreeOptionChange,
+    allAgreed,
+    handleToggleAllAgreements,
 
     // Images
     attachedImages,

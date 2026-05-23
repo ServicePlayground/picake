@@ -60,6 +60,24 @@ export class JwtUtil {
   }
 
   /**
+   * TOTP 2단계 인증 대기 임시 토큰 (5분 유효)
+   */
+  async generateTotpPendingToken(payload: JwtPayload): Promise<string> {
+    return await this.jwtService.signAsync(
+      { ...payload, type: TOKEN_TYPES.TOTP_PENDING },
+      { expiresIn: "5m" },
+    );
+  }
+
+  /** 관리자 최초 Google OTP 등록용 임시 토큰(액세스·리프레시 없음) */
+  async generateTotpSetupPendingToken(payload: JwtPayload): Promise<string> {
+    return await this.jwtService.signAsync(
+      { ...payload, type: TOKEN_TYPES.TOTP_SETUP_PENDING },
+      { expiresIn: "30m" },
+    );
+  }
+
+  /**
    * 토큰을 검증하고 페이로드를 반환합니다.
    * @param token JWT 토큰
    * @returns 검증된 페이로드

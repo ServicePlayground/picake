@@ -10,13 +10,14 @@ import { AuthAccountFindService } from "@apps/backend/modules/auth/services/auth
 import { AuthMypagePhoneService } from "@apps/backend/modules/auth/services/auth-mypage-phone.service";
 import { AuthMypageProfileService } from "@apps/backend/modules/auth/services/auth-mypage-profile.service";
 import { AuthWithdrawService } from "@apps/backend/modules/auth/services/auth-withdraw.service";
+import { AuthAdminService } from "@apps/backend/modules/auth/services/auth-admin.service";
 import { JwtUtil } from "@apps/backend/modules/auth/utils/jwt.util";
 import { JwtStrategy } from "@apps/backend/modules/auth/strategies/jwt.strategy";
 import { AuthGuard } from "@apps/backend/modules/auth/guards/auth.guard";
 
 /**
  * 인증 모듈
- * 사용자 인증, JWT 토큰 관리, 휴대폰 인증, 구글 OAuth를 제공합니다.
+ * 사용자·판매자·관리자 인증, JWT, 휴대폰·OAuth 등을 제공합니다.
  */
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { AuthGuard } from "@apps/backend/modules/auth/guards/auth.guard";
     AuthPhoneService,
     AuthGoogleOauthService,
     AuthKakaoOauthService,
+    AuthAdminService,
     JwtUtil,
     JwtStrategy,
     AuthGuard,
@@ -49,6 +51,7 @@ import { AuthGuard } from "@apps/backend/modules/auth/guards/auth.guard";
     AuthMypageProfileService,
     AuthWithdrawService,
     AuthAccountFindService,
+    JwtUtil,
   ],
 })
 export class AuthModule {}

@@ -31,6 +31,8 @@ export function ReservationBottomSheet({
   pickupLongitude,
   imageUploadEnabled,
   letteringMaxLength,
+  businessCalendar,
+  refundCancellationPolicy,
   onClose,
 }: ReservationBottomSheetProps) {
   const { mutate: createOrder, isPending: isCreatingOrder } = useCreateOrder();
@@ -51,6 +53,18 @@ export function ReservationBottomSheet({
     setLetteringMessage,
     requestMessage,
     setRequestMessage,
+    reserverName,
+    setReserverName,
+    reserverPhone,
+    setReserverPhone,
+    agreePayment,
+    setAgreePayment,
+    agreeRefund,
+    setAgreeRefund,
+    agreeOptionChange,
+    setAgreeOptionChange,
+    allAgreed,
+    handleToggleAllAgreements,
     imageUrls,
     fileInputRef,
     orderItems,
@@ -213,6 +227,9 @@ export function ReservationBottomSheet({
                 totalQuantity,
                 totalPrice,
                 storeName,
+                // 예약자 연락처 (입력된 경우만 전달)
+                ...(reserverName.trim() && { reservationContactName: reserverName.trim() }),
+                ...(reserverPhone.trim() && { reservationPhone: reserverPhone.trim() }),
                 // 픽업 정보
                 pickupAddress,
                 pickupRoadAddress,
@@ -226,7 +243,13 @@ export function ReservationBottomSheet({
               // API 호출
               createOrder(orderRequest);
             }}
-            disabled={orderItems.length === 0 || isCreatingOrder}
+            disabled={
+              orderItems.length === 0 ||
+              !reserverName.trim() ||
+              !reserverPhone.trim() ||
+              !allAgreed ||
+              isCreatingOrder
+            }
           >
             {isCreatingOrder
               ? "처리 중..."
@@ -273,6 +296,7 @@ export function ReservationBottomSheet({
       setTempSelectedDate={setTempSelectedDate}
       tempSelectedTime={tempSelectedTime}
       setTempSelectedTime={setTempSelectedTime}
+      businessCalendar={businessCalendar}
     />
   );
 
@@ -288,12 +312,32 @@ export function ReservationBottomSheet({
       handleDeleteClick={handleDeleteClick}
       handleQuantityChange={handleQuantityChange}
       handleAddNewItem={handleAddNewItem}
+      reserverName={reserverName}
+      setReserverName={setReserverName}
+      reserverPhone={reserverPhone}
+      setReserverPhone={setReserverPhone}
+      agreePayment={agreePayment}
+      setAgreePayment={setAgreePayment}
+      agreeRefund={agreeRefund}
+      setAgreeRefund={setAgreeRefund}
+      agreeOptionChange={agreeOptionChange}
+      setAgreeOptionChange={setAgreeOptionChange}
+      allAgreed={allAgreed}
+      handleToggleAllAgreements={handleToggleAllAgreements}
+      refundCancellationPolicy={refundCancellationPolicy}
     />
   );
 
   return (
     <>
-      <BottomSheet isOpen={isOpen} onClose={handleClose} title={getTitle()} footer={renderFooter()}>
+      <BottomSheet
+        isOpen={isOpen}
+        onClose={handleClose}
+        title={getTitle()}
+        footer={renderFooter()}
+        fullScreen={view === "confirm"}
+        scrollResetKey={view}
+      >
         {view === "options" && renderOptionsView()}
         {view === "calendar" && renderCalendarView()}
         {view === "confirm" && renderConfirmView()}

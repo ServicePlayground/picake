@@ -7,6 +7,7 @@
 export const AUDIENCE = {
   CONSUMER: "consumer",
   SELLER: "seller",
+  ADMIN: "admin",
 } as const;
 export type AudienceConst = (typeof AUDIENCE)[keyof typeof AUDIENCE];
 
@@ -56,6 +57,8 @@ export interface GoogleRegisterRequestDto {
   googleEmail: string;
   name: string;
   phone: string;
+  agreedToTerms: boolean;
+  agreedToPrivacy: boolean;
 }
 
 export interface KakaoRegisterRequestDto {
@@ -63,6 +66,8 @@ export interface KakaoRegisterRequestDto {
   kakaoEmail: string;
   name: string;
   phone: string;
+  agreedToTerms: boolean;
+  agreedToPrivacy: boolean;
 }
 
 /** POST /v1/seller/auth/find-account */

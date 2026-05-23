@@ -5,6 +5,7 @@ import { BottomSheet } from "@/apps/web-user/common/components/bottom-sheets/Bot
 import { Button } from "@/apps/web-user/common/components/buttons/Button";
 import { ReservationCalendarView } from "@/apps/web-user/features/product/components/sections/reservation-bottom-sheet/ReservationCalendarView";
 import { useUpdateReservationPickupDate } from "@/apps/web-user/features/order/hooks/mutations/useUpdateReservationPickupDate";
+import type { StoreBusinessCalendar } from "@/apps/web-user/features/store/types/store.type";
 
 interface PickupDateChangeBottomSheetProps {
   isOpen: boolean;
@@ -13,6 +14,8 @@ interface PickupDateChangeBottomSheetProps {
   /** 현재 픽업 일시 (ISO 8601). 시트 오픈 시 초기 선택값으로 사용 */
   initialPickupDate: string;
   onSuccess: () => void;
+  /** 스토어 영업 캘린더 — 캘린더에서 휴무일 disable + 영업 시간만 노출 */
+  businessCalendar?: StoreBusinessCalendar;
 }
 
 export function PickupDateChangeBottomSheet({
@@ -21,6 +24,7 @@ export function PickupDateChangeBottomSheet({
   orderId,
   initialPickupDate,
   onSuccess,
+  businessCalendar,
 }: PickupDateChangeBottomSheetProps) {
   const { mutate, isPending } = useUpdateReservationPickupDate();
 
@@ -80,6 +84,7 @@ export function PickupDateChangeBottomSheet({
         setTempSelectedDate={setTempDate}
         tempSelectedTime={tempTime}
         setTempSelectedTime={setTempTime}
+        businessCalendar={businessCalendar}
       />
     </BottomSheet>
   );

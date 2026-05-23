@@ -22,6 +22,10 @@ export class ConsumerMapperUtil {
       createdAt: user.createdAt,
       lastLoginAt: lastLoginAt ?? user.lastLoginAt ?? new Date(),
       pushNotificationsEnabled,
+      agreedToTermsAt: user.agreedToTermsAt ?? null,
+      agreedToPrivacyAt: user.agreedToPrivacyAt ?? null,
+      agreedToThirdPartyAt: user.agreedToThirdPartyAt ?? null,
+      agreedToLocationTermsAt: user.agreedToLocationTermsAt ?? null,
     };
   }
 }

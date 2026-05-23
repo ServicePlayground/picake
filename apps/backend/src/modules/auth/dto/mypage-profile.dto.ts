@@ -127,6 +127,42 @@ export class ConsumerMypageProfileResponseDto extends MypageProfileBaseResponseD
     example: true,
   })
   pushNotificationsEnabled: boolean;
+
+  @ApiProperty({
+    description: "서비스 이용약관 동의 시각 (미동의 시 null)",
+    type: String,
+    format: "date-time",
+    nullable: true,
+    example: "2026-05-23T10:00:00.000Z",
+  })
+  agreedToTermsAt: Date | null;
+
+  @ApiProperty({
+    description: "개인정보 처리방침 동의 시각 (미동의 시 null)",
+    type: String,
+    format: "date-time",
+    nullable: true,
+    example: "2026-05-23T10:00:00.000Z",
+  })
+  agreedToPrivacyAt: Date | null;
+
+  @ApiProperty({
+    description: "개인정보 제3자 제공 동의 시각 (미동의 시 null)",
+    type: String,
+    format: "date-time",
+    nullable: true,
+    example: "2026-05-23T10:00:00.000Z",
+  })
+  agreedToThirdPartyAt: Date | null;
+
+  @ApiProperty({
+    description: "위치기반서비스 이용약관 동의 시각 (선택 동의 — 미동의 시 null)",
+    type: String,
+    format: "date-time",
+    nullable: true,
+    example: null,
+  })
+  agreedToLocationTermsAt: Date | null;
 }
 
 /**
@@ -139,4 +175,22 @@ export class SellerMypageProfileResponseDto extends MypageProfileBaseResponseDto
     description: "판매자 온보딩·사업자 검증 단계",
   })
   sellerVerificationStatus: SellerVerificationStatus;
+
+  @ApiProperty({
+    description: "서비스 이용약관 동의 시각 (미동의 시 null)",
+    type: String,
+    format: "date-time",
+    nullable: true,
+    example: "2026-05-23T10:00:00.000Z",
+  })
+  agreedToTermsAt: Date | null;
+
+  @ApiProperty({
+    description: "개인정보 처리방침 동의 시각 (미동의 시 null)",
+    type: String,
+    format: "date-time",
+    nullable: true,
+    example: "2026-05-23T10:00:00.000Z",
+  })
+  agreedToPrivacyAt: Date | null;
 }

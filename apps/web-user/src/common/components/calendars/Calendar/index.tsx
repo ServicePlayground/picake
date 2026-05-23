@@ -3,6 +3,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/apps/web-user/common/lib/utils";
+import type { StoreBusinessCalendar } from "@/apps/web-user/features/store/types/store.type";
+import { isStoreOpenOnSeoulCalendarDay } from "@/apps/web-user/features/store/utils/store-business-calendar.util";
 
 export interface CalendarProps {
   /**
@@ -29,6 +31,10 @@ export interface CalendarProps {
    * 초기 표시 월 (기본값: 현재 월)
    */
   initialMonth?: Date;
+  /**
+   * 영업 캘린더 — 정의되면 휴무일/요일이 자동으로 disable 처리됨
+   */
+  businessCalendar?: StoreBusinessCalendar;
 }
 
 const DAYS_OF_WEEK = ["일", "월", "화", "수", "목", "금", "토"];
@@ -40,6 +46,7 @@ export const Calendar: React.FC<CalendarProps> = ({
   maxDate,
   className,
   initialMonth = new Date(),
+  businessCalendar,
 }) => {
   const [currentMonth, setCurrentMonth] = useState(
     new Date(initialMonth.getFullYear(), initialMonth.getMonth(), 1),
@@ -90,6 +97,11 @@ export const Calendar: React.FC<CalendarProps> = ({
       const maxDateOnly = new Date(maxDate);
       maxDateOnly.setHours(0, 0, 0, 0);
       if (dateOnly > maxDateOnly) return true;
+    }
+
+    // 영업 캘린더 휴무일 체크 (정기휴무 + dayOverrides)
+    if (businessCalendar && !isStoreOpenOnSeoulCalendarDay(businessCalendar, dateOnly)) {
+      return true;
     }
 
     return false;

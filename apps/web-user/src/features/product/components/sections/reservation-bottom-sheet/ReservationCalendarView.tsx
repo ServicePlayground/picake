@@ -1,9 +1,12 @@
 "use client";
 
+import { useEffect, useMemo } from "react";
 import { Calendar } from "@/apps/web-user/common/components/calendars/Calendar";
 import { TimePicker } from "@/apps/web-user/common/components/timepickers/TimePicker";
 import { cn } from "@/apps/web-user/common/lib/utils";
 import type { MapPickupPeriodKind } from "@/apps/web-user/features/store/utils/map.util";
+import type { StoreBusinessCalendar } from "@/apps/web-user/features/store/types/store.type";
+import { getEffectiveSeoulDayOpenMinuteRange } from "@/apps/web-user/features/store/utils/store-business-calendar.util";
 
 interface ReservationCalendarViewProps {
   tempSelectedDate: Date | null;
@@ -14,6 +17,8 @@ interface ReservationCalendarViewProps {
   pickupPeriodMode?: boolean;
   selectedPickupPeriod?: MapPickupPeriodKind | null;
   onPickupPeriodChange?: (period: MapPickupPeriodKind) => void;
+  /** 스토어 영업 캘린더 — 정의되면 휴무일 disable + 시간 범위 제한 */
+  businessCalendar?: StoreBusinessCalendar;
 }
 
 const PERIOD_LABELS: Record<MapPickupPeriodKind, string> = {
@@ -35,13 +40,34 @@ export function ReservationCalendarView({
   pickupPeriodMode = false,
   selectedPickupPeriod,
   onPickupPeriodChange,
+  businessCalendar,
 }: ReservationCalendarViewProps) {
+  // 선택 날짜의 영업 분 범위 (open inclusive, close exclusive). 영업 캘린더 없으면 null
+  const timeRange = useMemo(() => {
+    if (!businessCalendar || !tempSelectedDate) return null;
+    return getEffectiveSeoulDayOpenMinuteRange(businessCalendar, tempSelectedDate);
+  }, [businessCalendar, tempSelectedDate]);
+
+  // 선택 시각이 새 영업 범위 밖이면 자동으로 비움
+  useEffect(() => {
+    if (!businessCalendar || !tempSelectedTime) return;
+    if (!timeRange) {
+      setTempSelectedTime(null);
+      return;
+    }
+    const m = tempSelectedTime.getHours() * 60 + tempSelectedTime.getMinutes();
+    if (m < timeRange.openMin || m >= timeRange.closeMin) {
+      setTempSelectedTime(null);
+    }
+  }, [businessCalendar, timeRange, tempSelectedTime, setTempSelectedTime]);
+
   return (
     <div className="px-[20px] py-[16px] flex flex-col gap-[48px]">
       <Calendar
         selectedDate={tempSelectedDate}
         onDateSelect={setTempSelectedDate}
         minDate={new Date()}
+        businessCalendar={businessCalendar}
         className="border-0 shadow-none p-0"
       />
       {pickupPeriodMode ? (
@@ -88,6 +114,8 @@ export function ReservationCalendarView({
             onTimeSelect={setTempSelectedTime}
             interval={30}
             timeFormat="12h"
+            minTimeMinutes={timeRange?.openMin}
+            maxTimeMinutes={timeRange?.closeMin}
           />
         </div>
       )}

@@ -22,9 +22,9 @@ import { LoggerUtil } from "@apps/backend/common/utils/logger.util";
  * 1. `Authorization: Bearer <token>` 에서 액세스 토큰 문자열 추출 (`jwtFromRequest`)
  * 2. `JWT_SECRET` 으로 서명 검증·만료 검사 (passport-jwt, `validate` 호출 전에 처리)
  * 3. `validate` 에서 `type === access`, `sub`·`aud` 존재 여부 확인
- * 4. `aud` 가 consumer/seller 인 경우 DB에서 해당 계정을 조회해 비활성 여부·`phone`·(seller면) 사업자 검증 상태 등 최신 값을 붙여 반환
+ * 4. `aud` 가 consumer/seller/admin 인 경우 DB에서 해당 계정을 조회해 비활성 여부·`phone`·(seller면) 사업자 검증 상태 등 최신 값을 붙여 반환
  *
- * 발급 페이로드는 {@link JwtUtil} 기준 `sub`, `aud`, `type`(access|refresh) 및 `iat`/`exp` 이다.
+ * 발급 페이로드는 {@link JwtUtil} 기준 `sub`, `aud`, `type`(access|refresh|totp_pending|totp_setup_pending) 및 `iat`/`exp` 이다.
  * 역할·권한을 JWT에 넣지 않고, 필요한 필드는 매 요청 DB 조회로 맞춘다.
  *
  * 실패 시 `UnauthorizedException`(메시지는 `AUTH_ERROR_MESSAGES` 참고).
@@ -71,15 +71,22 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
    */
   async validate(payload: JwtVerifiedPayload): Promise<AuthenticatedUser> {
     try {
-      // 액세스 토큰만 허용 (리프레시는 토큰 갱신 등 별도 플로우)
-      if (payload.type !== TOKEN_TYPES.ACCESS) {
-        LoggerUtil.log(`JWT 검증 실패: 잘못된 토큰 타입 - type: ${payload.type}`);
-        throw new UnauthorizedException(AUTH_ERROR_MESSAGES.ACCESS_TOKEN_WRONG_TYPE);
-      }
-
       if (!payload.sub || !payload.aud) {
         LoggerUtil.log(`JWT 검증 실패: 필수 필드 없음 - payload: ${JSON.stringify(payload)}`);
         throw new UnauthorizedException(AUTH_ERROR_MESSAGES.ACCESS_TOKEN_MISSING_REQUIRED_INFO);
+      }
+
+      if (payload.type === TOKEN_TYPES.TOTP_SETUP_PENDING) {
+        if (payload.aud !== AUDIENCE.ADMIN) {
+          LoggerUtil.log(`JWT 검증 실패: totp_setup_pending 은 admin 전용 - aud: ${payload.aud}`);
+          throw new UnauthorizedException(AUTH_ERROR_MESSAGES.ACCESS_TOKEN_WRONG_TYPE);
+        }
+        return await this.validateAdminTotpSetupPending(payload);
+      }
+
+      if (payload.type !== TOKEN_TYPES.ACCESS) {
+        LoggerUtil.log(`JWT 검증 실패: 잘못된 토큰 타입 - type: ${payload.type}`);
+        throw new UnauthorizedException(AUTH_ERROR_MESSAGES.ACCESS_TOKEN_WRONG_TYPE);
       }
 
       if (payload.aud === AUDIENCE.CONSUMER) {
@@ -87,6 +94,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       }
       if (payload.aud === AUDIENCE.SELLER) {
         return await this.validateSeller(payload);
+      }
+      if (payload.aud === AUDIENCE.ADMIN) {
+        return await this.validateAdmin(payload);
       }
 
       LoggerUtil.log(`JWT 검증 실패: 알 수 없는 aud - aud: ${payload.aud}`);
@@ -142,6 +152,63 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       phone: c.phone,
       loginType,
       loginId,
+    };
+  }
+
+  /** `aud === admin`: Admin 계정 존재·활성 여부 확인 */
+  private async validateAdmin(payload: JwtVerifiedPayload): Promise<AuthenticatedUser> {
+    const admin = await this.prisma.admin.findUnique({
+      where: { id: payload.sub },
+      select: { id: true, username: true, isActive: true },
+    });
+
+    if (!admin) {
+      LoggerUtil.log(`JWT 검증 실패: admin 없음 - id: ${payload.sub}`);
+      throw new UnauthorizedException(AUTH_ERROR_MESSAGES.ACCESS_TOKEN_ACCOUNT_NOT_FOUND);
+    }
+    if (!admin.isActive) {
+      throw new UnauthorizedException(AUTH_ERROR_MESSAGES.ACCESS_TOKEN_ACCOUNT_INACTIVE);
+    }
+
+    return {
+      ...payload,
+      aud: AUDIENCE.ADMIN,
+      id: admin.id,
+      username: admin.username,
+    };
+  }
+
+  /**
+   * 관리자 Google OTP **미등록** 상태에서만 유효 — 등록 완료 후에는 일반 로그인 필요
+   */
+  private async validateAdminTotpSetupPending(
+    payload: JwtVerifiedPayload,
+  ): Promise<AuthenticatedUser> {
+    const admin = await this.prisma.admin.findUnique({
+      where: { id: payload.sub },
+      select: { id: true, username: true, isActive: true, isTotpEnabled: true },
+    });
+
+    if (!admin) {
+      LoggerUtil.log(`JWT 검증 실패: admin 없음 - id: ${payload.sub}`);
+      throw new UnauthorizedException(AUTH_ERROR_MESSAGES.ACCESS_TOKEN_ACCOUNT_NOT_FOUND);
+    }
+    if (!admin.isActive) {
+      throw new UnauthorizedException(AUTH_ERROR_MESSAGES.ACCESS_TOKEN_ACCOUNT_INACTIVE);
+    }
+    if (admin.isTotpEnabled) {
+      LoggerUtil.log(
+        `JWT 검증 실패: totp_setup_pending 이지만 이미 OTP 활성화됨 - id: ${payload.sub}`,
+      );
+      throw new UnauthorizedException(AUTH_ERROR_MESSAGES.ACCESS_TOKEN_INVALID);
+    }
+
+    return {
+      ...payload,
+      type: TOKEN_TYPES.TOTP_SETUP_PENDING,
+      aud: AUDIENCE.ADMIN,
+      id: admin.id,
+      username: admin.username,
     };
   }
 

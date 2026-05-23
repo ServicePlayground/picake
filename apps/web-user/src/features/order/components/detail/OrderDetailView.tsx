@@ -18,9 +18,10 @@ import { NoticeSection } from "./NoticeSection";
 import { PaymentPendingCountdownHeader } from "./PaymentPendingCountdownHeader";
 import { PickupDateChangeBottomSheet } from "./PickupDateChangeBottomSheet";
 import { OptionChangeBottomSheet } from "./OptionChangeBottomSheet";
-import { Icon } from "@/apps/web-user/common/components/icons";
+import { InfoNotice } from "@/apps/web-user/common/components/notice/InfoNotice";
 import { Button } from "@/apps/web-user/common/components/buttons/Button";
 import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
+import { useStoreDetail } from "@/apps/web-user/features/store/hooks/queries/useStoreDetail";
 
 function getStatusNotice(status: OrderStatus): {
   message: string;
@@ -45,6 +46,8 @@ interface OrderDetailViewProps {
 }
 
 export function OrderDetailView({ order }: OrderDetailViewProps) {
+  // 픽업 날짜 변경 바텀시트의 캘린더 휴무일/영업시간 적용용
+  const { data: storeDetail } = useStoreDetail(order.storeId);
   const [isMapSheetOpen, setIsMapSheetOpen] = useState(false);
   const [isInquirySheetOpen, setIsInquirySheetOpen] = useState(false);
   const [isPickupDateSheetOpen, setIsPickupDateSheetOpen] = useState(false);
@@ -68,19 +71,7 @@ export function OrderDetailView({ order }: OrderDetailViewProps) {
         if (!notice) return null;
         return (
           <div className="px-5 py-4">
-            <div
-              className={`flex items-center gap-2 px-3 py-2.5 rounded-lg ${
-                notice.isRed ? "bg-red-50" : "bg-gray-50"
-              }`}
-            >
-              <Icon
-                name="warning"
-                width={16}
-                height={16}
-                className={notice.isRed ? "text-red-400" : "text-gray-400"}
-              />
-              <p className="text-xs text-gray-700">{notice.message}</p>
-            </div>
+            <InfoNotice tone={notice.isRed ? "red" : "gray"} message={notice.message} />
           </div>
         );
       })()}
@@ -111,7 +102,7 @@ export function OrderDetailView({ order }: OrderDetailViewProps) {
           order={order}
           onChangeOptions={(item) => setOptionEditTargetItem(item)}
         />
-        <NoticeSection />
+        <NoticeSection refundCancellationPolicy={order.storeRefundCancellationPolicy} />
 
         <NavigationBottomSheet
           isOpen={isMapSheetOpen}
@@ -125,6 +116,7 @@ export function OrderDetailView({ order }: OrderDetailViewProps) {
           onClose={() => setIsInquirySheetOpen(false)}
           kakaoChannelUrl={null}
           instagramUrl={null}
+          phoneNumber={storeDetail?.phoneNumber}
         />
         <PickupDateChangeBottomSheet
           isOpen={isPickupDateSheetOpen}
@@ -132,6 +124,7 @@ export function OrderDetailView({ order }: OrderDetailViewProps) {
           orderId={order.id}
           initialPickupDate={order.pickupDate}
           onSuccess={() => setShowPickupDateUpdatedToast(true)}
+          businessCalendar={storeDetail?.businessCalendar}
         />
         <OptionChangeBottomSheet
           isOpen={optionEditTargetItem !== null}

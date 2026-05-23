@@ -1,32 +1,39 @@
 import { OrderDetailSectionTitle } from "./OrderDetailSectionTitle";
+import {
+  formatRefundRulePeriodLabel,
+  type RefundCancellationPolicy,
+} from "@/apps/web-user/features/store/types/store.type";
 
-const REFUND_RULES = [
-  { period: "~ 픽업 3일 전", rule: "취소 시 전액 환불" },
-  { period: "픽업 2일 전", rule: "취소 시 50% 환불" },
-  { period: "픽업 1일 전", rule: "취소 불가 / 환불 불가" },
-  { period: "픽업 당일", rule: "취소 불가 / 환불 불가" },
-];
+interface NoticeSectionProps {
+  /** 판매자 환불·취소 규정. 없으면 안내 박스만 비워서 노출 */
+  refundCancellationPolicy?: RefundCancellationPolicy;
+}
 
-export function NoticeSection() {
+export function NoticeSection({ refundCancellationPolicy }: NoticeSectionProps) {
+  const refundRules = refundCancellationPolicy?.rules ?? [];
   return (
     <section className="px-5">
       <OrderDetailSectionTitle>안내 사항</OrderDetailSectionTitle>
       <div className="flex flex-col gap-5 mb-16 p-4 bg-gray-50 rounded-lg">
         <div>
           <h3 className="text-2sm font-bold text-gray-900 mb-2.5">환불/취소 규정</h3>
-          <div className="rounded-lg border border-gray-100 bg-white overflow-hidden">
-            {REFUND_RULES.map(({ period, rule }) => (
-              <div
-                key={period}
-                className="flex items-center text-2sm text-gray-900 border-b border-gray-100 last:border-b-0"
-              >
-                <span className="w-[110px] px-4 py-3 text-gray-500 border-r border-gray-100 shrink-0">
-                  {period}
-                </span>
-                <span className="px-4 py-3 text-gray-900">{rule}</span>
-              </div>
-            ))}
-          </div>
+          {refundRules.length === 0 ? (
+            <p className="text-2sm text-gray-500">등록된 환불/취소 규정이 없습니다.</p>
+          ) : (
+            <div className="rounded-lg border border-gray-100 bg-white overflow-hidden">
+              {refundRules.map(({ daysBeforePickup, refundDescription }, index) => (
+                <div
+                  key={`${daysBeforePickup}-${index}`}
+                  className="flex items-center text-2sm text-gray-900 border-b border-gray-100 last:border-b-0"
+                >
+                  <span className="w-[110px] px-4 py-3 text-gray-500 border-r border-gray-100 shrink-0">
+                    {formatRefundRulePeriodLabel(daysBeforePickup)}
+                  </span>
+                  <span className="px-4 py-3 text-gray-900">{refundDescription}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
         <div>
           <h3 className="text-2sm font-bold text-gray-900 mb-1">노쇼 정책</h3>

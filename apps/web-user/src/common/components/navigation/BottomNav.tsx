@@ -9,7 +9,7 @@ import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 const NAV_ITEMS = [
   { icon: "home", label: "홈", path: PATHS.HOME, ready: true },
   { icon: "map", label: "지도", path: PATHS.MAP, ready: true },
-  { icon: "favorite", label: "저장", path: PATHS.SAVED, ready: false },
+  { icon: "favorite", label: "저장", path: PATHS.SAVED, ready: true },
   { icon: "mypage", label: "MY", path: PATHS.MYPAGE, ready: true },
 ] as const;
 

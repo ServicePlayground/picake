@@ -5,12 +5,16 @@ import Link from "next/link";
 import { Icon } from "@/apps/web-user/common/components/icons";
 import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 import { BottomNav } from "@/apps/web-user/common/components/navigation/BottomNav";
-import { Modal } from "@/apps/web-user/common/components/modals/Modal";
+import { LinkListItem } from "@/apps/web-user/common/components/lists/LinkListItem";
 import { useMypageProfile } from "@/apps/web-user/features/mypage/hooks/queries/useMypageProfile";
 import { useAuthStore, useAuthHasHydrated } from "@/apps/web-user/common/store/auth.store";
 import { UpcomingOrderCard } from "../../features/order/components/UpcomingOrderCard";
 import { useMyOrders } from "@/apps/web-user/features/order/hooks/queries/useMyOrders";
 import { OrderStatus } from "@/apps/web-user/features/order/types/order.type";
+import { ProfileEditBottomSheet } from "@/apps/web-user/features/mypage/components/ProfileEditBottomSheet";
+import { useUpdateMypageProfile } from "@/apps/web-user/features/mypage/hooks/mutations/useUpdateMypageProfile";
+import { Toast } from "@/apps/web-user/common/components/toast/Toast";
+import { useLoginSheetStore } from "@/apps/web-user/common/store/login-sheet.store";
 
 function getLoginInfo(user: {
   googleId: string;
@@ -41,15 +45,18 @@ function getLoginInfo(user: {
 const QUICK_LINKS = [
   { icon: "reservation", label: "내 예약", href: PATHS.MY_ORDERS },
   { icon: "review", label: "내 후기", href: PATHS.MY_REVIEWS },
-  { icon: "saved", label: "저장", href: PATHS.SAVED },
+  { icon: "saved", label: "저장", href: PATHS.MY_SAVED },
   { icon: "recent", label: "최근 본", href: PATHS.RECENT },
 ] as const;
 
 export default function MypagePage() {
-  const { isAuthenticated, login } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
   const hasHydrated = useAuthHasHydrated();
   const { data: user } = useMypageProfile();
-  const [isAppGuideOpen, setIsAppGuideOpen] = useState(false);
+  const openLoginSheet = useLoginSheetStore((s) => s.openLoginSheet);
+  const [isProfileEditOpen, setIsProfileEditOpen] = useState(false);
+  const [showProfileUpdatedToast, setShowProfileUpdatedToast] = useState(false);
+  const { mutate: updateProfile, isPending: isUpdatingProfile } = useUpdateMypageProfile();
   const { data: ordersData } = useMyOrders({ type: "UPCOMING" });
   const upcomingCount =
     ordersData?.pages
@@ -71,9 +78,9 @@ export default function MypagePage() {
           <Link href={PATHS.ALARM} className="flex items-center justify-center">
             <Icon name="alarm" width={24} height={24} className="text-gray-900" />
           </Link>
-          <button type="button" className="flex items-center justify-center">
+          <Link href={PATHS.SETTING} className="flex items-center justify-center">
             <Icon name="setting" width={24} height={24} className="text-gray-900" />
-          </button>
+          </Link>
         </div>
       </header>
 
@@ -98,7 +105,7 @@ export default function MypagePage() {
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <Icon name="mypage" width={44} height={44} className="text-gray-400" />
+                <Icon name="mypage" width={44} height={44} className="text-gray-200" />
               )}
             </div>
 
@@ -111,6 +118,7 @@ export default function MypagePage() {
             </div>
             <button
               type="button"
+              onClick={() => setIsProfileEditOpen(true)}
               className="flex items-center justify-center h-[32px] w-[83px] text-xs font-bold text-gray-900 border border-gray-100 rounded-md"
             >
               프로필 수정
@@ -148,13 +156,7 @@ export default function MypagePage() {
           <p className="text-sm text-gray-700">더욱 편리한 이용을 위해</p>
           <button
             type="button"
-            onClick={() => {
-              if (process.env.NODE_ENV === "development") {
-                login(process.env.NEXT_PUBLIC_DEV_ACCESS_TOKEN ?? "");
-              } else {
-                setIsAppGuideOpen(true);
-              }
-            }}
+            onClick={openLoginSheet}
             className="py-[10px] px-5 text-sm font-bold text-white bg-primary rounded-lg"
           >
             로그인 / 회원가입
@@ -169,14 +171,7 @@ export default function MypagePage() {
           { label: "공지사항", href: PATHS.NOTICE },
           { label: "Q&A", href: PATHS.QNA },
         ].map(({ label, href }) => (
-          <Link
-            key={label}
-            href={href}
-            className="flex items-center justify-between px-5 py-4 border-b border-gray-100"
-          >
-            <span className="text-sm font-bold text-gray-900">{label}</span>
-            <Icon name="arrow" width={20} height={20} className="text-gray-900 rotate-90" />
-          </Link>
+          <LinkListItem key={label} href={href} label={label} />
         ))}
       </section>
 
@@ -184,31 +179,46 @@ export default function MypagePage() {
       <section className="mt-8 pb-[60px]">
         <p className="px-5 py-2 text-xs text-gray-500">기타</p>
         {[
-          { label: "서비스 이용약관", href: "/" },
-          { label: "위치정보 이용약관", href: "/" },
-          { label: "개인정보 처리방침", href: "/" },
-          { label: "버전정보", href: "/" },
+          { label: "서비스 이용약관", href: PATHS.LEGAL_TERMS_OF_SERVICE },
+          { label: "위치정보 이용약관", href: PATHS.LEGAL_LOCATION_TERMS },
+          { label: "개인정보 처리방침", href: PATHS.LEGAL_PRIVACY_POLICY },
+          { label: "개인정보 제3자 제공 동의", href: PATHS.LEGAL_THIRD_PARTY_CONSENT },
+          { label: "버전정보", href: PATHS.VERSION },
         ].map(({ label, href }) => (
-          <Link
-            key={label}
-            href={href}
-            className="flex items-center justify-between px-5 py-4 border-b border-gray-100"
-          >
-            <span className="text-sm font-bold text-gray-900">{label}</span>
-            <Icon name="arrow" width={20} height={20} className="text-gray-900 rotate-90" />
-          </Link>
+          <LinkListItem key={label} href={href} label={label} />
         ))}
       </section>
 
-      <Modal
-        isOpen={isAppGuideOpen}
-        onClose={() => setIsAppGuideOpen(false)}
-        title="앱을 설치해주세요!"
-        description="로그인은 Picake 앱에서만 가능합니다."
-        confirmText="확인"
-        onConfirm={() => setIsAppGuideOpen(false)}
-        hideCancel
+      <ProfileEditBottomSheet
+        isOpen={isProfileEditOpen}
+        onClose={() => setIsProfileEditOpen(false)}
+        initialNickname={user?.nickname ?? ""}
+        initialProfileImageUrl={user?.profileImageUrl}
+        isSubmitting={isUpdatingProfile}
+        onSubmit={({ nickname, profileImageUrl }) => {
+          updateProfile(
+            { nickname, profileImageUrl },
+            {
+              onSuccess: () => {
+                setIsProfileEditOpen(false);
+                setShowProfileUpdatedToast(true);
+              },
+            },
+          );
+        }}
       />
+
+      {showProfileUpdatedToast && (
+        <Toast
+          message="수정완료"
+          iconName="checkCircle"
+          iconClassName="text-green-400"
+          variant="column"
+          position="center"
+          duration={1000}
+          onClose={() => setShowProfileUpdatedToast(false)}
+        />
+      )}
 
       <BottomNav />
     </div>

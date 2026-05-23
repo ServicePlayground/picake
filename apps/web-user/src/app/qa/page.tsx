@@ -28,6 +28,7 @@ export default function QAPage() {
     "idle",
   );
   const [geocodeResponse, setGeocodeResponse] = useState<string | null>(null);
+  const [locationError, setLocationError] = useState<string | null>(null);
   const [googleAuthHref, setGoogleAuthHref] = useState<string | null>(null);
   const [kakaoAuthHref, setKakaoAuthHref] = useState<string | null>(null);
 
@@ -42,10 +43,19 @@ export default function QAPage() {
   const handleGetLocation = () => {
     if (!navigator.geolocation) {
       setLocationStatus("error");
+      setLocationError("navigator.geolocation 사용 불가 (브라우저 미지원)");
       return;
     }
     setLocationStatus("loading");
     setGeocodeResponse(null);
+    setLocationError(null);
+
+    const startedAt = Date.now();
+    const isSecure = typeof window !== "undefined" ? window.isSecureContext : false;
+    const protocol = typeof window !== "undefined" ? window.location.protocol : "?";
+    const host = typeof window !== "undefined" ? window.location.host : "?";
+    const ua = typeof navigator !== "undefined" ? navigator.userAgent : "?";
+
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         const { latitude, longitude } = position.coords;
@@ -65,7 +75,26 @@ export default function QAPage() {
         setLocationStatus("success");
       },
       (error) => {
-        console.error("위치 요청 실패:", error.message);
+        const elapsed = Date.now() - startedAt;
+        const codeName =
+          error.code === 1
+            ? "PERMISSION_DENIED"
+            : error.code === 2
+              ? "POSITION_UNAVAILABLE"
+              : error.code === 3
+                ? "TIMEOUT"
+                : "UNKNOWN";
+        const details = [
+          `code: ${error.code} (${codeName})`,
+          `message: ${error.message || "(empty)"}`,
+          `elapsed: ${elapsed}ms`,
+          `isSecureContext: ${isSecure}`,
+          `protocol: ${protocol}`,
+          `host: ${host}`,
+          `userAgent: ${ua}`,
+        ].join("\n");
+        console.error("위치 요청 실패:", details);
+        setLocationError(details);
         setLocationStatus("error");
       },
     );
@@ -129,9 +158,14 @@ export default function QAPage() {
               <span>{longitude ?? "-"}</span>
             </div>
             {locationStatus === "error" && (
-              <p className="text-red-400 text-xs mt-1">
-                위치 권한이 거부됐거나 오류가 발생했습니다.
-              </p>
+              <div className="mt-1">
+                <p className="text-red-400 text-xs">위치 권한이 거부됐거나 오류가 발생했습니다.</p>
+                {locationError && (
+                  <pre className="mt-2 bg-red-50 border border-red-200 rounded-xl p-3 text-[10px] text-red-700 overflow-x-auto whitespace-pre-wrap break-all">
+                    {locationError}
+                  </pre>
+                )}
+              </div>
             )}
             {geocodeResponse && (
               <div className="mt-3">
@@ -239,6 +273,29 @@ export default function QAPage() {
             ) : (
               uniqueStoreIds.map((storeId) => <StoreItem key={storeId} storeId={storeId} />)
             )}
+          </div>
+        </section>
+
+        {/* 배포·CI 버전 (클라이언트 번들에 박힌 NEXT_PUBLIC_* ) */}
+        <section className="bg-white rounded-2xl p-5 border border-gray-200">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="w-2 h-2 rounded-full bg-slate-400" />
+            <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider">버전 정보</h2>
+          </div>
+          <p className="text-xs text-gray-400 mb-4">
+            Vercel 빌드 시 주입됩니다. 로컬에서는 보통 비어 있습니다.
+          </p>
+
+          <div className="flex flex-col gap-5">
+            <div>
+              <p className="text-xs font-bold text-gray-700 mb-2">Vercel</p>
+              <div className="rounded-xl bg-gray-50 border border-gray-100 px-4 py-3 space-y-1">
+                <p className="text-[10px] font-mono text-gray-400">VERCEL_GIT_COMMIT_SHA</p>
+                <p className="text-xs font-mono text-gray-900 break-all leading-relaxed">
+                  {process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA?.trim() ?? "—"}
+                </p>
+              </div>
+            </div>
           </div>
         </section>
       </div>

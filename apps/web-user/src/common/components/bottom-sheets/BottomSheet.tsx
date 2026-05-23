@@ -16,6 +16,10 @@ interface BottomSheetProps {
   zIndexClassName?: string;
   /** Footer 영역 그림자 표시 여부 (기본값: true) */
   footerShadow?: boolean;
+  /** 화면을 가득 채우고 상단 radius 제거 (페이지처럼 노출) */
+  fullScreen?: boolean;
+  /** 이 값이 바뀔 때마다 콘텐츠 영역을 맨 위로 스크롤 */
+  scrollResetKey?: string | number;
 }
 
 export function BottomSheet({
@@ -27,8 +31,18 @@ export function BottomSheet({
   maxHeight = "80%",
   zIndexClassName,
   footerShadow = true,
+  fullScreen = false,
+  scrollResetKey,
 }: BottomSheetProps) {
   const sheetRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+
+  // scrollResetKey 변경 시 콘텐츠 스크롤을 맨 위로 리셋
+  useEffect(() => {
+    if (contentRef.current) {
+      contentRef.current.scrollTop = 0;
+    }
+  }, [scrollResetKey]);
 
   // 바깥 영역 클릭 시 닫기
   const handleBackdropClick = (e: React.MouseEvent) => {
@@ -74,12 +88,25 @@ export function BottomSheet({
     >
       <div
         ref={sheetRef}
-        className="fixed bottom-0 left-0 right-0 max-w-[638px] mx-auto bg-white rounded-t-3xl flex flex-col animate-slide-up"
-        style={{ maxHeight }}
+        className={clsx(
+          "fixed bottom-0 left-0 right-0 max-w-[638px] mx-auto bg-white flex flex-col animate-slide-up",
+          fullScreen ? "top-0" : "rounded-t-3xl",
+        )}
+        style={fullScreen ? undefined : { maxHeight }}
       >
         {/* Header */}
-        <div className="relative h-[64px] border-b border-gray-100">
-          <h2 className="flex items-center justify-center h-[64px] text-base font-bold text-center text-gray-900">
+        <div
+          className={clsx(
+            "relative",
+            fullScreen ? "h-[52px]" : "h-[64px] border-b border-gray-100",
+          )}
+        >
+          <h2
+            className={clsx(
+              "flex items-center justify-center text-base font-bold text-center text-gray-900",
+              fullScreen ? "h-[52px]" : "h-[64px]",
+            )}
+          >
             {title}
           </h2>
           <button
@@ -92,7 +119,9 @@ export function BottomSheet({
         </div>
 
         {/* Content - 스크롤 가능 영역 */}
-        <div className="flex-1 overflow-y-auto">{children}</div>
+        <div ref={contentRef} className="flex-1 overflow-y-auto">
+          {children}
+        </div>
 
         {/* Footer - 고정 영역 */}
         {footer && (

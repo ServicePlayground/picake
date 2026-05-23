@@ -13,8 +13,8 @@
     "db:migrate:status": "dotenv -e ./.env.development -- prisma migrate status --schema ./src/infra/database/prisma/schema.prisma",
     "db:migrate:deploy": "prisma migrate deploy --schema ./src/infra/database/prisma/schema.prisma",
     "db:migrate:deploy:status": "prisma migrate status --schema ./src/infra/database/prisma/schema.prisma",
-    "db:seed:dev": "dotenv -e ./.env.development -- ts-node -O '{\"module\":\"CommonJS\"}' src/infra/database/prisma/seed.ts",
-    "db:seed:staging": "dotenv -e ./.env.staging -- ts-node -O '{\"module\":\"CommonJS\"}' src/infra/database/prisma/seed.ts",
+    "db:seed:dev": "dotenv -e ./.env.development -- ts-node -r tsconfig-paths/register -O '{\"module\":\"CommonJS\"}' src/infra/database/prisma/seed.ts",
+    "db:seed:staging": "dotenv -e ./.env.staging -- ts-node -r tsconfig-paths/register -O '{\"module\":\"CommonJS\"}' src/infra/database/prisma/seed.ts",
     "db:studio:dev": "dotenv -e ./.env.development -- prisma studio --schema ./src/infra/database/prisma/schema.prisma"
   },
   "dependencies": {
@@ -43,7 +43,8 @@
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",
-    "socket.io": "^4.8.3"
+    "socket.io": "^4.8.3",
+    "speakeasy": "^2.0.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
@@ -55,6 +56,7 @@
     "@types/node": "^20.3.1",
     "@types/passport": "1.0.17",
     "@types/passport-jwt": "^4",
+    "@types/speakeasy": "^2.0.10",
     "dotenv-cli": "^7.4.1",
     "prisma": "6.16.3",
     "ts-node": "^10.9.2",

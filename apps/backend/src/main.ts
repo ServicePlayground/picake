@@ -10,9 +10,11 @@ import { AppModule } from "@apps/backend/app.module";
 import { API_PREFIX } from "@apps/backend/common/constants/app.constants";
 import { SellerApiModule } from "@apps/backend/apis/seller/seller-api.module";
 import { ConsumerApiModule } from "@apps/backend/apis/consumer/consumer-api.module";
+import { AdminApiModule } from "@apps/backend/apis/admin/admin-api.module";
 import {
   sellerSwaggerConfig,
   consumerSwaggerConfig,
+  adminSwaggerConfig,
 } from "@apps/backend/common/config/swagger.config";
 import { AUDIENCE } from "@apps/backend/modules/auth/constants/auth.constants";
 import { PrismaService } from "@apps/backend/infra/database/prisma.service";
@@ -174,6 +176,11 @@ async function bootstrap(): Promise<void> {
       include: [SellerApiModule],
     });
     SwaggerModule.setup(`${API_PREFIX}/docs/${AUDIENCE.SELLER}`, app, sellerDoc);
+
+    const adminDoc = SwaggerModule.createDocument(app, adminSwaggerConfig, {
+      include: [AdminApiModule],
+    });
+    SwaggerModule.setup(`${API_PREFIX}/docs/${AUDIENCE.ADMIN}`, app, adminDoc);
   }
 
   // 서버 시작

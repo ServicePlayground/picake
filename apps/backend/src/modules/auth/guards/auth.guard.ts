@@ -10,6 +10,7 @@ import { Reflector } from "@nestjs/core";
 import { AuthGuard as BaseAuthGuard } from "@nestjs/passport";
 import {
   AUTH_ERROR_MESSAGES,
+  TOKEN_TYPES,
   type AudienceConst,
 } from "@apps/backend/modules/auth/constants/auth.constants";
 import { LoggerUtil } from "@apps/backend/common/utils/logger.util";
@@ -20,6 +21,7 @@ export interface AuthMetadata {
   isPublic: boolean; // 인증 건너뛰기
   isOptionalPublic?: boolean; // 선택적 인증: 토큰이 있으면 검증하고, 없으면 통과
   audiences?: AudienceConst[];
+  jwtTypes?: readonly string[]; // 허용 JWT `type` 클레임. 생략 시 액세스 토큰(`access`)만 허용
 }
 
 /**
@@ -123,6 +125,17 @@ export class AuthGuard extends BaseAuthGuard("jwt") implements CanActivate {
           `인증 실패: aud 불일치 - userAud: ${user.aud}, required: ${authMetadata.audiences.join(",")}`,
         );
         throw new ForbiddenException(AUTH_ERROR_MESSAGES.AUDIENCE_NOT_AUTHORIZED);
+      }
+    }
+
+    if (authMetadata && !authMetadata.isPublic && !authMetadata.isOptionalPublic && user) {
+      const allowed = authMetadata.jwtTypes ?? [TOKEN_TYPES.ACCESS];
+      const t = user.type;
+      if (!t || !allowed.includes(t)) {
+        LoggerUtil.log(
+          `인증 실패: JWT type 불허 - type: ${String(t)}, allowed: ${allowed.join(",")}`,
+        );
+        throw new ForbiddenException(AUTH_ERROR_MESSAGES.JWT_TYPE_NOT_ALLOWED_FOR_ROUTE);
       }
     }
 

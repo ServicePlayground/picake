@@ -2,6 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { AuthPhoneService } from "@apps/backend/modules/auth/services/auth-phone.service";
 import { AuthGoogleOauthService } from "@apps/backend/modules/auth/services/auth-google-oauth.service";
 import { AuthKakaoOauthService } from "@apps/backend/modules/auth/services/auth-kakao-oauth.service";
+import { AuthAdminService } from "@apps/backend/modules/auth/services/auth-admin.service";
 import { AuthAccountFindService } from "@apps/backend/modules/auth/services/auth-account-find.service";
 import { FindAccountRequestDto } from "@apps/backend/modules/auth/dto/auth-find-account.dto";
 import {
@@ -16,6 +17,12 @@ import {
   SendVerificationCodeRequestDto,
   VerifyPhoneCodeRequestDto,
 } from "@apps/backend/modules/auth/dto/auth-phone-verification.dto";
+import {
+  AdminLoginRequestDto,
+  AdminRegisterRequestDto,
+  AdminTotpEnableRequestDto,
+  AdminTotpVerifyLoginRequestDto,
+} from "@apps/backend/modules/auth/dto/auth-admin.dto";
 import { JwtVerifiedPayload } from "@apps/backend/modules/auth/types/auth.types";
 import { AUDIENCE } from "@apps/backend/modules/auth/constants/auth.constants";
 
@@ -29,6 +36,7 @@ export class AuthService {
     private readonly authPhoneService: AuthPhoneService,
     private readonly authGoogleOauthService: AuthGoogleOauthService,
     private readonly authKakaoOauthService: AuthKakaoOauthService,
+    private readonly authAdminService: AuthAdminService,
   ) {}
 
   private getSessionAvailabilityResponse(): SessionAvailabilityResponse {
@@ -141,5 +149,47 @@ export class AuthService {
    */
   logout(): void {
     // 헤더 기반 인증에서는 클라이언트에서 토큰을 삭제하면 되므로 서버에서는 별도 처리 불필요
+  }
+
+  /**
+   * 관리자 회원가입 - ID·비밀번호
+   */
+  async adminRegister(dto: AdminRegisterRequestDto) {
+    return this.authAdminService.register(dto);
+  }
+
+  /**
+   * 관리자 로그인 — Google OTP 미등록이면 `totpSetupPendingToken`, 등록된 계정이면 `totpPendingToken` 후 `adminVerifyTotpLogin`으로 최종 토큰 발급
+   */
+  async adminLogin(dto: AdminLoginRequestDto) {
+    return this.authAdminService.login(dto);
+  }
+
+  /**
+   * 관리자 로그인 2단계 — TOTP 코드 검증 후 토큰 쌍 발급
+   */
+  async adminVerifyTotpLogin(dto: AdminTotpVerifyLoginRequestDto) {
+    return this.authAdminService.verifyTotpLogin(dto);
+  }
+
+  /**
+   * 관리자 Google OTP 설정 시작 - QR·secret
+   */
+  async adminSetupTotp(adminId: string) {
+    return this.authAdminService.setupTotp(adminId);
+  }
+
+  /**
+   * 관리자 Google OTP 활성화 - 코드 확인
+   */
+  async adminEnableTotp(adminId: string, dto: AdminTotpEnableRequestDto) {
+    return this.authAdminService.enableTotp(adminId, dto);
+  }
+
+  /**
+   * 관리자 액세스 토큰이 가드·전략을 통과했을 때의 확인 응답 - DB 조회 없음
+   */
+  getCurrentAdmin(user: JwtVerifiedPayload): SessionAvailabilityResponse {
+    return this.authAdminService.getSessionAvailability(user);
   }
 }

@@ -127,6 +127,8 @@ export interface Product {
   pickupZonecode: string;
   pickupLatitude: number;
   pickupLongitude: number;
+  /** 스토어가 설정한 환불·취소 규정 (Product 상세에 포함됨) */
+  storeRefundCancellationPolicy?: import("@/apps/web-user/features/store/types/store.type").RefundCancellationPolicy;
 }
 
 /**

@@ -27,7 +27,7 @@ export const MypageWithdrawSection: React.FC = () => {
   const handleWithdraw = async () => {
     if (!canSubmit) return;
     const ok = window.confirm(
-      "정말로 회원 탈퇴를 진행하시겠어요? 탈퇴 후에는 계정이 비활성화됩니다.",
+      "정말로 회원 탈퇴를 진행하시겠어요? 탈퇴 시 계정·스토어·상품 등 모든 정보가 삭제되며 복구할 수 없습니다.",
     );
     if (!ok) return;
 
@@ -42,7 +42,8 @@ export const MypageWithdrawSection: React.FC = () => {
       </CardHeader>
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">
-          탈퇴 사유를 남겨주시면 서비스 개선에 활용됩니다. 탈퇴 시 현재 계정은 비활성화됩니다.
+          탈퇴 사유를 남겨주시면 서비스 개선에 활용됩니다. 탈퇴 시 계정·스토어·상품 등 모든 정보가
+          삭제되며, 동일 OAuth·휴대폰으로 다시 가입할 수 있습니다.
         </p>
         <div className="space-y-2">
           <label className="text-sm font-medium" htmlFor="withdraw-reason">
@@ -68,7 +69,7 @@ export const MypageWithdrawSection: React.FC = () => {
             onChange={(e) => setAgreed(e.target.checked)}
             className="h-4 w-4"
           />
-          회원 탈퇴 시 계정이 비활성화되는 것에 동의합니다.
+          회원 탈퇴 시 계정 정보가 삭제되는 것에 동의합니다.
         </label>
 
         <div className="flex justify-end">
