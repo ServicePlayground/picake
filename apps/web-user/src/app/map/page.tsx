@@ -40,6 +40,7 @@ import {
   buildMapPlatformStoreStatusOverlayHtml,
   shouldUseDimPlatformMapMarker,
   buildMapPageUrl,
+  buildMapSearchUrlWithOptionalQuery,
   parseMapPickupFilterFromUrlSearchParams,
   MAP_PICKUP_URL_DATE_KEY,
   MAP_PICKUP_URL_PERIOD_KEY,
@@ -606,6 +607,7 @@ export default function MapPage() {
   useEffect(() => {
     if (!searchQuery) {
       searchStoresRef.current = null;
+      if (listSheetPanelOffsetRef.current > 0) closeListSheet();
       const map = mapInstanceRef.current;
       if (map) drawPlatformStoreMarkers();
       return;
@@ -657,7 +659,15 @@ export default function MapPage() {
     return () => {
       cancelled = true;
     };
-  }, [searchQuery, listFilter, pickupFilter, clearKakaoMarkers, drawPlatformStoreMarkers, openListSheet]);
+  }, [
+    searchQuery,
+    listFilter,
+    pickupFilter,
+    clearKakaoMarkers,
+    drawPlatformStoreMarkers,
+    openListSheet,
+    closeListSheet,
+  ]);
 
   // 검색 결과 0건 + 위치가 늦게 도착할 때 지도 중심만 이동 (목록 시트 높이는 유지)
   useEffect(() => {
@@ -762,6 +772,10 @@ export default function MapPage() {
         pickupFilter={pickupFilter}
         onCalendarClick={() => setPickupCalendarOpen(true)}
         onPickupClear={handlePickupClear}
+        onSearchBackClick={() =>
+          router.push(buildMapSearchUrlWithOptionalQuery(searchQuery, pickupFilter))
+        }
+        onSearchCloseClick={() => router.push(buildMapPageUrl(null, pickupFilter))}
       />
 
       <MapPickupDateBottomSheet

@@ -15,7 +15,12 @@ interface MapTopSearchBarProps {
   searchQuery: string | null;
   onCalendarClick?: () => void;
   pickupFilter?: MapPickupFilter | null;
+  /** 픽업 칩(비검색 모드) 초기화 */
   onPickupClear?: () => void;
+  /** 검색 결과 헤더 ← : 검색·픽업 유지한 채 검색 페이지로 */
+  onSearchBackClick?: () => void;
+  /** 검색 결과 헤더 X : 검색어 없이 지도(픽업은 유지) */
+  onSearchCloseClick?: () => void;
 }
 
 export function MapPickupFilterChip({
@@ -71,8 +76,18 @@ export function MapTopSearchBar({
   onCalendarClick,
   pickupFilter,
   onPickupClear,
+  onSearchBackClick,
+  onSearchCloseClick,
 }: MapTopSearchBarProps) {
   const router = useRouter();
+
+  const handleSearchBack = () => {
+    if (onSearchBackClick) {
+      onSearchBackClick();
+    } else {
+      router.back();
+    }
+  };
 
   const renderPickupSlot = () => {
     if (onCalendarClick == null) return null;
@@ -114,31 +129,40 @@ export function MapTopSearchBar({
         <div className="flex w-full min-w-0 items-center gap-2">
           <button
             type="button"
-            onClick={() => router.back()}
+            onClick={handleSearchBack}
             className="flex shrink-0 items-center justify-center p-0"
-            aria-label="뒤로 가기"
+            aria-label="검색 페이지로 돌아가기"
           >
             <Icon name="back" width={24} height={24} className="text-gray-900 block" />
           </button>
-          <span
-            className="min-w-0 flex-1 truncate text-left font-normal"
+          <button
+            type="button"
+            onClick={handleSearchBack}
+            className="min-w-0 flex-1 truncate border-0 bg-transparent p-0 text-left font-normal"
             style={{
               fontSize: 16,
               lineHeight: "140%",
               color: "var(--grayscale-gr-900, #1A1A1A)",
             }}
+            aria-label="검색어 수정"
           >
             {searchQuery}
-          </span>
+          </button>
           {/* 검색 페이지와 동일: X → 세로선 → 달력 또는 픽업 한 줄 (gap 12px) */}
           <div className="flex shrink-0 items-center gap-[12px]">
             <button
               type="button"
-              onClick={() =>
-                router.push(buildMapSearchUrlWithOptionalQuery(searchQuery, pickupFilter ?? null))
-              }
+              onClick={() => {
+                if (onSearchCloseClick) {
+                  onSearchCloseClick();
+                } else {
+                  router.push(
+                    buildMapSearchUrlWithOptionalQuery(searchQuery, pickupFilter ?? null),
+                  );
+                }
+              }}
               className="flex h-5 w-5 shrink-0 items-center justify-center p-0"
-              aria-label="검색어 입력으로 돌아가기"
+              aria-label="검색 초기화"
             >
               <Icon name="closeCircle" width={20} height={20} className="text-gray-300" />
             </button>
@@ -146,7 +170,7 @@ export function MapTopSearchBar({
             {pickupFilter != null ? (
               <button
                 type="button"
-                onClick={() => onPickupClear?.()}
+                onClick={() => onCalendarClick?.()}
                 className="max-w-[min(100%,200px)] shrink-0 truncate border-0 p-0 text-left"
                 style={{
                   borderRadius: 4,
@@ -157,7 +181,7 @@ export function MapTopSearchBar({
                   lineHeight: "140%",
                   color: "var(--primary-or-400, #FF653E)",
                 }}
-                aria-label="픽업 날짜 초기화"
+                aria-label="픽업 날짜 변경"
               >
                 {formatMapPickupFilterInline(pickupFilter)}
               </button>
