@@ -35,6 +35,25 @@ export function getMapLayoutViewportHeight(): number {
   return Math.round(Math.max(inner, visual));
 }
 
+/** 시트 오픈 직전 레이아웃 높이 — 여러 프레임 샘플 중 최대값 (웹뷰 검색 진입 등) */
+export function sampleMapLayoutViewportHeight(): Promise<number> {
+  if (typeof window === "undefined") return Promise.resolve(800);
+
+  return new Promise((resolve) => {
+    const heights: number[] = [];
+    const push = () => heights.push(getMapLayoutViewportHeight());
+
+    push();
+    requestAnimationFrame(() => {
+      push();
+      requestAnimationFrame(() => {
+        push();
+        resolve(Math.max(...heights, 400));
+      });
+    });
+  });
+}
+
 /** 지도 bounds 패딩(px) - 검색 결과 전체가 보이도록 할 때 */
 export const MAP_BOUNDS_PADDING = 80;
 

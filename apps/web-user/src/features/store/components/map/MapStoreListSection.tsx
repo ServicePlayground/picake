@@ -111,7 +111,7 @@ export function MapStoreListSection({
       {!hideSortFilter && (
         <div
           className="min-w-0 shrink-0 overflow-x-auto overflow-y-visible"
-          style={{ WebkitOverflowScrolling: "touch" }}
+          style={{ WebkitOverflowScrolling: "touch", touchAction: "pan-x" }}
         >
           {/* 패딩을 스크롤되는 쪽에 두어, 스크롤 끝에서도 오른쪽 20px가 보이도록 함 */}
           <div

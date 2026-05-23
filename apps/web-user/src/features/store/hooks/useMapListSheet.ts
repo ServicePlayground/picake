@@ -8,6 +8,7 @@ import {
   LIST_SHEET_OPEN_RATIO,
   LIST_SHEET_BOTTOM_NAV_HEIGHT,
   getMapLayoutViewportHeight,
+  sampleMapLayoutViewportHeight,
 } from "@/apps/web-user/features/store/constants/map.constant";
 
 /** 스냅 단계: 없음(0) / 중간 / 꽉채우기 */
@@ -31,6 +32,19 @@ function nearestAmong(current: number, candidates: number[]): number {
     }
   }
   return best;
+}
+
+/** 레이아웃 높이가 커졌을 때 기존 오프셋을 새 스냅 단계에 맞게 보정 */
+function remapOffsetForLayoutHeightChange(
+  currentOffset: number,
+  prevLayoutHeight: number,
+  nextLayoutHeight: number,
+): number {
+  const prev = getSnapPoints(prevLayoutHeight);
+  const next = getSnapPoints(nextLayoutHeight);
+  if (currentOffset >= prev.full - 1) return next.full;
+  if (currentOffset >= prev.middle - 1) return next.middle;
+  return nearestAmong(currentOffset, [0, next.middle, next.full]);
 }
 
 /** 드래그 시작 시 스냅 단계(오프셋 값) + 손 뗐을 때 위치로 스냅할 값 결정 */
@@ -71,36 +85,72 @@ export function useMapListSheet(getStoresForList: () => StoreInfo[]) {
   const listSheetSnapAtPointerDownRef = useRef(0);
   const listSheetPanelMaxOffsetRef = useRef(400);
   const listSheetPanelOffsetRef = useRef(0);
-  /** 시트가 열려 있는 동안 스냅 계산에 쓰는 고정 레이아웃 높이 (웹뷰 높이 변동 방지) */
+  /** 시트가 열려 있는 동안 스냅 계산에 쓰는 레이아웃 높이 */
   const listSheetLayoutHeightRef = useRef<number | null>(null);
 
-  const ensureListSheetLayoutHeight = useCallback(() => {
-    if (listSheetLayoutHeightRef.current == null) {
-      listSheetLayoutHeightRef.current = getMapLayoutViewportHeight();
+  const applyLayoutHeight = useCallback((layoutHeight: number, preferOffset?: number) => {
+    const prevHeight = listSheetLayoutHeightRef.current;
+    const current = listSheetPanelOffsetRef.current;
+    const { middle, full } = getSnapPoints(layoutHeight);
+
+    listSheetLayoutHeightRef.current = layoutHeight;
+    listSheetPanelMaxOffsetRef.current = full;
+
+    let target = preferOffset ?? middle;
+    if (preferOffset === undefined) {
+      if (current <= 0) {
+        target = middle;
+      } else if (prevHeight != null && prevHeight < layoutHeight - 2) {
+        target = remapOffsetForLayoutHeightChange(current, prevHeight, layoutHeight);
+      } else {
+        target = current;
+      }
     }
-    return listSheetLayoutHeightRef.current;
+
+    if (Math.abs(current - target) < 1) return;
+    listSheetPanelOffsetRef.current = target;
+    setListSheetPanelOffset(target);
+  }, []);
+
+  /** 뷰포트가 커졌으면 캐시·스냅 갱신 (검색 직후 30% → 45% 보정) */
+  const refreshLayoutHeightIfGrown = useCallback(() => {
+    const measured = getMapLayoutViewportHeight();
+    const prev = listSheetLayoutHeightRef.current;
+    if (prev == null) {
+      listSheetLayoutHeightRef.current = measured;
+      listSheetPanelMaxOffsetRef.current = getSnapPoints(measured).full;
+      return measured;
+    }
+    if (measured <= prev + 2) return prev;
+
+    const current = listSheetPanelOffsetRef.current;
+    const nextOffset = remapOffsetForLayoutHeightChange(current, prev, measured);
+    listSheetLayoutHeightRef.current = measured;
+    listSheetPanelMaxOffsetRef.current = getSnapPoints(measured).full;
+    if (Math.abs(current - nextOffset) >= 1) {
+      listSheetPanelOffsetRef.current = nextOffset;
+      setListSheetPanelOffset(nextOffset);
+    }
+    return measured;
   }, []);
 
   const getListSheetMaxOffset = useCallback(() => {
-    return getSnapPoints(ensureListSheetLayoutHeight()).full;
-  }, [ensureListSheetLayoutHeight]);
+    const h = listSheetLayoutHeightRef.current ?? getMapLayoutViewportHeight();
+    return getSnapPoints(h).full;
+  }, []);
 
   const getListSheetMiddleOffset = useCallback(() => {
-    return getSnapPoints(ensureListSheetLayoutHeight()).middle;
-  }, [ensureListSheetLayoutHeight]);
+    const h = listSheetLayoutHeightRef.current ?? getMapLayoutViewportHeight();
+    return getSnapPoints(h).middle;
+  }, []);
 
   const commitOpenListSheet = useCallback(() => {
     const stores = getStoresForList();
     setListSheetStores(stores);
-    const layoutHeight = ensureListSheetLayoutHeight();
-    const { middle, full } = getSnapPoints(layoutHeight);
-    listSheetPanelMaxOffsetRef.current = full;
-    if (Math.abs(listSheetPanelOffsetRef.current - middle) < 1) {
-      return;
-    }
-    listSheetPanelOffsetRef.current = middle;
-    setListSheetPanelOffset(middle);
-  }, [getStoresForList, ensureListSheetLayoutHeight]);
+    void sampleMapLayoutViewportHeight().then((layoutHeight) => {
+      applyLayoutHeight(layoutHeight);
+    });
+  }, [getStoresForList, applyLayoutHeight]);
 
   const openListSheet = useCallback(
     (options?: OpenListSheetOptions) => {
@@ -121,25 +171,20 @@ export function useMapListSheet(getStoresForList: () => StoreInfo[]) {
 
   const handlePointerDown = useCallback(
     (clientY: number) => {
-      ensureListSheetLayoutHeight();
-      listSheetPanelMaxOffsetRef.current = getListSheetMaxOffset();
+      const layoutHeight = refreshLayoutHeightIfGrown();
+      const { middle, full } = getSnapPoints(layoutHeight);
+      listSheetPanelMaxOffsetRef.current = full;
       listSheetDragStartYRef.current = clientY;
       listSheetDragStartOffsetRef.current = listSheetPanelOffset;
       listSheetSnapAtPointerDownRef.current = nearestAmong(listSheetPanelOffset, [
         0,
-        getListSheetMiddleOffset(),
-        getListSheetMaxOffset(),
+        middle,
+        full,
       ]);
       setIsListSheetPanelDragging(true);
       setListSheetStores(getStoresForList());
     },
-    [
-      ensureListSheetLayoutHeight,
-      getListSheetMaxOffset,
-      getListSheetMiddleOffset,
-      listSheetPanelOffset,
-      getStoresForList,
-    ],
+    [refreshLayoutHeightIfGrown, listSheetPanelOffset, getStoresForList],
   );
 
   const handlePointerMove = useCallback((clientY: number) => {
@@ -156,17 +201,36 @@ export function useMapListSheet(getStoresForList: () => StoreInfo[]) {
   const handlePointerUp = useCallback(() => {
     listSheetDragStartYRef.current = null;
     setIsListSheetPanelDragging(false);
-    const layoutHeight = ensureListSheetLayoutHeight();
+    refreshLayoutHeightIfGrown();
+    const layoutHeight = listSheetLayoutHeightRef.current ?? getMapLayoutViewportHeight();
     const current = listSheetPanelOffsetRef.current;
     const snapAtDown = listSheetSnapAtPointerDownRef.current;
     const snapped = resolveSnap(current, snapAtDown, layoutHeight);
     listSheetPanelOffsetRef.current = snapped;
     setListSheetPanelOffset(snapped);
-  }, [ensureListSheetLayoutHeight]);
+  }, [refreshLayoutHeightIfGrown]);
 
   useEffect(() => {
     listSheetPanelOffsetRef.current = listSheetPanelOffset;
   }, [listSheetPanelOffset]);
+
+  /** 시트가 열린 뒤 주소창·웹뷰 chrome이 사라지며 높이가 커질 때 스냅 재보정 */
+  useEffect(() => {
+    if (listSheetPanelOffset <= 0) return;
+
+    const sync = () => refreshLayoutHeightIfGrown();
+    sync();
+    const t = window.setTimeout(sync, 120);
+
+    window.visualViewport?.addEventListener("resize", sync);
+    window.addEventListener("resize", sync);
+
+    return () => {
+      window.clearTimeout(t);
+      window.visualViewport?.removeEventListener("resize", sync);
+      window.removeEventListener("resize", sync);
+    };
+  }, [listSheetPanelOffset, refreshLayoutHeightIfGrown]);
 
   return {
     listSheetStores,
