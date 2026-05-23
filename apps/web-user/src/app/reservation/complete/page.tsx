@@ -9,6 +9,7 @@ import { OrderStatus } from "@/apps/web-user/features/order/types/order.type";
 import { Icon } from "@/apps/web-user/common/components/icons";
 import { useOrderDetail } from "@/apps/web-user/features/order/hooks/queries/useOrderDetail";
 import { useProductDetail } from "@/apps/web-user/features/product/hooks/queries/useProductDetail";
+import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 
 const formatDateTime = (dateString: string | null) => {
   if (!dateString) return "";
@@ -218,7 +219,7 @@ export default function ReservationCompletePage() {
           </div>
           <div className="fixed bottom-0 left-0 right-0 px-[20px] py-[12px] max-w-[638px] mx-auto bg-white">
             <div className="flex gap-[8px]">
-              <Link href={`/store/${orderData.storeId}`} className="flex-1">
+              <Link href={PATHS.ORDER.DETAIL(orderData.id)} className="flex-1">
                 <Button variant="outline">예약 상세보기</Button>
               </Link>
               <Link href="/" className="flex-1">

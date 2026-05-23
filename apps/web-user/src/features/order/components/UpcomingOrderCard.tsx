@@ -125,15 +125,45 @@ export function UpcomingOrderCard() {
       <Swiper
         slidesPerView="auto"
         spaceBetween={10}
-        slidesOffsetAfter={hasMore ? 120 : 20}
+        slidesOffsetAfter={20}
         className="!overflow-visible"
         onAfterInit={handleSwiperInit}
         onTouchEnd={(swiper) => {
           if (!hasMore || hasNavigated.current) return;
-          if (swiper.isEnd && swiper.touches.diff < -80) {
-            hasNavigated.current = true;
+          // 손가락 이동 거리가 아니라, 콘텐츠가 끝 위치 너머로 실제로 밀린 거리(overscroll) 기준
+          const overshoot = swiper.maxTranslate() - swiper.translate;
+          if (!(swiper.isEnd && overshoot > 80)) return;
+          hasNavigated.current = true;
+
+          const wrapper = swiper.wrapperEl;
+          if (!wrapper) {
             router.push("/mypage/order");
+            return;
           }
+          swiper.allowTouchMove = false;
+          // maxTranslate()는 "모두보기" 영역까지 스크롤된 끝 위치 →
+          // 마지막 카드가 정렬되는 위치(slidesGrid 마지막 값)로 복귀시킴
+          const lastIndex = swiper.slides.length - 1;
+          const rest =
+            lastIndex >= 0 && swiper.slidesGrid[lastIndex] != null
+              ? -swiper.slidesGrid[lastIndex]
+              : swiper.maxTranslate();
+
+          // swiper 기본 스냅 대신, 당겨진 위치에서 spring으로 튕겨 마지막 카드로 복귀 후 이동
+          setTimeout(() => {
+            const transformStr = getComputedStyle(wrapper).transform;
+            const currentX =
+              transformStr && transformStr !== "none"
+                ? new DOMMatrixReadOnly(transformStr).m41
+                : rest - 14;
+            // 현재(당겨진) 위치에 고정 후 reflow → spring 이징으로 제자리 복귀
+            wrapper.style.transition = "none";
+            wrapper.style.transform = `translate3d(${currentX}px, 0, 0)`;
+            void wrapper.offsetWidth;
+            wrapper.style.transition = "transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)";
+            wrapper.style.transform = `translate3d(${rest}px, 0, 0)`;
+            setTimeout(() => router.push("/mypage/order"), 600);
+          }, 0);
         }}
       >
         {visibleOrders.map((order, index) => (

@@ -116,6 +116,7 @@ export function OrderDetailView({ order }: OrderDetailViewProps) {
           onClose={() => setIsInquirySheetOpen(false)}
           kakaoChannelUrl={null}
           instagramUrl={null}
+          phoneNumber={storeDetail?.phoneNumber}
         />
         <PickupDateChangeBottomSheet
           isOpen={isPickupDateSheetOpen}
