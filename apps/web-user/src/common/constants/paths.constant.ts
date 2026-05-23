@@ -56,6 +56,7 @@ export const PATHS = {
   LEGAL_PRIVACY_POLICY: "/mypage/legal/privacy-policy",
   LEGAL_LOCATION_TERMS: "/mypage/legal/location-terms",
   LEGAL_THIRD_PARTY_CONSENT: "/mypage/legal/third-party-consent",
+  VERSION: "/mypage/version",
 
   // 알람 페이지
   ALARM: "/alarm",

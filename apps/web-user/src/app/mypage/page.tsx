@@ -183,7 +183,7 @@ export default function MypagePage() {
           { label: "위치정보 이용약관", href: PATHS.LEGAL_LOCATION_TERMS },
           { label: "개인정보 처리방침", href: PATHS.LEGAL_PRIVACY_POLICY },
           { label: "개인정보 제3자 제공 동의", href: PATHS.LEGAL_THIRD_PARTY_CONSENT },
-          { label: "버전정보", href: "/" },
+          { label: "버전정보", href: PATHS.VERSION },
         ].map(({ label, href }) => (
           <LinkListItem key={label} href={href} label={label} />
         ))}
