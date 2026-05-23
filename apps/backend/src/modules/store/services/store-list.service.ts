@@ -29,6 +29,7 @@ import { StoreOwnershipUtil } from "@apps/backend/modules/store/utils/store-owne
 import { LoggerUtil } from "@apps/backend/common/utils/logger.util";
 import { PRODUCT_ERROR_MESSAGES } from "@apps/backend/modules/product/constants/product.constants";
 import { storeRowMatchesMapPickupFilter } from "@apps/backend/modules/store/utils/store-business-calendar.util";
+import { buildStoreKeywordSearchWhere } from "@apps/backend/modules/product/utils/product-search.util";
 
 /**
  * 스토어 목록 조회 서비스
@@ -367,8 +368,7 @@ export class StoreListService {
     const conditions: Prisma.StoreWhereInput[] = [];
 
     if (params.search?.trim()) {
-      const keyword = params.search.trim();
-      conditions.push({ name: { contains: keyword, mode: "insensitive" } });
+      conditions.push(buildStoreKeywordSearchWhere(params.search));
     }
 
     const parsedRegions = parseRegionsParam(params.regions);

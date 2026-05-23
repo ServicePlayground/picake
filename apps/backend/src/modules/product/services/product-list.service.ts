@@ -20,6 +20,10 @@ import {
   parseRegionsParam,
   buildStoreWhereInputForRegions,
 } from "@apps/backend/modules/store/utils/region-filter.util";
+import {
+  buildProductKeywordOrConditions,
+  buildProductKeywordSearchSqlCondition,
+} from "@apps/backend/modules/product/utils/product-search.util";
 
 @Injectable()
 export class ProductListService {
@@ -94,10 +98,7 @@ export class ProductListService {
     }
 
     if (params.search) {
-      const keyword = params.search.trim();
-      conditions.push(
-        Prisma.sql`(p.name ILIKE ${`%${keyword}%`} OR ${keyword} = ANY(p.search_tags))`,
-      );
+      conditions.push(buildProductKeywordSearchSqlCondition(params.search));
     }
 
     if (params.minPrice !== undefined) {
@@ -224,13 +225,7 @@ export class ProductListService {
     productType?: ProductType,
     productCategoryTypes?: ProductCategoryType[],
   ): void {
-    const searchConditions: Prisma.ProductWhereInput[] = [];
-    if (search) {
-      searchConditions.push(
-        { name: { contains: search, mode: Prisma.QueryMode.insensitive } }, // 상품명에서 검색 (대소문자 구분 없음)
-        { searchTags: { has: search } }, // 검색 태그에서 검색 (정확히 일치)
-      );
-    }
+    const searchConditions = search ? buildProductKeywordOrConditions(search) : [];
 
     if (minPrice !== undefined || maxPrice !== undefined) {
       where.salePrice = {};

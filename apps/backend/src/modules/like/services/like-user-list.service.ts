@@ -11,6 +11,7 @@ import {
 import { Prisma } from "@apps/backend/infra/database/prisma/generated/client";
 import { calculatePaginationMeta } from "@apps/backend/common/utils/pagination.util";
 import { ProductMapperUtil } from "@apps/backend/modules/product/utils/product-mapper.util";
+import { buildProductKeywordOrConditions } from "@apps/backend/modules/product/utils/product-search.util";
 import { StoreMapperUtil } from "@apps/backend/modules/store/utils/store-mapper.util";
 import { ProductResponseDto } from "@apps/backend/modules/product/dto/product-detail.dto";
 import { StoreResponseDto } from "@apps/backend/modules/store/dto/store-detail.dto";
@@ -344,13 +345,7 @@ export class LikeUserListService {
     productType?: ProductType,
     productCategoryTypes?: ProductCategoryType[],
   ): void {
-    const searchConditions: Prisma.ProductWhereInput[] = [];
-    if (search) {
-      searchConditions.push(
-        { name: { contains: search, mode: Prisma.QueryMode.insensitive } },
-        { searchTags: { has: search } },
-      );
-    }
+    const searchConditions = search ? buildProductKeywordOrConditions(search) : [];
 
     if (minPrice !== undefined || maxPrice !== undefined) {
       where.salePrice = {};
