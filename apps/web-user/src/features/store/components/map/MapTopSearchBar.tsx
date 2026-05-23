@@ -25,9 +25,11 @@ interface MapTopSearchBarProps {
 
 export function MapPickupFilterChip({
   filter,
+  onCalendarClick,
   onClear,
 }: {
   filter: MapPickupFilter;
+  onCalendarClick: () => void;
   onClear: () => void;
 }) {
   const { dateLine, periodLine } = formatMapPickupFilterForSearchBar(filter);
@@ -49,9 +51,9 @@ export function MapPickupFilterChip({
     >
       <button
         type="button"
-        onClick={onClear}
+        onClick={onCalendarClick}
         className="flex min-h-0 min-w-0 flex-1 flex-col items-start justify-center gap-0 p-0 text-left"
-        aria-label={`픽업 ${dateLine} ${periodLine} 필터 초기화`}
+        aria-label={`픽업 ${dateLine} ${periodLine} 날짜 변경`}
       >
         <span className={labelClass}>{dateLine}</span>
         <span className={labelClass}>{periodLine}</span>
@@ -92,7 +94,13 @@ export function MapTopSearchBar({
   const renderPickupSlot = () => {
     if (onCalendarClick == null) return null;
     if (pickupFilter != null) {
-      return <MapPickupFilterChip filter={pickupFilter} onClear={onPickupClear ?? (() => {})} />;
+      return (
+        <MapPickupFilterChip
+          filter={pickupFilter}
+          onCalendarClick={onCalendarClick}
+          onClear={onPickupClear ?? (() => {})}
+        />
+      );
     }
     return (
       <button
