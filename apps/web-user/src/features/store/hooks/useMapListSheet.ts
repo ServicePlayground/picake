@@ -11,6 +11,8 @@ import {
   sampleMapLayoutViewportHeight,
 } from "@/apps/web-user/features/store/constants/map.constant";
 
+type SnapStage = "closed" | "middle" | "full";
+
 /** 스냅 단계: 없음(0) / 중간 / 꽉채우기 */
 function getSnapPoints(layoutHeight: number) {
   const middle = Math.round(layoutHeight * LIST_SHEET_OPEN_RATIO - LIST_SHEET_HANDLE_HEIGHT);
@@ -34,6 +36,17 @@ function nearestAmong(current: number, candidates: number[]): number {
   return best;
 }
 
+/** 오프셋이 어느 스냅 단계에 해당하는지 (레이아웃 높이 변경 시에도 단계 비교용) */
+function getSnapStage(offset: number, layoutHeight: number): SnapStage {
+  const { middle, full } = getSnapPoints(layoutHeight);
+  if (offset >= full - 2) return "full";
+  if (offset >= middle - 2) return "middle";
+  return "closed";
+}
+
+/** full에서 아래로 조금만 내려도 middle로 스냅 (full에 재스냅되는 2단계 방지) */
+const FULL_TO_LOWER_MIN_DRAG_PX = 16;
+
 /** 레이아웃 높이가 커졌을 때 기존 오프셋을 새 스냅 단계에 맞게 보정 */
 function remapOffsetForLayoutHeightChange(
   currentOffset: number,
@@ -47,19 +60,21 @@ function remapOffsetForLayoutHeightChange(
   return nearestAmong(currentOffset, [0, next.middle, next.full]);
 }
 
-/** 드래그 시작 시 스냅 단계(오프셋 값) + 손 뗐을 때 위치로 스냅할 값 결정 */
-function resolveSnap(current: number, snapAtPointerDown: number, layoutHeight: number): number {
+/** 드래그 시작 시 스냅 단계 + 손 뗐을 때 위치로 스냅할 값 결정 */
+function resolveSnap(current: number, stageAtDown: SnapStage, layoutHeight: number): number {
   const { closed, middle, full } = getSnapPoints(layoutHeight);
-  if (snapAtPointerDown === full && current < full) {
-    return nearestAmong(current, [closed, middle]);
+
+  if (stageAtDown === "full" && current < full - FULL_TO_LOWER_MIN_DRAG_PX) {
+    if (current < middle * 0.35) return closed;
+    return middle;
   }
-  if (snapAtPointerDown === closed && current > closed) {
+  if (stageAtDown === "closed" && current > closed) {
     return nearestAmong(current, [middle, full]);
   }
-  if (snapAtPointerDown === middle && current < middle) {
+  if (stageAtDown === "middle" && current < middle) {
     return closed;
   }
-  if (snapAtPointerDown === middle && current > middle) {
+  if (stageAtDown === "middle" && current > middle) {
     return full;
   }
   return nearestAmong(current, [closed, middle, full]);
@@ -82,7 +97,7 @@ export function useMapListSheet(getStoresForList: () => StoreInfo[]) {
 
   const listSheetDragStartYRef = useRef<number | null>(null);
   const listSheetDragStartOffsetRef = useRef(0);
-  const listSheetSnapAtPointerDownRef = useRef(0);
+  const listSheetSnapStageAtPointerDownRef = useRef<SnapStage>("closed");
   const listSheetPanelMaxOffsetRef = useRef(400);
   const listSheetPanelOffsetRef = useRef(0);
   /** 시트가 열려 있는 동안 스냅 계산에 쓰는 레이아웃 높이 */
@@ -172,15 +187,14 @@ export function useMapListSheet(getStoresForList: () => StoreInfo[]) {
   const handlePointerDown = useCallback(
     (clientY: number) => {
       const layoutHeight = refreshLayoutHeightIfGrown();
-      const { middle, full } = getSnapPoints(layoutHeight);
+      const { full } = getSnapPoints(layoutHeight);
       listSheetPanelMaxOffsetRef.current = full;
       listSheetDragStartYRef.current = clientY;
       listSheetDragStartOffsetRef.current = listSheetPanelOffset;
-      listSheetSnapAtPointerDownRef.current = nearestAmong(listSheetPanelOffset, [
-        0,
-        middle,
-        full,
-      ]);
+      listSheetSnapStageAtPointerDownRef.current = getSnapStage(
+        listSheetPanelOffset,
+        layoutHeight,
+      );
       setIsListSheetPanelDragging(true);
       setListSheetStores(getStoresForList());
     },
@@ -204,8 +218,8 @@ export function useMapListSheet(getStoresForList: () => StoreInfo[]) {
     refreshLayoutHeightIfGrown();
     const layoutHeight = listSheetLayoutHeightRef.current ?? getMapLayoutViewportHeight();
     const current = listSheetPanelOffsetRef.current;
-    const snapAtDown = listSheetSnapAtPointerDownRef.current;
-    const snapped = resolveSnap(current, snapAtDown, layoutHeight);
+    const stageAtDown = listSheetSnapStageAtPointerDownRef.current;
+    const snapped = resolveSnap(current, stageAtDown, layoutHeight);
     listSheetPanelOffsetRef.current = snapped;
     setListSheetPanelOffset(snapped);
   }, [refreshLayoutHeightIfGrown]);
