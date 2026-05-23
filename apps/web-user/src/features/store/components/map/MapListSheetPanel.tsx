@@ -67,6 +67,22 @@ export function MapListSheetPanel({
     return el.scrollHeight > el.clientHeight + 1;
   }, []);
 
+  const beginSheetDragFromContent = useCallback(
+    (
+      el: HTMLDivElement,
+      gesture: { mode: ContentGestureMode; startY: number },
+      clientY: number,
+      preventDefault?: () => void,
+    ) => {
+      gesture.mode = "sheet";
+      el.style.touchAction = "none";
+      preventDefault?.();
+      sheetPointerDown(gesture.startY);
+      sheetPointerMove(clientY);
+    },
+    [sheetPointerDown, sheetPointerMove],
+  );
+
   useEffect(() => {
     if (!disableContentGestures) return;
     const g = contentGestureRef.current;
@@ -103,44 +119,51 @@ export function MapListSheetPanel({
       const el = scrollRef.current;
       if (!g || !el) return;
 
+      const clientY = e.touches[0].clientY;
+
       if (g.mode === "sheet") {
         e.preventDefault();
-        sheetPointerMove(e.touches[0].clientY);
-        return;
-      }
-      if (g.mode === "scroll") return;
-
-      const st = el.scrollTop;
-      if (st > 0) {
-        g.mode = "scroll";
-        return;
-      }
-
-      const clientY = e.touches[0].clientY;
-      const dy = clientY - g.startY;
-      if (Math.abs(dy) < CONTENT_SHEET_DRAG_THRESHOLD) return;
-
-      if (dy < 0) {
-        g.mode = "sheet";
-        el.style.touchAction = "none";
-        e.preventDefault();
-        sheetPointerDown(g.startY);
         sheetPointerMove(clientY);
         return;
       }
 
-      if (canScrollListVertically(el)) {
+      if (g.mode === "scroll") {
+        const dy = clientY - g.startY;
+        if (el.scrollTop <= 0 && dy > CONTENT_SHEET_DRAG_THRESHOLD) {
+          beginSheetDragFromContent(el, g, clientY, () => e.preventDefault());
+        }
+        return;
+      }
+
+      if (el.scrollTop > 0) {
         g.mode = "scroll";
         return;
       }
 
-      g.mode = "sheet";
-      el.style.touchAction = "none";
-      e.preventDefault();
-      sheetPointerDown(g.startY);
-      sheetPointerMove(clientY);
+      const dy = clientY - g.startY;
+      if (Math.abs(dy) < CONTENT_SHEET_DRAG_THRESHOLD) return;
+
+      // 맨 위에서 아래로 당기면 항상 시트 접기 (목록 스크롤 여부와 무관)
+      if (dy > 0) {
+        beginSheetDragFromContent(el, g, clientY, () => e.preventDefault());
+        return;
+      }
+
+      // 맨 위에서 위로: 시트가 꽉 찬 뒤에만 목록 스크롤, 그 전에는 시트 펼치기
+      if (expandedToTop && canScrollListVertically(el)) {
+        g.mode = "scroll";
+        return;
+      }
+
+      beginSheetDragFromContent(el, g, clientY, () => e.preventDefault());
     },
-    [canScrollListVertically, disableContentGestures, sheetPointerDown, sheetPointerMove],
+    [
+      beginSheetDragFromContent,
+      canScrollListVertically,
+      disableContentGestures,
+      expandedToTop,
+      sheetPointerMove,
+    ],
   );
 
   const onContentTouchEnd = useCallback(
@@ -183,10 +206,19 @@ export function MapListSheetPanel({
           sheetPointerMove(moveEvent.clientY);
           return;
         }
-        if (mode === "scroll") return;
 
-        const st = el.scrollTop;
-        if (st > 0) {
+        if (mode === "scroll") {
+          const dy = moveEvent.clientY - startY;
+          if (el.scrollTop <= 0 && dy > CONTENT_SHEET_DRAG_THRESHOLD) {
+            mode = "sheet";
+            el.style.touchAction = "none";
+            sheetPointerDown(startY);
+            sheetPointerMove(moveEvent.clientY);
+          }
+          return;
+        }
+
+        if (el.scrollTop > 0) {
           mode = "scroll";
           return;
         }
@@ -194,7 +226,7 @@ export function MapListSheetPanel({
         const dy = moveEvent.clientY - startY;
         if (Math.abs(dy) < CONTENT_SHEET_DRAG_THRESHOLD) return;
 
-        if (dy < 0) {
+        if (dy > 0) {
           mode = "sheet";
           el.style.touchAction = "none";
           sheetPointerDown(startY);
@@ -202,7 +234,7 @@ export function MapListSheetPanel({
           return;
         }
 
-        if (canScrollListVertically(el)) {
+        if (expandedToTop && canScrollListVertically(el)) {
           mode = "scroll";
           return;
         }
@@ -216,7 +248,14 @@ export function MapListSheetPanel({
       window.addEventListener("mousemove", onMove);
       window.addEventListener("mouseup", onUp);
     },
-    [canScrollListVertically, disableContentGestures, sheetPointerDown, sheetPointerMove, sheetPointerUp],
+    [
+      canScrollListVertically,
+      disableContentGestures,
+      expandedToTop,
+      sheetPointerDown,
+      sheetPointerMove,
+      sheetPointerUp,
+    ],
   );
 
   return (
