@@ -27,6 +27,7 @@ import {
   MAP_BOUNDS_PADDING,
   KAKAO_PLACES_KEYWORD,
   MAP_MARKER_LABEL_TEXT_SHADOW,
+  MAP_SELECTED_STORE_CARD_BOTTOM,
 } from "@/apps/web-user/features/store/constants/map.constant";
 import {
   escapeHtmlForOverlay,
@@ -270,6 +271,7 @@ export default function MapPage() {
           isCenteringFromClickRef.current = true;
           map.panTo(position);
         }
+        if (listSheetPanelOffsetRef.current > 0) closeListSheet();
         setSelectedStore(store);
       });
 
@@ -287,7 +289,7 @@ export default function MapPage() {
       });
       platformOverlaysRef.current.push(overlay);
     });
-  }, [getStoresToShow, pickupFilter]);
+  }, [getStoresToShow, pickupFilter, closeListSheet]);
 
   const drawPlatformStoreMarkersRef = useRef(drawPlatformStoreMarkers);
   drawPlatformStoreMarkersRef.current = drawPlatformStoreMarkers;
@@ -824,38 +826,43 @@ export default function MapPage() {
       </button>
 
       {selectedStore && (
-        <div className="absolute z-30" style={{ left: 16, right: 16, bottom: 120 }}>
+        <div
+          className="absolute z-30"
+          style={{ left: 16, right: 16, bottom: MAP_SELECTED_STORE_CARD_BOTTOM }}
+        >
           <MapStoreCard store={selectedStore} />
         </div>
       )}
 
-      <MapListSheetPanel
-        offset={listSheetPanelOffset}
-        expandedToTop={
-          listSheetPanelOffset > 0 && listSheetPanelOffset >= getListSheetMaxOffset() - 1
-        }
-        isDragging={isListSheetPanelDragging}
-        onTouchStart={handleListSheetTouchStart}
-        onTouchMove={handleListSheetTouchMove}
-        onTouchEnd={handleListSheetTouchEnd}
-        onMouseDown={handleListSheetMouseDown}
-        sheetPointerDown={listSheetHandlePointerDown}
-        sheetPointerMove={listSheetHandlePointerMove}
-        sheetPointerUp={listSheetHandlePointerUp}
-      >
-        {listSheetPanelOffset > 0 && (
-          <MapStoreListSection
-            stores={listSheetStores}
-            hideHandle
-            hideSortFilter={false}
-            userLocation={userLocation}
-            sortBy={listSortBy}
-            onSortByChange={setListSortBy}
-            listFilter={listFilter}
-            onListFilterChange={setListFilter}
-          />
-        )}
-      </MapListSheetPanel>
+      {!selectedStore && (
+        <MapListSheetPanel
+          offset={listSheetPanelOffset}
+          expandedToTop={
+            listSheetPanelOffset > 0 && listSheetPanelOffset >= getListSheetMaxOffset() - 1
+          }
+          isDragging={isListSheetPanelDragging}
+          onTouchStart={handleListSheetTouchStart}
+          onTouchMove={handleListSheetTouchMove}
+          onTouchEnd={handleListSheetTouchEnd}
+          onMouseDown={handleListSheetMouseDown}
+          sheetPointerDown={listSheetHandlePointerDown}
+          sheetPointerMove={listSheetHandlePointerMove}
+          sheetPointerUp={listSheetHandlePointerUp}
+        >
+          {listSheetPanelOffset > 0 && (
+            <MapStoreListSection
+              stores={listSheetStores}
+              hideHandle
+              hideSortFilter={false}
+              userLocation={userLocation}
+              sortBy={listSortBy}
+              onSortByChange={setListSortBy}
+              listFilter={listFilter}
+              onListFilterChange={setListFilter}
+            />
+          )}
+        </MapListSheetPanel>
+      )}
 
       <BottomNav />
     </div>
