@@ -23,6 +23,18 @@ export const MAP_SELECTED_STORE_CARD_BOTTOM =
 /** 목록 패널 중간단계: 화면 높이 대비 비율 (0.45 = 45vh) */
 export const LIST_SHEET_OPEN_RATIO = 0.45;
 
+/**
+ * 목록 시트 스냅 높이 계산용 레이아웃 높이(px).
+ * 웹뷰·모바일에서 innerHeight가 일시적으로 작게 잡히는 경우를 줄이기 위해
+ * visualViewport와 innerHeight 중 큰 값을 사용합니다.
+ */
+export function getMapLayoutViewportHeight(): number {
+  if (typeof window === "undefined") return 800;
+  const inner = window.innerHeight;
+  const visual = window.visualViewport?.height ?? 0;
+  return Math.round(Math.max(inner, visual));
+}
+
 /** 지도 bounds 패딩(px) - 검색 결과 전체가 보이도록 할 때 */
 export const MAP_BOUNDS_PADDING = 80;
 

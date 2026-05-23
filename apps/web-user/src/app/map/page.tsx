@@ -147,12 +147,9 @@ export default function MapPage() {
     listSheetStores,
     setListSheetStores,
     listSheetPanelOffset,
-    setListSheetPanelOffset,
     isListSheetPanelDragging,
     listSheetPanelOffsetRef,
-    listSheetPanelMaxOffsetRef,
     getListSheetMaxOffset,
-    getListSheetMiddleOffset,
     openListSheet,
     closeListSheet,
     handlePointerDown: listSheetHandlePointerDown,
@@ -497,11 +494,7 @@ export default function MapPage() {
                 : new window.kakao.maps.LatLng(DEFAULT_MAP_CENTER.lat, DEFAULT_MAP_CENTER.lng);
             map.setCenter(center);
           }
-          setListSheetStores(getStoresForListRef.current());
-          const middleOff = getListSheetMiddleOffset();
-          listSheetPanelMaxOffsetRef.current = getListSheetMaxOffset();
-          listSheetPanelOffsetRef.current = middleOff;
-          setListSheetPanelOffset(middleOff);
+          openListSheet({ deferInWebView: true });
         }
       });
     },
@@ -511,10 +504,7 @@ export default function MapPage() {
       updateUserLocationMarker,
       userLocation,
       closeListSheet,
-      getListSheetMaxOffset,
-      getListSheetMiddleOffset,
-      setListSheetStores,
-      setListSheetPanelOffset,
+      openListSheet,
     ],
   );
 
@@ -651,17 +641,15 @@ export default function MapPage() {
           );
           map.setBounds(bounds, MAP_BOUNDS_PADDING);
         } else {
-          // 검색 결과 0개: 지도 중심만 현재위치 또는 강남구로
-          const center = userLocation
-            ? new window.kakao.maps.LatLng(userLocation.latitude, userLocation.longitude)
-            : new window.kakao.maps.LatLng(DEFAULT_MAP_CENTER.lat, DEFAULT_MAP_CENTER.lng);
+          // 검색 결과 0개: 지도 중심만 현재위치 또는 강남구로 (위치는 ref로 최신값 사용)
+          const loc = userLocationRef.current;
+          const center =
+            loc != null
+              ? new window.kakao.maps.LatLng(loc.latitude, loc.longitude)
+              : new window.kakao.maps.LatLng(DEFAULT_MAP_CENTER.lat, DEFAULT_MAP_CENTER.lng);
           map.setCenter(center);
         }
-        setListSheetStores(getStoresForList());
-        const middleOff = getListSheetMiddleOffset();
-        listSheetPanelMaxOffsetRef.current = getListSheetMaxOffset();
-        listSheetPanelOffsetRef.current = middleOff;
-        setListSheetPanelOffset(middleOff);
+        openListSheet({ deferInWebView: true });
       } catch {
         searchStoresRef.current = null;
       }
@@ -669,19 +657,17 @@ export default function MapPage() {
     return () => {
       cancelled = true;
     };
-  }, [
-    searchQuery,
-    listFilter,
-    pickupFilter,
-    userLocation,
-    clearKakaoMarkers,
-    drawPlatformStoreMarkers,
-    getListSheetMaxOffset,
-    getListSheetMiddleOffset,
-    getStoresForList,
-    setListSheetStores,
-    setListSheetPanelOffset,
-  ]);
+  }, [searchQuery, listFilter, pickupFilter, clearKakaoMarkers, drawPlatformStoreMarkers, openListSheet]);
+
+  // 검색 결과 0건 + 위치가 늦게 도착할 때 지도 중심만 이동 (목록 시트 높이는 유지)
+  useEffect(() => {
+    if (!searchQuery || !userLocation) return;
+    const stores = searchStoresRef.current;
+    if (stores === null || stores.length > 0) return;
+    const map = mapInstanceRef.current;
+    if (!map || !window.kakao?.maps) return;
+    map.setCenter(new window.kakao.maps.LatLng(userLocation.latitude, userLocation.longitude));
+  }, [searchQuery, userLocation]);
 
   useEffect(() => {
     if (!mapInstanceRef.current) return;
@@ -798,7 +784,7 @@ export default function MapPage() {
 
       <button
         type="button"
-        onClick={openListSheet}
+        onClick={() => openListSheet()}
         className="absolute left-1/2 -translate-x-1/2 z-10 flex items-center justify-center bg-white"
         style={{
           bottom: 110,
