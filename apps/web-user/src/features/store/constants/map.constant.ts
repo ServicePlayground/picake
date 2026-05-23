@@ -31,8 +31,22 @@ export const LIST_SHEET_OPEN_RATIO = 0.45;
 export function getMapLayoutViewportHeight(): number {
   if (typeof window === "undefined") return 800;
   const inner = window.innerHeight;
-  const visual = window.visualViewport?.height ?? 0;
-  return Math.round(Math.max(inner, visual));
+  const client = document.documentElement.clientHeight;
+  const vv = window.visualViewport;
+  const visual = vv?.height ?? 0;
+  /** iOS 웹뷰: offsetTop 포함 시 실제 가시 영역에 가깝다 */
+  const visualWithChrome = vv && visual > 0 ? Math.round(visual + vv.offsetTop) : 0;
+  return Math.round(Math.max(inner, visual, visualWithChrome, client));
+}
+
+/** 드래그 직전 등 짧은 구간에서 여러 번 읽어 최대값 사용 (웹뷰 뷰포트 지연 보정) */
+export function measureMapLayoutViewportHeightSync(): number {
+  if (typeof window === "undefined") return 800;
+  let max = 400;
+  for (let i = 0; i < 4; i += 1) {
+    max = Math.max(max, getMapLayoutViewportHeight());
+  }
+  return max;
 }
 
 /** 시트 오픈 직전 레이아웃 높이 — 여러 프레임 샘플 중 최대값 (웹뷰 검색 진입 등) */
