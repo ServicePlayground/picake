@@ -1,18 +1,16 @@
 {
   "permissions": {
     "allow": [
-      "Bash(yarn install:*)",
-      "Bash(yarn add:*)",
-      "Bash(yarn remove:*)",
-      "Bash(yarn dlx:*)",
-      "Bash(npx shadcn@latest add:*)",
-      "Bash(curl:*)",
-      "Bash(yarn web-user:storybook:*)",
-      "Bash(lsof:*)",
-      "Bash(yarn info:*)",
-      "Bash(node:*)"
-    ],
-    "deny": [],
-    "ask": []
+      "Bash(node -e \"const { TOTP, generateSecret } = require\\('/Users/geunu/Desktop/workspace/스위트오더/@01/sweet-order/node_modules/otplib'\\); const secret = generateSecret\\(\\); const totp = new TOTP\\(\\); console.log\\('secret:', secret\\); console.log\\('token:', totp.generate\\(secret\\)\\); console.log\\('uri:', totp.keyuri\\('admin01', 'Picake Admin', secret\\)\\);\")",
+      "Bash(yarn workspace *)",
+      "Bash(yarn install *)",
+      "Bash(npx tsc *)",
+      "Bash(timeout 15 yarn dev)",
+      "Bash(yarn dev *)",
+      "Bash(curl -s http://localhost:3003)",
+      "Bash(kill %1)",
+      "Bash(find /Users/geenu/Desktop/workspace/스위트오더/@01/sweet-order/apps/backend/src -path \"*upload*\" -name \"*.ts\" | head -15)",
+      "Bash(mkdir -p /Users/geunu/Desktop/workspace/스위트오더/@01/sweet-order/docs/legal)"
+    ]
   }
 }
