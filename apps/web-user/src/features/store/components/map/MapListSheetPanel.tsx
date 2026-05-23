@@ -1,7 +1,16 @@
 "use client";
 
-import { ReactNode, useCallback, useRef } from "react";
-import { LIST_SHEET_HANDLE_HEIGHT } from "@/apps/web-user/features/store/constants/map.constant";
+import { ReactNode, useCallback, useEffect, useRef } from "react";
+import {
+  LIST_SHEET_HANDLE_HEIGHT,
+  MAP_STORE_LIST_FILTER_MODAL_ID,
+} from "@/apps/web-user/features/store/constants/map.constant";
+
+function isInsideMapListFilterModal(target: EventTarget | null): boolean {
+  if (typeof document === "undefined" || !(target instanceof Node)) return false;
+  const modal = document.getElementById(MAP_STORE_LIST_FILTER_MODAL_ID);
+  return modal?.contains(target) ?? false;
+}
 
 /** 목록 영역에서 시트 드래그로 인식하기 전 최소 이동(px) */
 const CONTENT_SHEET_DRAG_THRESHOLD = 8;
@@ -11,6 +20,8 @@ interface MapListSheetPanelProps {
   offset: number;
   /** true면 최상단까지 펼친 상태(상단 모서리 직각) */
   expandedToTop?: boolean;
+  /** 필터 모달이 열려 있을 때 목록 영역 드래그·스크롤 제스처 비활성화 */
+  disableContentGestures?: boolean;
   isDragging: boolean;
   onTouchStart: (e: React.TouchEvent) => void;
   onTouchMove: (e: React.TouchEvent) => void;
@@ -28,6 +39,7 @@ type ContentGestureMode = "undecided" | "sheet" | "scroll";
 export function MapListSheetPanel({
   offset,
   expandedToTop = false,
+  disableContentGestures = false,
   isDragging,
   onTouchStart,
   onTouchMove,
@@ -55,24 +67,38 @@ export function MapListSheetPanel({
     return el.scrollHeight > el.clientHeight + 1;
   }, []);
 
-  /** 목록 영역 터치: 스크롤 가능하면 스크롤, 맨 위·짧은 목록이면 시트와 동일하게 드래그 */
-  const onContentTouchStart = useCallback((e: React.TouchEvent) => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const startScrollTop = el.scrollTop;
-    if (startScrollTop > 0) {
-      contentGestureRef.current = { mode: "scroll", startY: e.touches[0].clientY, startScrollTop };
-      return;
+  useEffect(() => {
+    if (!disableContentGestures) return;
+    const g = contentGestureRef.current;
+    if (g?.mode === "sheet") {
+      sheetPointerUp();
     }
-    contentGestureRef.current = {
-      mode: "undecided",
-      startY: e.touches[0].clientY,
-      startScrollTop: 0,
-    };
-  }, []);
+    resetContentGesture();
+  }, [disableContentGestures, resetContentGesture, sheetPointerUp]);
+
+  /** 목록 영역 터치: 스크롤 가능하면 스크롤, 맨 위·짧은 목록이면 시트와 동일하게 드래그 */
+  const onContentTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      if (disableContentGestures || isInsideMapListFilterModal(e.target)) return;
+      const el = scrollRef.current;
+      if (!el) return;
+      const startScrollTop = el.scrollTop;
+      if (startScrollTop > 0) {
+        contentGestureRef.current = { mode: "scroll", startY: e.touches[0].clientY, startScrollTop };
+        return;
+      }
+      contentGestureRef.current = {
+        mode: "undecided",
+        startY: e.touches[0].clientY,
+        startScrollTop: 0,
+      };
+    },
+    [disableContentGestures],
+  );
 
   const onContentTouchMove = useCallback(
     (e: React.TouchEvent) => {
+      if (disableContentGestures || isInsideMapListFilterModal(e.target)) return;
       const g = contentGestureRef.current;
       const el = scrollRef.current;
       if (!g || !el) return;
@@ -114,11 +140,12 @@ export function MapListSheetPanel({
       sheetPointerDown(g.startY);
       sheetPointerMove(clientY);
     },
-    [canScrollListVertically, sheetPointerDown, sheetPointerMove],
+    [canScrollListVertically, disableContentGestures, sheetPointerDown, sheetPointerMove],
   );
 
   const onContentTouchEnd = useCallback(
     (e: React.TouchEvent) => {
+      if (disableContentGestures || isInsideMapListFilterModal(e.target)) return;
       const g = contentGestureRef.current;
       if (g?.mode === "sheet") {
         e.preventDefault();
@@ -126,11 +153,12 @@ export function MapListSheetPanel({
       }
       resetContentGesture();
     },
-    [resetContentGesture, sheetPointerUp],
+    [disableContentGestures, resetContentGesture, sheetPointerUp],
   );
 
   const onContentMouseDown = useCallback(
     (e: React.MouseEvent) => {
+      if (disableContentGestures || isInsideMapListFilterModal(e.target)) return;
       if (e.button !== 0) return;
       const el = scrollRef.current;
       if (!el) return;
@@ -188,7 +216,7 @@ export function MapListSheetPanel({
       window.addEventListener("mousemove", onMove);
       window.addEventListener("mouseup", onUp);
     },
-    [canScrollListVertically, sheetPointerDown, sheetPointerMove, sheetPointerUp],
+    [canScrollListVertically, disableContentGestures, sheetPointerDown, sheetPointerMove, sheetPointerUp],
   );
 
   return (
@@ -220,7 +248,7 @@ export function MapListSheetPanel({
       </div>
       <div
         ref={scrollRef}
-        className="flex-1 min-h-0 overflow-y-auto overscroll-contain flex flex-col cursor-grab active:cursor-grabbing"
+        className={`flex-1 min-h-0 overflow-y-auto overscroll-contain flex flex-col ${disableContentGestures ? "" : "cursor-grab active:cursor-grabbing"}`}
         style={{ WebkitOverflowScrolling: "touch" }}
         onTouchStart={onContentTouchStart}
         onTouchMove={onContentTouchMove}

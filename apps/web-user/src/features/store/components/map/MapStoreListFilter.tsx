@@ -8,6 +8,7 @@ import { DualThumbRangeSlider } from "@/apps/web-user/common/components/sliders"
 import {
   MAP_LIST_SIZE_OPTIONS,
   MAP_LIST_CATEGORY_OPTIONS,
+  MAP_STORE_LIST_FILTER_MODAL_ID,
 } from "@/apps/web-user/features/store/constants/map.constant";
 import type { ProductCategoryType } from "@/apps/web-user/features/product/types/product.type";
 
@@ -114,13 +115,19 @@ const styles = {
 interface MapStoreListFilterProps {
   listFilter?: StoreListFilter;
   onListFilterChange: (filter: StoreListFilter) => void;
+  /** 필터 모달 열림 상태 (지도 목록 시트 제스처 잠금 등) */
+  onPanelOpenChange?: (open: boolean) => void;
 }
 
 // ---------------------------------------------------------------------------
 // 메인 컴포넌트
 // ---------------------------------------------------------------------------
 
-export function MapStoreListFilter({ listFilter, onListFilterChange }: MapStoreListFilterProps) {
+export function MapStoreListFilter({
+  listFilter,
+  onListFilterChange,
+  onPanelOpenChange,
+}: MapStoreListFilterProps) {
   const [panelOpen, setPanelOpen] = useState(false);
   const [draftSizes, setDraftSizes] = useState<string[]>(listFilter?.sizes ?? []);
   const [draftPriceMinScale, setDraftPriceMinScale] = useState(() =>
@@ -132,6 +139,10 @@ export function MapStoreListFilter({ listFilter, onListFilterChange }: MapStoreL
   const [draftCategories, setDraftCategories] = useState<ProductCategoryType[]>(
     listFilter?.productCategoryTypes ?? [],
   );
+
+  useEffect(() => {
+    onPanelOpenChange?.(panelOpen);
+  }, [panelOpen, onPanelOpenChange]);
 
   useEffect(() => {
     if (!panelOpen) return;
@@ -297,7 +308,14 @@ export function MapStoreListFilter({ listFilter, onListFilterChange }: MapStoreL
       {panelOpen &&
         typeof document !== "undefined" &&
         createPortal(
-          <div className="fixed inset-0 z-[100]">
+          <div
+            id={MAP_STORE_LIST_FILTER_MODAL_ID}
+            className="fixed inset-0 z-[100]"
+            onTouchStart={(e) => e.stopPropagation()}
+            onTouchMove={(e) => e.stopPropagation()}
+            onTouchEnd={(e) => e.stopPropagation()}
+            onTouchCancel={(e) => e.stopPropagation()}
+          >
             <button
               type="button"
               className="absolute inset-0 bg-black/20"
@@ -312,6 +330,9 @@ export function MapStoreListFilter({ listFilter, onListFilterChange }: MapStoreL
               onClick={(e) => e.stopPropagation()}
               onMouseDown={(e) => e.stopPropagation()}
               onTouchStart={(e) => e.stopPropagation()}
+              onTouchMove={(e) => e.stopPropagation()}
+              onTouchEnd={(e) => e.stopPropagation()}
+              onTouchCancel={(e) => e.stopPropagation()}
             >
               <header className={styles.panelHeader}>
                 <h2 id="filter-panel-title" className={styles.panelTitle}>
@@ -327,7 +348,7 @@ export function MapStoreListFilter({ listFilter, onListFilterChange }: MapStoreL
                 </button>
               </header>
 
-              <div className="flex-1 overflow-y-auto pt-6">
+              <div className="flex-1 overflow-y-auto overscroll-y-contain pt-6">
                 <section className={`${styles.sectionContent} ${styles.sectionBlock}`}>
                   <h3 className={styles.sectionTitle}>사이즈</h3>
                   <div className="grid grid-cols-2 gap-4">
@@ -362,7 +383,14 @@ export function MapStoreListFilter({ listFilter, onListFilterChange }: MapStoreL
                   </div>
                 </section>
 
-                <section className={`${styles.sectionContent} ${styles.sectionBlock}`}>
+                <section
+                  className={`${styles.sectionContent} ${styles.sectionBlock}`}
+                  style={{ touchAction: "none" }}
+                  onTouchStart={(e) => e.stopPropagation()}
+                  onTouchMove={(e) => e.stopPropagation()}
+                  onTouchEnd={(e) => e.stopPropagation()}
+                  onTouchCancel={(e) => e.stopPropagation()}
+                >
                   <h3 className={styles.sectionTitle}>가격</h3>
                   <DualThumbRangeSlider
                     min={PRICE_SCALE_MIN}

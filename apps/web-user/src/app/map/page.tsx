@@ -71,6 +71,7 @@ export default function MapPage() {
   const [listFilter, setListFilter] = useState<StoreListFilter>({});
   const [pickupFilter, setPickupFilter] = useState<MapPickupFilter | null>(null);
   const [pickupCalendarOpen, setPickupCalendarOpen] = useState(false);
+  const [mapListFilterPanelOpen, setMapListFilterPanelOpen] = useState(false);
 
   /** URL에 픽업이 있으면 상태에 반영 (검색 페이지 등에서 돌아올 때) */
   useEffect(() => {
@@ -840,6 +841,7 @@ export default function MapPage() {
           expandedToTop={
             listSheetPanelOffset > 0 && listSheetPanelOffset >= getListSheetMaxOffset() - 1
           }
+          disableContentGestures={mapListFilterPanelOpen}
           isDragging={isListSheetPanelDragging}
           onTouchStart={handleListSheetTouchStart}
           onTouchMove={handleListSheetTouchMove}
@@ -859,6 +861,7 @@ export default function MapPage() {
               onSortByChange={setListSortBy}
               listFilter={listFilter}
               onListFilterChange={setListFilter}
+              onFilterPanelOpenChange={setMapListFilterPanelOpen}
             />
           )}
         </MapListSheetPanel>

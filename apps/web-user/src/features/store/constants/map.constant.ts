@@ -38,6 +38,9 @@ export function getMapLayoutViewportHeight(): number {
 /** 지도 bounds 패딩(px) - 검색 결과 전체가 보이도록 할 때 */
 export const MAP_BOUNDS_PADDING = 80;
 
+/** 지도 목록 필터 모달 루트 id (포털·시트 제스처 충돌 방지용) */
+export const MAP_STORE_LIST_FILTER_MODAL_ID = "map-store-list-filter-modal";
+
 /** 지도 마커 라벨(스토어명·미입점·영업 상태) 공통 흰색 외곽선 */
 export const MAP_MARKER_LABEL_TEXT_SHADOW =
   "-1px 0px #fff, 0px 1px #fff, 1px 0px #fff, 0px -1px #fff";
