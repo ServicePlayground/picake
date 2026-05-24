@@ -1,4 +1,4 @@
-name: Deploy Backend to EC2 (Staging)
+name: Deploy Picake Backend to EC2 (Staging)
 
 permissions:
   contents: read
@@ -56,21 +56,21 @@ jobs:
               echo "🔄 배포 실패로 인한 롤백 시작..."
               
               # PM2 프로세스 중지 (이미 실패한 새 버전이 실행 중일 수 있음)
-              pm2 delete sweet-order-backend 2>/dev/null || true
+              pm2 delete picake-backend-staging 2>/dev/null || true
               
               # 가장 최근 백업 찾기
-              LATEST_BACKUP=$(ls -td ~/sweet-order.backup.* 2>/dev/null | head -1)
+              LATEST_BACKUP=$(ls -td ~/picake.backup.* 2>/dev/null | head -1)
               
               if [ -n "$LATEST_BACKUP" ] && [ -d "$LATEST_BACKUP" ]; then
                 echo "📦 백업 복원 중: $LATEST_BACKUP"
-                rm -rf ~/sweet-order
-                mv "$LATEST_BACKUP" ~/sweet-order
+                rm -rf ~/picake
+                mv "$LATEST_BACKUP" ~/picake
                 
                 # 이전 버전으로 PM2 재시작
-                if [ -f ~/sweet-order/apps/backend/dist/main.js ]; then
-                  cd ~/sweet-order/apps/backend
+                if [ -f ~/picake/apps/backend/dist/main.js ]; then
+                  cd ~/picake/apps/backend
                   NODE_ENV=staging pm2 start dist/main.js \
-                    --name sweet-order-backend \
+                    --name picake-backend-staging \
                     --update-env \
                     --cwd $(pwd)
                   pm2 save
@@ -116,7 +116,7 @@ jobs:
 
             # 오래된 백업 파일 정리 (항상 실행, 디스크 사용량에 따라 유지 개수만 조정)
             echo "🗑️ 오래된 백업 파일 정리 중..."
-            cleanup_old_backups "서버" "~/sweet-order.backup.*" "$USE_PERCENT"
+            cleanup_old_backups "서버" "~/picake.backup.*" "$USE_PERCENT"
             cleanup_old_backups "DB" "~/db-backup.*.sql.gz" "$USE_PERCENT"
             cleanup_old_backups "DB" "~/db-backup.*.dump" "$USE_PERCENT"
 
@@ -128,11 +128,11 @@ jobs:
               fi
               
               # 기존 프로젝트의 node_modules 삭제 (dist는 롤백 시 PM2 기동에 필요하므로 유지)
-              if [ -d ~/sweet-order ]; then
+              if [ -d ~/picake ]; then
                 echo "🗑️ 기존 프로젝트의 node_modules 디렉토리 삭제 중..."
-                find ~/sweet-order -type d -name "node_modules" -exec rm -rf {} + 2>/dev/null || true
-                find ~/sweet-order -type d -name ".next" -exec rm -rf {} + 2>/dev/null || true
-                find ~/sweet-order -type d -name ".yarn" -exec rm -rf {} + 2>/dev/null || true
+                find ~/picake -type d -name "node_modules" -exec rm -rf {} + 2>/dev/null || true
+                find ~/picake -type d -name ".next" -exec rm -rf {} + 2>/dev/null || true
+                find ~/picake -type d -name ".yarn" -exec rm -rf {} + 2>/dev/null || true
               fi
               
               # Yarn 캐시 정리
@@ -168,8 +168,8 @@ jobs:
             echo "🗄️ 데이터베이스 백업 생성 중..."
             DB_BACKUP_NAME=~/db-backup.$(date +%Y%m%d_%H%M%S).sql.gz
             PGPASSWORD='${{ secrets.STAGING_DATABASE_PASSWORD }}' \
-              pg_dump -h localhost -p 5432 -U sweetorder_admin \
-              -d sweetorder_staging_db \
+              pg_dump -h localhost -p 5432 -U picake_admin \
+              -d picake_staging_db \
               -F c -f "${DB_BACKUP_NAME%.gz}" 2>/dev/null || {
               echo "⚠️ DB 백업 실패 (계속 진행합니다)"
               rm -f "${DB_BACKUP_NAME%.gz}"
@@ -184,26 +184,26 @@ jobs:
             # 기존 프로젝트 백업 (타임스탬프 포함)
             # 백업 전에 node_modules만 삭제 (dist는 롤백 시 이전 빌드로 서비스 복구에 필요)
             CURRENT_BACKUP_NAME=""
-            if [ -d ~/sweet-order ]; then
+            if [ -d ~/picake ]; then
               echo "🗑️ 백업 전 불필요한 파일 정리 중 (node_modules 등)..."
-              find ~/sweet-order -type d -name "node_modules" -exec rm -rf {} + 2>/dev/null || true
-              find ~/sweet-order -type d -name ".next" -exec rm -rf {} + 2>/dev/null || true
-              find ~/sweet-order -type d -name ".yarn" -exec rm -rf {} + 2>/dev/null || true
-              find ~/sweet-order -type f -name "*.log" -delete 2>/dev/null || true
+              find ~/picake -type d -name "node_modules" -exec rm -rf {} + 2>/dev/null || true
+              find ~/picake -type d -name ".next" -exec rm -rf {} + 2>/dev/null || true
+              find ~/picake -type d -name ".yarn" -exec rm -rf {} + 2>/dev/null || true
+              find ~/picake -type f -name "*.log" -delete 2>/dev/null || true
               
-              CURRENT_BACKUP_NAME=~/sweet-order.backup.$(date +%Y%m%d_%H%M%S)
+              CURRENT_BACKUP_NAME=~/picake.backup.$(date +%Y%m%d_%H%M%S)
               echo "📦 기존 프로젝트 백업 중: $CURRENT_BACKUP_NAME"
-              mv ~/sweet-order "$CURRENT_BACKUP_NAME" || {
+              mv ~/picake "$CURRENT_BACKUP_NAME" || {
                 echo "⚠️ 백업 실패, 기존 디렉토리 삭제 후 진행"
-                rm -rf ~/sweet-order
+                rm -rf ~/picake
               }
             fi
 
             # 배포 실패 시 롤백을 위한 trap 설정
             trap rollback_deployment ERR
 
-            mkdir -p ~/sweet-order
-            cd ~/sweet-order
+            mkdir -p ~/picake
+            cd ~/picake
 
             echo "📂 압축 해제"
             tar -xzf ~/deploy.tar.gz
@@ -211,7 +211,7 @@ jobs:
 
             # 기존 node_modules 정리 (혹시 남아있을 수 있음)
             echo "🗑️ 기존 node_modules 정리 중..."
-            find ~/sweet-order -type d -name "node_modules" -exec rm -rf {} + 2>/dev/null || true
+            find ~/picake -type d -name "node_modules" -exec rm -rf {} + 2>/dev/null || true
 
             # 캐시 정리 (중요)
             rm -rf ~/.cache ~/.yarn ~/.yarn/berry/cache
@@ -225,7 +225,7 @@ jobs:
 
             if [ "$USE_PERCENT" -gt 90 ]; then
               echo "⚠️ 디스크 사용량이 ${USE_PERCENT}%로 높습니다. 추가 정리 중..."
-              cleanup_old_backups "서버" "~/sweet-order.backup.*" "$USE_PERCENT"
+              cleanup_old_backups "서버" "~/picake.backup.*" "$USE_PERCENT"
               cleanup_old_backups "DB" "~/db-backup.*.sql.gz" "$USE_PERCENT"
               cleanup_old_backups "DB" "~/db-backup.*.dump" "$USE_PERCENT"
               USE_PERCENT=$(df / | tail -1 | awk '{print $5}' | sed 's/%//')
@@ -259,7 +259,7 @@ jobs:
 
             # DATABASE - staging
             # 옵션 1: EC2 PostgreSQL 사용 (비용 절감)
-            DATABASE_URL=postgresql://sweetorder_admin:${{ secrets.STAGING_DATABASE_PASSWORD }}@localhost:5432/sweetorder_staging_db?schema=public
+            DATABASE_URL=postgresql://picake_admin:${{ secrets.STAGING_DATABASE_PASSWORD }}@localhost:5432/picake_staging_db?schema=public
 
             # GOOGLE OAuth (Consumer) - staging
             GOOGLE_CLIENT_ID=${{ secrets.STAGING_GOOGLE_CLIENT_ID }}
@@ -365,13 +365,13 @@ jobs:
                 echo "📖 EC2 서버에 SSH 접속하여 다음을 확인하세요:"
                 echo ""
                 echo "1. pg_hba.conf 파일 수정:"
-                echo "   sudo vi /var/lib/pgsql/16/data/pg_hba.conf"
+                echo "   sudo nano /var/lib/pgsql/data/pg_hba.conf"
                 echo "   'host all all 127.0.0.1/32 ident' → 'host all all 127.0.0.1/32 md5'로 변경"
                 echo ""
                 echo "2. PostgreSQL 재시작:"
                 echo "   sudo systemctl restart postgresql"
                 echo ""
-                echo "3. 자세한 내용은 docs/infra/aws/EC2_Route53.md 3.3단계를 참고하세요."
+                echo "3. 자세한 내용은 docs/infra/aws/EC2_Route53_S3_CloudFront.md 3.3단계를 참고하세요."
                 echo ""
                 rollback_deployment
               fi
@@ -395,7 +395,7 @@ jobs:
               # }
             fi
 
-            cd ~/sweet-order
+            cd ~/picake
 
             echo "🔨 Backend build"
             yarn run backend:build:staging || {
@@ -404,10 +404,10 @@ jobs:
             }
 
             echo "🚀 PM2 restart"
-            pm2 delete sweet-order-backend || true
+            pm2 delete picake-backend-staging || true
             cd apps/backend
             NODE_ENV=staging pm2 start dist/main.js \
-              --name sweet-order-backend \
+              --name picake-backend-staging \
               --update-env \
               --cwd $(pwd) || {
               echo "❌ PM2 시작 실패"
@@ -424,7 +424,7 @@ jobs:
             # SSL 인증서 상태 로그 (EC2 로컬, 배포 성공 후)
             echo ""
             echo "🔒 SSL 인증서 상태 (EC2)"
-            API_HOST="api-staging.sweetorders.com"
+            API_HOST="api-staging.picakes.com"
             CERT_FILE="/etc/letsencrypt/live/${API_HOST}/fullchain.pem"
             if sudo test -f "$CERT_FILE"; then
               NOT_AFTER=$(sudo openssl x509 -in "$CERT_FILE" -noout -enddate 2>/dev/null | cut -d= -f2)
@@ -467,12 +467,12 @@ jobs:
               sleep 2
             done
             if [ "$HEALTH_OK" != true ]; then
-              echo "⚠️ localhost:8080 /health 실패 (60초 대기 후) — PM2 로그 확인: pm2 logs sweet-order-backend --lines 30"
+              echo "⚠️ localhost:8080 /health 실패 (60초 대기 후) — PM2 로그 확인: pm2 logs picake-backend-staging --lines 30"
             fi
 
             # 배포 성공 후 오래된 백업 정리 (디스크 사용량에 따라 동적 조정)
             USE_PERCENT=$(df / | tail -1 | awk '{print $5}' | sed 's/%//')
-            cleanup_old_backups "서버" "~/sweet-order.backup.*" "$USE_PERCENT"
+            cleanup_old_backups "서버" "~/picake.backup.*" "$USE_PERCENT"
             cleanup_old_backups "DB" "~/db-backup.*.sql.gz" "$USE_PERCENT"
             cleanup_old_backups "DB" "~/db-backup.*.dump" "$USE_PERCENT"
 
@@ -480,7 +480,7 @@ jobs:
         if: success()
         run: |
           set -euo pipefail
-          HOST="api-staging.sweetorders.com"
+          HOST="api-staging.picakes.com"
           WARN_DAYS=14
 
           echo "🔒 SSL 인증서 검증 (외부): https://${HOST}"
