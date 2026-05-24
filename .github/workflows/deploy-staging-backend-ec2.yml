@@ -216,8 +216,10 @@ jobs:
             # 캐시 정리 (중요)
             rm -rf ~/.cache ~/.yarn ~/.yarn/berry/cache
 
-            corepack enable
-            corepack prepare yarn@4.9.4 --activate
+            # NodeSource 설치 Node는 /usr/bin 심링크가 필요해 sudo 필수 (ec2-user만으로는 EACCES)
+            sudo corepack enable
+            sudo corepack prepare yarn@4.9.4 --activate
+            yarn --version
 
             # 디스크 공간 확인 후 의존성 설치
             USE_PERCENT=$(df / | tail -1 | awk '{print $5}' | sed 's/%//')
