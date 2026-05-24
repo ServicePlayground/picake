@@ -1,11 +1,12 @@
 name: Deploy to Vercel (Staging)
 
-# 트리거: web-user 또는 web-seller의 staging 태그가 푸시될 때 실행
+# 트리거: web-user, web-seller, web-admin의 staging 태그가 푸시될 때 실행
 on:
   push:
     tags:
       - "web-user/staging-*"
       - "web-seller/staging-*"
+      - "web-admin/staging-*"
 
 permissions: {}
 
@@ -34,9 +35,9 @@ jobs:
           PROJECT=${{ steps.extract-project.outputs.project }}
           ENV=${{ steps.extract-project.outputs.environment }}
 
-          if [[ "$PROJECT" != "web-user" && "$PROJECT" != "web-seller" ]]; then
+          if [[ "$PROJECT" != "web-user" && "$PROJECT" != "web-seller" && "$PROJECT" != "web-admin" ]]; then
             echo "❌ Invalid project name: $PROJECT"
-            echo "Valid project names: web-user, web-seller"
+            echo "Valid project names: web-user, web-seller, web-admin"
             exit 1
           fi
 
@@ -61,6 +62,9 @@ jobs:
               ;;
             web-seller)
               echo "webhook_url=${{ secrets.VERCEL_WEBHOOK_URL_WEB_SELLER_STAGING }}" >> $GITHUB_OUTPUT
+              ;;
+            web-admin)
+              echo "webhook_url=${{ secrets.VERCEL_WEBHOOK_URL_WEB_ADMIN_STAGING }}" >> $GITHUB_OUTPUT
               ;;
           esac
 

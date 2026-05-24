@@ -2,7 +2,7 @@
 
 ## 개요
 
-Sweet Order 프로젝트의 web-user, web-seller 애플리케이션을 Vercel에 배포하고 관리하는 가이드입니다.
+Sweet Order 프로젝트의 web-user, web-seller, web-admin 애플리케이션을 Vercel에 배포하고 관리하는 가이드입니다.
 
 ## Vercel을 선택한 이유
 
@@ -43,7 +43,7 @@ Sweet Order 프로젝트의 web-user, web-seller 애플리케이션을 Vercel에
 
 #### 2.1 프로젝트 구성
 
-총 4개의 Vercel 프로젝트를 생성합니다:
+총 6개의 Vercel 프로젝트를 생성합니다:
 
 | 프로젝트명            | 환경       | 브랜치    | 배포 타입  |
 | --------------------- | ---------- | --------- | ---------- |
@@ -51,6 +51,8 @@ Sweet Order 프로젝트의 web-user, web-seller 애플리케이션을 Vercel에
 | web-user-production   | production | `main`    | Production |
 | web-seller-staging    | staging    | `staging` | Production |
 | web-seller-production | production | `main`    | Production |
+| web-admin-staging     | staging    | `staging` | Production |
+| web-admin-production  | production | `main`    | Production |
 
 **중요 사항:**
 
@@ -60,23 +62,31 @@ Sweet Order 프로젝트의 web-user, web-seller 애플리케이션을 Vercel에
 
 #### 2.2 프로젝트 생성
 
-1. Vercel 대시보드에서 새 프로젝트 생성 (총 4개)
+1. Vercel 대시보드에서 새 프로젝트 생성 (총 6개)
 2. GitHub 저장소 연결
    - web-user-staging: `staging` 브랜치 연결
    - web-user-production: `main` 브랜치 연결
    - web-seller-staging: `staging` 브랜치 연결
    - web-seller-production: `main` 브랜치 연결
+   - web-admin-staging: `staging` 브랜치 연결
+   - web-admin-production: `main` 브랜치 연결
 3. 빌드 설정:
-   - Framework: Next.js (web-user) / Vite (web-seller)
-   - Build Command: `next build` (web-user) / `yarn build` (web-seller)
+   - Framework: Next.js (web-user) / Vite (web-seller, web-admin)
+   - Build Command: `next build` (web-user) / `yarn build` (web-seller, web-admin)
    - Install Command: `yarn install`
-   - Root Directory: `apps/web-user` 또는 `apps/web-seller`
-   - Output Directory: `.next` (web-user) / `dist` (web-seller)
+   - Root Directory: `apps/web-user` 또는 `apps/web-seller` 또는 `apps/web-admin`
+   - Output Directory: `.next` (web-user) / `dist` (web-seller) / `dist` (web-admin)
 
 #### 2.3 환경변수 설정
 
 1. Vercel 대시보드 → 프로젝트 설정 → Environment Variables
 2. 필요한 환경변수 추가
+
+| 프로젝트 | 환경변수 | staging 예시 |
+| -------- | -------- | ------------ |
+| web-user | (프로젝트별 설정) | — |
+| web-seller | `VITE_PUBLIC_API_DOMAIN` | `https://api-staging.sweetorders.com` |
+| web-admin | `VITE_PUBLIC_API_DOMAIN` | `https://api-staging.sweetorders.com` |
 
 #### 2.4 Deploy Hook 생성 (웹훅)
 
@@ -91,6 +101,7 @@ Sweet Order 프로젝트의 web-user, web-seller 애플리케이션을 Vercel에
 3. 다음 Secrets 추가:
    - `VERCEL_WEBHOOK_URL_WEB_USER_STAGING`: web-user 스테이징 환경 Vercel 웹훅 URL
    - `VERCEL_WEBHOOK_URL_WEB_SELLER_STAGING`: web-seller 스테이징 환경 Vercel 웹훅 URL
+   - `VERCEL_WEBHOOK_URL_WEB_ADMIN_STAGING`: web-admin 스테이징 환경 Vercel 웹훅 URL
 
 ### 4. GitHub 워크플로 생성 (태그 기반)
 
@@ -100,6 +111,7 @@ Sweet Order 프로젝트의 web-user, web-seller 애플리케이션을 Vercel에
 
 - `web-user/staging-*` 태그 푸시 시 web-user 배포
 - `web-seller/staging-*` 태그 푸시 시 web-seller 배포
+- `web-admin/staging-*` 태그 푸시 시 web-admin 배포
 
 **워크플로 동작:**
 
