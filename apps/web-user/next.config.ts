@@ -19,11 +19,11 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "static-staging.sweetorders.com",
+        hostname: "static-staging.picakes.com",
       },
       {
         protocol: "https",
-        hostname: "static.sweetorders.com",
+        hostname: "static.picakes.com",
       },
     ],
   },

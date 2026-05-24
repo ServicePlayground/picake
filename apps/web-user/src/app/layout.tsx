@@ -41,7 +41,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "ko_KR",
-    url: "https://sweetorders.com",
+    url: "https://picakes.com",
     siteName: "Picake",
     title: "Picake - 달콤한 디저트 주문 플랫폼",
     description:
