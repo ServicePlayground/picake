@@ -106,7 +106,13 @@ export function MapListSheetPanel({
       el.style.overflowY = "hidden";
       el.style.overscrollBehavior = "none";
       el.style.touchAction = "none";
-      resetContentGesture();
+      // 시트 드래그가 진행 중이면 제스처 상태를 유지해야 합니다.
+      // 여기서 resetContentGesture()를 호출하면 contentGestureRef가 null이 되어
+      // 이후 touchmove/touchend에서 sheetPointerMove/sheetPointerUp이 실행되지 않고,
+      // 시트가 드래그 위치(full의 90~95%)에 snap 없이 고정되는 버그가 발생합니다.
+      if (contentGestureRef.current?.mode !== "sheet") {
+        resetContentGesture();
+      }
     }
   }, [contentScrollEnabled, resetContentGesture]);
 
