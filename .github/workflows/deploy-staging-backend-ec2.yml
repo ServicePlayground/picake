@@ -54,18 +54,18 @@ jobs:
             rollback_deployment() {
               echo ""
               echo "🔄 배포 실패로 인한 롤백 시작..."
-              
+
               # PM2 프로세스 중지 (이미 실패한 새 버전이 실행 중일 수 있음)
               pm2 delete picake-backend-staging 2>/dev/null || true
-              
+
               # 가장 최근 백업 찾기
               LATEST_BACKUP=$(ls -td ~/picake.backup.* 2>/dev/null | head -1)
-              
+
               if [ -n "$LATEST_BACKUP" ] && [ -d "$LATEST_BACKUP" ]; then
                 echo "📦 백업 복원 중: $LATEST_BACKUP"
                 rm -rf ~/picake
                 mv "$LATEST_BACKUP" ~/picake
-                
+
                 # 이전 버전으로 PM2 재시작
                 if [ -f ~/picake/apps/backend/dist/main.js ]; then
                   cd ~/picake/apps/backend
@@ -81,7 +81,7 @@ jobs:
               else
                 echo "❌ 롤백 실패 - 백업을 찾을 수 없습니다"
               fi
-              
+
               exit 1
             }
 
@@ -91,7 +91,7 @@ jobs:
               local BACKUP_PATTERN=$2
               local USE_PERCENT=$3
               local KEEP_COUNT=5
-              
+
               # 디스크 사용량에 따라 백업 개수 조정
               if [ "$USE_PERCENT" -ge 90 ]; then
                 KEEP_COUNT=2
@@ -100,9 +100,9 @@ jobs:
                 KEEP_COUNT=3
                 echo "⚠️ 디스크 사용량이 높아 백업을 최근 ${KEEP_COUNT}개만 유지합니다"
               fi
-              
+
               echo "🧹 오래된 ${BACKUP_TYPE} 백업 정리 중 (최근 ${KEEP_COUNT}개만 유지)..."
-              
+
               # 타임스탬프 기준으로 정렬하여 오래된 것부터 삭제
               ls -t ${BACKUP_PATTERN} 2>/dev/null | tail -n +$((KEEP_COUNT + 1)) | while read -r old_backup; do
                 echo "  삭제: $old_backup"
@@ -126,7 +126,7 @@ jobs:
               if [ "$USE_PERCENT" -ge 85 ]; then
                 echo "📢 주의: 디스크 사용량이 지속적으로 높다면 EC2 루트 볼륨 확장 또는 배포 로직 개선을 고려하세요"
               fi
-              
+
               # 기존 프로젝트의 node_modules 삭제 (dist는 롤백 시 PM2 기동에 필요하므로 유지)
               if [ -d ~/picake ]; then
                 echo "🗑️ 기존 프로젝트의 node_modules 디렉토리 삭제 중..."
@@ -134,29 +134,29 @@ jobs:
                 find ~/picake -type d -name ".next" -exec rm -rf {} + 2>/dev/null || true
                 find ~/picake -type d -name ".yarn" -exec rm -rf {} + 2>/dev/null || true
               fi
-              
+
               # Yarn 캐시 정리
               echo "🗑️ Yarn 캐시 정리 중..."
               yarn cache clean --all 2>/dev/null || true
               rm -rf ~/.cache ~/.yarn/cache ~/.yarn/berry/cache
-              
+
               # PM2 로그 정리
               echo "🗑️ PM2 로그 정리 중..."
               pm2 flush || true
-              
+
               # 시스템 패키지 캐시 정리
               echo "🗑️ 시스템 패키지 캐시 정리 중..."
               sudo dnf clean all 2>/dev/null || true
-              
+
               # 임시 파일 정리
               echo "🗑️ 임시 파일 정리 중..."
               sudo rm -rf /tmp/* 2>/dev/null || true
               rm -rf ~/tmp/* 2>/dev/null || true
-              
+
               # 정리 후 디스크 사용량 재확인
               USE_PERCENT=$(df / | tail -1 | awk '{print $5}' | sed 's/%//')
               echo "정리 후 디스크 사용량: ${USE_PERCENT}%"
-              
+
               # 여전히 95% 이상이면 배포 중단
               if [ "$USE_PERCENT" -gt 95 ]; then
                 echo "❌ 디스크 사용량 ${USE_PERCENT}% — 정리 후에도 공간 부족. 배포 중단"
@@ -190,7 +190,7 @@ jobs:
               find ~/picake -type d -name ".next" -exec rm -rf {} + 2>/dev/null || true
               find ~/picake -type d -name ".yarn" -exec rm -rf {} + 2>/dev/null || true
               find ~/picake -type f -name "*.log" -delete 2>/dev/null || true
-              
+
               CURRENT_BACKUP_NAME=~/picake.backup.$(date +%Y%m%d_%H%M%S)
               echo "📦 기존 프로젝트 백업 중: $CURRENT_BACKUP_NAME"
               mv ~/picake "$CURRENT_BACKUP_NAME" || {
@@ -213,12 +213,13 @@ jobs:
             echo "🗑️ 기존 node_modules 정리 중..."
             find ~/picake -type d -name "node_modules" -exec rm -rf {} + 2>/dev/null || true
 
-            # 캐시 정리 (중요)
-            rm -rf ~/.yarn/berry/cache 
+            # ✅ [FIX] ~/.yarn/berry/cache 삭제 제거
+            # 매번 삭제하면 수백 개 패키지를 처음부터 다시 받아야 하고,
+            # 다운로드 중 hang이 발생해도 yarn에 기본 타임아웃이 없어 무한 대기함.
+            # 캐시를 유지하면 다음 배포부터 이미 받은 패키지는 재사용되어 빠름.
+            # (디스크 80% 초과 시 위 블록에서 이미 정리됨)
 
-            # NodeSource 설치 Node는 /usr/bin 심링크가 필요해 sudo 필수 (ec2-user만으로는 EACCES)
-            sudo corepack enable
-            corepack prepare yarn@4.9.4 --activate
+            # yarn 버전 확인 (서버 초기 설정 시 이미 corepack으로 설치됨)
             yarn --version
 
             # 디스크 공간 확인 후 의존성 설치
@@ -235,7 +236,10 @@ jobs:
             fi
 
             echo "📦 의존성 설치"
-            yarn install || {
+            # ✅ [FIX] yarn install → yarn workspaces focus @picake/backend
+            # - backend 의존성만 설치 (web-user, web-seller, web-admin 패키지 제외)
+            # - --network-timeout 60000: 패키지 다운로드가 60초 이상 응답 없으면 hang 대신 에러 처리
+            yarn workspaces focus @picake/backend --network-timeout 60000 || {
               echo "❌ 의존성 설치 실패"
               rollback_deployment
             }
@@ -324,7 +328,7 @@ jobs:
               echo "⚠️ 실패한 마이그레이션 감지. 롤백 상태로 표시 중..."
               # 실패한 마이그레이션 이름 추출 (일반적으로 가장 최근 실패한 것)
               FAILED_MIGRATION=$(echo "$MIGRATE_STATUS" | grep -oP '^\s*\K[0-9_]+' | head -1 || echo "20260204214916_202602050649")
-              
+
               if [ -n "$FAILED_MIGRATION" ]; then
                 echo "🔧 마이그레이션 '$FAILED_MIGRATION'을 롤백 상태로 표시 중..."
                 npx prisma migrate resolve --rolled-back "$FAILED_MIGRATION" --schema ./src/infra/database/prisma/schema.prisma 2>/dev/null || true
@@ -336,18 +340,18 @@ jobs:
             MIGRATE_SUCCESS=false
             if ! npx prisma migrate deploy --schema ./src/infra/database/prisma/schema.prisma 2>&1 | tee /tmp/migrate_output.log; then
               MIGRATE_OUTPUT=$(cat /tmp/migrate_output.log)
-              
+
               # P3009 오류: 실패한 마이그레이션이 있는 경우
               if echo "$MIGRATE_OUTPUT" | grep -q "P3009\|failed migrations"; then
                 echo "⚠️ 실패한 마이그레이션 감지. 롤백 상태로 표시 후 재시도..."
-                
+
                 # 실패한 마이그레이션 이름 추출
                 FAILED_MIGRATION=$(echo "$MIGRATE_OUTPUT" | grep -oP 'The `\K[^`]+' | head -1 || echo "20260204214916_202602050649")
-                
+
                 if [ -n "$FAILED_MIGRATION" ]; then
                   echo "🔧 마이그레이션 '$FAILED_MIGRATION'을 롤백 상태로 표시 중..."
                   npx prisma migrate resolve --rolled-back "$FAILED_MIGRATION" --schema ./src/infra/database/prisma/schema.prisma 2>/dev/null || true
-                  
+
                   echo "🔄 마이그레이션 재시도 중..."
                   if npx prisma migrate deploy --schema ./src/infra/database/prisma/schema.prisma; then
                     echo "✅ Prisma migrate 성공 (재시도 후)"
