@@ -214,11 +214,11 @@ jobs:
             find ~/picake -type d -name "node_modules" -exec rm -rf {} + 2>/dev/null || true
 
             # 캐시 정리 (중요)
-            rm -rf ~/.cache ~/.yarn ~/.yarn/berry/cache
+            rm -rf ~/.yarn/berry/cache 
 
             # NodeSource 설치 Node는 /usr/bin 심링크가 필요해 sudo 필수 (ec2-user만으로는 EACCES)
             sudo corepack enable
-            sudo corepack prepare yarn@4.9.4 --activate
+            corepack prepare yarn@4.9.4 --activate
             yarn --version
 
             # 디스크 공간 확인 후 의존성 설치
