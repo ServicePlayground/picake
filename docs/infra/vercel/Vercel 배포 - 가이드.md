@@ -82,11 +82,11 @@ Picake 프로젝트의 web-user, web-seller, web-admin 애플리케이션을 Ver
 1. Vercel 대시보드 → 프로젝트 설정 → Environment Variables
 2. 필요한 환경변수 추가
 
-| 프로젝트 | 환경변수 | staging 예시 |
-| -------- | -------- | ------------ |
-| web-user | (프로젝트별 설정) | — |
+| 프로젝트   | 환경변수                 | staging 예시                      |
+| ---------- | ------------------------ | --------------------------------- |
+| web-user   | (프로젝트별 설정)        | —                                 |
 | web-seller | `VITE_PUBLIC_API_DOMAIN` | `https://api-staging.picakes.com` |
-| web-admin | `VITE_PUBLIC_API_DOMAIN` | `https://api-staging.picakes.com` |
+| web-admin  | `VITE_PUBLIC_API_DOMAIN` | `https://api-staging.picakes.com` |
 
 #### 2.4 Deploy Hook 생성 (웹훅)
 

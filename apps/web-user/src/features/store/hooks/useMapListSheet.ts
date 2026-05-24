@@ -15,9 +15,7 @@ import {
 /** 스냅 단계: 없음(0) / 중간 / 꽉채우기 */
 function getSnapPoints(layoutHeight: number) {
   const middle = Math.round(layoutHeight * LIST_SHEET_OPEN_RATIO - LIST_SHEET_HANDLE_HEIGHT);
-  const full = Math.round(
-    layoutHeight - LIST_SHEET_BOTTOM_NAV_HEIGHT - LIST_SHEET_HANDLE_HEIGHT,
-  );
+  const full = Math.round(layoutHeight - LIST_SHEET_BOTTOM_NAV_HEIGHT - LIST_SHEET_HANDLE_HEIGHT);
   return { closed: 0, middle, full };
 }
 
