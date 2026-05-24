@@ -17,8 +17,7 @@ const SEED_ACCOUNTS = {
     PHONE: "01012345678",
     NAME: "김철수",
     NICKNAME: "김철수_739",
-    PROFILE_IMAGE_URL:
-      "https://static-staging.sweetorders.com/uploads/2__1770124158308_b45059e5.jpeg",
+    PROFILE_IMAGE_URL: "https://static-staging.picakes.com/uploads/1779605116236_722257b7.jpeg",
     GOOGLE_ID: "115107911178776387683",
     GOOGLE_EMAIL: "olo90632951@gmail.com",
     /** 시드 판매자는 스토어·상품 시드까지 쓰므로 검증 완료 상태로 둠 */
@@ -30,8 +29,7 @@ const SEED_ACCOUNTS = {
     PHONE: "01023456789",
     NAME: "홍길동",
     NICKNAME: "홍길동_4821",
-    PROFILE_IMAGE_URL:
-      "https://static-staging.sweetorders.com/uploads/2__1770124158308_b45059e5.jpeg",
+    PROFILE_IMAGE_URL: "https://static-staging.picakes.com/uploads/1779605131078_b337595b.jpeg",
     GOOGLE_ID: "115107911178776387683",
     GOOGLE_EMAIL: "olo90632951@gmail.com",
     PUSH_NOTIFICATIONS_ENABLED: true,
@@ -49,8 +47,7 @@ const SEED_STORES = {
   STORE1: {
     NAME: "Picake",
     DESCRIPTION: "맛있는 케이크를 판매하는 스토어입니다.",
-    LOGO_IMAGE_URL:
-      "https://static-staging.sweetorders.com/uploads/NYenL1720090515_1770124331535_5b9aa552.png",
+    LOGO_IMAGE_URL: "https://static-staging.picakes.com/uploads/1779605159252_4d8646ed.jpeg",
     ADDRESS: "서울특별시 강동구 천호동 123-45",
     ROAD_ADDRESS: "서울특별시 강동구 천호대로 100",
     DETAIL_ADDRESS: "101호",
@@ -75,7 +72,7 @@ const SEED_STORES = {
   STORE2: {
     NAME: "디저트 파라다이스",
     DESCRIPTION: "다양한 디저트를 판매하는 스토어입니다.",
-    LOGO_IMAGE_URL: "https://static-staging.sweetorders.com/uploads/.png_1770124350794_a40b9a07",
+    LOGO_IMAGE_URL: "https://static-staging.picakes.com/uploads/1779605174262_b7ad9ab3.jpeg",
     ADDRESS: "서울특별시 강남구 역삼동 456-78",
     ROAD_ADDRESS: "서울특별시 강남구 테헤란로 200",
     DETAIL_ADDRESS: "102호",
@@ -109,8 +106,8 @@ const SEED_STORE_REFUND_CANCELLATION_POLICY = {
 const SEED_PRODUCT_BASE = {
   NAME: "프리미엄 초콜릿 케이크",
   IMAGES: [
-    "https://static-staging.sweetorders.com/uploads/1__1770124383061_4d54e9eb.jpeg",
-    "https://static-staging.sweetorders.com/uploads/2__1770124399509_6f9e0688.jpeg",
+    "https://static-staging.picakes.com/uploads/1779605188940_c6dd594b.jpeg",
+    "https://static-staging.picakes.com/uploads/1779605200087_f0d30173.jpeg",
   ],
   SALE_PRICE: 45000,
   SIZE_OPTIONS: [
@@ -208,9 +205,9 @@ const SEED_REVIEW_CONTENTS = [
 
 const SEED_PRODUCT_IMAGES = {
   FIRST_STORE_REVIEW_IMAGE:
-    "https://static-staging.sweetorders.com/uploads/2__1770124399509_6f9e0688.jpeg",
+    "https://static-staging.picakes.com/uploads/1779605188940_c6dd594b.jpeg",
   SECOND_STORE_REVIEW_IMAGE:
-    "https://static-staging.sweetorders.com/uploads/3__1770124435469_83ac03cc.jpeg",
+    "https://static-staging.picakes.com/uploads/1779605200087_f0d30173.jpeg",
 };
 
 const SEED_STORE_FEEDS = {

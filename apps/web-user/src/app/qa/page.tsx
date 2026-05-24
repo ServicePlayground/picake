@@ -310,7 +310,7 @@ function StoreItem({ storeId }: { storeId: string }) {
     e.preventDefault();
     e.stopPropagation();
     if (store) {
-      const appUrl = `nmap://map?lat=${store.latitude}&lng=${store.longitude}&zoom=15&appname=com.example.sweetorder`;
+      const appUrl = `nmap://map?lat=${store.latitude}&lng=${store.longitude}&zoom=15&appname=com.example.picake`;
       window.location.href = toExternalAppSchemeUrl(appUrl);
     }
   };

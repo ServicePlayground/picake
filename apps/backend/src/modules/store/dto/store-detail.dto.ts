@@ -153,8 +153,8 @@ export class StoreResponseDto extends StoreAddressDto {
     description: "해당 스토어의 모든 상품 대표이미지 URL 배열 (상품당 1장)",
     type: [String],
     example: [
-      "https://s3.ap-northeast-1.amazonaws.com/sweetorder-uploads/uploads/product1.png",
-      "https://s3.ap-northeast-1.amazonaws.com/sweetorder-uploads/uploads/product2.png",
+      "https://s3.ap-northeast-1.amazonaws.com/picake-uploads/uploads/product1.png",
+      "https://s3.ap-northeast-1.amazonaws.com/picake-uploads/uploads/product2.png",
     ],
   })
   productRepresentativeImageUrls: string[];

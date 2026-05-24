@@ -81,5 +81,5 @@ export const UPLOAD_ERROR_MESSAGES = {
 
 export const SWAGGER_EXAMPLES = {
   FILE_URL:
-    "https://s3.ap-northeast-1.amazonaws.com/sweetorder-uploads-staging-apne1/uploads/profile.png",
+    "https://s3.ap-northeast-1.amazonaws.com/picake-uploads-staging-apne1/uploads/profile.png",
 };

@@ -7,14 +7,14 @@ import "swiper/css";
 import "swiper/css/pagination";
 
 const BANNER_IMAGES = [
-  "/images/banner/sweetorder-open-banner1.png",
-  "/images/banner/sweetorder-open-banner2.png",
-  "/images/banner/sweetorder-open-banner3.png",
-  "/images/banner/sweetorder-open-banner4.png",
-  "/images/banner/sweetorder-open-banner5.png",
-  "/images/banner/sweetorder-open-banner6.png",
-  "/images/banner/sweetorder-open-banner7.png",
-  "/images/banner/sweetorder-open-banner8.png",
+  "/images/banner/open-banner1.png",
+  "/images/banner/open-banner2.png",
+  "/images/banner/open-banner3.png",
+  "/images/banner/open-banner4.png",
+  "/images/banner/open-banner5.png",
+  "/images/banner/open-banner6.png",
+  "/images/banner/open-banner7.png",
+  "/images/banner/open-banner8.png",
 ];
 
 function updateBullets(bullets: HTMLElement[], activeIndex: number) {
