@@ -8,7 +8,7 @@
 #### 2. AWS ECR 리포지토리 생성(ECR: Doker 이미지 저장소)
 
 5. AWS ECR > 프라이빗 레지스트리 > 리포지토리 생성
-6. 리포지토리 이름: sweet-order/backend
+6. 리포지토리 이름: picake/backend
 7. 이미지 태그 변경 가능성: Mutable
 8. 변경 가능한 태그 제외: staging-, prod-
 9. 암호화: AES-256
@@ -35,7 +35,7 @@ docker buildx create --use
 
 ENV="staging" # staging, prod
 ECR="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-REPO="sweet-order/backend"
+REPO="picake/backend"
 VERSION=$(date +%Y%m%d-%H%M)
 
 docker buildx build --platform linux/amd64,linux/arm64 -f apps/infra/backend/Dockerfile -t ${ECR}/${REPO}:${ENV} -t ${ECR}/${REPO}:${ENV}-${VERSION} --push .
@@ -75,7 +75,7 @@ docker buildx build --platform linux/amd64,linux/arm64 -f apps/infra/backend/Doc
 - 컨테이너 이미지 URI: 이전에 태그한 이미지 URI 선택 (staging)
 - 배포 트리거: 자동(ECR 레지스트리를 모니터링하여 이미지 푸시에 서비스의 새 버전을 배포)
 - ECR 엑세스 역할: 새 서비스 역할 생성
-- 서비스 이름: sweet-order-backend-{환경}
+- 서비스 이름: picake-order-backend-{환경}
 - 가상 CPU: 1 vCPU
 - 가상메모리: 2GB
 - 포트: 8080
@@ -85,7 +85,7 @@ docker buildx build --platform linux/amd64,linux/arm64 -f apps/infra/backend/Doc
 - 수신 네트워크 트래픽: 퍼블릭 엔드포인트
 - 발신 네트워크 트래픽: 사용자 지정 VPC(RDS가 프라이빗 서브넷이면 반드시 VPC 커넥터로 붙여야 DB에 접근 가능)
   - 새 VPC 커넥터 추가
-    - VPC 커넥터 이름: sweet-order-backend-{환경}-connector
+    - VPC 커넥터 이름: picake-backend-{환경}-connector
     - VPC: (위 6번에 작업한 것)(apprunner-staging-sg) vpc-00000 형태
     - 서브넷: (위 6번에 작업한 것)(apprunner-staging-sg) subnet-00000 형태
     - 보안 그룹: (위 6번에 작업한 것)(apprunner-staging-sg) sg-00000 형태

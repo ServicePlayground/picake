@@ -1,40 +1,82 @@
-# Sweet Order Web Seller
+# Picake Web Seller
 
-Sweet Order 플랫폼을 위한 React + Vite 기반 판매자 관리 시스템입니다. Material-UI와 최신 웹 기술을 활용하여 직관적이고 효율적인 관리자 경험을 제공합니다.
+Picake 플랫폼을 위한 React + Vite 기반 판매자 관리 시스템입니다. Shadcn/ui + Tailwind CSS와 최신 웹 기술을 활용하여 직관적이고 효율적인 판매자 경험을 제공합니다.
 
 ## 🏗️ 주요 기능
 
 ### ✅ 구현 완료
 
-- **인증 시스템**: 판매자 로그인, 로그아웃, 인증 상태 관리
+- **인증 시스템**: 판매자 로그인, 로그아웃, Google OAuth, Kakao OAuth, 계정 찾기
 - **관리자 레이아웃**: 반응형 사이드바, 헤더, 네비게이션
 - **사업자진위확인**: 국세청 API를 통한 사업자등록번호 진위확인
 - **스토어 등록(3단계)**: 사업자 진위확인 → 통신판매사업자 등록상세 → 스토어 정보 입력 및 생성
+- **스토어 관리**: 스토어 정보 수정, 홈 대시보드, 캘린더
+- **상품 관리**: 상품 목록, 등록, 상세/수정
+- **주문 관리**: 주문 목록, 주문 상세, 상태 관리
+- **피드 관리**: 피드 목록, 작성, 상세
+- **통계**: 주문/매출 통계 대시보드
+- **알림**: 알림 목록, 알림 설정
+- **채팅**: Socket.IO 기반 실시간 채팅 (준비 중)
+- **마이페이지**: 판매자 정보 조회/수정
 - **상태 관리**: Zustand를 활용한 전역 상태 관리
 - **API 통신**: TanStack Query + Axios를 활용한 서버 상태 관리
 - **에러 처리**: Error Boundary와 전역 에러 처리
-- **반응형 UI**: 모바일 우선 반응형 디자인
-- **Material-UI**: 일관된 디자인 시스템
+- **디자인 시스템**: Shadcn/ui + Tailwind CSS (Material-UI에서 마이그레이션 완료)
 
 ### 🔄 개발 중
 
-- 상품 관리 (등록, 수정, 삭제, 목록)
-- 주문 관리 (주문 목록, 상태 변경)
-- 매출 통계 및 대시보드
+- 채팅 시스템 활성화
 - 재고 관리
-- 고객 관리
 
 ## 🔗 주요 페이지
 
-### 관리자 기능
+### 인증 관련
 
-- **홈페이지**: `/` - 대시보드 및 메인 페이지
+- **로그인**: `/auth/login` - 판매자 로그인
+- **계정 찾기**: `/auth/find-account` - 계정 정보 찾기
+- **Google 콜백**: `/auth/google/callback` - Google OAuth 콜백
+- **Kakao 콜백**: `/auth/kakao/callback` - Kakao OAuth 콜백
+- **이용약관**: `/legal/terms-of-service`
+- **개인정보처리방침**: `/legal/privacy-policy`
+
+### 마이페이지
+
+- **마이페이지**: `/mypage` - 판매자 정보
+
+### 스토어
+
 - **스토어 등록**: `/store/create` - 3단계 마법사 기반 스토어 개설 플로우
-- **상품 관리**: `/products` - 상품 등록, 수정, 삭제
-- **주문 관리**: `/orders` - 주문 목록 및 상태 관리
-- **매출 통계**: `/analytics` - 매출 및 통계 데이터
-- **설정**: `/settings` - 계정 및 시스템 설정
+- **스토어 홈**: `/store/:storeId/home` - 스토어 대시보드
+- **스토어 수정**: `/store/:storeId/edit` - 스토어 정보 수정
+- **캘린더**: `/store/:storeId/calendar` - 스토어 캘린더
+
+### 상품
+
+- **상품 목록**: `/store/:storeId/products` - 상품 목록
+- **상품 등록**: `/store/:storeId/products/create` - 상품 등록
+- **상품 상세**: `/store/:storeId/products/:productId` - 상품 상세/수정
+
+### 주문
+
+- **주문 목록**: `/store/:storeId/orders` - 주문 목록
+- **주문 상세**: `/store/:storeId/orders/:orderId` - 주문 상세
+
+### 피드
+
+- **피드 목록**: `/store/:storeId/feed` - 피드 목록
+- **피드 작성**: `/store/:storeId/feed/create` - 피드 작성
+- **피드 상세**: `/store/:storeId/feed/:feedId` - 피드 상세
+
+### 알림
+
+- **알림 목록**: `/store/:storeId/notifications` - 알림 목록
+- **알림 설정**: `/store/:storeId/notifications/settings` - 알림 설정
+
+### 통계
+
+- **주문 통계**: `/store/:storeId/statistics/orders` - 매출/주문 통계
 
 ### 개발 서버
 
 - **로컬 개발**: http://localhost:3002
+- **스토리북**: http://localhost:6007

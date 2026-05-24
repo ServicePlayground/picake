@@ -2,7 +2,7 @@
 
 ## 📋 개요
 
-본 문서는 SweetOrder 백엔드에 구현된 Sentry 에러 로깅 시스템의 구조와 동작 방식을 설명하는 가이드입니다.
+본 문서는 Picake 백엔드에 구현된 Sentry 에러 로깅 시스템의 구조와 동작 방식을 설명하는 가이드입니다.
 
 **최종 업데이트**: 2025-01-23  
 **대상**: `apps/backend` 디렉토리
@@ -168,7 +168,7 @@ SENTRY_DSN=https://xxx@sentry.io/xxx
 
 1. **플랫폼**: Nest.js
 2. **알림**: 중요 이슈, 이메일로 알림 (Slack, Discord는 유료 플랜)
-3. **프로젝트 이름**: `sweetorder-backend-staging` (검증 환경)
+3. **프로젝트 이름**: `picake-backend-staging` (검증 환경)
 
 ### 4.2 환경 변수 설정
 
