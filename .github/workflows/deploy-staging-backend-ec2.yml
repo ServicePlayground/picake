@@ -238,8 +238,9 @@ jobs:
             echo "📦 의존성 설치"
             # ✅ [FIX] yarn install → yarn workspaces focus @picake/backend
             # - backend 의존성만 설치 (web-user, web-seller, web-admin 패키지 제외)
-            # - --network-timeout 60000: 패키지 다운로드가 60초 이상 응답 없으면 hang 대신 에러 처리
-            yarn workspaces focus @picake/backend --network-timeout 60000 || {
+            # - YARN_HTTP_TIMEOUT: 패키지 다운로드가 60초 이상 응답 없으면 hang 대신 에러 처리
+            #   (yarn workspaces focus는 --network-timeout 플래그 미지원, 환경변수로 설정)
+            YARN_HTTP_TIMEOUT=60000 yarn workspaces focus @picake/backend || {
               echo "❌ 의존성 설치 실패"
               rollback_deployment
             }
