@@ -42,3 +42,21 @@ export const formatTime = (date: Date | string): string => {
     minute: "2-digit",
   });
 };
+
+/**
+ * 날짜를 점 구분 문자열로 포맷팅 (YYYY.MM.DD 형식)
+ *
+ * @param date - 포맷팅할 날짜 (Date 객체 또는 ISO 문자열)
+ * @returns 날짜 문자열 (예: "2024.01.05")
+ *
+ * @example
+ * formatDateDot(new Date()) // "2024.01.05"
+ * formatDateDot("2024-01-05T12:00:00.000Z") // "2024.01.05"
+ */
+export const formatDateDot = (date: Date | string): string => {
+  const d = typeof date === "string" ? new Date(date) : date;
+  const y = d.getFullYear();
+  const m = d.getMonth() + 1;
+  const day = d.getDate();
+  return `${y}.${String(m).padStart(2, "0")}.${String(day).padStart(2, "0")}`;
+};

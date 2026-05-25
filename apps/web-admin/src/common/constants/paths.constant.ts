@@ -9,6 +9,8 @@ import { AdminSettingsPage } from "@/apps/web-admin/pages/admin-management/setti
 import { HomeBannersListPage } from "@/apps/web-admin/pages/consumer/home-banners/List";
 import { ConsumerTermsListPage } from "@/apps/web-admin/pages/consumer/terms/List";
 import { SellerTermsListPage } from "@/apps/web-admin/pages/seller/terms/List";
+import { NoticesListPage } from "@/apps/web-admin/pages/consumer/notices/List";
+import { QnasListPage } from "@/apps/web-admin/pages/consumer/qnas/List";
 
 export const ROUTES = {
   ROOT: "/",
@@ -28,6 +30,8 @@ export const ROUTES = {
   CONSUMER: {
     HOME_BANNERS: "/consumer/home-banners",
     TERMS: "/consumer/terms",
+    NOTICES: "/consumer/notices",
+    QNAS: "/consumer/qnas",
   },
   SELLER: {
     TERMS: "/seller/terms",
@@ -52,6 +56,8 @@ export const ADMIN_ROUTE_CONFIG = [
   // 구매자 앱
   { path: ROUTES.CONSUMER.HOME_BANNERS, element: HomeBannersListPage },
   { path: ROUTES.CONSUMER.TERMS, element: ConsumerTermsListPage },
+  { path: ROUTES.CONSUMER.NOTICES, element: NoticesListPage },
+  { path: ROUTES.CONSUMER.QNAS, element: QnasListPage },
   // 판매자 앱
   { path: ROUTES.SELLER.TERMS, element: SellerTermsListPage },
 ] as const;

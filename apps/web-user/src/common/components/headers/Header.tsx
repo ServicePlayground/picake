@@ -36,7 +36,7 @@ export default function Header({ variant = "main", title, onBackClick }: HeaderP
   const { data: regionsData } = useStoreRegions();
 
   const [overrideResult, setOverrideResult] = useState<RegionMatchResult | null>(null);
-  const [previousResult, setPreviousResult] = useState<RegionMatchResult | null>(null);
+  const [previousResult] = useState<RegionMatchResult | null>(null);
   const [showOpenAlarmToast, setShowOpenAlarmToast] = useState(false);
   const [regionToast, setRegionToast] = useState<"loading" | "done" | null>(null);
   const isRegionChanging = useRef(false);

@@ -248,6 +248,68 @@ const SEED_HOME_BANNERS = [
   },
 ] as const;
 
+const SEED_NOTICES = [
+  {
+    TITLE: "서비스 점검 안내",
+    CONTENT:
+      "안녕하세요. Picake입니다.\n2026년 6월 1일(일) 02:00~06:00 서비스 점검이 예정되어 있습니다.\n이용에 불편을 드려 죄송합니다.",
+    IS_PINNED: true,
+    IS_ACTIVE: true,
+    CREATED_AT: new Date("2026-05-20T09:00:00Z"),
+  },
+  {
+    TITLE: "Picake 서비스 오픈 안내",
+    CONTENT: "Picake 베타 서비스가 오픈되었습니다.\n많은 이용 부탁드립니다.",
+    IS_PINNED: false,
+    IS_ACTIVE: true,
+    CREATED_AT: new Date("2026-05-22T10:00:00Z"),
+  },
+  {
+    TITLE: "고객센터 운영 시간 안내",
+    CONTENT: "고객센터 운영 시간은 평일 10:00~18:00입니다.\n주말·공휴일은 휴무입니다.",
+    IS_PINNED: false,
+    IS_ACTIVE: true,
+    CREATED_AT: new Date("2026-05-24T14:00:00Z"),
+  },
+] as const;
+
+const SEED_QNAS = [
+  {
+    QUESTION: "주문은 어떻게 하나요?",
+    ANSWER:
+      "원하시는 상품을 선택한 후 예약하기 버튼을 눌러 픽업 일시와 옵션을 선택하시면 주문이 완료됩니다.",
+    CATEGORY: "주문/예약",
+    IS_PINNED: true,
+    IS_ACTIVE: true,
+    CREATED_AT: new Date("2026-05-20T09:00:00Z"),
+  },
+  {
+    QUESTION: "주문 취소는 언제까지 가능한가요?",
+    ANSWER: "픽업일 기준 환불 정책은 각 스토어 상품 페이지에 안내되어 있습니다.",
+    CATEGORY: "주문/예약",
+    IS_PINNED: false,
+    IS_ACTIVE: true,
+    CREATED_AT: new Date("2026-05-21T10:00:00Z"),
+  },
+  {
+    QUESTION: "픽업 시간을 변경할 수 있나요?",
+    ANSWER:
+      "주문 완료 후 마이페이지에서 픽업 일시 변경이 가능합니다. 변경 불가 시점은 스토어 정책을 확인해 주세요.",
+    CATEGORY: "서비스 이용",
+    IS_PINNED: false,
+    IS_ACTIVE: true,
+    CREATED_AT: new Date("2026-05-23T11:00:00Z"),
+  },
+  {
+    QUESTION: "회원 탈퇴는 어떻게 하나요?",
+    ANSWER: "마이페이지 > 설정 > 회원 탈퇴 메뉴에서 진행하실 수 있습니다.",
+    CATEGORY: "서비스 이용",
+    IS_PINNED: false,
+    IS_ACTIVE: true,
+    CREATED_AT: new Date("2026-05-24T15:00:00Z"),
+  },
+] as const;
+
 /** 시드 약관 공통 필드 — 타입별 제목은 TERMS_TYPE_LABEL과 동일하게 맞춤 */
 const SEED_TERMS_BASE = {
   VERSION: "1.0",
@@ -770,6 +832,67 @@ async function seedHomeBanners() {
 }
 
 /**
+ * 공지사항을 생성합니다.
+ *
+ * 동작 방식:
+ * - 공지사항이 1개 이상이면 건너뛰기
+ * - 없으면 시드 공지 3개 생성 (핀 고정 1건 포함)
+ */
+async function seedNotices() {
+  const existingCount = await prisma.notice.count();
+  if (existingCount > 0) {
+    return 0;
+  }
+
+  const created = await Promise.all(
+    SEED_NOTICES.map((notice) =>
+      prisma.notice.create({
+        data: {
+          title: notice.TITLE,
+          content: notice.CONTENT,
+          isPinned: notice.IS_PINNED,
+          isActive: notice.IS_ACTIVE,
+          createdAt: notice.CREATED_AT,
+        },
+      }),
+    ),
+  );
+
+  return created.length;
+}
+
+/**
+ * Q&A를 생성합니다.
+ *
+ * 동작 방식:
+ * - Q&A가 1개 이상이면 건너뛰기
+ * - 없으면 시드 Q&A 4개 생성 (카테고리·핀 고정 포함)
+ */
+async function seedQnas() {
+  const existingCount = await prisma.qna.count();
+  if (existingCount > 0) {
+    return 0;
+  }
+
+  const created = await Promise.all(
+    SEED_QNAS.map((qna) =>
+      prisma.qna.create({
+        data: {
+          question: qna.QUESTION,
+          answer: qna.ANSWER,
+          category: qna.CATEGORY,
+          isPinned: qna.IS_PINNED,
+          isActive: qna.IS_ACTIVE,
+          createdAt: qna.CREATED_AT,
+        },
+      }),
+    ),
+  );
+
+  return created.length;
+}
+
+/**
  * 약관 문서(활성 v1.0)를 생성합니다.
  *
  * 동작 방식:
@@ -864,8 +987,10 @@ async function seedTermsAgreements(consumerId: string, sellerId: string) {
  * 4. 상품 리뷰 생성 (리뷰가 하나도 없을 때만 생성)
  * 5. 스토어 피드 생성 (피드가 하나도 없을 때만 생성)
  * 6. 홈 배너 생성 (배너가 하나도 없을 때만 생성)
- * 7. 약관 문서 생성 (약관이 하나도 없을 때만 생성)
- * 8. 시드 계정 약관 동의 이력 연결 (활성 약관이 있을 때 upsert)
+ * 7. 공지사항 생성 (공지가 하나도 없을 때만 생성)
+ * 8. Q&A 생성 (Q&A가 하나도 없을 때만 생성)
+ * 9. 약관 문서 생성 (약관이 하나도 없을 때만 생성)
+ * 10. 시드 계정 약관 동의 이력 연결 (활성 약관이 있을 때 upsert)
  *
  * 특징:
  * - idempotent: 여러 번 실행해도 안전함
@@ -875,6 +1000,8 @@ async function seedTermsAgreements(consumerId: string, sellerId: string) {
  * - 리뷰는 1개 이상 존재하면 업데이트하지 않음, 하나도 없을 때만 생성
  * - 피드는 1개 이상 존재하면 업데이트하지 않음, 하나도 없을 때만 생성
  * - 홈 배너는 1개 이상 존재하면 업데이트하지 않음, 하나도 없을 때만 생성
+ * - 공지사항은 1개 이상 존재하면 업데이트하지 않음, 하나도 없을 때만 생성
+ * - Q&A는 1개 이상 존재하면 업데이트하지 않음, 하나도 없을 때만 생성
  * - 약관 문서는 1개 이상 존재하면 업데이트하지 않음, 하나도 없을 때만 생성
  * - 약관 동의 이력은 시드 계정에 대해 upsert (문서가 있으면 매 실행 시 연결 보장)
  */
@@ -887,6 +1014,8 @@ async function main() {
   const reviewCreatedCount = await seedProductReviews(consumers, products, stores);
   const feedCreatedCount = await seedStoreFeeds();
   const homeBannerCreatedCount = await seedHomeBanners();
+  const noticeCreatedCount = await seedNotices();
+  const qnaCreatedCount = await seedQnas();
   const termsDocumentCreatedCount = await seedTermsDocuments();
   const termsAgreementUpsertCount = await seedTermsAgreements(consumers[0].id, seller.id);
 
@@ -898,6 +1027,8 @@ async function main() {
   console.log(`✅ Product reviews created (if none existed): ${reviewCreatedCount}`);
   console.log(`✅ Store feeds created (if none existed): ${feedCreatedCount}`);
   console.log(`✅ Home banners created (if none existed): ${homeBannerCreatedCount}`);
+  console.log(`✅ Notices created (if none existed): ${noticeCreatedCount}`);
+  console.log(`✅ Q&As created (if none existed): ${qnaCreatedCount}`);
   console.log(`✅ Terms documents created (if none existed): ${termsDocumentCreatedCount}`);
   console.log(`✅ Terms agreements upserted for seed users: ${termsAgreementUpsertCount}`);
   console.log("🎉 Database seeding (idempotent) completed!");

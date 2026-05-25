@@ -12,9 +12,7 @@ import {
   LIST_CARD_TITLE,
   LIST_SCREEN_HEADING,
   LIST_SECTION_GAP,
-  LIST_STATS_TEXT,
 } from "@/apps/web-admin/common/constants/list-typography.constant";
-import { HOME_BANNER_MAX_COUNT } from "@/apps/web-admin/features/home-banner/constants/homeBanner.constant";
 import { HomeBannerAddSection } from "@/apps/web-admin/features/home-banner/components/form/HomeBannerAddSection";
 import { HomeBannerEditDialog } from "@/apps/web-admin/features/home-banner/components/form/HomeBannerEditDialog";
 import { HomeBannerTable } from "@/apps/web-admin/features/home-banner/components/list/HomeBannerTable";
@@ -59,14 +57,7 @@ export const HomeBannersListPage: React.FC = () => {
 
   return (
     <div className={LIST_SECTION_GAP}>
-      {/* 헤더 */}
-      <div className="flex items-center justify-between gap-4">
-        <h1 className={LIST_SCREEN_HEADING}>홈 배너 관리</h1>
-        <div className={LIST_STATS_TEXT}>
-          <span className="font-semibold text-foreground">{items.length}</span> /{" "}
-          {HOME_BANNER_MAX_COUNT}
-        </div>
-      </div>
+      <h1 className={LIST_SCREEN_HEADING}>홈 배너 관리</h1>
 
       {/* 배너 등록 */}
       <Card className={LIST_CARD}>

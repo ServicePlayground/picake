@@ -8,7 +8,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/apps/web-seller/common/components/cards/Card";
-import { BaseButton as Button } from "@/apps/web-seller/common/components/buttons/BaseButton";
 import { HourlyOrderChart } from "@/apps/web-seller/features/statistics/components/charts/HourlyOrderChart";
 import { HorizontalMetricBars } from "@/apps/web-seller/features/statistics/components/charts/HorizontalMetricBars";
 import { StatisticsDateRangeField } from "@/apps/web-seller/features/statistics/components/StatisticsDateRangeField";
@@ -45,7 +44,7 @@ export const StatisticsOverallContent: React.FC<StatisticsOverallContentProps> =
     markCustom,
   } = useStatisticsOverviewRangeState();
 
-  const { data, isLoading, isFetching, refetch } = useStatisticsOverviewQuery({
+  const { data, isLoading, isFetching } = useStatisticsOverviewQuery({
     storeId,
     startDate,
     endDate,

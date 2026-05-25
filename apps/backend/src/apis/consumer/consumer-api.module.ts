@@ -25,6 +25,10 @@ import { HomeBannerModule } from "@apps/backend/modules/home-banner/home-banner.
 import { ConsumerHomeBannerController } from "@apps/backend/apis/consumer/controllers/home-banner.controller";
 import { TermsModule } from "@apps/backend/modules/terms/terms.module";
 import { ConsumerTermsController } from "@apps/backend/apis/consumer/controllers/terms.controller";
+import { NoticeModule } from "@apps/backend/modules/notice/notice.module";
+import { ConsumerNoticeController } from "@apps/backend/apis/consumer/controllers/notice.controller";
+import { QnaModule } from "@apps/backend/modules/qna/qna.module";
+import { ConsumerQnaController } from "@apps/backend/apis/consumer/controllers/qna.controller";
 
 /**
  * Consumer(구매자) API 모듈 — 경로 prefix `consumer`, JWT aud `consumer`
@@ -45,6 +49,8 @@ import { ConsumerTermsController } from "@apps/backend/apis/consumer/controllers
     RecentViewModule,
     NotificationModule,
     TermsModule,
+    NoticeModule,
+    QnaModule,
     // ChatModule,
   ],
   controllers: [
@@ -61,6 +67,8 @@ import { ConsumerTermsController } from "@apps/backend/apis/consumer/controllers
     ConsumerNotificationController,
     ConsumerHomeBannerController,
     ConsumerTermsController,
+    ConsumerNoticeController,
+    ConsumerQnaController,
     // ConsumerChatController,
   ],
 })
