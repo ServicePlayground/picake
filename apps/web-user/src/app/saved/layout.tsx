@@ -1,0 +1,14 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "찜 목록",
+  description: "저장한 케이크와 매장 목록을 확인하세요.",
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
+
+export default function SavedLayout({ children }: { children: React.ReactNode }) {
+  return children;
+}
