@@ -23,6 +23,8 @@ import { ConsumerNotificationController } from "@apps/backend/apis/consumer/cont
 import { ConsumerFcmTokenController } from "@apps/backend/apis/consumer/controllers/fcm-token.controller";
 import { HomeBannerModule } from "@apps/backend/modules/home-banner/home-banner.module";
 import { ConsumerHomeBannerController } from "@apps/backend/apis/consumer/controllers/home-banner.controller";
+import { TermsModule } from "@apps/backend/modules/terms/terms.module";
+import { ConsumerTermsController } from "@apps/backend/apis/consumer/controllers/terms.controller";
 
 /**
  * Consumer(구매자) API 모듈 — 경로 prefix `consumer`, JWT aud `consumer`
@@ -42,6 +44,7 @@ import { ConsumerHomeBannerController } from "@apps/backend/apis/consumer/contro
     LikeModule,
     RecentViewModule,
     NotificationModule,
+    TermsModule,
     // ChatModule,
   ],
   controllers: [
@@ -57,6 +60,7 @@ import { ConsumerHomeBannerController } from "@apps/backend/apis/consumer/contro
     ConsumerMypageController,
     ConsumerNotificationController,
     ConsumerHomeBannerController,
+    ConsumerTermsController,
     // ConsumerChatController,
   ],
 })

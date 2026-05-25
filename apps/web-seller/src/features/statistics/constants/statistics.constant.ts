@@ -7,9 +7,6 @@ export const STATISTICS_ACCUMULATED_DAY_OFFSET = -89;
 /** 첫 진입 기본 기간: 오늘 기준 며칠 전부터 (포함 일수 = 이 값 + 1) */
 export const STATISTICS_DEFAULT_DAY_OFFSET = -6;
 
-/** 주문 통계 개요 React Query staleTime */
-export const STATISTICS_OVERVIEW_STALE_TIME_MS = 60_000;
-
 /**
  * 주문 통계 화면 카드 표면 — 영역마다 색을 달리하지 않고 동일 톤의 그라데이션만 사용합니다.
  * (차트 막대 색은 `HorizontalMetricBars` 등에서 구분)

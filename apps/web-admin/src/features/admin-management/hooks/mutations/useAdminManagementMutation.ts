@@ -49,8 +49,7 @@ export function useUpdateAdminRegistrationApproval() {
     mutationFn: ({ adminId, dto }) => adminManagementApi.updateRegistrationApproval(adminId, dto),
     onSuccess: (_, variables) => {
       void queryClient.invalidateQueries({ queryKey: adminManagementQueryKeys.all });
-      const label =
-        variables.dto.approvalStatus === AdminApprovalStatus.APPROVED ? "승인" : "거절";
+      const label = variables.dto.approvalStatus === AdminApprovalStatus.APPROVED ? "승인" : "거절";
       addAlert({
         severity: "success",
         message: `가입 신청이 ${label}되었습니다.`,

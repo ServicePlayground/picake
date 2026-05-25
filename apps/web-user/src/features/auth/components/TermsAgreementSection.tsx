@@ -40,25 +40,25 @@ const TERMS_ITEMS: TermsItem[] = [
     key: "termsOfService",
     label: "서비스 이용약관",
     required: true,
-    href: PATHS.LEGAL_TERMS_OF_SERVICE,
+    href: PATHS.TERMS.TERMS_OF_SERVICE,
   },
   {
     key: "privacyPolicy",
     label: "개인정보 처리방침",
     required: true,
-    href: PATHS.LEGAL_PRIVACY_POLICY,
+    href: PATHS.TERMS.PRIVACY_POLICY,
   },
   {
     key: "thirdPartyConsent",
     label: "개인정보 제3자 제공 동의",
     required: true,
-    href: PATHS.LEGAL_THIRD_PARTY_CONSENT,
+    href: PATHS.TERMS.THIRD_PARTY_CONSENT,
   },
   {
     key: "locationTerms",
     label: "위치기반서비스 이용약관",
     required: false,
-    href: PATHS.LEGAL_LOCATION_TERMS,
+    href: PATHS.TERMS.LOCATION_TERMS,
   },
 ];
 
@@ -104,7 +104,13 @@ export function TermsAgreementSection({ value, onChange }: TermsAgreementSection
               }
               className="flex-1 min-w-0"
             />
-            <Link href={item.href} className="shrink-0 ml-2 p-1" aria-label={`${item.label} 보기`}>
+            <Link
+              href={item.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0 ml-2 p-1"
+              aria-label={`${item.label} 보기`}
+            >
               <Icon name="arrow" width={16} height={16} className="text-gray-400 rotate-90" />
             </Link>
           </div>

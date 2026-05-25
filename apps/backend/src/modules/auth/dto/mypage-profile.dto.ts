@@ -129,40 +129,32 @@ export class ConsumerMypageProfileResponseDto extends MypageProfileBaseResponseD
   pushNotificationsEnabled: boolean;
 
   @ApiProperty({
-    description: "서비스 이용약관 동의 시각 (미동의 시 null)",
-    type: String,
-    format: "date-time",
+    description: "동의한 서비스 이용약관 버전 (미동의 시 null)",
     nullable: true,
-    example: "2026-05-23T10:00:00.000Z",
+    example: "1.0",
   })
-  agreedToTermsAt: Date | null;
+  agreedTermsVersion: string | null;
 
   @ApiProperty({
-    description: "개인정보 처리방침 동의 시각 (미동의 시 null)",
-    type: String,
-    format: "date-time",
+    description: "동의한 개인정보 처리방침 버전 (미동의 시 null)",
     nullable: true,
-    example: "2026-05-23T10:00:00.000Z",
+    example: "1.0",
   })
-  agreedToPrivacyAt: Date | null;
+  agreedPrivacyVersion: string | null;
 
   @ApiProperty({
-    description: "개인정보 제3자 제공 동의 시각 (미동의 시 null)",
-    type: String,
-    format: "date-time",
+    description: "동의한 개인정보 제3자 제공 동의 버전 (미동의 시 null)",
     nullable: true,
-    example: "2026-05-23T10:00:00.000Z",
+    example: "1.0",
   })
-  agreedToThirdPartyAt: Date | null;
+  agreedThirdPartyVersion: string | null;
 
   @ApiProperty({
-    description: "위치기반서비스 이용약관 동의 시각 (선택 동의 — 미동의 시 null)",
-    type: String,
-    format: "date-time",
+    description: "동의한 위치기반서비스 이용약관 버전 (선택 동의 — 미동의 시 null)",
     nullable: true,
     example: null,
   })
-  agreedToLocationTermsAt: Date | null;
+  agreedLocationTermsVersion: string | null;
 }
 
 /**
@@ -177,20 +169,16 @@ export class SellerMypageProfileResponseDto extends MypageProfileBaseResponseDto
   sellerVerificationStatus: SellerVerificationStatus;
 
   @ApiProperty({
-    description: "서비스 이용약관 동의 시각 (미동의 시 null)",
-    type: String,
-    format: "date-time",
+    description: "동의한 서비스 이용약관 버전 (미동의 시 null)",
     nullable: true,
-    example: "2026-05-23T10:00:00.000Z",
+    example: "1.0",
   })
-  agreedToTermsAt: Date | null;
+  agreedTermsVersion: string | null;
 
   @ApiProperty({
-    description: "개인정보 처리방침 동의 시각 (미동의 시 null)",
-    type: String,
-    format: "date-time",
+    description: "동의한 개인정보 처리방침 버전 (미동의 시 null)",
     nullable: true,
-    example: "2026-05-23T10:00:00.000Z",
+    example: "1.0",
   })
-  agreedToPrivacyAt: Date | null;
+  agreedPrivacyVersion: string | null;
 }

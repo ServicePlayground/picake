@@ -11,7 +11,7 @@ import { useUpdateAdminManagementConfig } from "@/apps/web-admin/features/admin-
 import { useAdminManagementConfig } from "@/apps/web-admin/features/admin-management/hooks/queries/useAdminManagementQuery";
 
 export const AdminSettingsPage: React.FC = () => {
-  const { data, isLoading, isError } = useAdminManagementConfig();
+  const { data, isLoading } = useAdminManagementConfig();
   const { mutate: updateConfig, isPending } = useUpdateAdminManagementConfig();
 
   return (
@@ -28,13 +28,7 @@ export const AdminSettingsPage: React.FC = () => {
           <ContentLoading variant="section" message="설정을 불러오는 중…" className="py-12" />
         )}
 
-        {isError && (
-          <p className="p-6 text-sm text-destructive">
-            설정을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.
-          </p>
-        )}
-
-        {!isLoading && !isError && data && (
+        {!isLoading && data && (
           <AdminRegistrationApprovalSetting
             config={data}
             isPending={isPending}

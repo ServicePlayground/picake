@@ -1,5 +1,10 @@
 import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/apps/web-admin/common/components/cards/Card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/apps/web-admin/common/components/cards/Card";
 import { EmptyState } from "@/apps/web-admin/common/components/fallbacks/EmptyState";
 import { ContentLoading } from "@/apps/web-admin/common/components/loading/ContentLoading";
 import {
@@ -22,7 +27,7 @@ import type { HomeBannerItemResponseDto } from "@/apps/web-admin/features/home-b
 
 export const HomeBannersListPage: React.FC = () => {
   const [editingItem, setEditingItem] = useState<HomeBannerItemResponseDto | null>(null);
-  const { data, isLoading, isError } = useHomeBannerList();
+  const { data, isLoading } = useHomeBannerList();
   const deleteMutation = useDeleteHomeBanner();
   const reorderMutation = useReorderHomeBanner();
 
@@ -82,15 +87,8 @@ export const HomeBannersListPage: React.FC = () => {
           {isLoading && (
             <ContentLoading variant="section" message="배너를 불러오는 중…" className="py-12" />
           )}
-          {isError && (
-            <p className="py-12 text-center text-sm text-destructive">
-              데이터를 불러오지 못했습니다.
-            </p>
-          )}
-          {!isLoading && !isError && items.length === 0 && (
-            <EmptyState message="등록된 배너가 없습니다." />
-          )}
-          {!isLoading && !isError && items.length > 0 && (
+          {!isLoading && items.length === 0 && <EmptyState message="등록된 배너가 없습니다." />}
+          {!isLoading && items.length > 0 && (
             <HomeBannerTable
               items={items}
               isBusy={isBusy}

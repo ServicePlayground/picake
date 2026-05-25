@@ -20,6 +20,8 @@ import { SellerMypageController } from "@apps/backend/apis/seller/controllers/my
 import { SellerHomeModule } from "@apps/backend/modules/seller-home/seller-home.module";
 import { UploadModule } from "@apps/backend/modules/upload/upload.module";
 import { SellerUploadController } from "@apps/backend/apis/seller/controllers/upload.controller";
+import { TermsModule } from "@apps/backend/modules/terms/terms.module";
+import { SellerTermsController } from "@apps/backend/apis/seller/controllers/terms.controller";
 
 /**
  * Seller API 모듈
@@ -38,6 +40,7 @@ import { SellerUploadController } from "@apps/backend/apis/seller/controllers/up
     OrderModule,
     StatisticsModule,
     NotificationModule,
+    TermsModule,
     // ChatModule,
   ],
   controllers: [
@@ -52,6 +55,7 @@ import { SellerUploadController } from "@apps/backend/apis/seller/controllers/up
     SellerStatisticsController,
     SellerNotificationController,
     SellerMypageController,
+    SellerTermsController,
     // SellerChatController,
   ],
 })

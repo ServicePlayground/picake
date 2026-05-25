@@ -83,12 +83,6 @@ model Consumer {
   kakaoId     String? @unique @map("kakao_id")
   kakaoEmail  String? @map("kakao_email")
 
-  /// 약관 동의 타임스탬프 (회원가입 시점 기록 — 법적 증거)
-  agreedToTermsAt        DateTime? @map("agreed_to_terms_at")
-  agreedToPrivacyAt      DateTime? @map("agreed_to_privacy_at")
-  agreedToThirdPartyAt   DateTime? @map("agreed_to_third_party_at")
-  agreedToLocationTermsAt DateTime? @map("agreed_to_location_terms_at")
-
   createdAt   DateTime @default(now()) @map("created_at")
   lastLoginAt DateTime? @map("last_login_at")
 
@@ -101,6 +95,7 @@ model Consumer {
   consumerNotifications UserNotification[]
   fcmTokens          ConsumerFcmToken[]
   notificationPreferences ConsumerNotificationPreference[]
+  termsAgreements    ConsumerTermsAgreement[]
 
   @@index([phone])
   @@index([googleId])
@@ -129,16 +124,13 @@ model Seller {
   /// 판매자 온보딩·검증 단계 (스토어 생성 후 갱신)
   sellerVerificationStatus SellerVerificationStatus @default(REGISTERED) @map("seller_verification_status")
 
-  /// 약관 동의 타임스탬프 (회원가입 시점 기록 — 법적 증거)
-  agreedToTermsAt   DateTime? @map("agreed_to_terms_at")
-  agreedToPrivacyAt DateTime? @map("agreed_to_privacy_at")
-
   createdAt   DateTime @default(now()) @map("created_at")
   lastLoginAt DateTime? @map("last_login_at")
 
   stores                  Store[]
   sellerNotifications     UserNotification[]
   notificationPreferences UserNotificationPreference[]
+  termsAgreements         SellerTermsAgreement[]
 
   @@index([phone])
   @@index([googleId])
@@ -683,9 +675,90 @@ model OrderItem {
   @@map("order_items")
 }
 
+/// 약관 문서 (버전 이력 포함 — 약관은 수정 시 새 버전으로만 등록, 기존 내용 불변)
+model TermsDocument {
+  // Primary Key
+  id String @id @default(cuid())
+
+  // 비즈니스 필드
+  type        TermsType // 약관 유형
+  version     String    // 버전 (예: "1.0", "1.1", "2.0")
+  title       String    // 약관 제목
+  content     String    @db.Text  // HTML 형식 약관 본문
+  /// 현재 사용자에게 노출되는 활성 버전 여부 (동일 type에서 1개만 true)
+  isActive    Boolean   @default(false) @map("is_active")
+  /// 약관 시행일 (이 날부터 법적 효력 발생)
+  effectiveAt DateTime  @map("effective_at")
+
+  // 시스템 필드
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  consumerAgreements ConsumerTermsAgreement[]
+  sellerAgreements   SellerTermsAgreement[]
+
+  @@unique([type, version])
+  @@index([type, isActive])
+  @@index([type, effectiveAt(sort: Desc)])
+  @@map("terms_documents")
+}
+
+/// 구매자 약관 동의 이력 (회원가입 시 동의한 버전 기록 — 법적 증거)
+model ConsumerTermsAgreement {
+  // Primary Key
+  id String @id @default(cuid())
+
+  // 관계 필드
+  consumerId      String @map("consumer_id")
+  termsDocumentId String @map("terms_document_id")
+
+  // 시스템 필드
+  agreedAt DateTime @default(now()) @map("agreed_at")
+
+  // Relations
+  consumer      Consumer      @relation(fields: [consumerId], references: [id], onDelete: Cascade)
+  termsDocument TermsDocument @relation(fields: [termsDocumentId], references: [id], onDelete: Cascade)
+
+  @@unique([consumerId, termsDocumentId])
+  @@index([consumerId])
+  @@map("consumer_terms_agreements")
+}
+
+/// 판매자 약관 동의 이력 (회원가입 시 동의한 버전 기록 — 법적 증거)
+model SellerTermsAgreement {
+  // Primary Key
+  id String @id @default(cuid())
+
+  // 관계 필드
+  sellerId        String @map("seller_id")
+  termsDocumentId String @map("terms_document_id")
+
+  // 시스템 필드
+  agreedAt DateTime @default(now()) @map("agreed_at")
+
+  // Relations
+  seller        Seller        @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  termsDocument TermsDocument @relation(fields: [termsDocumentId], references: [id], onDelete: Cascade)
+
+  @@unique([sellerId, termsDocumentId])
+  @@index([sellerId])
+  @@map("seller_terms_agreements")
+}
+
 // ============================================================================
 // Enums
 // ============================================================================
+
+/// 약관 유형 (구매자/판매자 앱별 약관 종류)
+enum TermsType {
+  CONSUMER_TERMS_OF_SERVICE    // 구매자 서비스 이용약관
+  CONSUMER_PRIVACY_POLICY      // 구매자 개인정보 처리방침
+  CONSUMER_THIRD_PARTY_CONSENT // 구매자 개인정보 제3자 제공 동의
+  CONSUMER_LOCATION_TERMS      // 구매자 위치기반서비스 이용약관
+  SELLER_TERMS_OF_SERVICE      // 판매자 서비스 이용약관
+  SELLER_PRIVACY_POLICY        // 판매자 개인정보 처리방침
+}
 
 /// 관리자 가입 승인 상태
 enum AdminApprovalStatus {

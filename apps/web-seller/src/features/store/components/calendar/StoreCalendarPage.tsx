@@ -1,6 +1,5 @@
 import React from "react";
 import { Link, useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Tabs,
@@ -28,9 +27,7 @@ import {
 import { ROUTES } from "@/apps/web-seller/common/constants/paths.constant";
 import { useStoreDetail } from "@/apps/web-seller/features/store/hooks/queries/useStoreQuery";
 import { useUpdateStoreBusinessCalendar } from "@/apps/web-seller/features/store/hooks/mutations/useStoreMutation";
-import { orderApi } from "@/apps/web-seller/features/order/apis/order.api";
-import { orderQueryKeys } from "@/apps/web-seller/features/order/constants/orderQueryKeys.constant";
-import { OrderSortBy } from "@/apps/web-seller/features/order/types/order.dto";
+import { useCalendarDayOrders } from "@/apps/web-seller/features/order/hooks/queries/useOrderQuery";
 import {
   getOrderStatusBadgeVariant,
   getOrderStatusLabel,
@@ -133,19 +130,11 @@ export const StoreCalendarPage: React.FC = () => {
   const [overrides, setOverrides] = React.useState<Record<string, DayOverride>>({});
   const [selectedKey, setSelectedKey] = React.useState<string | null>(null);
 
-  const { data: ordersList, isLoading: ordersLoading } = useQuery({
-    queryKey: orderQueryKeys.calendarByStore(storeId ?? "", selectedKey),
-    queryFn: () =>
-      orderApi.getOrders({
-        page: 1,
-        limit: 200,
-        sortBy: OrderSortBy.LATEST,
-        storeId: storeId!,
-        pickupStartDate: selectedKey!,
-        pickupEndDate: selectedKey!,
-      }),
-    enabled: !!storeId && !!selectedKey,
-  });
+  const {
+    data: ordersList,
+    isLoading: ordersLoading,
+    isError: ordersError,
+  } = useCalendarDayOrders(storeId ?? "", selectedKey);
 
   const [draftOpen, setDraftOpen] = React.useState(true);
   const [draftStart, setDraftStart] = React.useState("00:00");
@@ -325,7 +314,6 @@ export const StoreCalendarPage: React.FC = () => {
     return (
       <div className="space-y-6">
         <h1 className="text-3xl font-bold">스토어 캘린더</h1>
-        <p className="text-muted-foreground">스토어를 불러올 수 없습니다.</p>
       </div>
     );
   }
@@ -534,12 +522,12 @@ export const StoreCalendarPage: React.FC = () => {
                         픽업 예정일이 이 날짜(서울 기준)인 주문입니다. 항목을 누르면 주문 상세로
                         이동합니다.
                       </p>
-                      {!ordersLoading && ordersForSelectedDay.length === 0 ? (
+                      {!ordersLoading && !ordersError && ordersForSelectedDay.length === 0 ? (
                         <p className="rounded-md border border-dashed border-border bg-muted/30 px-4 py-8 text-center text-sm text-muted-foreground">
                           이 날짜에 해당하는 픽업 예약이 없습니다.
                         </p>
                       ) : null}
-                      {!ordersLoading && ordersForSelectedDay.length > 0 ? (
+                      {!ordersLoading && !ordersError && ordersForSelectedDay.length > 0 ? (
                         <ul className="max-h-64 space-y-2 overflow-y-auto pr-1">
                           {ordersForSelectedDay.map((o) => (
                             <li key={o.id}>

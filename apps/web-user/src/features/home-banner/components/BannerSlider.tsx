@@ -32,14 +32,22 @@ function updateBullets(bullets: HTMLElement[], activeIndex: number) {
   });
 }
 
-function BannerSlideImage({ src, alt, priority }: { src: string; alt: string; priority?: boolean }) {
+function BannerSlideImage({
+  src,
+  alt,
+  priority,
+}: {
+  src: string;
+  alt: string;
+  priority?: boolean;
+}) {
   return (
     <Image src={src} alt={alt} fill className="object-cover" priority={priority} sizes="100vw" />
   );
 }
 
 export default function BannerSlider() {
-  const { data: banners = [], isLoading, isError } = useHomeBanners();
+  const { data: banners = [], isLoading } = useHomeBanners();
 
   if (isLoading) {
     return (
@@ -49,7 +57,7 @@ export default function BannerSlider() {
     );
   }
 
-  if (isError || banners.length === 0) {
+  if (banners.length === 0) {
     return <div className="h-[246px]" aria-hidden />;
   }
 
@@ -79,11 +87,7 @@ export default function BannerSlider() {
       >
         {banners.map((banner, idx) => {
           const slideContent = (
-            <BannerSlideImage
-              src={banner.imageUrl}
-              alt={`배너 ${idx + 1}`}
-              priority={idx === 0}
-            />
+            <BannerSlideImage src={banner.imageUrl} alt={`배너 ${idx + 1}`} priority={idx === 0} />
           );
 
           return (

@@ -1,13 +1,9 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
 import { likeApi, LikedStoresResponse } from "@/apps/web-user/features/like/apis/like.api";
 import { likeQueryKeys } from "@/apps/web-user/features/like/constants/likeQueryKeys.constant";
-import { useAlertStore } from "@/apps/web-user/common/store/alert.store";
-import getApiMessage from "@/apps/web-user/common/utils/getApiMessage";
+import { useQueryErrorAlert } from "@/apps/web-user/common/hooks/useQueryErrorAlert";
 
 export function useLikedStores({ limit = 20 }: { limit?: number } = {}) {
-  const { showAlert } = useAlertStore();
-
   const query = useInfiniteQuery<LikedStoresResponse>({
     queryKey: likeQueryKeys.likedStores(),
     queryFn: ({ pageParam = 1 }) =>
@@ -17,15 +13,7 @@ export function useLikedStores({ limit = 20 }: { limit?: number } = {}) {
     initialPageParam: 1,
   });
 
-  useEffect(() => {
-    if (query.isError) {
-      showAlert({
-        type: "error",
-        title: "오류",
-        message: getApiMessage.error(query.error),
-      });
-    }
-  }, [query.isError, query.error, showAlert]);
+  useQueryErrorAlert(query);
 
   return query;
 }

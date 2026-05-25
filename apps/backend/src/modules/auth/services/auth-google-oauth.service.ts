@@ -20,6 +20,7 @@ import {
 import { LoggerUtil } from "@apps/backend/common/utils/logger.util";
 import { buildInitialNicknameFromName } from "@apps/backend/modules/auth/utils/google-register-nickname.util";
 import { SentryUtil } from "@apps/backend/common/utils/sentry.util";
+import { TermsService } from "@apps/backend/modules/terms/terms.service";
 
 /**
  * 구글 OAuth — Consumer / Seller 테이블·JWT aud 분리
@@ -45,6 +46,7 @@ export class AuthGoogleOauthService {
     private readonly configService: ConfigService,
     private readonly authPhoneService: AuthPhoneService,
     private readonly withdrawService: AuthWithdrawService,
+    private readonly termsService: TermsService,
   ) {
     this.consumerGoogleClientId = configService.get<string>("GOOGLE_CLIENT_ID")!;
     this.consumerGoogleClientSecret = configService.get<string>("GOOGLE_CLIENT_SECRET")!;
@@ -354,12 +356,16 @@ export class AuthGoogleOauthService {
           nickname: buildInitialNicknameFromName(trimmedName),
           isPhoneVerified: true,
           lastLoginAt: now,
-          agreedToTermsAt: agreedToTerms ? now : null,
-          agreedToPrivacyAt: agreedToPrivacy ? now : null,
-          agreedToThirdPartyAt: agreedToThirdParty ? now : null,
-          agreedToLocationTermsAt: agreedToLocationTerms ? now : null,
         },
       });
+
+      // 약관 버전 동의 이력 기록
+      await this.termsService.recordConsumerAgreementsInTransaction(
+        tx,
+        row.id,
+        googleRegisterDto.termsDocumentIds ?? [],
+      );
+
       const tokenPair = await this.jwtUtil.generateTokenPair({
         sub: row.id,
         aud: AUDIENCE.CONSUMER,
@@ -437,10 +443,16 @@ export class AuthGoogleOauthService {
           isPhoneVerified: true,
           lastLoginAt: now,
           sellerVerificationStatus: "REGISTERED",
-          agreedToTermsAt: agreedToTerms ? now : null,
-          agreedToPrivacyAt: agreedToPrivacy ? now : null,
         },
       });
+
+      // 약관 버전 동의 이력 기록
+      await this.termsService.recordSellerAgreementsInTransaction(
+        tx,
+        row.id,
+        googleRegisterDto.termsDocumentIds ?? [],
+      );
+
       const tokenPair = await this.jwtUtil.generateTokenPair({
         sub: row.id,
         aud: AUDIENCE.SELLER,

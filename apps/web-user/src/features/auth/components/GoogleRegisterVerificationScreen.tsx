@@ -28,6 +28,12 @@ import {
   isRequiredTermsAllChecked,
   type TermsAgreementState,
 } from "@/apps/web-user/features/auth/components/TermsAgreementSection";
+import { useAlertStore } from "@/apps/web-user/common/store/alert.store";
+import { useConsumerActiveTerms } from "@/apps/web-user/features/terms/hooks/queries/useTermsQuery";
+import {
+  buildConsumerTermsDocumentIds,
+  mapConsumerActiveTermsToDocIds,
+} from "@/apps/web-user/features/terms/utils/terms-consent.util";
 
 function formatCountdownMmSs(totalSeconds: number): string {
   const s = Math.max(0, Math.floor(totalSeconds));
@@ -50,6 +56,7 @@ export function GoogleRegisterVerificationScreen() {
   const handleDuplicateAccount = useCallback((payload: DuplicateAccountPayload) => {
     setDuplicateAccount(payload);
   }, []);
+  const { showAlert } = useAlertStore();
   const googleRegisterMutation = useGoogleRegister({ onDuplicateAccount: handleDuplicateAccount });
 
   const [googleLoginData, setGoogleLoginData] = useState<{
@@ -68,6 +75,11 @@ export function GoogleRegisterVerificationScreen() {
   const [codeExpiresAt, setCodeExpiresAt] = useState<string | null>(null);
   const [countdownTick, setCountdownTick] = useState(0);
   const [termsState, setTermsState] = useState<TermsAgreementState>(INITIAL_TERMS_STATE);
+  const { data: consumerActiveTerms } = useConsumerActiveTerms();
+  const activeTermsDocIds = useMemo(
+    () => mapConsumerActiveTermsToDocIds(consumerActiveTerms ?? {}),
+    [consumerActiveTerms],
+  );
 
   useEffect(() => {
     const googleId = searchParams.get("googleId")?.trim();
@@ -167,6 +179,16 @@ export function GoogleRegisterVerificationScreen() {
       purpose: PHONE_VERIFICATION_PURPOSE.GOOGLE_REGISTRATION,
     });
 
+    const termsDocumentIds = buildConsumerTermsDocumentIds(termsState, activeTermsDocIds);
+    if (!termsDocumentIds) {
+      showAlert({
+        type: "warning",
+        title: "약관 동의",
+        message: "약관 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.",
+      });
+      return;
+    }
+
     await googleRegisterMutation.mutateAsync({
       ...googleLoginData,
       phone: normalized,
@@ -175,6 +197,7 @@ export function GoogleRegisterVerificationScreen() {
       agreedToPrivacy: termsState.privacyPolicy,
       agreedToThirdParty: termsState.thirdPartyConsent,
       agreedToLocationTerms: termsState.locationTerms,
+      termsDocumentIds,
     });
   };
 

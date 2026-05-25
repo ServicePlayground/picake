@@ -4,7 +4,7 @@ import { ContentLoading } from "@/apps/web-seller/common/components/loading/Cont
 import { MypageProfileSection } from "@/apps/web-seller/features/mypage/components/MypageProfileSection";
 import { MypagePhoneSection } from "@/apps/web-seller/features/mypage/components/MypagePhoneSection";
 import { MypageWithdrawSection } from "@/apps/web-seller/features/mypage/components/MypageWithdrawSection";
-import { MypageLegalSection } from "@/apps/web-seller/features/mypage/components/MypageLegalSection";
+import { MypageTermsSection } from "@/apps/web-seller/features/mypage/components/MypageTermsSection";
 
 /**
  * 판매자 계정 마이페이지
@@ -30,7 +30,7 @@ export const MypageIndexPage: React.FC = () => {
       </div>
 
       <MypageProfileSection profile={profile} />
-      <MypageLegalSection profile={profile} />
+      <MypageTermsSection profile={profile} />
       <MypagePhoneSection />
       <MypageWithdrawSection />
     </div>

@@ -81,7 +81,7 @@ export interface StoreHomeStoreProfileProps {
 }
 
 export const StoreHomeStoreProfile: React.FC<StoreHomeStoreProfileProps> = ({ storeId }) => {
-  const { data: s, isLoading, isError } = useStoreDetail(storeId);
+  const { data: s, isLoading } = useStoreDetail(storeId);
   const [logoFailed, setLogoFailed] = useState(false);
 
   const bankLabel =
@@ -97,12 +97,8 @@ export const StoreHomeStoreProfile: React.FC<StoreHomeStoreProfileProps> = ({ st
     );
   }
 
-  if (isError || !s) {
-    return (
-      <section className="rounded-2xl border border-destructive/30 bg-destructive/5 p-8">
-        <p className="text-sm text-destructive">스토어 정보를 불러오지 못했습니다.</p>
-      </section>
-    );
+  if (!s) {
+    return null;
   }
 
   return (

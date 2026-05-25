@@ -25,8 +25,8 @@ import { FindAccountPage } from "@/apps/web-seller/pages/auth/FindAccount";
 import { GoogleAuthCallbackPage } from "@/apps/web-seller/pages/auth/GoogleAuthCallback";
 import { KakaoAuthCallbackPage } from "@/apps/web-seller/pages/auth/KakaoAuthCallback";
 import { MypageIndexPage } from "@/apps/web-seller/pages/mypage/Index";
-import { TermsOfServicePage } from "@/apps/web-seller/pages/legal/TermsOfService";
-import { PrivacyPolicyPage } from "@/apps/web-seller/pages/legal/PrivacyPolicy";
+import { TermsOfServicePage } from "@/apps/web-seller/pages/terms/TermsOfService";
+import { PrivacyPolicyPage } from "@/apps/web-seller/pages/terms/PrivacyPolicy";
 
 // 인증 관련 경로 (AdminLayout 밖)
 export const AUTH_ROUTE_CONFIG = [
@@ -34,8 +34,8 @@ export const AUTH_ROUTE_CONFIG = [
   { path: ROUTES.AUTH.FIND_ACCOUNT, element: FindAccountPage },
   { path: ROUTES.AUTH.GOOGLE_REDIRECT_URI, element: GoogleAuthCallbackPage },
   { path: ROUTES.AUTH.KAKAO_REDIRECT_URI, element: KakaoAuthCallbackPage },
-  { path: ROUTES.LEGAL.TERMS_OF_SERVICE, element: TermsOfServicePage },
-  { path: ROUTES.LEGAL.PRIVACY_POLICY, element: PrivacyPolicyPage },
+  { path: ROUTES.TERMS.TERMS_OF_SERVICE, element: TermsOfServicePage },
+  { path: ROUTES.TERMS.PRIVACY_POLICY, element: PrivacyPolicyPage },
 ] as const;
 
 // 관리자 관련 경로 (AdminLayout 안)

@@ -1,4 +1,12 @@
-import { IsString, IsNotEmpty, IsBoolean, IsOptional, MinLength, MaxLength } from "class-validator";
+import {
+  IsString,
+  IsNotEmpty,
+  IsBoolean,
+  IsOptional,
+  IsArray,
+  MinLength,
+  MaxLength,
+} from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
 import { Transform } from "class-transformer";
 import { IsValidKoreanPhone } from "@apps/backend/common/decorators/validators.decorator";
@@ -84,4 +92,15 @@ export class GoogleRegisterRequestDto {
   @IsOptional()
   @IsBoolean()
   agreedToLocationTerms?: boolean;
+
+  @ApiProperty({
+    description: "동의한 약관 문서 ID 목록 (버전 이력 기록용, 선택)",
+    example: ["clxxxxxx", "clyyyyyy"],
+    required: false,
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  termsDocumentIds?: string[];
 }

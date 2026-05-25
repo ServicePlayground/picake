@@ -19,7 +19,7 @@ import { useAdminRegistrationRequestList } from "@/apps/web-admin/features/admin
 export const AdminRequestsListPage: React.FC = () => {
   const [page, setPage] = useState(1);
 
-  const { data, isLoading, isError } = useAdminRegistrationRequestList({
+  const { data, isLoading } = useAdminRegistrationRequestList({
     page,
     limit: ADMIN_ACCOUNT_LIST_PAGE_SIZE,
   });
@@ -59,12 +59,6 @@ export const AdminRequestsListPage: React.FC = () => {
       {/* 목록 */}
       {isLoading ? (
         <ContentLoading variant="section" message="가입 신청을 불러오는 중…" className="py-12" />
-      ) : isError ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="text-sm text-destructive">
-            데이터를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.
-          </div>
-        </div>
       ) : (
         <>
           {items.length === 0 ? (
@@ -79,9 +73,7 @@ export const AdminRequestsListPage: React.FC = () => {
                   onReject={handleReject}
                 />
               </Card>
-              {meta && (
-                <AdminManagementPagination page={page} meta={meta} onPageChange={setPage} />
-              )}
+              {meta && <AdminManagementPagination page={page} meta={meta} onPageChange={setPage} />}
             </>
           )}
         </>

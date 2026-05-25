@@ -30,8 +30,7 @@ export const AUTH_ERROR_MESSAGES = {
   THROTTLE_LIMIT_EXCEEDED: "ThrottlerException: Too Many Requests",
   USERNAME_ALREADY_EXISTS: "이미 사용 중인 아이디입니다.",
   ADMIN_LOGIN_INVALID_CREDENTIALS: "아이디 또는 비밀번호가 올바르지 않습니다.",
-  ADMIN_REGISTRATION_PENDING:
-    "가입 승인 대기 중입니다. 관리자의 승인 후 로그인할 수 있습니다.",
+  ADMIN_REGISTRATION_PENDING: "가입 승인 대기 중입니다. 관리자의 승인 후 로그인할 수 있습니다.",
   ADMIN_REGISTRATION_REJECTED: "가입이 거절된 계정입니다. 관리자에게 문의해주세요.",
   ADMIN_NOT_APPROVED: "승인되지 않은 계정입니다.",
   ADMIN_TOTP_PENDING_TOKEN_INVALID: "유효하지 않은 임시 토큰입니다. 다시 로그인해주세요.",

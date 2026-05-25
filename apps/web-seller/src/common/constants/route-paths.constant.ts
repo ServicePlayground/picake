@@ -31,8 +31,8 @@ export const ROUTES = {
     GOOGLE_REDIRECT_URI: "/auth/login/google",
     KAKAO_REDIRECT_URI: "/auth/login/kakao",
   },
-  LEGAL: {
-    TERMS_OF_SERVICE: "/legal/terms-of-service",
-    PRIVACY_POLICY: "/legal/privacy-policy",
+  TERMS: {
+    TERMS_OF_SERVICE: "/terms/terms-of-service",
+    PRIVACY_POLICY: "/terms/privacy-policy",
   },
 } as const;

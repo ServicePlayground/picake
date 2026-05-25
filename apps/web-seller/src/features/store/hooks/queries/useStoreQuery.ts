@@ -1,8 +1,6 @@
-import { useEffect } from "react";
-import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useQueryErrorAlert } from "@/apps/web-seller/common/hooks/useQueryErrorAlert";
 import { storeApi } from "@/apps/web-seller/features/store/apis/store.api";
-import { useAlertStore } from "@/apps/web-seller/common/store/alert.store";
-import getApiMessage from "@/apps/web-seller/common/utils/getApiMessage";
 import {
   GetSellerStoresRequestDto,
   StoreListResponseDto,
@@ -17,7 +15,6 @@ export function useStoreList({
   search,
   sortBy,
 }: Partial<GetSellerStoresQueryParams> = {}) {
-  const { addAlert } = useAlertStore();
   const { isAuthenticated } = useAuthStore();
 
   const query = useInfiniteQuery<StoreListResponseDto>({
@@ -31,8 +28,6 @@ export function useStoreList({
       if (sortBy !== undefined) params.sortBy = sortBy;
       return storeApi.getStoreList(params);
     },
-    // 반환된 값은 다음 API 요청의 queryFn의 pageParam으로 전달됩니다.
-    // 이 값은 hasNextPage에도 영향을 줍니다.
     getNextPageParam: (lastPage) => {
       if (lastPage.meta.hasNext) {
         return lastPage.meta.currentPage + 1;
@@ -40,39 +35,23 @@ export function useStoreList({
       return undefined;
     },
     initialPageParam: 1,
-    enabled: isAuthenticated, // 인증된 경우에만 자동으로 호출
+    enabled: isAuthenticated,
   });
 
-  useEffect(() => {
-    if (query.isError) {
-      addAlert({
-        severity: "error",
-        message: getApiMessage.error(query.error),
-      });
-    }
-  }, [query.isError, query.error, addAlert]);
+  useQueryErrorAlert(query);
 
   return query;
 }
 
 // 스토어 상세 조회 쿼리
 export function useStoreDetail(storeId: string) {
-  const { addAlert } = useAlertStore();
-
   const query = useQuery({
     queryKey: storeQueryKeys.detail(storeId),
     queryFn: () => storeApi.getStoreDetail(storeId),
     enabled: !!storeId,
   });
 
-  useEffect(() => {
-    if (query.isError) {
-      addAlert({
-        severity: "error",
-        message: getApiMessage.error(query.error),
-      });
-    }
-  }, [query.isError, query.error, addAlert]);
+  useQueryErrorAlert(query);
 
   return query;
 }

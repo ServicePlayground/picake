@@ -1,15 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
+import { useQueryErrorAlert } from "@/apps/web-seller/common/hooks/useQueryErrorAlert";
+import { useAuthStore } from "@/apps/web-seller/features/auth/store/auth.store";
 import { mypageApi } from "@/apps/web-seller/features/mypage/apis/mypage.api";
 import { mypageQueryKeys } from "@/apps/web-seller/features/mypage/constants/mypageQueryKeys.constant";
 import type { SellerMypageProfileResponseDto } from "@/apps/web-seller/features/mypage/types/mypage.dto";
-import { useAuthStore } from "@/apps/web-seller/features/auth/store/auth.store";
 
 export function useMypageProfile() {
   const { isAuthenticated } = useAuthStore();
 
-  return useQuery<SellerMypageProfileResponseDto>({
+  const query = useQuery<SellerMypageProfileResponseDto>({
     queryKey: mypageQueryKeys.profile(),
     queryFn: () => mypageApi.getProfile(),
     enabled: isAuthenticated,
   });
+
+  useQueryErrorAlert(query);
+
+  return query;
 }

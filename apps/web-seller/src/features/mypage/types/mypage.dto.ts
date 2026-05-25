@@ -19,10 +19,10 @@ export interface SellerMypageProfileResponseDto {
   sellerVerificationStatus: string;
   createdAt: string;
   lastLoginAt: string;
-  /** 서비스 이용약관 동의 시각 (미동의 시 null) */
-  agreedToTermsAt: string | null;
-  /** 개인정보 처리방침 동의 시각 (미동의 시 null) */
-  agreedToPrivacyAt: string | null;
+  /** 동의한 서비스 이용약관 버전 (미동의 시 null) */
+  agreedTermsVersion: string | null;
+  /** 동의한 개인정보 처리방침 버전 (미동의 시 null) */
+  agreedPrivacyVersion: string | null;
 }
 
 /** PATCH /v1/seller/mypage/profile */

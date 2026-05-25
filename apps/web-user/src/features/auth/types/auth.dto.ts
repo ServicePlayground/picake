@@ -40,6 +40,8 @@ export interface GoogleRegisterRequestDto {
   agreedToPrivacy: boolean;
   agreedToThirdParty: boolean;
   agreedToLocationTerms: boolean;
+  /** 동의한 약관 문서 ID 목록 (버전 이력 기록용) */
+  termsDocumentIds?: string[];
 }
 
 export interface KakaoRegisterRequestDto {
@@ -51,6 +53,8 @@ export interface KakaoRegisterRequestDto {
   agreedToPrivacy: boolean;
   agreedToThirdParty: boolean;
   agreedToLocationTerms: boolean;
+  /** 동의한 약관 문서 ID 목록 (버전 이력 기록용) */
+  termsDocumentIds?: string[];
 }
 
 export interface VerifyPhoneCodeRequestDto {

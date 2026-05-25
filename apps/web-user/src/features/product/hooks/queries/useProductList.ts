@@ -1,5 +1,4 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
 import { productApi } from "@/apps/web-user/features/product/apis/product.api";
 import { productQueryKeys } from "@/apps/web-user/features/product/constants/productQueryKeys.constant";
 import {
@@ -8,8 +7,7 @@ import {
   ProductListQueryParams,
   SortBy,
 } from "@/apps/web-user/features/product/types/product.type";
-import getApiMessage from "@/apps/web-user/common/utils/getApiMessage";
-import { useAlertStore } from "@/apps/web-user/common/store/alert.store";
+import { useQueryErrorAlert } from "@/apps/web-user/common/hooks/useQueryErrorAlert";
 
 export function useProductList({
   limit = 30,
@@ -22,8 +20,6 @@ export function useProductList({
   productCategoryTypes,
   regions,
 }: Partial<ProductListQueryParams> = {}) {
-  const { showAlert } = useAlertStore();
-
   const query = useInfiniteQuery<ProductListResponse>({
     queryKey: productQueryKeys.list({
       limit,
@@ -76,15 +72,7 @@ export function useProductList({
     initialPageParam: 1,
   });
 
-  useEffect(() => {
-    if (query.isError) {
-      showAlert({
-        type: "error",
-        title: "오류",
-        message: getApiMessage.error(query.error),
-      });
-    }
-  }, [query.isError, query.error, showAlert]);
+  useQueryErrorAlert(query);
 
   return query;
 }

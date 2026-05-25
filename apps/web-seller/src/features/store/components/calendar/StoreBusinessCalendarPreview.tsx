@@ -80,7 +80,7 @@ export const StoreBusinessCalendarPreview: React.FC<StoreBusinessCalendarPreview
   storeId,
   className,
 }) => {
-  const { data: store, isLoading, isError } = useStoreDetail(storeId);
+  const { data: store, isLoading } = useStoreDetail(storeId);
   const [monthCursor, setMonthCursor] = React.useState(() => startOfMonth(new Date()));
   const [weeklyOff, setWeeklyOff] = React.useState<Set<number>>(() => new Set());
   const [standardStart, setStandardStart] = React.useState("00:00");
@@ -149,21 +149,8 @@ export const StoreBusinessCalendarPreview: React.FC<StoreBusinessCalendarPreview
     );
   }
 
-  if (isError || !store) {
-    return (
-      <Card className={cn(HOME_CARD, className)}>
-        <CardContent className={cn("p-6", HOME_BODY_MUTED)}>
-          캘린더 정보를 불러오지 못했습니다.{" "}
-          <Link
-            to={ROUTES.STORE_DETAIL_CALENDAR(storeId)}
-            className="font-medium text-primary underline"
-          >
-            캘린더 보기
-          </Link>
-          에서 확인해 주세요.
-        </CardContent>
-      </Card>
-    );
+  if (!store) {
+    return null;
   }
 
   return (

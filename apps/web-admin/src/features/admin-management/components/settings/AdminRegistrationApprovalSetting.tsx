@@ -45,9 +45,7 @@ export function AdminRegistrationApprovalSetting({
               onClick={() => !isPending && onToggle(!config.requireApproval)}
               className={cn(
                 "h-6 w-11 rounded-full border-2 transition-colors duration-200",
-                config.requireApproval
-                  ? "border-primary bg-primary"
-                  : "border-input bg-muted",
+                config.requireApproval ? "border-primary bg-primary" : "border-input bg-muted",
               )}
             >
               <div

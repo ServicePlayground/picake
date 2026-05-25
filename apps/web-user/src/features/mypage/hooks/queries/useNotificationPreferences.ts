@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useQueryErrorAlert } from "@/apps/web-user/common/hooks/useQueryErrorAlert";
 import { useAuthStore } from "@/apps/web-user/common/store/auth.store";
 import {
   mypageApi,
@@ -8,9 +9,13 @@ import {
 export function useNotificationPreferences() {
   const { isAuthenticated } = useAuthStore();
 
-  return useQuery<NotificationPreferences>({
+  const query = useQuery<NotificationPreferences>({
     queryKey: ["mypage", "notification-preferences"],
     queryFn: mypageApi.getNotificationPreferences,
     enabled: isAuthenticated,
   });
+
+  useQueryErrorAlert(query);
+
+  return query;
 }

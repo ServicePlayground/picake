@@ -64,9 +64,7 @@ export function TotpSetupPage() {
             <p className="text-sm leading-relaxed text-zinc-600">
               {setupTotpMutation.isPending
                 ? "OTP 설정 정보를 불러오는 중입니다..."
-                : setupTotpMutation.isError
-                  ? "QR 코드를 불러오지 못했습니다. 잠시 후 다시 시도해주세요."
-                  : "Google Authenticator 앱을 설치한 후 아래 버튼을 눌러 QR 코드를 생성하세요."}
+                : "Google Authenticator 앱을 설치한 후 아래 버튼을 눌러 QR 코드를 생성하세요."}
             </p>
             {!setupTotpMutation.isPending && (
               <Button
