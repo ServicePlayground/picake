@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useQueryErrorAlert } from "@/apps/web-seller/common/hooks/useQueryErrorAlert";
 import { orderApi } from "@/apps/web-seller/features/order/apis/order.api";
 import { orderQueryKeys } from "@/apps/web-seller/features/order/constants/orderQueryKeys.constant";
 import {
@@ -9,8 +9,6 @@ import {
   OrderListRequestDto,
 } from "@/apps/web-seller/features/order/types/order.dto";
 import type { OrderListQueryParams } from "@/apps/web-seller/features/order/types/order.ui";
-import getApiMessage from "@/apps/web-seller/common/utils/getApiMessage";
-import { useAlertStore } from "@/apps/web-seller/common/store/alert.store";
 
 export function useOrderList({
   page = 1,
@@ -25,8 +23,6 @@ export function useOrderList({
   orderNumber,
   type,
 }: Partial<OrderListQueryParams> & { page: number; limit: number; sortBy: OrderSortBy }) {
-  const { addAlert } = useAlertStore();
-
   const query = useQuery<OrderListResponseDto>({
     queryKey: orderQueryKeys.list({
       page,
@@ -75,35 +71,40 @@ export function useOrderList({
     },
   });
 
-  useEffect(() => {
-    if (query.isError) {
-      addAlert({
-        severity: "error",
-        message: getApiMessage.error(query.error),
-      });
-    }
-  }, [query.isError, query.error, addAlert]);
+  useQueryErrorAlert(query);
 
   return query;
 }
 
 export function useOrderDetail(orderId: string) {
-  const { addAlert } = useAlertStore();
-
   const query = useQuery<OrderResponseDto>({
     queryKey: orderQueryKeys.detail(orderId),
     queryFn: () => orderApi.getOrderDetail(orderId),
     enabled: !!orderId,
   });
 
-  useEffect(() => {
-    if (query.isError) {
-      addAlert({
-        severity: "error",
-        message: getApiMessage.error(query.error),
-      });
-    }
-  }, [query.isError, query.error, addAlert]);
+  useQueryErrorAlert(query);
+
+  return query;
+}
+
+/** 스토어 캘린더: 선택한 픽업일(YYYY-MM-DD) 주문 목록 */
+export function useCalendarDayOrders(storeId: string, pickupDayKey: string | null) {
+  const query = useQuery<OrderListResponseDto>({
+    queryKey: orderQueryKeys.calendarByStore(storeId, pickupDayKey),
+    queryFn: () =>
+      orderApi.getOrders({
+        page: 1,
+        limit: 200,
+        sortBy: OrderSortBy.LATEST,
+        storeId,
+        pickupStartDate: pickupDayKey!,
+        pickupEndDate: pickupDayKey!,
+      }),
+    enabled: !!storeId && !!pickupDayKey,
+  });
+
+  useQueryErrorAlert(query);
 
   return query;
 }

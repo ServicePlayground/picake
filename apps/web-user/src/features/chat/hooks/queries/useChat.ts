@@ -10,14 +10,13 @@ import {
   GetChatRoomsRequest,
 } from "@/apps/web-user/features/chat/types/chat.type";
 import { useRouter } from "next/navigation";
+import { useQueryErrorAlert } from "@/apps/web-user/common/hooks/useQueryErrorAlert";
 import { useAlertStore } from "@/apps/web-user/common/store/alert.store";
-import { useEffect } from "react";
 import getApiMessage from "@/apps/web-user/common/utils/getApiMessage";
 
 // 채팅방 목록 조회 (무한 스크롤)
 export function useChatRooms(limit: number = 20) {
   const accessToken = useAuthStore((state) => state.accessToken);
-  const { showAlert } = useAlertStore();
 
   const query = useInfiniteQuery<ChatRoomListResponse>({
     queryKey: chatQueryKeys.list({ limit }),
@@ -40,15 +39,7 @@ export function useChatRooms(limit: number = 20) {
     enabled: !!accessToken,
   });
 
-  useEffect(() => {
-    if (query.isError) {
-      showAlert({
-        type: "error",
-        title: "오류",
-        message: getApiMessage.error(query.error),
-      });
-    }
-  }, [query.isError, query.error, showAlert]);
+  useQueryErrorAlert(query);
 
   return query;
 }
@@ -76,7 +67,6 @@ export function useCreateOrGetChatRoom() {
 // 메시지 목록 조회 (무한스크롤)
 export function useMessages(roomId: string, limit: number = 50) {
   const accessToken = useAuthStore((state) => state.accessToken);
-  const { showAlert } = useAlertStore();
 
   const query = useInfiniteQuery<MessageListResponse>({
     queryKey: chatQueryKeys.messages(roomId, { limit }),
@@ -99,15 +89,7 @@ export function useMessages(roomId: string, limit: number = 50) {
     enabled: !!roomId && !!accessToken,
   });
 
-  useEffect(() => {
-    if (query.isError) {
-      showAlert({
-        type: "error",
-        title: "오류",
-        message: getApiMessage.error(query.error),
-      });
-    }
-  }, [query.isError, query.error, showAlert]);
+  useQueryErrorAlert(query);
 
   return query;
 }

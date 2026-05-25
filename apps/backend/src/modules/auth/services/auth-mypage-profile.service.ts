@@ -19,6 +19,10 @@ import { AUTH_ERROR_MESSAGES, AUDIENCE } from "@apps/backend/modules/auth/consta
 import { ConsumerMapperUtil } from "@apps/backend/modules/auth/utils/consumer-mapper.util";
 import { SellerMapperUtil } from "@apps/backend/modules/auth/utils/seller-mapper.util";
 import { LoggerUtil } from "@apps/backend/common/utils/logger.util";
+import {
+  CONSUMER_TERMS_AGREEMENT_INCLUDE,
+  SELLER_TERMS_AGREEMENT_INCLUDE,
+} from "@apps/backend/modules/terms/constants/terms.constants";
 
 /**
  * 마이페이지 — 프로필 조회·수정 (구매자·판매자)
@@ -41,6 +45,7 @@ export class AuthMypageProfileService {
     const [row, preference] = await Promise.all([
       this.prisma.consumer.findUnique({
         where: { id: user.sub },
+        include: CONSUMER_TERMS_AGREEMENT_INCLUDE,
       }),
       this.prisma.consumerNotificationPreference.findUnique({
         where: {
@@ -62,6 +67,7 @@ export class AuthMypageProfileService {
       row,
       undefined,
       preference?.orderPushEnabled ?? true,
+      row.termsAgreements,
     );
   }
 
@@ -72,6 +78,7 @@ export class AuthMypageProfileService {
 
     const row = await this.prisma.seller.findUnique({
       where: { id: user.sub },
+      include: SELLER_TERMS_AGREEMENT_INCLUDE,
     });
 
     if (!row) {
@@ -79,7 +86,7 @@ export class AuthMypageProfileService {
       throw new UnauthorizedException(AUTH_ERROR_MESSAGES.ACCESS_TOKEN_ACCOUNT_NOT_FOUND);
     }
 
-    return SellerMapperUtil.mapToSellerInfo(row);
+    return SellerMapperUtil.mapToSellerInfo(row, undefined, row.termsAgreements);
   }
 
   async updateConsumerMypageProfile(
@@ -115,9 +122,10 @@ export class AuthMypageProfileService {
     const updated = await this.prisma.consumer.update({
       where: { id: user.sub },
       data,
+      include: CONSUMER_TERMS_AGREEMENT_INCLUDE,
     });
 
-    return ConsumerMapperUtil.mapConsumerToInfo(updated);
+    return ConsumerMapperUtil.mapConsumerToInfo(updated, undefined, true, updated.termsAgreements);
   }
 
   async updateSellerMypageProfile(
@@ -153,8 +161,9 @@ export class AuthMypageProfileService {
     const updated = await this.prisma.seller.update({
       where: { id: user.sub },
       data,
+      include: SELLER_TERMS_AGREEMENT_INCLUDE,
     });
 
-    return SellerMapperUtil.mapToSellerInfo(updated);
+    return SellerMapperUtil.mapToSellerInfo(updated, undefined, updated.termsAgreements);
   }
 }

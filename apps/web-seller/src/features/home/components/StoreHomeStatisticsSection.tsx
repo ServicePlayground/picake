@@ -62,7 +62,7 @@ export const StoreHomeStatisticsSection: React.FC<StoreHomeStatisticsSectionProp
     };
   }, []);
 
-  const { data, isLoading, isError, isFetching, refetch } = useStatisticsOverviewQuery({
+  const { data, isLoading, isFetching, refetch } = useStatisticsOverviewQuery({
     storeId,
     startDate,
     endDate,
@@ -103,16 +103,7 @@ export const StoreHomeStatisticsSection: React.FC<StoreHomeStatisticsSectionProp
             <div className="flex w-full items-center justify-center rounded-lg border border-border bg-muted/20 py-6">
               <ContentLoading variant="section" message="통계를 불러오는 중…" className="py-8" />
             </div>
-          ) : isError ? (
-            <div className="flex w-full flex-col items-center justify-center gap-3 rounded-lg border border-border bg-muted/20 py-14">
-              <p className="text-sm text-destructive">
-                통계를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
-              </p>
-              <Button type="button" variant="outline" size="sm" onClick={() => refetch()}>
-                다시 시도
-              </Button>
-            </div>
-          ) : (
+          ) : data ? (
             <>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <Card className="border-border bg-card shadow-none">
@@ -184,7 +175,7 @@ export const StoreHomeStatisticsSection: React.FC<StoreHomeStatisticsSectionProp
                 </Card>
               </div>
             </>
-          )}
+          ) : null}
         </CardContent>
       </Card>
     </section>

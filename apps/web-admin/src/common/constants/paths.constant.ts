@@ -7,6 +7,8 @@ import { AdminRequestsListPage } from "@/apps/web-admin/pages/admin-management/r
 import { AdminAccountsListPage } from "@/apps/web-admin/pages/admin-management/accounts/List";
 import { AdminSettingsPage } from "@/apps/web-admin/pages/admin-management/settings/Index";
 import { HomeBannersListPage } from "@/apps/web-admin/pages/consumer/home-banners/List";
+import { ConsumerTermsListPage } from "@/apps/web-admin/pages/consumer/terms/List";
+import { SellerTermsListPage } from "@/apps/web-admin/pages/seller/terms/List";
 
 export const ROUTES = {
   ROOT: "/",
@@ -25,6 +27,10 @@ export const ROUTES = {
   },
   CONSUMER: {
     HOME_BANNERS: "/consumer/home-banners",
+    TERMS: "/consumer/terms",
+  },
+  SELLER: {
+    TERMS: "/seller/terms",
   },
 } as const;
 
@@ -45,4 +51,7 @@ export const ADMIN_ROUTE_CONFIG = [
   { path: ROUTES.ADMIN_MANAGEMENT.SETTINGS, element: AdminSettingsPage },
   // 구매자 앱
   { path: ROUTES.CONSUMER.HOME_BANNERS, element: HomeBannersListPage },
+  { path: ROUTES.CONSUMER.TERMS, element: ConsumerTermsListPage },
+  // 판매자 앱
+  { path: ROUTES.SELLER.TERMS, element: SellerTermsListPage },
 ] as const;

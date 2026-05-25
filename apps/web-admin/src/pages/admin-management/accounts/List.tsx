@@ -32,7 +32,7 @@ export const AdminAccountsListPage: React.FC = () => {
     setPage(1);
   }, [approvalStatus]);
 
-  const { data, isLoading, isError } = useAdminAccountList({
+  const { data, isLoading } = useAdminAccountList({
     page,
     limit: ADMIN_ACCOUNT_LIST_PAGE_SIZE,
     approvalStatus,
@@ -83,12 +83,6 @@ export const AdminAccountsListPage: React.FC = () => {
       {/* 목록 */}
       {isLoading ? (
         <ContentLoading variant="section" message="계정을 불러오는 중…" className="py-12" />
-      ) : isError ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="text-sm text-destructive">
-            데이터를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.
-          </div>
-        </div>
       ) : (
         <>
           {items.length === 0 ? (

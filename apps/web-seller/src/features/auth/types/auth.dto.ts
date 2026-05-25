@@ -59,6 +59,8 @@ export interface GoogleRegisterRequestDto {
   phone: string;
   agreedToTerms: boolean;
   agreedToPrivacy: boolean;
+  /** 동의한 약관 문서 ID 목록 (버전 이력 기록용) */
+  termsDocumentIds?: string[];
 }
 
 export interface KakaoRegisterRequestDto {
@@ -68,6 +70,8 @@ export interface KakaoRegisterRequestDto {
   phone: string;
   agreedToTerms: boolean;
   agreedToPrivacy: boolean;
+  /** 동의한 약관 문서 ID 목록 (버전 이력 기록용) */
+  termsDocumentIds?: string[];
 }
 
 /** POST /v1/seller/auth/find-account */

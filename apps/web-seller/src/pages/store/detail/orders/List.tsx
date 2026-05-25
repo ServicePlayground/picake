@@ -81,7 +81,7 @@ export const StoreDetailOrderListPage: React.FC = () => {
     );
   }
 
-  const { data, isLoading, isError } = useOrderList({
+  const { data, isLoading } = useOrderList({
     page,
     limit: LIMIT,
     sortBy,
@@ -223,10 +223,6 @@ export const StoreDetailOrderListPage: React.FC = () => {
       {/* 주문 목록 */}
       {isLoading ? (
         <ContentLoading variant="section" message="주문을 불러오는 중…" className="py-12" />
-      ) : isError ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="text-destructive">주문을 불러오는 중 오류가 발생했습니다.</div>
-        </div>
       ) : (
         <>
           <OrderList orders={orders} />

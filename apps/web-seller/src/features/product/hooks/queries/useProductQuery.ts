@@ -1,8 +1,6 @@
 import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useQueryErrorAlert } from "@/apps/web-seller/common/hooks/useQueryErrorAlert";
 import { productApi } from "@/apps/web-seller/features/product/apis/product.api";
-import { useAlertStore } from "@/apps/web-seller/common/store/alert.store";
-import getApiMessage from "@/apps/web-seller/common/utils/getApiMessage";
 import { productQueryKeys } from "@/apps/web-seller/features/product/constants/productQueryKeys.constant";
 import {
   ProductListResponseDto,
@@ -13,22 +11,13 @@ import type { GetSellerProductsQueryParams } from "@/apps/web-seller/features/pr
 
 // 상품 상세 조회 쿼리
 export function useProductDetail(productId: string) {
-  const { addAlert } = useAlertStore();
-
   const query = useQuery({
     queryKey: productQueryKeys.detail(productId),
     queryFn: () => productApi.getProductDetail(productId),
     enabled: !!productId,
   });
 
-  useEffect(() => {
-    if (query.isError) {
-      addAlert({
-        severity: "error",
-        message: getApiMessage.error(query.error),
-      });
-    }
-  }, [query.isError, query.error, addAlert]);
+  useQueryErrorAlert(query);
 
   return query;
 }
@@ -46,8 +35,6 @@ export function useProductList({
   productType,
   productCategoryTypes,
 }: Partial<GetSellerProductsQueryParams> & { storeId: string }) {
-  const { addAlert } = useAlertStore();
-
   const query = useInfiniteQuery<ProductListResponseDto>({
     queryKey: productQueryKeys.list({
       limit,
@@ -106,14 +93,7 @@ export function useProductList({
     initialPageParam: 1,
   });
 
-  useEffect(() => {
-    if (query.isError) {
-      addAlert({
-        severity: "error",
-        message: getApiMessage.error(query.error),
-      });
-    }
-  }, [query.isError, query.error, addAlert]);
+  useQueryErrorAlert(query);
 
   return query;
 }

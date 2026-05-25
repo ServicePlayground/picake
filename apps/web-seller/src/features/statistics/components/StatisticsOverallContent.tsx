@@ -45,7 +45,7 @@ export const StatisticsOverallContent: React.FC<StatisticsOverallContentProps> =
     markCustom,
   } = useStatisticsOverviewRangeState();
 
-  const { data, isLoading, isError, isFetching, refetch } = useStatisticsOverviewQuery({
+  const { data, isLoading, isFetching, refetch } = useStatisticsOverviewQuery({
     storeId,
     startDate,
     endDate,
@@ -123,21 +123,7 @@ export const StatisticsOverallContent: React.FC<StatisticsOverallContentProps> =
         >
           <ContentLoading variant="section" message="통계를 불러오는 중…" className="py-10" />
         </div>
-      ) : isError ? (
-        <div
-          className={cn(
-            "flex flex-col items-center justify-center gap-3 rounded-lg border py-16",
-            STATISTICS_SURFACE_CARD,
-          )}
-        >
-          <p className="text-sm text-destructive">
-            통계를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
-          </p>
-          <Button type="button" variant="outline" size="sm" onClick={() => refetch()}>
-            다시 시도
-          </Button>
-        </div>
-      ) : (
+      ) : data ? (
         <>
           <p className="text-xs text-muted-foreground">
             기간은 주문 <span className="font-medium">접수일</span>(서버 Asia/Seoul 달력) 기준이며,
@@ -321,7 +307,7 @@ export const StatisticsOverallContent: React.FC<StatisticsOverallContentProps> =
             </Card>
           </div>
         </>
-      )}
+      ) : null}
     </div>
   );
 };

@@ -24,6 +24,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-error-boundary": "^6.0.0",
+    "react-quill": "^2.0.0",
     "react-router-dom": "^7.9.4",
     "tailwind-merge": "^2.6.0",
     "zustand": "5.0.8"

@@ -1,10 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
+import { useQueryErrorAlert } from "@/apps/web-user/common/hooks/useQueryErrorAlert";
 import { storeApi } from "@/apps/web-user/features/store/apis/store.api";
 
 export function useStoreRegions() {
-  return useQuery({
+  const query = useQuery({
     queryKey: ["store", "regions"],
     queryFn: storeApi.getRegions,
-    staleTime: 1000 * 60 * 10, // 10분 캐시
   });
+
+  useQueryErrorAlert(query);
+
+  return query;
 }

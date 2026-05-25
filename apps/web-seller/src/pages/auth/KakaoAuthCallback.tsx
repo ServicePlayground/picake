@@ -1,4 +1,4 @@
-import { useEffect, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { authApi } from "@/apps/web-seller/features/auth/apis/auth.api";
@@ -26,6 +26,11 @@ import {
   clearPendingOAuthRegister,
   type PendingKakaoRegister,
 } from "@/apps/web-seller/features/auth/utils/oauth-callback-pending.util";
+import { useSellerActiveTerms } from "@/apps/web-seller/features/terms/hooks/queries/useTermsQuery";
+import {
+  buildSellerTermsDocumentIds,
+  mapSellerActiveTermsToDocIds,
+} from "@/apps/web-seller/features/terms/utils/terms-consent.util";
 
 function readInitialKakaoLoginData(): PendingKakaoRegister | null {
   const pending = getPendingOAuthRegister();
@@ -63,6 +68,11 @@ export function KakaoAuthCallbackPage() {
   const [nameError, setNameError] = useState("");
   const [termsState, setTermsState] = useState<SellerTermsAgreementState>(
     INITIAL_SELLER_TERMS_STATE,
+  );
+  const { data: sellerActiveTerms } = useSellerActiveTerms();
+  const activeTermsDocIds = useMemo(
+    () => mapSellerActiveTermsToDocIds(sellerActiveTerms ?? {}),
+    [sellerActiveTerms],
   );
 
   useEffect(() => {
@@ -156,12 +166,23 @@ export function KakaoAuthCallbackPage() {
       return;
     }
 
+    const termsDocumentIds = buildSellerTermsDocumentIds(termsState, activeTermsDocIds);
+    if (!termsDocumentIds) {
+      addAlert({
+        message: "약관 정보를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.",
+        title: "약관 동의",
+        severity: "warning",
+      });
+      return;
+    }
+
     await kakaoRegisterMutation.mutateAsync({
       ...kakaoLoginData,
       phone,
       name: displayName.trim(),
       agreedToTerms: termsState.termsOfService,
       agreedToPrivacy: termsState.privacyPolicy,
+      termsDocumentIds,
     });
     clearPendingOAuthRegister();
   };

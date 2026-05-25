@@ -3,9 +3,15 @@ import {
   ProductCategoryType,
   SellerVerificationStatus,
   StoreBankName,
+  TermsType,
 } from "./generated/client";
 import * as bcrypt from "bcrypt";
 import { ADMIN_BCRYPT_SALT_ROUNDS } from "@apps/backend/modules/auth/constants/auth.constants";
+import {
+  CONSUMER_TERMS_TYPES,
+  SELLER_TERMS_TYPES,
+  TERMS_TYPE_LABEL,
+} from "@apps/backend/modules/terms/constants/terms.constants";
 
 const prisma = new PrismaClient();
 
@@ -241,6 +247,17 @@ const SEED_HOME_BANNERS = [
     CREATED_AT: new Date("2026-05-25T00:00:01Z"),
   },
 ] as const;
+
+/** 시드 약관 공통 필드 — 타입별 제목은 TERMS_TYPE_LABEL과 동일하게 맞춤 */
+const SEED_TERMS_BASE = {
+  VERSION: "1.0",
+  EFFECTIVE_AT: new Date("2024-01-01T00:00:00.000Z"),
+} as const;
+
+const SEED_TERMS_TYPES: TermsType[] = [
+  ...CONSUMER_TERMS_TYPES,
+  ...SELLER_TERMS_TYPES,
+];
 
 /**
  * 시드 계정을 생성합니다 — 구매자 1명, 판매자 1명.
@@ -756,6 +773,89 @@ async function seedHomeBanners() {
 }
 
 /**
+ * 약관 문서(활성 v1.0)를 생성합니다.
+ *
+ * 동작 방식:
+ * - 약관이 1개 이상이면 건너뛰기
+ * - 없으면 구매자·판매자 앱별 타입마다 활성 버전 1개씩 생성
+ */
+async function seedTermsDocuments() {
+  const existingCount = await prisma.termsDocument.count();
+  if (existingCount > 0) {
+    return 0;
+  }
+
+  const created = await Promise.all(
+    SEED_TERMS_TYPES.map((type) => {
+      const title = TERMS_TYPE_LABEL[type];
+      const version = SEED_TERMS_BASE.VERSION;
+      return prisma.termsDocument.create({
+        data: {
+          type,
+          version,
+          title,
+          content: `<h1>${title}</h1><p>시드 데이터용 약관 본문입니다. (버전 ${version})</p>`,
+          isActive: true,
+          effectiveAt: SEED_TERMS_BASE.EFFECTIVE_AT,
+        },
+      });
+    }),
+  );
+
+  return created.length;
+}
+
+/**
+ * 시드 구매자·판매자에 약관 동의 이력을 연결합니다.
+ *
+ * 동작 방식:
+ * - 활성 약관 문서가 없으면 건너뛰기
+ * - 시드 consumer/seller에 대해 upsert (여러 번 실행해도 안전)
+ */
+async function seedTermsAgreements(consumerId: string, sellerId: string) {
+  const activeDocs = await prisma.termsDocument.findMany({
+    where: { isActive: true },
+    select: { id: true, type: true },
+  });
+  if (activeDocs.length === 0) {
+    return 0;
+  }
+
+  const consumerTypeSet = new Set<TermsType>(CONSUMER_TERMS_TYPES);
+  const sellerTypeSet = new Set<TermsType>(SELLER_TERMS_TYPES);
+
+  const ops = activeDocs.flatMap((doc) => {
+    const tasks = [];
+    if (consumerTypeSet.has(doc.type)) {
+      tasks.push(
+        prisma.consumerTermsAgreement.upsert({
+          where: {
+            consumerId_termsDocumentId: { consumerId, termsDocumentId: doc.id },
+          },
+          update: {},
+          create: { consumerId, termsDocumentId: doc.id },
+        }),
+      );
+    }
+    if (sellerTypeSet.has(doc.type)) {
+      tasks.push(
+        prisma.sellerTermsAgreement.upsert({
+          where: {
+            sellerId_termsDocumentId: { sellerId, termsDocumentId: doc.id },
+          },
+          update: {},
+          create: { sellerId, termsDocumentId: doc.id },
+        }),
+      );
+    }
+    return tasks;
+  });
+
+  await Promise.all(ops);
+  return ops.length;
+}
+
+/**
  * 메인 시드 함수
  *
  * 중요!!: ** 스키마가 수정되더라도 ** 기존 데이터 유지되면서 새로운 데이터가 추가/수정되는 방식으로 해야, 실제 배포환경에서 오류가 발생하지 않습니다.
@@ -767,6 +867,8 @@ async function seedHomeBanners() {
  * 4. 상품 리뷰 생성 (리뷰가 하나도 없을 때만 생성)
  * 5. 스토어 피드 생성 (피드가 하나도 없을 때만 생성)
  * 6. 홈 배너 생성 (배너가 하나도 없을 때만 생성)
+ * 7. 약관 문서 생성 (약관이 하나도 없을 때만 생성)
+ * 8. 시드 계정 약관 동의 이력 연결 (활성 약관이 있을 때 upsert)
  *
  * 특징:
  * - idempotent: 여러 번 실행해도 안전함
@@ -776,6 +878,8 @@ async function seedHomeBanners() {
  * - 리뷰는 1개 이상 존재하면 업데이트하지 않음, 하나도 없을 때만 생성
  * - 피드는 1개 이상 존재하면 업데이트하지 않음, 하나도 없을 때만 생성
  * - 홈 배너는 1개 이상 존재하면 업데이트하지 않음, 하나도 없을 때만 생성
+ * - 약관 문서는 1개 이상 존재하면 업데이트하지 않음, 하나도 없을 때만 생성
+ * - 약관 동의 이력은 시드 계정에 대해 upsert (문서가 있으면 매 실행 시 연결 보장)
  */
 async function main() {
   const { seller, consumers } = await upsertSeedUsers();
@@ -786,6 +890,8 @@ async function main() {
   const reviewCreatedCount = await seedProductReviews(consumers, products, stores);
   const feedCreatedCount = await seedStoreFeeds();
   const homeBannerCreatedCount = await seedHomeBanners();
+  const termsDocumentCreatedCount = await seedTermsDocuments();
+  const termsAgreementUpsertCount = await seedTermsAgreements(consumers[0].id, seller.id);
 
   console.log(
     `✅ Seed seller + consumer + admin created/retrieved: ${2 + consumers.length} (seller 1 + consumer 1 + admin 1)`,
@@ -795,6 +901,8 @@ async function main() {
   console.log(`✅ Product reviews created (if none existed): ${reviewCreatedCount}`);
   console.log(`✅ Store feeds created (if none existed): ${feedCreatedCount}`);
   console.log(`✅ Home banners created (if none existed): ${homeBannerCreatedCount}`);
+  console.log(`✅ Terms documents created (if none existed): ${termsDocumentCreatedCount}`);
+  console.log(`✅ Terms agreements upserted for seed users: ${termsAgreementUpsertCount}`);
   console.log("🎉 Database seeding (idempotent) completed!");
 }
 

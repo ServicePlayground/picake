@@ -3,6 +3,7 @@ import { JwtModule } from "@nestjs/jwt";
 import { PassportModule } from "@nestjs/passport";
 import { ConfigService } from "@nestjs/config";
 import { AdminManagementModule } from "@apps/backend/modules/admin-management/admin-management.module";
+import { TermsModule } from "@apps/backend/modules/terms/terms.module";
 import { AuthService } from "@apps/backend/modules/auth/auth.service";
 import { AuthPhoneService } from "@apps/backend/modules/auth/services/auth-phone.service";
 import { AuthGoogleOauthService } from "@apps/backend/modules/auth/services/auth-google-oauth.service";
@@ -23,6 +24,7 @@ import { AuthGuard } from "@apps/backend/modules/auth/guards/auth.guard";
 @Module({
   imports: [
     AdminManagementModule,
+    TermsModule,
     PassportModule,
     JwtModule.registerAsync({
       useFactory: (configService: ConfigService) => ({

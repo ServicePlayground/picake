@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { ChevronRight } from "lucide-react";
 import { Checkbox } from "@/apps/web-seller/common/components/inputs/Checkbox";
-import { ROUTES } from "@/apps/web-seller/common/constants/route-paths.constant";
+import { ROUTES } from "@/apps/web-seller/common/constants/paths.constant";
 import { cn } from "@/apps/web-seller/common/utils/classname.util";
 
 export interface SellerTermsAgreementState {
@@ -33,12 +33,12 @@ const TERMS_ITEMS: TermsItem[] = [
   {
     key: "termsOfService",
     label: "서비스 이용약관",
-    href: ROUTES.LEGAL.TERMS_OF_SERVICE,
+    href: ROUTES.TERMS.TERMS_OF_SERVICE,
   },
   {
     key: "privacyPolicy",
     label: "개인정보 처리방침",
-    href: ROUTES.LEGAL.PRIVACY_POLICY,
+    href: ROUTES.TERMS.PRIVACY_POLICY,
   },
 ];
 

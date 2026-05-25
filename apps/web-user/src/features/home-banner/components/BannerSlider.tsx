@@ -39,7 +39,7 @@ function BannerSlideImage({ src, alt, priority }: { src: string; alt: string; pr
 }
 
 export default function BannerSlider() {
-  const { data: banners = [], isLoading, isError } = useHomeBanners();
+  const { data: banners = [], isLoading } = useHomeBanners();
 
   if (isLoading) {
     return (
@@ -49,7 +49,7 @@ export default function BannerSlider() {
     );
   }
 
-  if (isError || banners.length === 0) {
+  if (banners.length === 0) {
     return <div className="h-[246px]" aria-hidden />;
   }
 
