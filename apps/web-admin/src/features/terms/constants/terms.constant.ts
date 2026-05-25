@@ -16,10 +16,7 @@ export const CONSUMER_TERMS_TYPES: TermsType[] = [
   "CONSUMER_LOCATION_TERMS",
 ];
 
-export const SELLER_TERMS_TYPES: TermsType[] = [
-  "SELLER_TERMS_OF_SERVICE",
-  "SELLER_PRIVACY_POLICY",
-];
+export const SELLER_TERMS_TYPES: TermsType[] = ["SELLER_TERMS_OF_SERVICE", "SELLER_PRIVACY_POLICY"];
 
 /** 약관 HTML 미리보기/렌더링용 루트 클래스 */
 export const TERMS_PREVIEW_CONTENT_CLASS = "terms-preview-content";

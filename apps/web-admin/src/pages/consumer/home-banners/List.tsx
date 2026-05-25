@@ -1,5 +1,10 @@
 import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/apps/web-admin/common/components/cards/Card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/apps/web-admin/common/components/cards/Card";
 import { EmptyState } from "@/apps/web-admin/common/components/fallbacks/EmptyState";
 import { ContentLoading } from "@/apps/web-admin/common/components/loading/ContentLoading";
 import {
@@ -82,9 +87,7 @@ export const HomeBannersListPage: React.FC = () => {
           {isLoading && (
             <ContentLoading variant="section" message="배너를 불러오는 중…" className="py-12" />
           )}
-          {!isLoading && items.length === 0 && (
-            <EmptyState message="등록된 배너가 없습니다." />
-          )}
+          {!isLoading && items.length === 0 && <EmptyState message="등록된 배너가 없습니다." />}
           {!isLoading && items.length > 0 && (
             <HomeBannerTable
               items={items}

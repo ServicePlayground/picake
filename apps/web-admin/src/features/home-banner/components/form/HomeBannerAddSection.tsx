@@ -136,7 +136,11 @@ export function HomeBannerAddSection({ currentCount }: HomeBannerAddSectionProps
           {formError && <p className="text-sm text-destructive">{formError}</p>}
 
           <div className="flex justify-end border-t pt-5">
-            <Button type="button" onClick={() => void handleSubmit()} disabled={isBusy || !imageUrl}>
+            <Button
+              type="button"
+              onClick={() => void handleSubmit()}
+              disabled={isBusy || !imageUrl}
+            >
               {createMutation.isPending ? "등록 중..." : "배너 등록"}
             </Button>
           </div>

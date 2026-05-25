@@ -2,7 +2,10 @@ import { StatusBadge } from "@/apps/web-admin/common/components/badges/StatusBad
 import { ContentLoading } from "@/apps/web-admin/common/components/loading/ContentLoading";
 import { TermsHtmlPreviewDialog } from "@/apps/web-admin/features/terms/components/dialog/TermsHtmlPreviewDialog";
 import { useTermsDetail } from "@/apps/web-admin/features/terms/hooks/queries/useTermsQuery";
-import { formatTermsDate, formatTermsDateTime } from "@/apps/web-admin/features/terms/utils/terms-date.util";
+import {
+  formatTermsDate,
+  formatTermsDateTime,
+} from "@/apps/web-admin/features/terms/utils/terms-date.util";
 
 interface TermsPreviewDialogProps {
   id: string | null;

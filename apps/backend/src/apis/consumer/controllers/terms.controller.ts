@@ -29,8 +29,7 @@ export class ConsumerTermsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: "활성 약관 조회",
-    description:
-      "약관 타입별 현재 활성 버전의 HTML 내용을 반환합니다. (비로그인 접근 가능)",
+    description: "약관 타입별 현재 활성 버전의 HTML 내용을 반환합니다. (비로그인 접근 가능)",
   })
   @ApiParam({ name: "type", enum: CONSUMER_TERMS_TYPES })
   @SwaggerResponse(200, { dataDto: TermsDocumentResponseDto })

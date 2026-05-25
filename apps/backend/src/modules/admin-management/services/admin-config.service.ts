@@ -49,7 +49,10 @@ export class AdminConfigService {
     });
   }
 
-  private toResponse(config: { requireApproval: boolean; updatedAt: Date }): AdminConfigResponseDto {
+  private toResponse(config: {
+    requireApproval: boolean;
+    updatedAt: Date;
+  }): AdminConfigResponseDto {
     return { requireApproval: config.requireApproval, updatedAt: config.updatedAt };
   }
 }

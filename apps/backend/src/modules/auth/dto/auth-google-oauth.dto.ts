@@ -1,4 +1,12 @@
-import { IsString, IsNotEmpty, IsBoolean, IsOptional, IsArray, MinLength, MaxLength } from "class-validator";
+import {
+  IsString,
+  IsNotEmpty,
+  IsBoolean,
+  IsOptional,
+  IsArray,
+  MinLength,
+  MaxLength,
+} from "class-validator";
 import { ApiProperty } from "@nestjs/swagger";
 import { Transform } from "class-transformer";
 import { IsValidKoreanPhone } from "@apps/backend/common/decorators/validators.decorator";

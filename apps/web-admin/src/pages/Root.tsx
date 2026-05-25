@@ -1,5 +1,8 @@
 import React from "react";
-import { LIST_SCREEN_HEADING, LIST_SECTION_GAP } from "@/apps/web-admin/common/constants/list-typography.constant";
+import {
+  LIST_SCREEN_HEADING,
+  LIST_SECTION_GAP,
+} from "@/apps/web-admin/common/constants/list-typography.constant";
 
 export const RootPage: React.FC = () => {
   return (

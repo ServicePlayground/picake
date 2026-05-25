@@ -36,9 +36,7 @@ export function TermsHtmlPreviewDialog({
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
           <div>
             <h3 className={LIST_CARD_TITLE}>{title}</h3>
-            {description && (
-              <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
-            )}
+            {description && <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>}
           </div>
           <button
             type="button"

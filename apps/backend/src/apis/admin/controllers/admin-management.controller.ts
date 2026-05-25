@@ -74,10 +74,7 @@ export class AdminManagementController {
   })
   @SwaggerResponse(200, { dataDto: AdminAccountItemResponseDto })
   @SwaggerAuthResponses()
-  async updateApproval(
-    @Param("id") id: string,
-    @Body() dto: UpdateAdminApprovalDto,
-  ) {
+  async updateApproval(@Param("id") id: string, @Body() dto: UpdateAdminApprovalDto) {
     return await this.adminManagementService.updateApproval(id, dto);
   }
 

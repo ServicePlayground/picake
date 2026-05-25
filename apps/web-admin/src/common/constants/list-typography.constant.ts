@@ -25,5 +25,4 @@ export const LIST_TABLE_CELL = "text-sm text-foreground";
 export const LIST_TABLE_CELL_MUTED = "text-sm text-muted-foreground";
 
 /** 카드 내부 설정·옵션 박스 */
-export const LIST_ITEM_BOX =
-  "rounded-lg border border-border bg-muted/20 px-4 py-3 shadow-sm";
+export const LIST_ITEM_BOX = "rounded-lg border border-border bg-muted/20 px-4 py-3 shadow-sm";

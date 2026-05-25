@@ -8,7 +8,10 @@ import {
 } from "@/apps/web-admin/common/constants/list-typography.constant";
 import { cn } from "@/apps/web-admin/common/utils/classname.util";
 import type { TermsDocumentSummaryResponseDto } from "@/apps/web-admin/features/terms/types/terms.dto";
-import { formatTermsDate, formatTermsDateTime } from "@/apps/web-admin/features/terms/utils/terms-date.util";
+import {
+  formatTermsDate,
+  formatTermsDateTime,
+} from "@/apps/web-admin/features/terms/utils/terms-date.util";
 import { sortTermsVersionsByVersionDesc } from "@/apps/web-admin/features/terms/utils/terms-version.util";
 
 interface TermsVersionTableProps {

@@ -125,7 +125,13 @@ export class AuthAdminService {
 
     const admin = await this.prisma.admin.findUnique({
       where: { id: payload.sub },
-      select: { id: true, isActive: true, approvalStatus: true, isTotpEnabled: true, totpSecret: true },
+      select: {
+        id: true,
+        isActive: true,
+        approvalStatus: true,
+        isTotpEnabled: true,
+        totpSecret: true,
+      },
     });
 
     if (!admin || !admin.isActive || !admin.isTotpEnabled || !admin.totpSecret) {

@@ -73,9 +73,7 @@ export const AdminRequestsListPage: React.FC = () => {
                   onReject={handleReject}
                 />
               </Card>
-              {meta && (
-                <AdminManagementPagination page={page} meta={meta} onPageChange={setPage} />
-              )}
+              {meta && <AdminManagementPagination page={page} meta={meta} onPageChange={setPage} />}
             </>
           )}
         </>

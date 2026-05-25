@@ -59,7 +59,11 @@ export class TermsService {
     consumerId: string,
     termsDocumentIds: string[],
   ): Promise<void> {
-    return this.writeService.recordConsumerAgreementsInTransaction(tx, consumerId, termsDocumentIds);
+    return this.writeService.recordConsumerAgreementsInTransaction(
+      tx,
+      consumerId,
+      termsDocumentIds,
+    );
   }
 
   recordSellerAgreementsInTransaction(

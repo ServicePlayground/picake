@@ -23,8 +23,7 @@ export class ConsumerHomeBannerController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: "홈 배너 목록 조회",
-    description:
-      "구매자 앱 홈에 노출 중인 배너만 정렬 순으로 반환합니다. (비로그인 접근 가능)",
+    description: "구매자 앱 홈에 노출 중인 배너만 정렬 순으로 반환합니다. (비로그인 접근 가능)",
   })
   @SwaggerResponse(200, { dataDto: HomeBannerListResponseDto })
   async list() {

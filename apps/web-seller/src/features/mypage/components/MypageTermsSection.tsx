@@ -25,7 +25,9 @@ function TermsRow({ label, agreedVersion, href }: TermsRowProps) {
     <div className="flex flex-col gap-2 border-b border-zinc-100 py-3 last:border-0 last:pb-0 first:pt-0 sm:flex-row sm:items-center sm:justify-between">
       <div className="min-w-0">
         <p className="text-sm font-medium text-zinc-900">{label}</p>
-        <p className="mt-0.5 text-xs text-zinc-500">동의 버전: {formatConsentVersion(agreedVersion)}</p>
+        <p className="mt-0.5 text-xs text-zinc-500">
+          동의 버전: {formatConsentVersion(agreedVersion)}
+        </p>
       </div>
       <Link
         to={href}

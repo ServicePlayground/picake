@@ -117,7 +117,11 @@ export function HomeBannerEditDialog({ item, onClose }: HomeBannerEditDialogProp
           >
             취소
           </Button>
-          <Button type="button" onClick={() => void handleSave()} disabled={updateMutation.isPending}>
+          <Button
+            type="button"
+            onClick={() => void handleSave()}
+            disabled={updateMutation.isPending}
+          >
             {updateMutation.isPending ? "저장 중..." : "저장"}
           </Button>
         </div>

@@ -98,7 +98,10 @@ export function BannerImageUpload({
           value ? "border-solid bg-muted" : "border-dashed bg-muted/50",
           error && "border-destructive",
           isDragging && enableDragDrop && "border-primary bg-muted",
-          !value && !isUploading && !disabled && "cursor-pointer hover:border-primary hover:bg-muted",
+          !value &&
+            !isUploading &&
+            !disabled &&
+            "cursor-pointer hover:border-primary hover:bg-muted",
           isBusy && "cursor-not-allowed opacity-60",
         )}
         style={{ width, maxWidth: maxWidth ?? "100%", height }}

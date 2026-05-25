@@ -32,9 +32,7 @@ export function getMenuItems(): MenuItem[] {
     {
       text: "판매자",
       icon: React.createElement(Store, { className: "w-5 h-5" }),
-      children: [
-        { text: "약관 관리", path: ROUTES.SELLER.TERMS },
-      ],
+      children: [{ text: "약관 관리", path: ROUTES.SELLER.TERMS }],
     },
     {
       text: "관리자",

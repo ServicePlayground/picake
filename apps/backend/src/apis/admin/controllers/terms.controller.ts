@@ -95,8 +95,7 @@ export class AdminTermsController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: "(로그인 필요) 약관 버전 활성화",
-    description:
-      "해당 타입의 기존 활성 버전이 자동으로 비활성화되고 이 버전이 활성화됩니다.",
+    description: "해당 타입의 기존 활성 버전이 자동으로 비활성화되고 이 버전이 활성화됩니다.",
   })
   @SwaggerResponse(200, { dataDto: TermsDocumentResponseDto })
   @SwaggerResponse(404, { dataExample: createMessageObject(TERMS_ERROR_MESSAGES.NOT_FOUND) })

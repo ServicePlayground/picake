@@ -92,9 +92,7 @@ export const AdminAccountsListPage: React.FC = () => {
               <Card className={LIST_CARD}>
                 <AdminAccountTable items={items} />
               </Card>
-              {meta && (
-                <AdminManagementPagination page={page} meta={meta} onPageChange={setPage} />
-              )}
+              {meta && <AdminManagementPagination page={page} meta={meta} onPageChange={setPage} />}
             </>
           )}
         </>

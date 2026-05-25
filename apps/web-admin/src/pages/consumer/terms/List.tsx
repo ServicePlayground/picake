@@ -1,5 +1,10 @@
 import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/apps/web-admin/common/components/cards/Card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/apps/web-admin/common/components/cards/Card";
 import { EmptyState } from "@/apps/web-admin/common/components/fallbacks/EmptyState";
 import { ContentLoading } from "@/apps/web-admin/common/components/loading/ContentLoading";
 import {
@@ -35,7 +40,8 @@ export const ConsumerTermsListPage: React.FC = () => {
   const items = data?.data ?? [];
 
   const handleActivate = (id: string) => {
-    if (!window.confirm("이 버전을 활성 버전으로 지정할까요?\n기존 활성 버전은 비활성화됩니다.")) return;
+    if (!window.confirm("이 버전을 활성 버전으로 지정할까요?\n기존 활성 버전은 비활성화됩니다."))
+      return;
     activateMutation.mutate(id);
   };
 
@@ -72,9 +78,10 @@ export const ConsumerTermsListPage: React.FC = () => {
                 onClick={() => setActiveType(t)}
                 className={`
                   px-4 py-2 text-sm font-medium transition-colors
-                  ${activeType === t
-                    ? "border-b-2 border-primary text-primary"
-                    : "text-muted-foreground hover:text-foreground"
+                  ${
+                    activeType === t
+                      ? "border-b-2 border-primary text-primary"
+                      : "text-muted-foreground hover:text-foreground"
                   }
                 `}
               >
@@ -84,7 +91,11 @@ export const ConsumerTermsListPage: React.FC = () => {
           </div>
 
           {isLoading && (
-            <ContentLoading variant="section" message="버전 이력을 불러오는 중…" className="py-12" />
+            <ContentLoading
+              variant="section"
+              message="버전 이력을 불러오는 중…"
+              className="py-12"
+            />
           )}
           {!isLoading && items.length === 0 && (
             <EmptyState message="등록된 약관 버전이 없습니다." />

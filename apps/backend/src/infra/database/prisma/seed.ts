@@ -254,10 +254,7 @@ const SEED_TERMS_BASE = {
   EFFECTIVE_AT: new Date("2024-01-01T00:00:00.000Z"),
 } as const;
 
-const SEED_TERMS_TYPES: TermsType[] = [
-  ...CONSUMER_TERMS_TYPES,
-  ...SELLER_TERMS_TYPES,
-];
+const SEED_TERMS_TYPES: TermsType[] = [...CONSUMER_TERMS_TYPES, ...SELLER_TERMS_TYPES];
 
 /**
  * 시드 계정을 생성합니다 — 구매자 1명, 판매자 1명.
