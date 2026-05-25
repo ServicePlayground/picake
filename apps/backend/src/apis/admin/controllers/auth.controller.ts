@@ -1,5 +1,5 @@
 import { Controller, Post, Get, Body, HttpCode, HttpStatus, Request } from "@nestjs/common";
-import { ApiTags, ApiOperation } from "@nestjs/swagger";
+import { ApiTags, ApiOperation, ApiExtraModels } from "@nestjs/swagger";
 import { AuthService } from "@apps/backend/modules/auth/auth.service";
 import { Auth } from "@apps/backend/modules/auth/decorators/auth.decorator";
 import { SwaggerResponse } from "@apps/backend/common/decorators/swagger-response.decorator";
@@ -15,11 +15,13 @@ import {
 import {
   AdminLoginRequestDto,
   AdminRegisterRequestDto,
+  AdminRegisterResponseDto,
   AdminTotpEnableRequestDto,
   AdminTotpVerifyLoginRequestDto,
 } from "@apps/backend/modules/auth/dto/auth-admin.dto";
 
 @ApiTags("[관리자] 인증")
+@ApiExtraModels(AdminRegisterResponseDto)
 @Controller(`${AUDIENCE.ADMIN}/auth`)
 @Auth({ isPublic: true })
 export class AdminAuthController {
@@ -28,13 +30,7 @@ export class AdminAuthController {
   @Post("register")
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: "관리자 회원가입 (ID/비밀번호)" })
-  @SwaggerResponse(201, {
-    dataExample: {
-      id: SWAGGER_EXAMPLES.ADMIN_DATA.id,
-      username: SWAGGER_EXAMPLES.ADMIN_DATA.username,
-      createdAt: SWAGGER_EXAMPLES.ADMIN_DATA.createdAt,
-    },
-  })
+  @SwaggerResponse(201, { dataDto: AdminRegisterResponseDto })
   @SwaggerResponse(409, {
     dataExample: { message: AUTH_ERROR_MESSAGES.USERNAME_ALREADY_EXISTS },
   })

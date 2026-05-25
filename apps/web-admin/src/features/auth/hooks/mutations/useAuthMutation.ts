@@ -31,11 +31,16 @@ export function useRegister() {
 
   return useMutation({
     mutationFn: authApi.register,
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // requiresApproval이 true이면 승인 안내 메시지, false이면 즉시 로그인 가능 메시지
+      const message = data.requiresApproval
+        ? "가입 신청이 완료되었습니다. 관리자 승인 후 로그인할 수 있습니다."
+        : "회원가입이 완료되었습니다. 로그인해주세요.";
       addAlert({
         title: "성공",
-        message: "회원가입이 완료되었습니다. 로그인해주세요.",
+        message,
         severity: "success",
+        autoHideDuration: data.requiresApproval ? null : 6000,
       });
       navigate(ROUTES.AUTH.LOGIN);
     },

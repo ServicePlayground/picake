@@ -1,5 +1,5 @@
 import React from "react";
-import { ChevronLeft } from "lucide-react";
+import { ChevronDown, ChevronLeft } from "lucide-react";
 import { getMenuItems } from "@/apps/web-admin/common/constants/menu.constant";
 import { useLocation, useNavigate } from "react-router-dom";
 import { BaseButton as Button } from "@/apps/web-admin/common/components/buttons/BaseButton";
@@ -24,6 +24,22 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   const currentPath = location.pathname;
 
   const menuItems = React.useMemo(() => getMenuItems(), []);
+
+  // 현재 경로가 속한 그룹은 기본적으로 펼침, 나머지는 닫힘
+  const [expandedGroups, setExpandedGroups] = React.useState<Record<string, boolean>>(() => {
+    const initial: Record<string, boolean> = {};
+    menuItems.forEach((item) => {
+      if (item.children) {
+        const isActive = item.children.some((c) => c.path === currentPath);
+        initial[item.text] = isActive;
+      }
+    });
+    return initial;
+  });
+
+  const toggleGroup = (text: string) => {
+    setExpandedGroups((prev) => ({ ...prev, [text]: !prev[text] }));
+  };
 
   const onNavigate = (path: string) => {
     navigate(path);
@@ -65,7 +81,8 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
             <ul className="p-2 space-y-1">
               {menuItems.map((item) => {
                 const hasChildren = Array.isArray(item.children) && item.children.length > 0;
-                const isParentSelected =
+                const isGroupExpanded = expandedGroups[item.text] ?? false;
+                const isParentActive =
                   currentPath === (item.path ?? "") ||
                   (hasChildren && item.children!.some((c) => c.path === currentPath));
 
@@ -74,13 +91,15 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                     <button
                       type="button"
                       onClick={() => {
-                        if (item.path) {
+                        if (hasChildren) {
+                          toggleGroup(item.text);
+                        } else if (item.path) {
                           onNavigate(item.path);
                         }
                       }}
                       className={cn(
                         "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                        isParentSelected
+                        isParentActive
                           ? "bg-zinc-700 text-zinc-50"
                           : "text-zinc-300 hover:bg-zinc-800 hover:text-zinc-50",
                       )}
@@ -89,9 +108,17 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                         <span className="flex-shrink-0 w-5 h-5 text-inherit">{item.icon}</span>
                       )}
                       <span className="flex-1 text-left">{item.text}</span>
+                      {hasChildren && (
+                        <ChevronDown
+                          className={cn(
+                            "h-4 w-4 flex-shrink-0 text-zinc-400 transition-transform duration-200",
+                            isGroupExpanded && "rotate-180",
+                          )}
+                        />
+                      )}
                     </button>
 
-                    {hasChildren && (
+                    {hasChildren && isGroupExpanded && (
                       <ul className="pl-8 mt-1 space-y-1">
                         {item.children!.map((child) => (
                           <li key={child.text}>

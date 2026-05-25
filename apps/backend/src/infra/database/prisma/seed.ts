@@ -307,13 +307,33 @@ async function upsertSeedAdmin() {
         totpSecret: null,
         isTotpEnabled: false,
         isActive: true,
+        // 시드 관리자는 항상 승인된 상태로 생성
+        approvalStatus: "APPROVED",
+        approvedAt: CREATED_AT,
         createdAt: CREATED_AT,
         lastLoginAt: LAST_LOGIN_AT,
       },
     });
+  } else if (admin.approvalStatus !== "APPROVED") {
+    // 기존 시드 관리자가 PENDING 상태라면 APPROVED로 수정
+    admin = await prisma.admin.update({
+      where: { id: admin.id },
+      data: { approvalStatus: "APPROVED", approvedAt: new Date() },
+    });
   }
 
   return admin;
+}
+
+/**
+ * AdminConfig (싱글톤 설정) 시드 — 없으면 생성, 있으면 유지
+ */
+async function upsertAdminConfig() {
+  await prisma.adminConfig.upsert({
+    where: { id: "default" },
+    create: { id: "default", requireApproval: false },
+    update: {}, // 기존 값 유지
+  });
 }
 
 /**
@@ -716,6 +736,7 @@ async function seedStoreFeeds() {
 async function main() {
   const { seller, consumers } = await upsertSeedUsers();
   await upsertSeedAdmin();
+  await upsertAdminConfig();
   const stores = await upsertStores(seller);
   const products = await upsertProducts(stores);
   const reviewCreatedCount = await seedProductReviews(consumers, products, stores);
