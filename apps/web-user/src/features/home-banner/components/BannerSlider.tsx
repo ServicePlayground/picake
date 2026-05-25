@@ -50,7 +50,7 @@ export default function BannerSlider() {
   }
 
   if (isError || banners.length === 0) {
-    return null;
+    return <div className="h-[246px]" aria-hidden />;
   }
 
   return (
