@@ -1,6 +1,9 @@
 -- RenameTable
 ALTER TABLE "display_contents" RENAME TO "home_banners";
 
+-- RenameConstraint (PK name follows old table name after RENAME)
+ALTER TABLE "home_banners" RENAME CONSTRAINT "display_contents_pkey" TO "home_banners_pkey";
+
 -- DropColumn
 ALTER TABLE "home_banners" DROP COLUMN "placement";
 
