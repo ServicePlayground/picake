@@ -1,7 +1,8 @@
-import { Link } from "react-router-dom";
+import { useState } from "react";
 import { ChevronRight } from "lucide-react";
 import { Checkbox } from "@/apps/web-seller/common/components/inputs/Checkbox";
-import { ROUTES } from "@/apps/web-seller/common/constants/paths.constant";
+import { TermsPreviewDialog } from "@/apps/web-seller/features/terms/components/TermsPreviewDialog";
+import type { TermsType } from "@/apps/web-seller/features/terms/types/terms.dto";
 import { cn } from "@/apps/web-seller/common/utils/classname.util";
 
 export interface SellerTermsAgreementState {
@@ -26,19 +27,19 @@ interface SellerTermsAgreementSectionProps {
 interface TermsItem {
   key: keyof SellerTermsAgreementState;
   label: string;
-  href: string;
+  termsType: TermsType;
 }
 
 const TERMS_ITEMS: TermsItem[] = [
   {
     key: "termsOfService",
     label: "서비스 이용약관",
-    href: ROUTES.TERMS.TERMS_OF_SERVICE,
+    termsType: "SELLER_TERMS_OF_SERVICE",
   },
   {
     key: "privacyPolicy",
     label: "개인정보 처리방침",
-    href: ROUTES.TERMS.PRIVACY_POLICY,
+    termsType: "SELLER_PRIVACY_POLICY",
   },
 ];
 
@@ -47,6 +48,7 @@ const TERMS_LINK_SLOT_CLASS = "flex size-6 shrink-0 items-center justify-center"
 
 export function SellerTermsAgreementSection({ value, onChange }: SellerTermsAgreementSectionProps) {
   const allChecked = TERMS_ITEMS.every((item) => value[item.key]);
+  const [previewTerms, setPreviewTerms] = useState<TermsItem | null>(null);
 
   return (
     <div className="border-t border-zinc-100 pt-4">
@@ -83,18 +85,26 @@ export function SellerTermsAgreementSection({ value, onChange }: SellerTermsAgre
               }
               className="min-w-0 flex-1"
             />
-            <Link
-              to={item.href}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              type="button"
+              onClick={() => setPreviewTerms(item)}
               className={cn(TERMS_LINK_SLOT_CLASS, "text-zinc-400 hover:text-zinc-700")}
               aria-label={`${item.label} 보기`}
             >
               <ChevronRight className="size-4" aria-hidden />
-            </Link>
+            </button>
           </div>
         ))}
       </div>
+
+      {previewTerms && (
+        <TermsPreviewDialog
+          open
+          onClose={() => setPreviewTerms(null)}
+          title={previewTerms.label}
+          termsType={previewTerms.termsType}
+        />
+      )}
     </div>
   );
 }
