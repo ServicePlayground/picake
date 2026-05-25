@@ -200,7 +200,11 @@ export function MapListSheetPanel({
 
       const startScrollTop = el.scrollTop;
       if (startScrollTop > 0) {
-        contentGestureRef.current = { mode: "scroll", startY: e.touches[0].clientY, startScrollTop };
+        contentGestureRef.current = {
+          mode: "scroll",
+          startY: e.touches[0].clientY,
+          startScrollTop,
+        };
         return;
       }
       contentGestureRef.current = {

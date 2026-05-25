@@ -32,10 +32,8 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 
   return (
     <>
-      {/* Mobile overlay backdrop */}
       {isMobile && open && <div className="fixed inset-0 bg-black/50 z-40" onClick={onToggle} />}
 
-      {/* Sidebar */}
       <aside
         className={cn(
           "fixed top-0 left-0 h-full bg-[#1a1a1a] border-r border-zinc-800 z-50 transition-transform duration-300",
@@ -45,7 +43,6 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         style={{ width: drawerWidth }}
       >
         <div className="flex flex-col h-full">
-          {/* Toolbar */}
           <div className="flex items-center h-16 px-4 border-b border-zinc-800 gap-2">
             <div className="flex-1 min-w-0 text-sm font-medium truncate text-zinc-100">PICAKE</div>
             {!isMobile && (
@@ -60,7 +57,6 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
             )}
           </div>
 
-          {/* Navigation Menu */}
           <nav className="min-h-0 flex-1 overflow-y-auto">
             <ul className="p-2 space-y-1">
               {menuItems.map((item) => {

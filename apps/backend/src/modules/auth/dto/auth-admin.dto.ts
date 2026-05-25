@@ -1,5 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsString, Matches, MinLength, MaxLength, IsNotEmpty } from "class-validator";
+import { AdminApprovalStatus } from "@apps/backend/infra/database/prisma/generated/client";
 import {
   AUTH_ERROR_MESSAGES,
   SWAGGER_DESCRIPTIONS,
@@ -58,6 +59,28 @@ export class AdminTotpVerifyLoginRequestDto {
   @IsString()
   @Matches(/^\d{6}$/, { message: AUTH_ERROR_MESSAGES.VERIFICATION_CODE_INVALID_FORMAT })
   totpCode: string;
+}
+
+/**
+ * 관리자 회원가입 응답 DTO
+ */
+export class AdminRegisterResponseDto {
+  @ApiProperty({ example: SWAGGER_EXAMPLES.ADMIN_DATA.id })
+  id: string;
+
+  @ApiProperty({ example: SWAGGER_EXAMPLES.ADMIN_DATA.username })
+  username: string;
+
+  @ApiProperty({ enum: AdminApprovalStatus })
+  approvalStatus: AdminApprovalStatus;
+
+  @ApiProperty({
+    description: "가입 승인 필요 설정이 켜져 있는지 여부",
+  })
+  requiresApproval: boolean;
+
+  @ApiProperty({ example: SWAGGER_EXAMPLES.ADMIN_DATA.createdAt })
+  createdAt: Date;
 }
 
 export class AdminTotpEnableRequestDto {

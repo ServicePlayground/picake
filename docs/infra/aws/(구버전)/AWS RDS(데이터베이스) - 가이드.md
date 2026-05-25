@@ -24,7 +24,7 @@
 - 모니터링: Database Insights - 표준
 - Performance Insights 활성화, 7일
 - 로그 내보내기: PostgreSQL 로그
-- 초기 데이터베이스 이름: sweetorder_staging_db
+- 초기 데이터베이스 이름: picake_staging_db
 - DB 파라미터 그룹: 기본값
 
 2. RDS 환경변수 설정

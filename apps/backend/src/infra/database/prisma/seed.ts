@@ -229,6 +229,19 @@ const SEED_STORE_FEEDS = {
   },
 };
 
+const SEED_HOME_BANNERS = [
+  {
+    IMAGE_URL: "https://static-staging.picakes.com/uploads/1779684236323_14e65ce5.jpeg",
+    SORT_ORDER: 0,
+    CREATED_AT: new Date("2026-05-25T00:00:00Z"),
+  },
+  {
+    IMAGE_URL: "https://static-staging.picakes.com/uploads/1779683811855_d41d1340.jpeg",
+    SORT_ORDER: 1,
+    CREATED_AT: new Date("2026-05-25T00:00:01Z"),
+  },
+] as const;
+
 /**
  * 시드 계정을 생성합니다 — 구매자 1명, 판매자 1명.
  *
@@ -307,13 +320,33 @@ async function upsertSeedAdmin() {
         totpSecret: null,
         isTotpEnabled: false,
         isActive: true,
+        // 시드 관리자는 항상 승인된 상태로 생성
+        approvalStatus: "APPROVED",
+        approvedAt: CREATED_AT,
         createdAt: CREATED_AT,
         lastLoginAt: LAST_LOGIN_AT,
       },
     });
+  } else if (admin.approvalStatus !== "APPROVED") {
+    // 기존 시드 관리자가 PENDING 상태라면 APPROVED로 수정
+    admin = await prisma.admin.update({
+      where: { id: admin.id },
+      data: { approvalStatus: "APPROVED", approvedAt: new Date() },
+    });
   }
 
   return admin;
+}
+
+/**
+ * AdminConfig (싱글톤 설정) 시드 — 없으면 생성, 있으면 유지
+ */
+async function upsertAdminConfig() {
+  await prisma.adminConfig.upsert({
+    where: { id: "default" },
+    create: { id: "default", requireApproval: false },
+    update: {}, // 기존 값 유지
+  });
 }
 
 /**
@@ -694,6 +727,35 @@ async function seedStoreFeeds() {
 }
 
 /**
+ * 홈 배너를 생성합니다.
+ *
+ * 동작 방식:
+ * - 홈 배너가 1개 이상이면 건너뛰기
+ * - 없으면 시드 배너 2개 생성 (sortOrder 순 노출)
+ */
+async function seedHomeBanners() {
+  const existingCount = await prisma.homeBanner.count();
+  if (existingCount > 0) {
+    return 0;
+  }
+
+  const created = await Promise.all(
+    SEED_HOME_BANNERS.map((banner) =>
+      prisma.homeBanner.create({
+        data: {
+          imageUrl: banner.IMAGE_URL,
+          sortOrder: banner.SORT_ORDER,
+          isActive: true,
+          createdAt: banner.CREATED_AT,
+        },
+      }),
+    ),
+  );
+
+  return created.length;
+}
+
+/**
  * 메인 시드 함수
  *
  * 중요!!: ** 스키마가 수정되더라도 ** 기존 데이터 유지되면서 새로운 데이터가 추가/수정되는 방식으로 해야, 실제 배포환경에서 오류가 발생하지 않습니다.
@@ -704,6 +766,7 @@ async function seedStoreFeeds() {
  * 3. 상품 생성 (100개, 상품이 하나도 없을 때만 생성)
  * 4. 상품 리뷰 생성 (리뷰가 하나도 없을 때만 생성)
  * 5. 스토어 피드 생성 (피드가 하나도 없을 때만 생성)
+ * 6. 홈 배너 생성 (배너가 하나도 없을 때만 생성)
  *
  * 특징:
  * - idempotent: 여러 번 실행해도 안전함
@@ -712,14 +775,17 @@ async function seedStoreFeeds() {
  * - 상품은 1개 이상 존재하면 업데이트하지 않음, 하나도 없을 때만 생성
  * - 리뷰는 1개 이상 존재하면 업데이트하지 않음, 하나도 없을 때만 생성
  * - 피드는 1개 이상 존재하면 업데이트하지 않음, 하나도 없을 때만 생성
+ * - 홈 배너는 1개 이상 존재하면 업데이트하지 않음, 하나도 없을 때만 생성
  */
 async function main() {
   const { seller, consumers } = await upsertSeedUsers();
   await upsertSeedAdmin();
+  await upsertAdminConfig();
   const stores = await upsertStores(seller);
   const products = await upsertProducts(stores);
   const reviewCreatedCount = await seedProductReviews(consumers, products, stores);
   const feedCreatedCount = await seedStoreFeeds();
+  const homeBannerCreatedCount = await seedHomeBanners();
 
   console.log(
     `✅ Seed seller + consumer + admin created/retrieved: ${2 + consumers.length} (seller 1 + consumer 1 + admin 1)`,
@@ -728,6 +794,7 @@ async function main() {
   console.log(`✅ Products created/retrieved: ${products.length}`);
   console.log(`✅ Product reviews created (if none existed): ${reviewCreatedCount}`);
   console.log(`✅ Store feeds created (if none existed): ${feedCreatedCount}`);
+  console.log(`✅ Home banners created (if none existed): ${homeBannerCreatedCount}`);
   console.log("🎉 Database seeding (idempotent) completed!");
 }
 

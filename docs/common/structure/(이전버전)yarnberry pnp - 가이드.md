@@ -12,7 +12,7 @@
 
 ```
 # 기존 방식 (node_modules)
-sweet-order/
+picake/
 ├── node_modules/           # 수만 개의 파일
 │   ├── react/             # React 패키지
 │   ├── @types/react/      # React 타입 정의
@@ -64,7 +64,7 @@ yarn install
 
 ```
 # PnP 방식
-sweet-order/
+picake/
 ├── .pnp.cjs               # 의존성 맵 파일 (하나의 파일!)
 ├── .yarn/cache/           # 패키지들이 압축된 상태로 저장
 │   ├── npm-lodash-4.17.21-abc123.zip
@@ -120,7 +120,7 @@ yarn install
 └── ...
 
 # 프로젝트별 캐시 (선택적)
-sweet-order/.yarn/cache/          # 프로젝트별 캐시
+picake/.yarn/cache/          # 프로젝트별 캐시
 ├── npm-prisma-6.16.3-jkl012.zip
 └── ...
 ```
@@ -144,8 +144,8 @@ cd project-b
 yarn add lodash
 # → 이미 다운로드된 lodash 재사용 (다운로드 없음!)
 
-# Sweet Order 프로젝트에서 lodash 설치
-cd sweet-order
+# Picake 프로젝트에서 lodash 설치
+cd picake
 yarn add lodash
 # → 역시 이미 다운로드된 lodash 재사용
 ```
@@ -189,7 +189,7 @@ yarn install
 **기존 방식:**
 
 ```
-sweet-order/
+picake/
 ├── node_modules/     # 2.1GB
 └── apps/backend/
     └── node_modules/ # 1.8GB
@@ -199,7 +199,7 @@ sweet-order/
 **PnP 방식:**
 
 ```
-sweet-order/
+picake/
 ├── .pnp.cjs         # 1KB
 ├── .yarn/cache/     # 1.3GB (압축된 상태)
 └── apps/backend/
@@ -285,7 +285,7 @@ const packageMap = {
 yarn explain peer-requirements
 
 # 결과 예시:
-# p11f819 → ✘ @sweet-order/backend doesn't provide typescript
+# p11f819 → ✘ @picake/backend doesn't provide typescript
 # → TypeScript가 누락되었다는 의미
 ```
 
@@ -296,7 +296,7 @@ yarn explain peer-requirements
 yarn why lodash
 
 # 결과 예시:
-# @sweet-order/backend@workspace:apps/backend
+# @picake/backend@workspace:apps/backend
 # └─ lodash@npm:4.17.21
 #    └─ Used by: @nestjs/common
 ```

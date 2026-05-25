@@ -5,7 +5,7 @@
 1. AWS > S3 > 버킷 생성
 
 - 버킷 유형: 범용
-- 버킷 이름: sweetorder-uploads-{환경}-apne1
+- 버킷 이름: picake-uploads-{환경}-apne1
 - 객체 소유권: ACL 비활성화됨
 - 모든 퍼블릭 액세스 차단
 - 버전 관리 OFF
@@ -23,9 +23,9 @@
       "http://localhost:3001",
       "http://localhost:3002",
       "http://localhost:3003",
-      "https://staging.sweetorders.com",
-      "https://seller-staging.sweetorders.com",
-      "https://admin-staging.sweetorders.com"
+      "https://staging.picakes.com",
+      "https://seller-staging.picakes.com",
+      "https://admin-staging.picakes.com"
     ],
     "AllowedMethods": ["GET", "HEAD", "PUT", "POST"],
     "AllowedHeaders": ["*"], // 전체 허용
@@ -44,12 +44,12 @@
 1. AWS > CloudFront > 배포 생성
 
 - 1단계
-  - Distribution name: sweetorder-static-staging
+  - Distribution name: picake-static-staging
   - Distribution type: Single website or app
   - Domain: (생략)
 - 2단계
   - Origin type: Amazon S3
-  - Origin: browse S3 버튼 클릭 > 해당 버킷 선택(sweetorder-uploads-{환경}-apne1)
+  - Origin: browse S3 버튼 클릭 > 해당 버킷 선택(picake-uploads-{환경}-apne1)
   - Origin path: (생략)
   - Settings: 선택되어 있는 상태 유지
 - 3단계
@@ -57,22 +57,22 @@
 
 2. 정책 복사 및 저장
    - 2-1. 생성한 배포 클릭 > origin(원본) 탭 > 해당 origin 선택 후 편집 > 정책 복사 버튼 클릭
-   - 2-2. AWS > S3 > sweetorder-uploads-{환경}-apne1 버킷 클릭 > 권한 탭 > 버킷 정책 편집 > CloudFront에서 복사한 정책을 JSON 편집기에 붙여넣기 > 저장
+   - 2-2. AWS > S3 > picake-uploads-{환경}-apne1 버킷 클릭 > 권한 탭 > 버킷 정책 편집 > CloudFront에서 복사한 정책을 JSON 편집기에 붙여넣기 > 저장
 
 3. (SSL 인증서 요청) AWS > Certificate Manager > 인증서 요청 (4단계까지 완료후 발급될때까지 기다려야함)
 
 - (us-east-1)
 - 인증서 유형: 퍼블릭 인증서 요청
-- 도메인 이름: static-staging.sweetorders.com
+- 도메인 이름: static-staging.picakes.com
 - 내보내기: 내보내기 비활성화
 - 검증 방법: DNS 검증
 - 키 알고리즘: RSA 2048
 
-4. (DNS 레코드 생성) AWS > Route53 > 호스팅 영역 > sweetorders.com > 레코드 생성 > Type: CNAME, 위 3번에서 발급된 값 입력 > 생성
+4. (DNS 레코드 생성) AWS > Route53 > 호스팅 영역 > picakes.com > 레코드 생성 > Type: CNAME, 위 3번에서 발급된 값 입력 > 생성
 
 5. (CloudFront에 SSL 인증서 연결) AWS > CloudFront > 생성한 배포 클릭 > 편집
 
-- Alternate domain names (CNAMEs): (항목 추가) static-staging.sweetorders.com
+- Alternate domain names (CNAMEs): (항목 추가) static-staging.picakes.com
 - Custom SSL certificate: 드롭다운에서 발급된 인증서 선택
 
 6. (커스텀 도메인이 CloudFront Distribution을 가리키도록 설정)

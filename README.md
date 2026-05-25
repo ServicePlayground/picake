@@ -34,11 +34,13 @@ yarn install
 yarn backend:dev          # 백엔드 개발 서버 (포트: 3000)
 yarn web-user:dev         # 사용자 웹 개발 서버 (포트: 3001)
 yarn web-seller:dev       # 판매자 웹 개발 서버 (포트: 3002)
+yarn web-admin:dev        # 관리자 웹 개발 서버
 
 # 데이터베이스 관리
 yarn db:seed:dev           # 백엔드 개발 데이터베이스 시드 (development)
 yarn db:seed:staging       # 백엔드 스테이징 데이터베이스 시드 (staging)
 yarn db:migrate:dev        # 백엔드 개발 데이터베이스 마이그레이션
+yarn db:migrate:status     # 백엔드 데이터베이스 마이그레이션 상태 확인
 yarn db:studio:dev         # 백엔드 개발 데이터베이스 스튜디오
 yarn db:reset:dev          # 백엔드 개발 데이터베이스 리셋
 
@@ -46,7 +48,8 @@ yarn db:reset:dev          # 백엔드 개발 데이터베이스 리셋
 yarn backend:build:staging     # 백엔드 스테이징 빌드
 yarn backend:build:production  # 백엔드 프로덕션 빌드
 yarn web-user:build            # 사용자 웹 빌드
-yarn web-seller:build            # 판매자 웹 빌드
+yarn web-seller:build          # 판매자 웹 빌드
+yarn web-admin:build           # 관리자 웹 빌드
 
 
 # 코드 품질 검사
@@ -75,6 +78,7 @@ yarn web-seller:storybook       # 판매자 스토리북 실행
 | `backend`    | `backend/staging-*`    | AWS EC2     | `backend/staging-v1.0.0`    |
 | `web-user`   | `web-user/staging-*`   | Vercel      | `web-user/staging-v1.0.0`   |
 | `web-seller` | `web-seller/staging-*` | Vercel      | `web-seller/staging-v1.0.0` |
+| `web-admin`  | `web-admin/staging-*`  | Vercel      | `web-admin/staging-v1.0.0`  |
 
 **태그 구조:** `{프로젝트명}/{환경}-{버전}`
 
@@ -224,9 +228,6 @@ hotfix/xxx (긴급 수정 브랜치)
 #### AWS 인프라
 
 - **[EC2 배포 가이드](./docs/infra/aws/EC2_Route53_S3_CloudFront.md)**: AWS EC2 백엔드 배포 가이드 (PostgreSQL, Nginx, PM2 포함)
-- **[AWS Region 가이드](./docs/infra/aws/AWS%20Region%20-%20가이드.md)**: AWS 리전 선택 가이드
-- **[AWS Route53 가이드](<./docs/infra/aws/AWS%20Route53(도메인)%20-%20가이드.md>)**: AWS Route53 도메인 설정 가이드
-- **[AWS S3(정적), CloudFront(CDN) 가이드](<./docs/infra/aws/AWS%20S3(정적),%20CloudFront(CDN)%20-%20가이드.md>)**: AWS S3(정적), CloudFront(CDN) 설정 가이드
 
 #### 배포 플랫폼
 

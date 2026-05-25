@@ -6,6 +6,8 @@ export interface AdminRegisterRequest {
 export interface AdminRegisterResponse {
   id: string;
   username: string;
+  approvalStatus: "PENDING" | "APPROVED" | "REJECTED";
+  requiresApproval: boolean;
   createdAt: string;
 }
 

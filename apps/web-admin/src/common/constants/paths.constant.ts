@@ -3,6 +3,10 @@ import { RegisterPage } from "@/apps/web-admin/pages/auth/Register";
 import { TotpSetupPage } from "@/apps/web-admin/pages/auth/TotpSetup";
 import { TotpVerifyPage } from "@/apps/web-admin/pages/auth/TotpVerify";
 import { RootPage } from "@/apps/web-admin/pages/Root";
+import { AdminRequestsListPage } from "@/apps/web-admin/pages/admin-management/requests/List";
+import { AdminAccountsListPage } from "@/apps/web-admin/pages/admin-management/accounts/List";
+import { AdminSettingsPage } from "@/apps/web-admin/pages/admin-management/settings/Index";
+import { HomeBannersListPage } from "@/apps/web-admin/pages/consumer/home-banners/List";
 
 export const ROUTES = {
   ROOT: "/",
@@ -12,6 +16,15 @@ export const ROUTES = {
     REGISTER: "/auth/register",
     TOTP_SETUP: "/auth/totp/setup",
     TOTP_VERIFY: "/auth/totp/verify",
+  },
+  // 관리자 계정 관리
+  ADMIN_MANAGEMENT: {
+    REQUESTS: "/admin-management/requests",
+    ACCOUNTS: "/admin-management/accounts",
+    SETTINGS: "/admin-management/settings",
+  },
+  CONSUMER: {
+    HOME_BANNERS: "/consumer/home-banners",
   },
 } as const;
 
@@ -24,4 +37,12 @@ export const AUTH_ROUTE_CONFIG = [
 ] as const;
 
 // 관리자 관련 경로 (AdminLayout 안)
-export const ADMIN_ROUTE_CONFIG = [{ path: ROUTES.ROOT, element: RootPage }] as const;
+export const ADMIN_ROUTE_CONFIG = [
+  { path: ROUTES.ROOT, element: RootPage },
+  // 관리자 계정 관리
+  { path: ROUTES.ADMIN_MANAGEMENT.REQUESTS, element: AdminRequestsListPage },
+  { path: ROUTES.ADMIN_MANAGEMENT.ACCOUNTS, element: AdminAccountsListPage },
+  { path: ROUTES.ADMIN_MANAGEMENT.SETTINGS, element: AdminSettingsPage },
+  // 구매자 앱
+  { path: ROUTES.CONSUMER.HOME_BANNERS, element: HomeBannersListPage },
+] as const;

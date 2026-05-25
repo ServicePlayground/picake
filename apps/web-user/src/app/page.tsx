@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { SearchBar } from "@/apps/web-user/common/components/search/SearchBar";
-import BannerSlider from "@/apps/web-user/common/components/sliders/BannerSlider";
+import BannerSlider from "@/apps/web-user/features/home-banner/components/BannerSlider";
 import CakeListSlider from "@/apps/web-user/common/components/sliders/CakeListSlider";
 import CategoryList from "@/apps/web-user/common/components/categories/CategoryList";
 import { useProductList } from "@/apps/web-user/features/product/hooks/queries/useProductList";

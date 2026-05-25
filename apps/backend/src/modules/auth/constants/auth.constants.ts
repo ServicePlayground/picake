@@ -29,6 +29,14 @@ export const AUTH_ERROR_MESSAGES = {
   KAKAO_OAUTH_TOKEN_EXCHANGE_FAILED: "카카오 OAuth 토큰 교환 실패",
   THROTTLE_LIMIT_EXCEEDED: "ThrottlerException: Too Many Requests",
   USERNAME_ALREADY_EXISTS: "이미 사용 중인 아이디입니다.",
+  ADMIN_LOGIN_INVALID_CREDENTIALS: "아이디 또는 비밀번호가 올바르지 않습니다.",
+  ADMIN_REGISTRATION_PENDING:
+    "가입 승인 대기 중입니다. 관리자의 승인 후 로그인할 수 있습니다.",
+  ADMIN_REGISTRATION_REJECTED: "가입이 거절된 계정입니다. 관리자에게 문의해주세요.",
+  ADMIN_NOT_APPROVED: "승인되지 않은 계정입니다.",
+  ADMIN_TOTP_PENDING_TOKEN_INVALID: "유효하지 않은 임시 토큰입니다. 다시 로그인해주세요.",
+  ADMIN_ACCOUNT_INVALID_STATE: "계정 상태가 올바르지 않습니다.",
+  ADMIN_ACCOUNT_NOT_FOUND: "계정을 찾을 수 없습니다.",
   TOTP_SETUP_REQUIRED: "먼저 TOTP 설정을 시작해주세요.",
   OTP_CODE_INVALID: "OTP 코드가 올바르지 않습니다.",
   /* --------------------------------- 토큰 관련 에러 메시지 (반드시 401으로 사용) (주의: 프론트호환성을 위해, 여기 외에 401 오류가 있으면 안됨) --------------------------------- */
