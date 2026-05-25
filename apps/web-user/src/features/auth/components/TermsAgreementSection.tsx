@@ -1,9 +1,10 @@
 "use client";
 
-import Link from "next/link";
+import { useState } from "react";
 import { Checkbox } from "@/apps/web-user/common/components/inputs/Checkbox";
 import { Icon } from "@/apps/web-user/common/components/icons";
-import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
+import { TermsPreviewBottomSheet } from "@/apps/web-user/features/terms/components/TermsPreviewBottomSheet";
+import type { TermsType } from "@/apps/web-user/features/terms/types/terms.dto";
 
 export interface TermsAgreementState {
   termsOfService: boolean;
@@ -32,7 +33,7 @@ interface TermsItem {
   key: keyof TermsAgreementState;
   label: string;
   required: boolean;
-  href: string;
+  termsType: TermsType;
 }
 
 const TERMS_ITEMS: TermsItem[] = [
@@ -40,30 +41,31 @@ const TERMS_ITEMS: TermsItem[] = [
     key: "termsOfService",
     label: "서비스 이용약관",
     required: true,
-    href: PATHS.TERMS.TERMS_OF_SERVICE,
+    termsType: "CONSUMER_TERMS_OF_SERVICE",
   },
   {
     key: "privacyPolicy",
     label: "개인정보 처리방침",
     required: true,
-    href: PATHS.TERMS.PRIVACY_POLICY,
+    termsType: "CONSUMER_PRIVACY_POLICY",
   },
   {
     key: "thirdPartyConsent",
     label: "개인정보 제3자 제공 동의",
     required: true,
-    href: PATHS.TERMS.THIRD_PARTY_CONSENT,
+    termsType: "CONSUMER_THIRD_PARTY_CONSENT",
   },
   {
     key: "locationTerms",
     label: "위치기반서비스 이용약관",
     required: false,
-    href: PATHS.TERMS.LOCATION_TERMS,
+    termsType: "CONSUMER_LOCATION_TERMS",
   },
 ];
 
 export function TermsAgreementSection({ value, onChange }: TermsAgreementSectionProps) {
   const allChecked = TERMS_ITEMS.every((item) => value[item.key]);
+  const [previewTerms, setPreviewTerms] = useState<TermsItem | null>(null);
 
   return (
     <div className="mt-8">
@@ -104,18 +106,26 @@ export function TermsAgreementSection({ value, onChange }: TermsAgreementSection
               }
               className="flex-1 min-w-0"
             />
-            <Link
-              href={item.href}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              type="button"
+              onClick={() => setPreviewTerms(item)}
               className="shrink-0 ml-2 p-1"
               aria-label={`${item.label} 보기`}
             >
               <Icon name="arrow" width={16} height={16} className="text-gray-400 rotate-90" />
-            </Link>
+            </button>
           </div>
         ))}
       </div>
+
+      {previewTerms && (
+        <TermsPreviewBottomSheet
+          isOpen
+          onClose={() => setPreviewTerms(null)}
+          title={previewTerms.label}
+          termsType={previewTerms.termsType}
+        />
+      )}
     </div>
   );
 }

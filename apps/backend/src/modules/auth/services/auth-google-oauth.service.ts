@@ -293,7 +293,6 @@ export class AuthGoogleOauthService {
       agreedToTerms,
       agreedToPrivacy,
       agreedToThirdParty,
-      agreedToLocationTerms,
     } = googleRegisterDto;
     const trimmedName = name.trim();
     const normalizedPhone = PhoneUtil.normalizePhone(phone);

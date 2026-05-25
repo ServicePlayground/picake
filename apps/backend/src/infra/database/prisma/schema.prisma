@@ -46,6 +46,40 @@ model AdminConfig {
   @@map("admin_configs")
 }
 
+/// 공지사항 (관리자가 작성, 구매자 앱 노출)
+model Notice {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  /// 핀 고정 여부 (true면 목록 최상단 고정)
+  isPinned  Boolean  @default(false) @map("is_pinned")
+  isActive  Boolean  @default(true) @map("is_active")
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([isActive, isPinned, sortOrder])
+  @@map("notices")
+}
+
+/// 자주 묻는 질문 (관리자가 작성, 구매자 앱 노출)
+model Qna {
+  id        String   @id @default(cuid())
+  question  String
+  answer    String
+  /// 카테고리 (예: "주문/예약", "서비스 이용")
+  category  String   @default("")
+  /// 핀 고정 여부 (true면 카테고리 내 최상단 고정)
+  isPinned  Boolean  @default(false) @map("is_pinned")
+  isActive  Boolean  @default(true) @map("is_active")
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([isActive, category, sortOrder])
+  @@map("qnas")
+}
+
 /// 구매자 앱(web-user) 홈 화면 슬라이드 배너
 model HomeBanner {
   id        String    @id @default(cuid())

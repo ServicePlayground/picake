@@ -26,6 +26,8 @@ export function getMenuItems(): MenuItem[] {
       icon: React.createElement(ShoppingBag, { className: "w-5 h-5" }),
       children: [
         { text: "홈 배너 관리", path: ROUTES.CONSUMER.HOME_BANNERS },
+        { text: "공지사항 관리", path: ROUTES.CONSUMER.NOTICES },
+        { text: "Q&A 관리", path: ROUTES.CONSUMER.QNAS },
         { text: "약관 관리", path: ROUTES.CONSUMER.TERMS },
       ],
     },

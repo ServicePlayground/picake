@@ -62,7 +62,7 @@ export const StoreHomeStatisticsSection: React.FC<StoreHomeStatisticsSectionProp
     };
   }, []);
 
-  const { data, isLoading, isFetching, refetch } = useStatisticsOverviewQuery({
+  const { data, isLoading, isFetching } = useStatisticsOverviewQuery({
     storeId,
     startDate,
     endDate,

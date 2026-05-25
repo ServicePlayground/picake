@@ -251,16 +251,8 @@ export class AuthKakaoOauthService {
   }
 
   async consumerKakaoRegisterWithPhone(kakaoRegisterDto: KakaoRegisterRequestDto) {
-    const {
-      kakaoId,
-      kakaoEmail,
-      phone,
-      name,
-      agreedToTerms,
-      agreedToPrivacy,
-      agreedToThirdParty,
-      agreedToLocationTerms,
-    } = kakaoRegisterDto;
+    const { kakaoId, kakaoEmail, phone, name, agreedToTerms, agreedToPrivacy, agreedToThirdParty } =
+      kakaoRegisterDto;
     const trimmedName = name.trim();
     const normalizedPhone = PhoneUtil.normalizePhone(phone);
 
