@@ -6,7 +6,6 @@ import { Icon } from "@/apps/web-user/common/components/icons";
 import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 import { BottomNav } from "@/apps/web-user/common/components/navigation/BottomNav";
 import { LinkListItem } from "@/apps/web-user/common/components/lists/LinkListItem";
-import { TermsPreviewListItem } from "@/apps/web-user/features/terms/components/TermsPreviewListItem";
 import { useMypageProfile } from "@/apps/web-user/features/mypage/hooks/queries/useMypageProfile";
 import { useAuthStore, useAuthHasHydrated } from "@/apps/web-user/common/store/auth.store";
 import { UpcomingOrderCard } from "../../features/order/components/UpcomingOrderCard";
@@ -48,6 +47,13 @@ const QUICK_LINKS = [
   { icon: "review", label: "내 후기", href: PATHS.MY_REVIEWS },
   { icon: "saved", label: "저장", href: PATHS.MY_SAVED },
   { icon: "recent", label: "최근 본", href: PATHS.RECENT },
+] as const;
+
+const TERMS_MENU = [
+  { label: "서비스 이용약관", href: PATHS.TERMS.TERMS_OF_SERVICE },
+  { label: "위치정보 이용약관", href: PATHS.TERMS.LOCATION_TERMS },
+  { label: "개인정보 처리방침", href: PATHS.TERMS.PRIVACY_POLICY },
+  { label: "개인정보 제3자 제공 동의", href: PATHS.TERMS.THIRD_PARTY_CONSENT },
 ] as const;
 
 export default function MypagePage() {
@@ -179,13 +185,9 @@ export default function MypagePage() {
       {/* 기타 */}
       <section className="mt-8 pb-[60px]">
         <p className="px-5 py-2 text-xs text-gray-500">기타</p>
-        <TermsPreviewListItem label="서비스 이용약관" termsType="CONSUMER_TERMS_OF_SERVICE" />
-        <TermsPreviewListItem label="위치정보 이용약관" termsType="CONSUMER_LOCATION_TERMS" />
-        <TermsPreviewListItem label="개인정보 처리방침" termsType="CONSUMER_PRIVACY_POLICY" />
-        <TermsPreviewListItem
-          label="개인정보 제3자 제공 동의"
-          termsType="CONSUMER_THIRD_PARTY_CONSENT"
-        />
+        {TERMS_MENU.map(({ label, href }) => (
+          <LinkListItem key={href} href={href} label={label} />
+        ))}
         <LinkListItem href={PATHS.VERSION} label="버전정보" />
       </section>
 

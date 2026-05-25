@@ -38,11 +38,11 @@ export function TermsDocumentScreen({ termsType }: TermsDocumentScreenProps) {
           className={TERMS_PREVIEW_CONTENT_CLASS}
           dangerouslySetInnerHTML={{ __html: htmlContent }}
         />
-      ) : isPending ? (
+      ) : (
         <p className="px-5 py-10 text-center text-sm text-[var(--grayscale-gr-500,#82817D)]">
-          문서를 불러오는 중…
+          {isPending ? "문서를 불러오는 중…" : "약관을 불러오지 못했습니다."}
         </p>
-      ) : null}
+      )}
     </div>
   );
 }
