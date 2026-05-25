@@ -1,21 +1,13 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination, Autoplay } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/pagination";
-
-const BANNER_IMAGES = [
-  "/images/banner/open-banner1.png",
-  "/images/banner/open-banner2.png",
-  "/images/banner/open-banner3.png",
-  "/images/banner/open-banner4.png",
-  "/images/banner/open-banner5.png",
-  "/images/banner/open-banner6.png",
-  "/images/banner/open-banner7.png",
-  "/images/banner/open-banner8.png",
-];
+import { useHomeBanners } from "@/apps/web-user/features/home-banner/hooks/queries/useHomeBanners";
+import { Skeleton } from "@/apps/web-user/common/components/skeleton/Skeleton";
 
 function updateBullets(bullets: HTMLElement[], activeIndex: number) {
   bullets.forEach((bullet, i) => {
@@ -40,7 +32,27 @@ function updateBullets(bullets: HTMLElement[], activeIndex: number) {
   });
 }
 
+function BannerSlideImage({ src, alt, priority }: { src: string; alt: string; priority?: boolean }) {
+  return (
+    <Image src={src} alt={alt} fill className="object-cover" priority={priority} sizes="100vw" />
+  );
+}
+
 export default function BannerSlider() {
+  const { data: banners = [], isLoading, isError } = useHomeBanners();
+
+  if (isLoading) {
+    return (
+      <div className="h-[246px]">
+        <Skeleton className="h-full w-full" />
+      </div>
+    );
+  }
+
+  if (isError || banners.length === 0) {
+    return null;
+  }
+
   return (
     <div className="h-[246px]">
       <Swiper
@@ -52,7 +64,7 @@ export default function BannerSlider() {
           },
         }}
         autoplay={{ delay: 3000, disableOnInteraction: false }}
-        loop={false}
+        loop={banners.length > 1}
         onSlideChange={(swiper) => {
           const bullets = swiper.pagination.bullets;
           if (!bullets) return;
@@ -65,17 +77,38 @@ export default function BannerSlider() {
         }}
         className="h-full [&_.swiper-pagination]:!bottom-[42px] [&_.swiper-pagination-bullet]:opacity-100 [&_.swiper-pagination-bullet]:transition-all [&_.swiper-pagination-bullet]:duration-200 [&_.swiper-pagination-bullet]:[filter:drop-shadow(0px_2px_7px_rgba(0,0,0,0.45))] [&_.swiper-pagination-bullet]:bg-[length:100%_100%] [&_.swiper-pagination-bullet]:bg-no-repeat [&_.swiper-pagination-bullet]:[background-color:transparent]"
       >
-        {BANNER_IMAGES.map((src, idx) => (
-          <SwiperSlide key={idx}>
-            <Image
-              src={src}
+        {banners.map((banner, idx) => {
+          const slideContent = (
+            <BannerSlideImage
+              src={banner.imageUrl}
               alt={`배너 ${idx + 1}`}
-              fill
-              className="object-cover"
               priority={idx === 0}
             />
-          </SwiperSlide>
-        ))}
+          );
+
+          return (
+            <SwiperSlide key={banner.id}>
+              {banner.linkUrl ? (
+                banner.linkUrl.startsWith("http") ? (
+                  <a
+                    href={banner.linkUrl}
+                    className="relative block h-full w-full"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {slideContent}
+                  </a>
+                ) : (
+                  <Link href={banner.linkUrl} className="relative block h-full w-full">
+                    {slideContent}
+                  </Link>
+                )
+              ) : (
+                <div className="relative h-full w-full">{slideContent}</div>
+              )}
+            </SwiperSlide>
+          );
+        })}
       </Swiper>
     </div>
   );

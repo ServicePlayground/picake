@@ -4036,6 +4036,7 @@ __metadata:
   resolution: "@picake/web-admin@workspace:apps/web-admin"
   dependencies:
     "@radix-ui/react-label": "npm:^2.1.8"
+    "@radix-ui/react-select": "npm:^2.2.6"
     "@radix-ui/react-slot": "npm:^1.2.4"
     "@tanstack/react-query": "npm:^5.90.5"
     "@tanstack/react-query-devtools": "npm:^5.90.2"

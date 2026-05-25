@@ -46,6 +46,25 @@ model AdminConfig {
   @@map("admin_configs")
 }
 
+/// 구매자 앱(web-user) 홈 화면 슬라이드 배너
+model HomeBanner {
+  id        String    @id @default(cuid())
+  imageUrl  String    @map("image_url")
+  linkUrl   String?   @map("link_url")
+  /// 노출 시작 시각 (null이면 즉시 노출)
+  startsAt  DateTime? @map("starts_at")
+  /// 노출 종료 시각 (null이면 종료 없음)
+  endsAt    DateTime? @map("ends_at")
+  sortOrder Int       @default(0) @map("sort_order")
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+
+  @@index([isActive, sortOrder])
+  @@index([startsAt, endsAt])
+  @@map("home_banners")
+}
+
 /// 구매자 앱(web-user) 전용 계정 — 판매자 계정과 DB·토큰으로 완전 분리
 model Consumer {
   id String @id @default(cuid())

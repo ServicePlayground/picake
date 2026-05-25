@@ -17,25 +17,23 @@ export function AdminManagementPagination({
   }
 
   return (
-    <div className="flex items-center justify-center gap-2 border-t border-zinc-100 px-4 py-3">
+    <div className="flex items-center justify-center gap-2">
       <Button
         variant="outline"
         size="sm"
         onClick={() => onPageChange(Math.max(1, page - 1))}
         disabled={page === 1}
-        className="h-8 px-3 text-xs"
       >
         이전
       </Button>
-      <span className="text-sm text-muted-foreground">
+      <div className="text-sm text-muted-foreground">
         {page} / {meta.totalPages}
-      </span>
+      </div>
       <Button
         variant="outline"
         size="sm"
         onClick={() => onPageChange(Math.min(meta.totalPages, page + 1))}
         disabled={page === meta.totalPages}
-        className="h-8 px-3 text-xs"
       >
         다음
       </Button>

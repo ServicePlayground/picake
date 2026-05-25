@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Check, Square } from "lucide-react";
+import { Check } from "lucide-react";
 import { cn } from "@/apps/web-seller/common/utils/classname.util";
 
 interface CheckboxProps {
@@ -24,7 +24,7 @@ export function Checkbox({
   return (
     <label
       className={cn(
-        "flex items-center gap-1.5",
+        "flex items-center gap-2",
         disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer",
         className,
       )}
@@ -38,12 +38,18 @@ export function Checkbox({
         disabled={disabled}
         className="sr-only"
       />
-      {checked ? (
-        <Check className="size-4 shrink-0 text-zinc-900" strokeWidth={2.5} aria-hidden />
-      ) : (
-        <Square className="size-4 shrink-0 text-zinc-400" strokeWidth={2} aria-hidden />
-      )}
-      {label ? <span className="text-sm leading-5 text-zinc-900">{label}</span> : null}
+      <span
+        aria-hidden
+        className={cn(
+          "flex size-4 shrink-0 items-center justify-center rounded border transition-colors",
+          checked
+            ? "border-primary bg-primary text-primary-foreground"
+            : "border-input bg-background",
+        )}
+      >
+        {checked ? <Check className="size-3" strokeWidth={3} aria-hidden /> : null}
+      </span>
+      {label ? <span className="text-sm leading-5 text-foreground">{label}</span> : null}
     </label>
   );
 }

@@ -1,10 +1,16 @@
+import { StatusBadge } from "@/apps/web-admin/common/components/badges/StatusBadge";
+import {
+  LIST_TABLE_CELL,
+  LIST_TABLE_CELL_MUTED,
+  LIST_TABLE_HEAD,
+} from "@/apps/web-admin/common/constants/list-typography.constant";
+import { cn } from "@/apps/web-admin/common/utils/classname.util";
 import type { AdminAccountItemResponseDto } from "@/apps/web-admin/features/admin-management/types/admin-management-account.dto";
 import {
-  ADMIN_APPROVAL_STATUS_BADGE_CLASS,
-  ADMIN_APPROVAL_STATUS_LABEL,
+  getAdminApprovalStatusBadgeVariant,
+  getAdminApprovalStatusLabel,
 } from "@/apps/web-admin/features/admin-management/utils/admin-approval-status.ui.util";
 import { formatAdminManagementDateTime } from "@/apps/web-admin/features/admin-management/utils/admin-management-date.util";
-import { cn } from "@/apps/web-admin/common/utils/classname.util";
 
 interface AdminAccountTableProps {
   items: AdminAccountItemResponseDto[];
@@ -13,51 +19,36 @@ interface AdminAccountTableProps {
 export function AdminAccountTable({ items }: AdminAccountTableProps) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full">
+      <table className="w-full min-w-[640px]">
         <thead>
-          <tr className="border-b border-zinc-200 bg-zinc-50/50">
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
-              아이디
-            </th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
-              승인 상태
-            </th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
-              OTP
-            </th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
-              마지막 로그인
-            </th>
-            <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-zinc-500">
-              가입일시
-            </th>
+          <tr className="border-b border-border text-left">
+            <th className={cn("px-4 py-3 text-left", LIST_TABLE_HEAD)}>아이디</th>
+            <th className={cn("px-4 py-3 text-left", LIST_TABLE_HEAD)}>승인 상태</th>
+            <th className={cn("px-4 py-3 text-left", LIST_TABLE_HEAD)}>OTP</th>
+            <th className={cn("px-4 py-3 text-left", LIST_TABLE_HEAD)}>마지막 로그인</th>
+            <th className={cn("px-4 py-3 text-left", LIST_TABLE_HEAD)}>가입일시</th>
           </tr>
         </thead>
         <tbody>
           {items.map((item) => (
-            <tr key={item.id} className="border-b border-zinc-100 last:border-0">
-              <td className="px-4 py-3 text-sm font-medium text-zinc-900">{item.username}</td>
-              <td className="px-4 py-3">
-                <span
-                  className={cn(
-                    "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
-                    ADMIN_APPROVAL_STATUS_BADGE_CLASS[item.approvalStatus],
-                  )}
-                >
-                  {ADMIN_APPROVAL_STATUS_LABEL[item.approvalStatus]}
-                </span>
+            <tr key={item.id} className="border-b border-border/80 last:border-0">
+              <td className={cn("px-4 py-3 font-medium", LIST_TABLE_CELL)}>{item.username}</td>
+              <td className={cn("px-4 py-3", LIST_TABLE_CELL)}>
+                <StatusBadge variant={getAdminApprovalStatusBadgeVariant(item.approvalStatus)}>
+                  {getAdminApprovalStatusLabel(item.approvalStatus)}
+                </StatusBadge>
               </td>
-              <td className="px-4 py-3 text-sm text-zinc-500">
+              <td className={cn("px-4 py-3", LIST_TABLE_CELL_MUTED)}>
                 {item.isTotpEnabled ? (
-                  <span className="text-emerald-600">활성</span>
+                  <span className="font-semibold text-emerald-600">활성</span>
                 ) : (
-                  <span className="text-zinc-400">미설정</span>
+                  "미설정"
                 )}
               </td>
-              <td className="px-4 py-3 text-sm text-zinc-500">
+              <td className={cn("px-4 py-3", LIST_TABLE_CELL_MUTED)}>
                 {formatAdminManagementDateTime(item.lastLoginAt)}
               </td>
-              <td className="px-4 py-3 text-sm text-zinc-500">
+              <td className={cn("px-4 py-3", LIST_TABLE_CELL_MUTED)}>
                 {formatAdminManagementDateTime(item.createdAt)}
               </td>
             </tr>

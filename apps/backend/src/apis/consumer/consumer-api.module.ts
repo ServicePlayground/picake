@@ -21,6 +21,8 @@ import { NotificationModule } from "@apps/backend/modules/notification/notificat
 import { FcmModule } from "@apps/backend/modules/fcm/fcm.module";
 import { ConsumerNotificationController } from "@apps/backend/apis/consumer/controllers/notification.controller";
 import { ConsumerFcmTokenController } from "@apps/backend/apis/consumer/controllers/fcm-token.controller";
+import { HomeBannerModule } from "@apps/backend/modules/home-banner/home-banner.module";
+import { ConsumerHomeBannerController } from "@apps/backend/apis/consumer/controllers/home-banner.controller";
 
 /**
  * Consumer(구매자) API 모듈 — 경로 prefix `consumer`, JWT aud `consumer`
@@ -30,6 +32,7 @@ import { ConsumerFcmTokenController } from "@apps/backend/apis/consumer/controll
   imports: [
     UploadModule,
     AuthModule,
+    HomeBannerModule,
     FcmModule,
     StoreModule,
     ProductModule,
@@ -53,6 +56,7 @@ import { ConsumerFcmTokenController } from "@apps/backend/apis/consumer/controll
     ConsumerLikeController,
     ConsumerMypageController,
     ConsumerNotificationController,
+    ConsumerHomeBannerController,
     // ConsumerChatController,
   ],
 })

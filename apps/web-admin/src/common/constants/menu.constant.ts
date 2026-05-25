@@ -1,5 +1,5 @@
 import React from "react";
-import { Home, ShieldCheck } from "lucide-react";
+import { Home, ShoppingBag, ShieldCheck } from "lucide-react";
 import { ROUTES } from "./paths.constant";
 
 export interface MenuChildItem {
@@ -20,6 +20,13 @@ export function getMenuItems(): MenuItem[] {
       text: "홈",
       icon: React.createElement(Home, { className: "w-5 h-5" }),
       path: ROUTES.ROOT,
+    },
+    {
+      text: "구매자",
+      icon: React.createElement(ShoppingBag, { className: "w-5 h-5" }),
+      children: [
+        { text: "홈 배너 관리", path: ROUTES.CONSUMER.HOME_BANNERS },
+      ],
     },
     {
       text: "관리자",
