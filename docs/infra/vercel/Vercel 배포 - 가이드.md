@@ -37,7 +37,7 @@ Picake 프로젝트의 web-user, web-seller, web-admin 애플리케이션을 Ver
 }
 ```
 
-이 설정은 웹훅을 통한 수동 배포만 사용한다는 의미입니다.
+이 설정은 브랜치 push 시 Vercel 자동 배포를 막고, **태그 + GitHub Actions**로만 배포한다는 의미입니다.
 
 ### 2. Vercel 콘솔 설정
 
@@ -88,24 +88,31 @@ Picake 프로젝트의 web-user, web-seller, web-admin 애플리케이션을 Ver
 | web-seller | `VITE_PUBLIC_API_DOMAIN` | `https://api-staging.picakes.com` |
 | web-admin  | `VITE_PUBLIC_API_DOMAIN` | `https://api-staging.picakes.com` |
 
-#### 2.4 Deploy Hook 생성 (웹훅)
+#### 2.4 Vercel 토큰 및 프로젝트 ID 확인
 
-1. Vercel 대시보드 → 프로젝트 설정 → Git → Deploy Hooks
-2. Deploy Hook 생성
-3. 생성된 웹훅 URL 복사 (다음 단계에서 사용)
+1. https://vercel.com/account/settings/tokens url직접 입력 -> 토큰 생성 및 깃허브 VERCEL_TOKEN secrets 설정
+2. Vercel → 팀 선택 → Settings → General → Team ID 복사 및 깃허브 VERCEL_ORG_ID secrets 설정
+3. Vercel → 팀 선택 → 각 프로젝트 -> Settings -> General -> Project ID 복사 및 깃허브 VERCEL_PROJECT_ID secrets 설정
 
-### 3. GitHub 환경변수 설정
+#### 2.5 Discord 웹훅 (배포 알림)
 
-1. GitHub 저장소 → Settings → Secrets and variables → Actions
-2. New repository secret 클릭
-3. 다음 Secrets 추가:
-   - `VERCEL_WEBHOOK_URL_WEB_USER_STAGING`: web-user 스테이징 환경 Vercel 웹훅 URL
-   - `VERCEL_WEBHOOK_URL_WEB_SELLER_STAGING`: web-seller 스테이징 환경 Vercel 웹훅 URL
-   - `VERCEL_WEBHOOK_URL_WEB_ADMIN_STAGING`: web-admin 스테이징 환경 Vercel 웹훅 URL
+1. Discord 서버 → 채널 설정 → 연동 → 웹후크 만들기
+2. 웹훅 URL을 GitHub Secret `DISCORD_WEBHOOK_URL_WEB_FE`에 등록
 
-### 4. GitHub 워크플로 생성 (태그 기반)
+| Secret                                 | 설명                           |
+| -------------------------------------- | ------------------------------ |
+| `VERCEL_TOKEN`                         | Vercel API 토큰                |
+| `VERCEL_ORG_ID`                        | Vercel 팀/개인 Org ID          |
+| `VERCEL_PROJECT_ID_WEB_USER_STAGING`   | web-user-staging 프로젝트 ID   |
+| `VERCEL_PROJECT_ID_WEB_SELLER_STAGING` | web-seller-staging 프로젝트 ID |
+| `VERCEL_PROJECT_ID_WEB_ADMIN_STAGING`  | web-admin-staging 프로젝트 ID  |
+| `DISCORD_WEBHOOK_URL_WEB_FE`           | 배포 결과 Discord 알림 웹훅    |
 
-`.github/workflows/deploy-staging-web.yml` 파일을 생성하여 태그 기반 배포 워크플로를 설정합니다.
+> 이전 Deploy Hook용 `VERCEL_WEBHOOK_URL_*` 시크릿은 더 이상 사용하지 않습니다.
+
+### 4. GitHub 워크플로 (태그 기반 + Discord 알림)
+
+`.github/workflows/deploy-staging-web.yml`에서 태그 푸시 시 Vercel CLI로 빌드·배포하고, 성공/실패 시 Discord로 알립니다.
 
 **워크플로 트리거:**
 
@@ -115,14 +122,14 @@ Picake 프로젝트의 web-user, web-seller, web-admin 애플리케이션을 Ver
 
 **워크플로 동작:**
 
-1. 태그에서 프로젝트명과 환경 추출
-2. 프로젝트명과 환경 유효성 검증
-3. 프로젝트별 Vercel 웹훅 URL 가져오기
-4. Vercel 웹훅 호출하여 배포 트리거
+1. 태그에서 프로젝트명·환경 추출 및 검증
+2. 모노레포 의존성 설치 (`yarn install`)
+3. `vercel pull` → `vercel build` → `vercel deploy` (배포 완료까지 대기)
+4. Discord에 성공/실패, 배포 URL, GitHub Actions 로그 링크, Vercel 빌드 로그 일부 전송
 
 자세한 워크플로 내용은 `.github/workflows/deploy-staging-web.yml` 파일을 참고하세요.
 
-### 5. 도메인 구성 (선택사항)
+### 4. 도메인 구성 (선택사항)
 
 커스텀 도메인 설정은 [AWS Route53(도메인) - 가이드](<../aws/AWS%20Route53(도메인)%20-%20가이드.md>)를 참고하세요.
 
