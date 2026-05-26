@@ -106,8 +106,9 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel@latest
 
+      # 모노레포: apps/<app>에서 vercel CLI를 실행하면 rootDirectory가 중복되어
+      # apps/web-user/apps/web-user 경로가 되며 "spawn sh ENOENT"가 발생함 → 저장소 루트에서 실행
       - name: Pull Vercel environment
-        working-directory: ${{ steps.extract-project.outputs.app_dir }}
         env:
           VERCEL_PROJECT_ID: ${{ steps.vercel-project.outputs.id }}
         run: |
@@ -116,12 +117,17 @@ jobs:
             exit 1
           fi
 
+          rm -rf apps/*/.vercel .vercel
+
           vercel pull --yes --environment=production --token="$VERCEL_TOKEN" \
             2>&1 | tee /tmp/vercel-pull.log
 
+          # 의존성은 위에서 루트 yarn install 완료 — vercel build의 install 단계 스킵
+          jq '.installCommand = "true"' .vercel/project.json > .vercel/project.json.tmp
+          mv .vercel/project.json.tmp .vercel/project.json
+
       - name: Build with Vercel
         id: vercel-build
-        working-directory: ${{ steps.extract-project.outputs.app_dir }}
         env:
           VERCEL_PROJECT_ID: ${{ steps.vercel-project.outputs.id }}
         run: |
@@ -132,7 +138,6 @@ jobs:
 
       - name: Deploy to Vercel
         id: vercel-deploy
-        working-directory: ${{ steps.extract-project.outputs.app_dir }}
         env:
           VERCEL_PROJECT_ID: ${{ steps.vercel-project.outputs.id }}
         run: |
