@@ -157,7 +157,7 @@ jobs:
       - name: Notify Discord
         if: always()
         env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL_WEB_FE }}
           PROJECT: ${{ steps.extract-project.outputs.project }}
           TAG: ${{ steps.extract-project.outputs.tag }}
           ENVIRONMENT: ${{ steps.extract-project.outputs.environment }}
@@ -166,7 +166,7 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           if [ -z "$DISCORD_WEBHOOK_URL" ]; then
-            echo "⚠️ DISCORD_WEBHOOK_URL is not set — skipping notification"
+            echo "⚠️ DISCORD_WEBHOOK_URL_WEB_FE is not set — skipping notification"
             exit 0
           fi
 
