@@ -54,50 +54,18 @@ Picake 프로젝트의 web-user, web-seller, web-admin 애플리케이션을 Ver
 | web-admin-staging     | staging    | `staging` | Production |
 | web-admin-production  | production | `main`    | Production |
 
-**중요 사항:**
-
-- staging과 production 환경 모두 별도의 Vercel 프로젝트로 구성됩니다
-- 각 프로젝트는 바라보는 브랜치만 다릅니다 (staging 브랜치 또는 main 브랜치)
-- 모든 프로젝트는 Production 타입으로 배포됩니다
-
 #### 2.2 프로젝트 생성
 
-1. Vercel 대시보드에서 새 프로젝트 생성 (총 6개)
-2. GitHub 저장소 연결
-   - web-user-staging: `staging` 브랜치 연결
-   - web-user-production: `main` 브랜치 연결
-   - web-seller-staging: `staging` 브랜치 연결
-   - web-seller-production: `main` 브랜치 연결
-   - web-admin-staging: `staging` 브랜치 연결
-   - web-admin-production: `main` 브랜치 연결
-3. 빌드 설정:
-   - Framework: Next.js (web-user) / Vite (web-seller, web-admin)
-   - Build Command: `next build` (web-user) / `yarn build` (web-seller, web-admin)
-   - Install Command: `yarn install`
-   - Root Directory: `apps/web-user` 또는 `apps/web-seller` 또는 `apps/web-admin`
-   - Output Directory: `.next` (web-user) / `dist` (web-seller) / `dist` (web-admin)
+1. 이전에 만들었던 프로젝트 설정 확인
 
 #### 2.3 환경변수 설정
 
 1. Vercel 대시보드 → 프로젝트 설정 → Environment Variables
 2. 필요한 환경변수 추가
 
-| 프로젝트   | 환경변수                 | staging 예시                      |
-| ---------- | ------------------------ | --------------------------------- |
-| web-user   | (프로젝트별 설정)        | —                                 |
-| web-seller | `VITE_PUBLIC_API_DOMAIN` | `https://api-staging.picakes.com` |
-| web-admin  | `VITE_PUBLIC_API_DOMAIN` | `https://api-staging.picakes.com` |
-
-#### 2.4 Vercel 토큰 및 프로젝트 ID 확인
-
-1. https://vercel.com/account/settings/tokens url직접 입력 -> 토큰 생성 및 깃허브 VERCEL_TOKEN secrets 설정
-2. Vercel → 팀 선택 → Settings → General → Team ID 복사 및 깃허브 VERCEL_ORG_ID secrets 설정
-3. Vercel → 팀 선택 → 각 프로젝트 -> Settings -> General -> Project ID 복사 및 깃허브 VERCEL_PROJECT_ID secrets 설정
-
-#### 2.5 Discord 웹훅 (배포 알림)
-
-1. Discord 서버 → 채널 설정 → 연동 → 웹후크 만들기
-2. 웹훅 URL을 GitHub Secret `DISCORD_WEBHOOK_URL_WEB_FE`에 등록
+- https://vercel.com/account/settings/tokens url직접 입력 -> 토큰 생성 및 깃허브 VERCEL_TOKEN secrets 설정
+- Vercel → 팀 선택 → Settings → General → Team ID 복사 및 깃허브 VERCEL_ORG_ID secrets 설정
+- Vercel → 팀 선택 → 각 프로젝트 -> Settings -> General -> Project ID 복사 및 깃허브 VERCEL_PROJECT_ID secrets 설정
 
 | Secret                                 | 설명                           |
 | -------------------------------------- | ------------------------------ |
@@ -108,9 +76,7 @@ Picake 프로젝트의 web-user, web-seller, web-admin 애플리케이션을 Ver
 | `VERCEL_PROJECT_ID_WEB_ADMIN_STAGING`  | web-admin-staging 프로젝트 ID  |
 | `DISCORD_WEBHOOK_URL_WEB_FE`           | 배포 결과 Discord 알림 웹훅    |
 
-> 이전 Deploy Hook용 `VERCEL_WEBHOOK_URL_*` 시크릿은 더 이상 사용하지 않습니다.
-
-### 4. GitHub 워크플로 (태그 기반 + Discord 알림)
+### 3. GitHub 워크플로 (태그 기반 + Discord 알림)
 
 `.github/workflows/deploy-staging-web.yml`에서 태그 푸시 시 Vercel CLI로 빌드·배포하고, 성공/실패 시 Discord로 알립니다.
 
