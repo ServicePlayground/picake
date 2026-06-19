@@ -99,6 +99,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
       {/* 탭 영역 */}
       <Tabs
         defaultTab="detail"
+        scrollOnSelect
         tabs={[
           {
             id: "detail",
