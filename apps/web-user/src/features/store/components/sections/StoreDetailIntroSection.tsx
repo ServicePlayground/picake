@@ -164,7 +164,7 @@ export function StoreDetailIntroSection({ store }: StoreDetailIntroSectionProps)
       {/* 설명 */}
       {store.description && (
         <div className="px-[16px] py-[12px] bg-gray-50 rounded-lg">
-          <p className="text-2sm text-gray-900 leading-relaxed">
+          <p className="text-2sm text-gray-900 leading-relaxed whitespace-pre-line">
             {displayDescription}
             {shouldTruncate && !isExpanded && (
               <button
