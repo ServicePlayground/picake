@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { Product } from "@/apps/web-user/features/product/types/product.type";
 import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
@@ -23,7 +24,18 @@ export function ProductDetailInfoSection({ product }: ProductDetailInfoSectionPr
           onClick={handleStoreClick}
           className="inline-flex items-center gap-[4px] mb-[8px] px-[6px] py-[6px] rounded-full bg-[#F6F5F5] text-xs text-gray-900 font-bold hover:bg-[#E8E6E6] transition-colors cursor-pointer"
         >
-          <span className="w-[14px] h-[14px] rounded-full bg-primary"></span>
+          {product.storeLogoImageUrl ? (
+            <Image
+              src={product.storeLogoImageUrl}
+              alt={product.storeName}
+              width={14}
+              height={14}
+              unoptimized
+              className="w-[14px] h-[14px] rounded-full object-cover"
+            />
+          ) : (
+            <span className="w-[14px] h-[14px] rounded-full bg-primary" />
+          )}
           {product.storeName}
         </button>
         <h1 className="text-xl font-bold text-gray-900">{product.name}</h1>

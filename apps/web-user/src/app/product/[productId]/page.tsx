@@ -135,7 +135,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
       />
 
       {/* 예약하기, 좋아요 - 하단 고정 */}
-      <div className="fixed bottom-0 left-0 right-0 mx-auto max-w-[638px] bg-white border-gray-200 flex flex-col shadow-[0_-4px_12px_-4px_rgba(0,0,0,0.16)]">
+      <div className="fixed bottom-0 left-0 right-0 z-40 mx-auto max-w-[638px] bg-white border-gray-200 flex flex-col shadow-[0_-4px_12px_-4px_rgba(0,0,0,0.16)]">
         <div className="flex items-center gap-[16px] px-[20px] py-[10px]">
           <button
             type="button"
