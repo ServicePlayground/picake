@@ -10,14 +10,11 @@ interface Category {
 }
 
 const MOCK_CATEGORIES: Category[] = [
-  { id: "1", name: "생일", image: null },
-  { id: "2", name: "연인", image: null },
-  { id: "3", name: "친구", image: null },
-  { id: "4", name: "직장", image: null },
-  { id: "5", name: "당일픽업", image: null },
-  { id: "6", name: "기념일", image: null },
-  { id: "7", name: "감사", image: null },
-  { id: "8", name: "축하", image: null },
+  { id: "1", name: "생일", image: "/images/contents/category1.png" },
+  { id: "2", name: "연인", image: "/images/contents/category2.png" },
+  { id: "3", name: "직장", image: "/images/contents/category3.png" },
+  { id: "4", name: "친구", image: "/images/contents/category4.png" },
+  { id: "5", name: "당일픽업", image: "/images/contents/category5.png" },
 ];
 
 export default function CategoryList() {

@@ -22,7 +22,7 @@ export function ProductDetailImageGallerySection({
 
   if (!images || images.length === 0) {
     return (
-      <div className="w-full h-[280px] sm:h-[400px] aspect-square bg-gray-100 flex items-center justify-center text-gray-500 text-sm font-medium">
+      <div className="w-full aspect-square bg-gray-100 flex items-center justify-center text-gray-500 text-sm font-medium">
         이미지가 없습니다.
       </div>
     );
@@ -36,7 +36,7 @@ export function ProductDetailImageGallerySection({
         pagination={{ type: "fraction" }}
         thumbs={{ swiper: thumbsSwiper && !thumbsSwiper.destroyed ? thumbsSwiper : null }}
         loop={images.length > 1}
-        className="w-full h-[280px] sm:h-[400px]"
+        className="w-full aspect-square"
       >
         {images.map((image, index) => (
           <SwiperSlide key={index}>

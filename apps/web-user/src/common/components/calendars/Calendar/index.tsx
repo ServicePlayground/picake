@@ -140,13 +140,28 @@ export const Calendar: React.FC<CalendarProps> = ({
     }
   }, [selectedDate, onDateSelect, minDate, maxDate, today]);
 
+  // minDate/maxDate가 속한 "월"의 시작일 (월 이동 제한 기준)
+  const minMonthStart = minDate ? new Date(minDate.getFullYear(), minDate.getMonth(), 1) : null;
+  const maxMonthStart = maxDate ? new Date(maxDate.getFullYear(), maxDate.getMonth(), 1) : null;
+
+  // 현재 표시 월이 minDate 월 이하면 이전 달 이동 불가
+  const isPrevMonthDisabled = minMonthStart
+    ? currentMonth.getTime() <= minMonthStart.getTime()
+    : false;
+  // 현재 표시 월이 maxDate 월 이상이면 다음 달 이동 불가
+  const isNextMonthDisabled = maxMonthStart
+    ? currentMonth.getTime() >= maxMonthStart.getTime()
+    : false;
+
   // 이전 달로 이동
   const goToPreviousMonth = () => {
+    if (isPrevMonthDisabled) return;
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
   };
 
   // 다음 달로 이동
   const goToNextMonth = () => {
+    if (isNextMonthDisabled) return;
     setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
   };
 
@@ -172,7 +187,13 @@ export const Calendar: React.FC<CalendarProps> = ({
         <button
           type="button"
           onClick={goToPreviousMonth}
-          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          disabled={isPrevMonthDisabled}
+          className={cn(
+            "p-2 rounded-full transition-colors",
+            isPrevMonthDisabled
+              ? "cursor-not-allowed opacity-30"
+              : "hover:bg-gray-100",
+          )}
           aria-label="이전 달"
         >
           <ChevronLeft className="w-5 h-5 text-gray-600" />
@@ -181,7 +202,13 @@ export const Calendar: React.FC<CalendarProps> = ({
         <button
           type="button"
           onClick={goToNextMonth}
-          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          disabled={isNextMonthDisabled}
+          className={cn(
+            "p-2 rounded-full transition-colors",
+            isNextMonthDisabled
+              ? "cursor-not-allowed opacity-30"
+              : "hover:bg-gray-100",
+          )}
           aria-label="다음 달"
         >
           <ChevronRight className="w-5 h-5 text-gray-600" />
