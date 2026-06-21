@@ -50,33 +50,37 @@ export const ProductCreationLetteringPolicySection: React.FC<
             />
           </div>
 
-          <div>
-            <SelectBox
-              label="레터링 문구 필수 여부"
-              value={form.letteringRequired}
-              onChange={(value) => onLetteringRequiredChange(value as OptionRequired)}
-              options={OPTION_REQUIRED_OPTIONS}
-              error={errors.letteringRequired}
-              required
-            />
-          </div>
+          {form.letteringVisible === EnableStatus.ENABLE && (
+            <>
+              <div>
+                <SelectBox
+                  label="레터링 문구 필수 여부"
+                  value={form.letteringRequired}
+                  onChange={(value) => onLetteringRequiredChange(value as OptionRequired)}
+                  options={OPTION_REQUIRED_OPTIONS}
+                  error={errors.letteringRequired}
+                  required
+                />
+              </div>
 
-          <div>
-            <Label className="after:content-['*'] after:ml-0.5 after:text-destructive">
-              최대 글자 수
-            </Label>
-            <NumberInput
-              value={form.letteringMaxLength}
-              onChange={(v) => onLetteringMaxLengthChange(v ?? 0)}
-              placeholder=""
-              min={0}
-              className={errors.letteringMaxLength ? "border-destructive" : ""}
-              disabled={disabled}
-            />
-            {errors.letteringMaxLength && (
-              <p className="text-sm text-destructive mt-1">{errors.letteringMaxLength}</p>
-            )}
-          </div>
+              <div>
+                <Label className="after:content-['*'] after:ml-0.5 after:text-destructive">
+                  최대 글자 수
+                </Label>
+                <NumberInput
+                  value={form.letteringMaxLength}
+                  onChange={(v) => onLetteringMaxLengthChange(v ?? 0)}
+                  placeholder=""
+                  min={1}
+                  className={errors.letteringMaxLength ? "border-destructive" : ""}
+                  disabled={disabled}
+                />
+                {errors.letteringMaxLength && (
+                  <p className="text-sm text-destructive mt-1">{errors.letteringMaxLength}</p>
+                )}
+              </div>
+            </>
+          )}
 
           <div>
             <SelectBox

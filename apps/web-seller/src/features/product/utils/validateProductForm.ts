@@ -1,3 +1,4 @@
+import { EnableStatus } from "@/apps/web-seller/features/product/types/product.dto";
 import type { ProductForm } from "@/apps/web-seller/features/product/types/product.ui";
 
 export const validateProductForm = (
@@ -38,6 +39,10 @@ export const validateProductForm = (
     form.salePrice > form.originalPrice
   ) {
     newErrors.salePrice = "판매가는 정가보다 클 수 없습니다.";
+  }
+
+  if (form.letteringVisible === EnableStatus.ENABLE && form.letteringMaxLength < 1) {
+    newErrors.letteringMaxLength = "최대 글자 수는 1 이상 입력해주세요.";
   }
 
   // 상품정보제공고시 검증

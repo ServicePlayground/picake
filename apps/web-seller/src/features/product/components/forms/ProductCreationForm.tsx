@@ -57,7 +57,7 @@ export const defaultForm: ProductForm = {
   ],
   letteringVisible: EnableStatus.ENABLE,
   letteringRequired: OptionRequired.OPTIONAL,
-  letteringMaxLength: 0,
+  letteringMaxLength: 1,
   imageUploadEnabled: EnableStatus.ENABLE,
   productCategoryTypes: [],
   searchTags: [],
@@ -174,7 +174,13 @@ export const ProductCreationForm: React.FC<Props> = ({
   };
 
   const handleLetteringVisibleChange = (value: EnableStatus) => {
-    const next = { ...form, letteringVisible: value };
+    const next = {
+      ...form,
+      letteringVisible: value,
+      ...(value === EnableStatus.ENABLE && form.letteringMaxLength < 1
+        ? { letteringMaxLength: 1 }
+        : {}),
+    };
     setForm(next);
     onChange?.(next);
   };
