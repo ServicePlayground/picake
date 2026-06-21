@@ -17,12 +17,7 @@ export interface TabsProps {
   scrollOffset?: number;
 }
 
-export function Tabs({
-  tabs,
-  defaultTab,
-  scrollOnSelect = false,
-  scrollOffset = 52,
-}: TabsProps) {
+export function Tabs({ tabs, defaultTab, scrollOnSelect = false, scrollOffset = 52 }: TabsProps) {
   const [activeTab, setActiveTab] = useState<string>(defaultTab || tabs[0]?.id || "");
   // sticky 탭 바는 붙어있을 때 위치가 52px로 고정돼 위치 계산이 불가하므로,
   // 바로 앞에 둔 비-sticky 앵커로 스크롤한다(scrollIntoView가 스크롤 컨테이너를 자동 탐색).

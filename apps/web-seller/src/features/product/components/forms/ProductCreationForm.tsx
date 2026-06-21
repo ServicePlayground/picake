@@ -13,6 +13,7 @@ import {
   CakeSizeOptionDto,
   CakeFlavorOptionDto,
   ProductCategoryType,
+  CakeSizeDisplayName,
 } from "@/apps/web-seller/features/product/types/product.dto";
 import type { ProductForm } from "@/apps/web-seller/features/product/types/product.ui";
 import { ProductCreationBasicInfoSection } from "@/apps/web-seller/features/product/components/sections/ProductCreationBasicInfoSection";
@@ -34,14 +35,29 @@ interface Props {
 export const defaultForm: ProductForm = {
   images: [],
   name: "",
+  originalPrice: 0,
   salePrice: 0,
   salesStatus: EnableStatus.ENABLE,
   visibilityStatus: EnableStatus.ENABLE,
-  cakeSizeOptions: [],
-  cakeFlavorOptions: [],
+  cakeSizeOptions: [
+    {
+      visible: EnableStatus.ENABLE,
+      displayName: CakeSizeDisplayName.DOSIRAK,
+      lengthCm: 0,
+      price: 0,
+      description: "1~2인용",
+    },
+  ],
+  cakeFlavorOptions: [
+    {
+      visible: EnableStatus.ENABLE,
+      displayName: "초콜릿",
+      price: 0,
+    },
+  ],
   letteringVisible: EnableStatus.ENABLE,
   letteringRequired: OptionRequired.OPTIONAL,
-  letteringMaxLength: 0,
+  letteringMaxLength: 1,
   imageUploadEnabled: EnableStatus.ENABLE,
   productCategoryTypes: [],
   searchTags: [],
@@ -99,6 +115,13 @@ export const ProductCreationForm: React.FC<Props> = ({
       onChange?.(next);
     };
 
+  const handleOriginalPriceChange = (value: number) => {
+    if (disabled) return;
+    const next = { ...form, originalPrice: value };
+    setForm(next);
+    onChange?.(next);
+  };
+
   const handleSalePriceChange = (value: number) => {
     if (disabled) return;
     const next = { ...form, salePrice: value };
@@ -151,7 +174,13 @@ export const ProductCreationForm: React.FC<Props> = ({
   };
 
   const handleLetteringVisibleChange = (value: EnableStatus) => {
-    const next = { ...form, letteringVisible: value };
+    const next = {
+      ...form,
+      letteringVisible: value,
+      ...(value === EnableStatus.ENABLE && form.letteringMaxLength < 1
+        ? { letteringMaxLength: 1 }
+        : {}),
+    };
     setForm(next);
     onChange?.(next);
   };
@@ -255,6 +284,7 @@ export const ProductCreationForm: React.FC<Props> = ({
                 onMainImageChange={handleMainImageChange}
                 onAdditionalImagesChange={handleAdditionalImagesChange}
                 onChange={handleChange}
+                onOriginalPriceChange={handleOriginalPriceChange}
                 onSalePriceChange={handleSalePriceChange}
                 disabled={disabled}
               />

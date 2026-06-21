@@ -67,6 +67,12 @@ export class ProductResponseDto extends PickupAddressDto {
   images: string[];
 
   @ApiProperty({
+    description: "정가",
+    example: SWAGGER_EXAMPLES.PRODUCT_DATA.originalPrice,
+  })
+  originalPrice: number;
+
+  @ApiProperty({
     description: "판매가",
     example: SWAGGER_EXAMPLES.PRODUCT_DATA.salePrice,
   })

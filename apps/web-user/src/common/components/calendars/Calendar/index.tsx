@@ -39,18 +39,34 @@ export interface CalendarProps {
 
 const DAYS_OF_WEEK = ["일", "월", "화", "수", "목", "금", "토"];
 
+function getMonthStart(date: Date): Date {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
 export const Calendar: React.FC<CalendarProps> = ({
   selectedDate,
   onDateSelect,
   minDate,
   maxDate,
   className,
-  initialMonth = new Date(),
+  initialMonth,
   businessCalendar,
 }) => {
-  const [currentMonth, setCurrentMonth] = useState(
-    new Date(initialMonth.getFullYear(), initialMonth.getMonth(), 1),
+  const displayMonthSource = initialMonth ?? selectedDate ?? null;
+
+  const [currentMonth, setCurrentMonth] = useState(() =>
+    displayMonthSource ? getMonthStart(displayMonthSource) : getMonthStart(new Date()),
   );
+
+  const displayMonthKey = displayMonthSource
+    ? `${displayMonthSource.getFullYear()}-${displayMonthSource.getMonth()}`
+    : null;
+
+  useEffect(() => {
+    if (displayMonthSource) {
+      setCurrentMonth(getMonthStart(displayMonthSource));
+    }
+  }, [displayMonthKey]);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -190,9 +206,7 @@ export const Calendar: React.FC<CalendarProps> = ({
           disabled={isPrevMonthDisabled}
           className={cn(
             "p-2 rounded-full transition-colors",
-            isPrevMonthDisabled
-              ? "cursor-not-allowed opacity-30"
-              : "hover:bg-gray-100",
+            isPrevMonthDisabled ? "cursor-not-allowed opacity-30" : "hover:bg-gray-100",
           )}
           aria-label="이전 달"
         >
@@ -205,9 +219,7 @@ export const Calendar: React.FC<CalendarProps> = ({
           disabled={isNextMonthDisabled}
           className={cn(
             "p-2 rounded-full transition-colors",
-            isNextMonthDisabled
-              ? "cursor-not-allowed opacity-30"
-              : "hover:bg-gray-100",
+            isNextMonthDisabled ? "cursor-not-allowed opacity-30" : "hover:bg-gray-100",
           )}
           aria-label="다음 달"
         >

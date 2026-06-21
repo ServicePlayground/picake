@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from "react-router-dom";
 import type { ProductResponseDto } from "@/apps/web-seller/features/product/types/product.dto";
 import { ROUTES } from "@/apps/web-seller/common/constants/paths.constant";
+import { isProductOnSale } from "@/apps/web-seller/features/product/utils/product-price.util";
 import { EmptyState } from "@/apps/web-seller/common/components/fallbacks/EmptyState";
 import { StatusBadge } from "@/apps/web-seller/common/components/badges/StatusBadge";
 
@@ -63,7 +64,16 @@ export function ProductList({ products }: ProductListProps) {
                   </StatusBadge>
                 </div>
                 <div className="text-base font-bold tabular-nums sm:text-lg">
-                  {product.salePrice.toLocaleString()}원
+                  {isProductOnSale(product.originalPrice, product.salePrice) ? (
+                    <div className="flex flex-col items-end gap-0.5 sm:flex-row sm:items-center sm:gap-2">
+                      <span className="text-sm font-normal text-muted-foreground line-through">
+                        {product.originalPrice.toLocaleString()}원
+                      </span>
+                      <span>{product.salePrice.toLocaleString()}원</span>
+                    </div>
+                  ) : (
+                    <span>{product.salePrice.toLocaleString()}원</span>
+                  )}
                 </div>
               </div>
             </div>

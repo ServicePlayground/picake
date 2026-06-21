@@ -66,6 +66,7 @@ export default function MapPage() {
   const { location: userLocation, refresh: refreshUserLocation } = useUserLocation();
 
   const [kakaoLoaded, setKakaoLoaded] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
   const [selectedStore, setSelectedStore] = useState<StoreInfo | null>(null);
   const [listSortBy, setListSortBy] = useState<MapListSortBy>("distance");
   const [listFilter, setListFilter] = useState<StoreListFilter>({});
@@ -124,7 +125,8 @@ export default function MapPage() {
   const selectedMarkerRef = useRef<any | null>(null);
   const isCenteringFromClickRef = useRef(false); // 마커 클릭으로 panTo 한 직후 idle에서 재처리 방지
   const usedUserLocationForCenterRef = useRef(false); // 이미 현재위치로 중심 잡았는지
-  const userLocationOverlayRef = useRef<any | null>(null);
+  const userLocationMarkerRef = useRef<any | null>(null); // 현재위치(파란 점) 마커
+  const userLocationMarkerImageRef = useRef<any | null>(null); // 현재위치 마커 이미지(1회 생성 후 재사용)
   const userLocationRef = useRef<{ latitude: number; longitude: number } | null>(null); // load 콜백에서 최신 위치 참조용
   const searchQueryRef = useRef<string | null>(searchQuery);
   const pickupFilterRef = useRef<MapPickupFilter | null>(pickupFilter);
@@ -301,25 +303,42 @@ export default function MapPage() {
     return () => window.clearInterval(id);
   }, []);
 
-  /** 현재위치 오버레이(점) 표시/제거 */
+  /**
+   * 현재위치(파란 점) 마커 표시/제거.
+   * CustomOverlay(HTML img)는 지도 생성 직후·panTo 도중 렌더되지 않는 카카오 타이밍 이슈가 있어
+   * 스토어 마커와 동일하게 Marker + MarkerImage로 그린다.
+   */
   const updateUserLocationMarker = useCallback(
     (location: { latitude: number; longitude: number } | null) => {
       const map = mapInstanceRef.current;
       if (!window.kakao?.maps || !map) return;
-      if (userLocationOverlayRef.current) {
-        userLocationOverlayRef.current.setMap(null);
-        userLocationOverlayRef.current = null;
+      if (!location) {
+        if (userLocationMarkerRef.current) {
+          userLocationMarkerRef.current.setMap(null);
+          userLocationMarkerRef.current = null;
+        }
+        return;
       }
-      if (!location) return;
       const position = new window.kakao.maps.LatLng(location.latitude, location.longitude);
-      userLocationOverlayRef.current = new window.kakao.maps.CustomOverlay({
-        map,
-        position,
-        content:
-          '<img src="/images/contents/map-current-position.png" alt="현재 위치" style="width:34px;height:34px;pointer-events:none;display:block" />',
-        yAnchor: 0.5,
-        xAnchor: 0.5,
-      });
+      if (!userLocationMarkerImageRef.current) {
+        userLocationMarkerImageRef.current = new window.kakao.maps.MarkerImage(
+          "/images/contents/map-current-position.png",
+          new window.kakao.maps.Size(34, 34),
+          { offset: new window.kakao.maps.Point(17, 17) }, // 좌표가 점 중앙에 오도록
+        );
+      }
+      if (userLocationMarkerRef.current) {
+        userLocationMarkerRef.current.setPosition(position);
+        userLocationMarkerRef.current.setMap(map);
+      } else {
+        userLocationMarkerRef.current = new window.kakao.maps.Marker({
+          map,
+          position,
+          image: userLocationMarkerImageRef.current,
+          clickable: false,
+          zIndex: 1, // 스토어 마커 위에 항상 보이도록
+        });
+      }
     },
     [],
   );
@@ -435,11 +454,19 @@ export default function MapPage() {
     (center: { lat: number; lng: number }, suppressKakaoUnopenedMarkers: boolean) => {
       if (!window.kakao?.maps || !mapContainerRef.current || mapInstanceRef.current) return;
       window.kakao.maps.load(() => {
+        // userLocation 도착 전·후로 initializeMap이 중복 호출되면 load 콜백이 2번 실행될 수 있음
+        if (mapInstanceRef.current) return;
+
         const map = new window.kakao.maps.Map(mapContainerRef.current, {
           center: new window.kakao.maps.LatLng(center.lat, center.lng),
           level: 5,
         });
         mapInstanceRef.current = map;
+        setMapReady(true);
+
+        if (typeof map.relayout === "function") {
+          map.relayout();
+        }
 
         if (suppressKakaoUnopenedMarkers) clearKakaoMarkers();
         drawPlatformStoreMarkersRef.current();
@@ -548,11 +575,11 @@ export default function MapPage() {
     usedUserLocationForCenterRef.current = true;
   }, [userLocation, searchQuery, pickupFilter, searchPlaces]);
 
-  // 현재위치 변경 시 지도 위 현재위치 마커(점) 갱신
+  // 현재위치 변경 또는 지도 준비 완료 시 현재위치 마커(점) 갱신
   useEffect(() => {
-    if (!mapInstanceRef.current) return;
+    if (!mapReady || !mapInstanceRef.current) return;
     updateUserLocationMarker(userLocation ?? null);
-  }, [userLocation, updateUserLocationMarker]);
+  }, [userLocation, updateUserLocationMarker, mapReady]);
 
   // 플랫폼 스토어 전체 조회 후 캐시. 지도 있으면 마커 그리기, 검색 모드가 아니면 미입점 검색
   useEffect(() => {

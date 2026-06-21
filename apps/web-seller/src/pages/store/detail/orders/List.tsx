@@ -18,6 +18,9 @@ import {
   OrderType,
 } from "@/apps/web-seller/features/order/types/order.dto";
 import { ORDER_STATUS_FILTER_OPTIONS } from "@/apps/web-seller/features/order/utils/order-status-ui.util";
+import { ORDER_STATUS_LIST_GUIDE_ITEMS } from "@/apps/web-seller/features/order/utils/order-status-seller-guide.util";
+import { OrderStatusGuideHelpButton } from "@/apps/web-seller/features/order/components/OrderStatusGuideHelpButton";
+import { OrderStatusGuideModal } from "@/apps/web-seller/features/order/components/OrderStatusGuideModal";
 import { useDebouncedValue } from "@/apps/web-seller/common/hooks/useDebouncedValue";
 import { ContentLoading } from "@/apps/web-seller/common/components/loading/ContentLoading";
 
@@ -35,6 +38,7 @@ export const StoreDetailOrderListPage: React.FC = () => {
   const [endDate, setEndDate] = useState<string>("");
   const [pickupStartDate, setPickupStartDate] = useState<string>("");
   const [pickupEndDate, setPickupEndDate] = useState<string>("");
+  const [statusGuideOpen, setStatusGuideOpen] = useState(false);
 
   // 주문 번호 검색 debounce (과도한 API 호출 방지)
   const debouncedOrderNumber = useDebouncedValue(orderNumber, DEBOUNCE_DELAY_MS);
@@ -147,7 +151,10 @@ export const StoreDetailOrderListPage: React.FC = () => {
 
           {/* 주문 상태 필터 */}
           <div className="min-w-0 space-y-1">
-            <Label>주문 상태</Label>
+            <Label className="inline-flex items-center gap-1">
+              주문 상태
+              <OrderStatusGuideHelpButton onClick={() => setStatusGuideOpen(true)} />
+            </Label>
             <Select
               value={orderStatus || "ALL"}
               onValueChange={(value) =>
@@ -253,6 +260,12 @@ export const StoreDetailOrderListPage: React.FC = () => {
           )}
         </>
       )}
+
+      <OrderStatusGuideModal
+        open={statusGuideOpen}
+        onClose={() => setStatusGuideOpen(false)}
+        items={ORDER_STATUS_LIST_GUIDE_ITEMS}
+      />
     </div>
   );
 };

@@ -22,7 +22,7 @@ const SEED_ACCOUNTS = {
   SELLER: {
     PHONE: "01012345678",
     NAME: "김철수",
-    NICKNAME: "김철수_739",
+    NICKNAME: "달콤한_마카롱_0739",
     PROFILE_IMAGE_URL: "https://static-staging.picakes.com/uploads/1779605116236_722257b7.jpeg",
     GOOGLE_ID: "115107911178776387683",
     GOOGLE_EMAIL: "olo90632951@gmail.com",
@@ -34,7 +34,7 @@ const SEED_ACCOUNTS = {
   CONSUMER: {
     PHONE: "01023456789",
     NAME: "홍길동",
-    NICKNAME: "홍길동_4821",
+    NICKNAME: "귀여운_강아지_4821",
     PROFILE_IMAGE_URL: "https://static-staging.picakes.com/uploads/1779605131078_b337595b.jpeg",
     GOOGLE_ID: "115107911178776387683",
     GOOGLE_EMAIL: "olo90632951@gmail.com",
@@ -116,6 +116,7 @@ const SEED_PRODUCT_BASE = {
     "https://static-staging.picakes.com/uploads/1779605200087_f0d30173.jpeg",
   ],
   SALE_PRICE: 45000,
+  ORIGINAL_PRICE: 50000,
   SIZE_OPTIONS: [
     {
       id: "size_seed_dosirak",
@@ -585,6 +586,7 @@ async function upsertProducts(stores: Awaited<ReturnType<typeof upsertStores>>) 
         storeId: targetStore.id,
         name: SEED_PRODUCT_BASE.NAME,
         images: SEED_PRODUCT_BASE.IMAGES,
+        originalPrice: SEED_PRODUCT_BASE.ORIGINAL_PRICE,
         salePrice: SEED_PRODUCT_BASE.SALE_PRICE,
         salesStatus: "ENABLE",
         visibilityStatus: "ENABLE",

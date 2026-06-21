@@ -70,6 +70,15 @@ export class UpdateProductRequestDto {
   images?: string[];
 
   @ApiPropertyOptional({
+    description: "정가",
+    example: PRODUCT_SWAGGER_EXAMPLES.PRODUCT_DATA.originalPrice,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  originalPrice?: number;
+
+  @ApiPropertyOptional({
     description: "판매가",
     example: PRODUCT_SWAGGER_EXAMPLES.PRODUCT_DATA.salePrice,
   })
