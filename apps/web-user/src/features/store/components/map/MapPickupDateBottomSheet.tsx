@@ -24,8 +24,10 @@ export function MapPickupDateBottomSheet({
   onConfirm,
   onClearFilter,
 }: MapPickupDateBottomSheetProps) {
-  const [tempDate, setTempDate] = useState<Date | null>(null);
-  const [tempPeriod, setTempPeriod] = useState<MapPickupPeriodKind | null>(null);
+  const [tempDate, setTempDate] = useState<Date | null>(() => selectedFilter?.date ?? null);
+  const [tempPeriod, setTempPeriod] = useState<MapPickupPeriodKind | null>(
+    () => selectedFilter?.kind ?? null,
+  );
 
   useEffect(() => {
     if (!isOpen) return;
