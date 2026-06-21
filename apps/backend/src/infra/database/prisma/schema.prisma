@@ -202,6 +202,7 @@ model Product {
   // 비즈니스 필드 - 기본 정보
   name              String // 상품명 (필수)
   images            String[] @default([]) // 상품 이미지 목록 (첫 번째 요소가 대표 이미지)
+  originalPrice     Int @map("original_price") // 정가
   salePrice         Int @map("sale_price") // 판매 가격
   salesStatus       EnableStatus @map("sales_status") // 판매 상태
   visibilityStatus  EnableStatus @map("visibility_status") // 노출 상태

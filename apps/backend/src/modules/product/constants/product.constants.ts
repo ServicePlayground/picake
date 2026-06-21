@@ -11,6 +11,8 @@ export const PRODUCT_ERROR_MESSAGES = {
   PRODUCT_INACTIVE: "판매중지된 상품입니다.",
   PRODUCT_OUT_OF_STOCK: "품절된 상품입니다.",
   PRODUCT_NOT_AVAILABLE: "구매할 수 없는 상품입니다.",
+  PRODUCT_PRICE_INVALID: "정가와 판매가는 0보다 큰 숫자여야 합니다.",
+  SALE_PRICE_EXCEEDS_ORIGINAL_PRICE: "판매가는 정가보다 클 수 없습니다.",
   REVIEW_NOT_FOUND: "후기를 찾을 수 없습니다.",
   /** 거리순 정렬 시 클라이언트 기준 위도·경도 미전달 */
   DISTANCE_SORT_REQUIRES_COORDINATES:
@@ -93,6 +95,7 @@ export const SWAGGER_EXAMPLES = {
     id: "prod_123456789",
     // 상품 정보
     name: "초콜릿 케이크",
+    originalPrice: 50000,
     salePrice: 45000,
     likeCount: 25,
     createdAt: new Date("2024-01-01T00:00:00.000Z"),

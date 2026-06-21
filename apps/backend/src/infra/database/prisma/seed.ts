@@ -116,6 +116,7 @@ const SEED_PRODUCT_BASE = {
     "https://static-staging.picakes.com/uploads/1779605200087_f0d30173.jpeg",
   ],
   SALE_PRICE: 45000,
+  ORIGINAL_PRICE: 50000,
   SIZE_OPTIONS: [
     {
       id: "size_seed_dosirak",
@@ -585,6 +586,7 @@ async function upsertProducts(stores: Awaited<ReturnType<typeof upsertStores>>) 
         storeId: targetStore.id,
         name: SEED_PRODUCT_BASE.NAME,
         images: SEED_PRODUCT_BASE.IMAGES,
+        originalPrice: SEED_PRODUCT_BASE.ORIGINAL_PRICE,
         salePrice: SEED_PRODUCT_BASE.SALE_PRICE,
         salesStatus: "ENABLE",
         visibilityStatus: "ENABLE",

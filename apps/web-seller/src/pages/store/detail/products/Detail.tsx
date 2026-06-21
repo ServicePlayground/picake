@@ -51,6 +51,7 @@ export const StoreDetailProductDetailPage: React.FC = () => {
   const productForm: ProductForm = {
     images: product.images || [],
     name: product.name,
+    originalPrice: product.originalPrice,
     salePrice: product.salePrice,
     salesStatus: product.salesStatus,
     visibilityStatus: product.visibilityStatus,
@@ -83,6 +84,7 @@ export const StoreDetailProductDetailPage: React.FC = () => {
     const request: UpdateProductRequestDto = {
       name: data.name,
       images: data.images,
+      originalPrice: data.originalPrice,
       salePrice: data.salePrice,
       salesStatus: data.salesStatus,
       visibilityStatus: data.visibilityStatus,

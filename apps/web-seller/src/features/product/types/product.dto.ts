@@ -76,6 +76,7 @@ export interface CreateProductRequestDto {
   storeId: string;
   name: string;
   images: string[];
+  originalPrice: number;
   salePrice: number;
   salesStatus: EnableStatus;
   visibilityStatus: EnableStatus;
@@ -115,6 +116,7 @@ export interface ProductResponseDto {
   storeId: string;
   name: string;
   images: string[];
+  originalPrice: number;
   salePrice: number;
   salesStatus: EnableStatus;
   visibilityStatus: EnableStatus;
@@ -184,6 +186,7 @@ export type ProductListResponseDto = ListResponseDto<ProductResponseDto>;
 export interface UpdateProductRequestDto {
   name?: string;
   images?: string[];
+  originalPrice?: number;
   salePrice?: number;
   salesStatus?: EnableStatus;
   visibilityStatus?: EnableStatus;

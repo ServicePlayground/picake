@@ -34,6 +34,7 @@ interface Props {
 export const defaultForm: ProductForm = {
   images: [],
   name: "",
+  originalPrice: 0,
   salePrice: 0,
   salesStatus: EnableStatus.ENABLE,
   visibilityStatus: EnableStatus.ENABLE,
@@ -98,6 +99,13 @@ export const ProductCreationForm: React.FC<Props> = ({
       setForm(next);
       onChange?.(next);
     };
+
+  const handleOriginalPriceChange = (value: number) => {
+    if (disabled) return;
+    const next = { ...form, originalPrice: value };
+    setForm(next);
+    onChange?.(next);
+  };
 
   const handleSalePriceChange = (value: number) => {
     if (disabled) return;
@@ -255,6 +263,7 @@ export const ProductCreationForm: React.FC<Props> = ({
                 onMainImageChange={handleMainImageChange}
                 onAdditionalImagesChange={handleAdditionalImagesChange}
                 onChange={handleChange}
+                onOriginalPriceChange={handleOriginalPriceChange}
                 onSalePriceChange={handleSalePriceChange}
                 disabled={disabled}
               />

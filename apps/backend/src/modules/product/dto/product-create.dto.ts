@@ -146,6 +146,15 @@ export class CreateProductRequestDto {
   images: string[];
 
   @ApiProperty({
+    description: "정가",
+    example: PRODUCT_SWAGGER_EXAMPLES.PRODUCT_DATA.originalPrice,
+  })
+  @IsNotEmpty()
+  @IsNumber()
+  @Min(0)
+  originalPrice: number;
+
+  @ApiProperty({
     description: "판매가",
     example: PRODUCT_SWAGGER_EXAMPLES.PRODUCT_DATA.salePrice,
   })

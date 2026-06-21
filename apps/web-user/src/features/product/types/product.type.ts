@@ -83,6 +83,7 @@ export interface Product {
   storeId: string;
   name: string;
   images: string[];
+  originalPrice: number;
   salePrice: number;
   likeCount: number;
   isLiked: boolean | null;
