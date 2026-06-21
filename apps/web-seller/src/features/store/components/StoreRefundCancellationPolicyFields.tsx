@@ -42,7 +42,7 @@ export const StoreRefundCancellationPolicyFields: React.FC<Props> = ({
             onClick={() => onChange(appendRefundRule(policy))}
           >
             <Plus className="h-3.5 w-3.5" />
-            규칙 추가
+            추가
           </Button>
         </div>
         <div className="space-y-2 p-3">
