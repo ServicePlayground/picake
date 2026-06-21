@@ -415,7 +415,7 @@ export const StoreCalendarPage: React.FC = () => {
           <div className="grid gap-6 lg:grid-cols-[1fr_minmax(280px,360px)]">
             <Card>
               <CardContent className="p-4 sm:p-5">
-                <div className="mb-4 flex items-center justify-between">
+                <div className="mb-4 flex items-center justify-center gap-1">
                   <Button type="button" variant="ghost" size="icon" onClick={goPrevMonth}>
                     <ChevronLeft className="h-5 w-5" />
                   </Button>
