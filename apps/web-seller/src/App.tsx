@@ -11,6 +11,7 @@ import { ErrorBoundaryProvider } from "./common/components/providers/ErrorBounda
 import { QueryProvider } from "./common/components/providers/QueryProvider";
 import { LoadingFallback } from "./common/components/fallbacks/LoadingFallback";
 import { Alert } from "./common/components/alerts/Alert";
+import { ConfirmAlert } from "./common/components/alerts/ConfirmAlert";
 import BuildInfoLogger from "./common/components/debug/BuildInfoLogger";
 
 const App: React.FC = () => {
@@ -20,6 +21,7 @@ const App: React.FC = () => {
         <BuildInfoLogger />
         <Router>
           <Alert />
+          <ConfirmAlert />
           <Suspense fallback={<LoadingFallback />}>
             <Routes>
               {/* 인증 관련 경로 (AdminLayout 밖) */}

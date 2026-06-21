@@ -30,6 +30,8 @@ import {
   ORDER_DETAIL_PAGE_META,
   ORDER_DETAIL_PAGE_TITLE,
   ORDER_DETAIL_SHEET,
+  ORDER_DETAIL_SHEET_HEADER,
+  ORDER_DETAIL_SHEET_TITLE,
   ORDER_DETAIL_TD_BLOCK,
 } from "@/apps/web-seller/features/order/constants/order-detail-page.constant";
 import {
@@ -38,6 +40,7 @@ import {
 } from "@/apps/web-seller/features/order/components/detail/OrderDetailSheetTable";
 import { cn } from "@/apps/web-seller/common/utils/classname.util";
 import { ContentLoading } from "@/apps/web-seller/common/components/loading/ContentLoading";
+import { useConfirmStore } from "@/apps/web-seller/common/store/confirm.store";
 
 type ReasonTarget =
   | OrderStatus.CANCEL_COMPLETED
@@ -48,15 +51,11 @@ type ReasonTarget =
 const IRREVERSIBLE_ACTION_CONFIRM_MESSAGE =
   "이 작업은 처리 후 되돌릴 수 없습니다. 계속하시겠습니까?";
 
-function confirmIrreversibleAction(run: () => void): void {
-  if (!window.confirm(IRREVERSIBLE_ACTION_CONFIRM_MESSAGE)) return;
-  run();
-}
-
 export const StoreDetailOrderDetailPage: React.FC = () => {
   const { storeId, orderId } = useParams<{ storeId: string; orderId: string }>();
   const { data: order, isLoading } = useOrderDetail(orderId || "");
   const updateOrderStatusMutation = useUpdateOrderStatus();
+  const openConfirmModal = useConfirmStore((state) => state.showConfirm);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   const [reasonTarget, setReasonTarget] = useState<ReasonTarget>(null);
   const [reasonText, setReasonText] = useState("");
@@ -91,30 +90,38 @@ export const StoreDetailOrderDetailPage: React.FC = () => {
   const status = order.orderStatus;
   const variant = getOrderStatusBadgeVariant(status);
 
+  const requestActionConfirm = (
+    onConfirm: () => void,
+    message: string = IRREVERSIBLE_ACTION_CONFIRM_MESSAGE,
+  ) => {
+    openConfirmModal({ message, onConfirm });
+  };
+
   const submitReason = () => {
     if (!reasonTarget || !orderId) return;
     const trimmed = reasonText.trim();
     if (!trimmed) return;
-    if (!window.confirm(IRREVERSIBLE_ACTION_CONFIRM_MESSAGE)) return;
-    const request: UpdateOrderStatusRequestDto = {
-      orderStatus: reasonTarget,
-    };
-    if (reasonTarget === OrderStatus.CANCEL_COMPLETED) {
-      request.sellerCancelReason = trimmed;
-    } else if (reasonTarget === OrderStatus.NO_SHOW) {
-      request.sellerNoShowReason = trimmed;
-    } else if (reasonTarget === OrderStatus.CANCEL_REFUND_PENDING) {
-      request.sellerCancelRefundPendingReason = trimmed;
-    }
-    updateOrderStatusMutation.mutate(
-      { orderId, request },
-      {
-        onSuccess: () => {
-          setReasonTarget(null);
-          setReasonText("");
+    requestActionConfirm(() => {
+      const request: UpdateOrderStatusRequestDto = {
+        orderStatus: reasonTarget,
+      };
+      if (reasonTarget === OrderStatus.CANCEL_COMPLETED) {
+        request.sellerCancelReason = trimmed;
+      } else if (reasonTarget === OrderStatus.NO_SHOW) {
+        request.sellerNoShowReason = trimmed;
+      } else if (reasonTarget === OrderStatus.CANCEL_REFUND_PENDING) {
+        request.sellerCancelRefundPendingReason = trimmed;
+      }
+      updateOrderStatusMutation.mutate(
+        { orderId, request },
+        {
+          onSuccess: () => {
+            setReasonTarget(null);
+            setReasonText("");
+          },
         },
-      },
-    );
+      );
+    });
   };
 
   const cancelReasonFlow = () => {
@@ -128,7 +135,7 @@ export const StoreDetailOrderDetailPage: React.FC = () => {
   };
 
   const showAcceptReservation = isSellerTransitionAllowed(status, OrderStatus.PAYMENT_PENDING);
-  const showConfirm = isSellerTransitionAllowed(status, OrderStatus.CONFIRMED);
+  const showConfirmReservation = isSellerTransitionAllowed(status, OrderStatus.CONFIRMED);
   const showPickupDone = isSellerTransitionAllowed(status, OrderStatus.PICKUP_COMPLETED);
   const showRefundDone = isSellerTransitionAllowed(status, OrderStatus.CANCEL_REFUND_COMPLETED);
   const showCancelOrder = isSellerTransitionAllowed(status, OrderStatus.CANCEL_COMPLETED);
@@ -140,7 +147,7 @@ export const StoreDetailOrderDetailPage: React.FC = () => {
   const hasAnyActions =
     !reasonTarget &&
     (showAcceptReservation ||
-      showConfirm ||
+      showConfirmReservation ||
       showPickupDone ||
       showRefundDone ||
       showCancelOrder ||
@@ -261,21 +268,23 @@ export const StoreDetailOrderDetailPage: React.FC = () => {
                         <Button
                           className={ORDER_DETAIL_ACTION_BTN}
                           onClick={() =>
-                            updateOrderStatusMutation.mutate({
-                              orderId: order.id,
-                              request: { orderStatus: OrderStatus.PAYMENT_PENDING },
-                            })
+                            requestActionConfirm(() =>
+                              updateOrderStatusMutation.mutate({
+                                orderId: order.id,
+                                request: { orderStatus: OrderStatus.PAYMENT_PENDING },
+                              }),
+                            )
                           }
                           disabled={updateOrderStatusMutation.isPending}
                         >
                           {updateOrderStatusMutation.isPending ? "처리 중..." : "예약 확인"}
                         </Button>
                       )}
-                      {showConfirm && (
+                      {showConfirmReservation && (
                         <Button
                           className={ORDER_DETAIL_ACTION_BTN}
                           onClick={() =>
-                            confirmIrreversibleAction(() =>
+                            requestActionConfirm(() =>
                               updateOrderStatusMutation.mutate({
                                 orderId: order.id,
                                 request: { orderStatus: OrderStatus.CONFIRMED },
@@ -291,7 +300,7 @@ export const StoreDetailOrderDetailPage: React.FC = () => {
                         <Button
                           className={ORDER_DETAIL_ACTION_BTN}
                           onClick={() =>
-                            confirmIrreversibleAction(() =>
+                            requestActionConfirm(() =>
                               updateOrderStatusMutation.mutate({
                                 orderId: order.id,
                                 request: { orderStatus: OrderStatus.PICKUP_COMPLETED },
@@ -307,7 +316,7 @@ export const StoreDetailOrderDetailPage: React.FC = () => {
                         <Button
                           className={ORDER_DETAIL_ACTION_BTN}
                           onClick={() =>
-                            confirmIrreversibleAction(() =>
+                            requestActionConfirm(() =>
                               updateOrderStatusMutation.mutate({
                                 orderId: order.id,
                                 request: { orderStatus: OrderStatus.CANCEL_REFUND_COMPLETED },
