@@ -34,6 +34,8 @@ const numericStringToValue = (s: string): number | undefined => {
   return Number.isNaN(n) ? undefined : n;
 };
 
+const BUSINESS_NO_MAX_LENGTH = 10;
+
 export const BusinessRegistrationForm: React.FC<Props> = ({ onSubmit, initialValue, onChange }) => {
   const [form, setForm] = useState<BusinessRegistrationFormValues>(initialValue || defaultForm);
   const [errors, setErrors] = useState<
@@ -88,7 +90,7 @@ export const BusinessRegistrationForm: React.FC<Props> = ({ onSubmit, initialVal
     };
 
   const handleBNoChange = (v: number | undefined) => {
-    const value = v === undefined ? "" : String(v);
+    const value = v === undefined ? "" : String(v).slice(0, BUSINESS_NO_MAX_LENGTH);
     const next = { ...form, b_no: value };
     setForm(next);
     onChange?.(next);
@@ -120,6 +122,7 @@ export const BusinessRegistrationForm: React.FC<Props> = ({ onSubmit, initialVal
             onChange={handleBNoChange}
             placeholder="하이픈(-) 없이 10자리 숫자로 입력해주세요."
             min={0}
+            max={9999999999}
             className={errors.b_no ? "border-destructive" : ""}
           />
           {errors.b_no && <p className="text-sm text-destructive mt-1">{errors.b_no}</p>}
