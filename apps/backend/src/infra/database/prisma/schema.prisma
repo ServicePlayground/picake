@@ -215,7 +215,6 @@ model Product {
   cakeSizeOptions   Json? @map("cake_size_options") // 케이크 사이즈 옵션
   cakeFlavorOptions  Json? @map("cake_flavor_options") // 케이크 맛 옵션
   letteringVisible   EnableStatus @map("lettering_visible") // 레터링 표시 여부
-  letteringRequired OptionRequired @map("lettering_required") // 레터링 필수 여부
   letteringMaxLength Int @map("lettering_max_length") // 레터링 최대 길이
   imageUploadEnabled EnableStatus @map("image_upload_enabled") // 이미지 업로드 가능 여부
 
@@ -800,11 +799,6 @@ enum AdminApprovalStatus {
   PENDING  // 승인 대기
   APPROVED // 승인 완료
   REJECTED // 거절
-}
-
-enum OptionRequired {
-  REQUIRED // 필수
-  OPTIONAL // 선택
 }
 
 enum EnableStatus {

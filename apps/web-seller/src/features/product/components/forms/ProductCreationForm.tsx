@@ -9,7 +9,6 @@ import {
 } from "@/apps/web-seller/common/components/tabs/Tabs";
 import {
   EnableStatus,
-  OptionRequired,
   CakeSizeOptionDto,
   CakeFlavorOptionDto,
   ProductCategoryType,
@@ -56,7 +55,6 @@ export const defaultForm: ProductForm = {
     },
   ],
   letteringVisible: EnableStatus.ENABLE,
-  letteringRequired: OptionRequired.OPTIONAL,
   letteringMaxLength: 1,
   imageUploadEnabled: EnableStatus.ENABLE,
   productCategoryTypes: [],
@@ -185,12 +183,6 @@ export const ProductCreationForm: React.FC<Props> = ({
     onChange?.(next);
   };
 
-  const handleLetteringRequiredChange = (value: OptionRequired) => {
-    const next = { ...form, letteringRequired: value };
-    setForm(next);
-    onChange?.(next);
-  };
-
   const handleLetteringMaxLengthChange = (value: number) => {
     if (disabled) return;
     const next = { ...form, letteringMaxLength: value };
@@ -302,7 +294,6 @@ export const ProductCreationForm: React.FC<Props> = ({
                 form={form}
                 errors={errors}
                 onLetteringVisibleChange={handleLetteringVisibleChange}
-                onLetteringRequiredChange={handleLetteringRequiredChange}
                 onLetteringMaxLengthChange={handleLetteringMaxLengthChange}
                 onImageUploadEnabledChange={handleImageUploadEnabledChange}
                 disabled={disabled}

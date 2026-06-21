@@ -12,11 +12,6 @@ export enum EnableStatus {
   DISABLE = "DISABLE",
 }
 
-export enum OptionRequired {
-  REQUIRED = "REQUIRED",
-  OPTIONAL = "OPTIONAL",
-}
-
 export enum ProductType {
   BASIC_CAKE = "BASIC_CAKE",
   CUSTOM_CAKE = "CUSTOM_CAKE",
@@ -83,7 +78,6 @@ export interface CreateProductRequestDto {
   cakeSizeOptions?: CakeSizeOptionDto[];
   cakeFlavorOptions?: CakeFlavorOptionDto[];
   letteringVisible: EnableStatus;
-  letteringRequired: OptionRequired;
   letteringMaxLength: number;
   imageUploadEnabled: EnableStatus;
   productType?: ProductType;
@@ -123,7 +117,6 @@ export interface ProductResponseDto {
   cakeSizeOptions?: CakeSizeOptionDto[] | null;
   cakeFlavorOptions?: CakeFlavorOptionDto[] | null;
   letteringVisible: EnableStatus;
-  letteringRequired: OptionRequired;
   letteringMaxLength: number;
   imageUploadEnabled: EnableStatus;
   productType: ProductType;
@@ -193,7 +186,6 @@ export interface UpdateProductRequestDto {
   cakeSizeOptions?: CakeSizeOptionDto[];
   cakeFlavorOptions?: CakeFlavorOptionDto[];
   letteringVisible?: EnableStatus;
-  letteringRequired?: OptionRequired;
   letteringMaxLength?: number;
   imageUploadEnabled?: EnableStatus;
   productType?: ProductType;

@@ -1,10 +1,7 @@
 import React from "react";
-import { EnableStatus, OptionRequired } from "@/apps/web-seller/features/product/types/product.dto";
+import { EnableStatus } from "@/apps/web-seller/features/product/types/product.dto";
 import type { ProductForm } from "@/apps/web-seller/features/product/types/product.ui";
-import {
-  OPTION_REQUIRED_OPTIONS,
-  ENABLE_DISABLE_OPTIONS,
-} from "@/apps/web-seller/features/product/constants/product.constant";
+import { ENABLE_DISABLE_OPTIONS } from "@/apps/web-seller/features/product/constants/product.constant";
 import { SelectBox } from "@/apps/web-seller/common/components/selects/SelectBox";
 import { NumberInput } from "@/apps/web-seller/common/components/inputs/NumberInput";
 import { Label } from "@/apps/web-seller/common/components/labels/Label";
@@ -14,7 +11,6 @@ export interface ProductCreationLetteringPolicySectionProps {
   form: ProductForm;
   errors: Partial<Record<keyof ProductForm, string>>;
   onLetteringVisibleChange: (value: EnableStatus) => void;
-  onLetteringRequiredChange: (value: OptionRequired) => void;
   onLetteringMaxLengthChange: (value: number) => void;
   onImageUploadEnabledChange: (value: EnableStatus) => void;
   disabled?: boolean;
@@ -27,7 +23,6 @@ export const ProductCreationLetteringPolicySection: React.FC<
   form,
   errors,
   onLetteringVisibleChange,
-  onLetteringRequiredChange,
   onLetteringMaxLengthChange,
   onImageUploadEnabledChange,
   disabled = false,
@@ -51,35 +46,22 @@ export const ProductCreationLetteringPolicySection: React.FC<
           </div>
 
           {form.letteringVisible === EnableStatus.ENABLE && (
-            <>
-              <div>
-                <SelectBox
-                  label="레터링 문구 필수 여부"
-                  value={form.letteringRequired}
-                  onChange={(value) => onLetteringRequiredChange(value as OptionRequired)}
-                  options={OPTION_REQUIRED_OPTIONS}
-                  error={errors.letteringRequired}
-                  required
-                />
-              </div>
-
-              <div>
-                <Label className="after:content-['*'] after:ml-0.5 after:text-destructive">
-                  최대 글자 수
-                </Label>
-                <NumberInput
-                  value={form.letteringMaxLength}
-                  onChange={(v) => onLetteringMaxLengthChange(v ?? 0)}
-                  placeholder=""
-                  min={1}
-                  className={errors.letteringMaxLength ? "border-destructive" : ""}
-                  disabled={disabled}
-                />
-                {errors.letteringMaxLength && (
-                  <p className="text-sm text-destructive mt-1">{errors.letteringMaxLength}</p>
-                )}
-              </div>
-            </>
+            <div>
+              <Label className="after:content-['*'] after:ml-0.5 after:text-destructive">
+                최대 글자 수
+              </Label>
+              <NumberInput
+                value={form.letteringMaxLength}
+                onChange={(v) => onLetteringMaxLengthChange(v ?? 0)}
+                placeholder=""
+                min={1}
+                className={errors.letteringMaxLength ? "border-destructive" : ""}
+                disabled={disabled}
+              />
+              {errors.letteringMaxLength && (
+                <p className="text-sm text-destructive mt-1">{errors.letteringMaxLength}</p>
+              )}
+            </div>
           )}
 
           <div>

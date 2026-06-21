@@ -142,9 +142,6 @@ export class ProductUpdateService {
     if (updateProductDto.letteringVisible !== undefined) {
       updateData.letteringVisible = updateProductDto.letteringVisible;
     }
-    if (updateProductDto.letteringRequired !== undefined) {
-      updateData.letteringRequired = updateProductDto.letteringRequired;
-    }
     if (updateProductDto.letteringMaxLength !== undefined) {
       updateData.letteringMaxLength = updateProductDto.letteringMaxLength;
     }

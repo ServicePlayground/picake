@@ -90,7 +90,6 @@ export class ProductCreateService {
             cakeSizeOptions: cakeSizeOptionsWithId as unknown as Prisma.InputJsonValue,
             cakeFlavorOptions: cakeFlavorOptionsWithId as unknown as Prisma.InputJsonValue,
             letteringVisible: createProductDto.letteringVisible,
-            letteringRequired: createProductDto.letteringRequired,
             letteringMaxLength: createProductDto.letteringMaxLength,
             imageUploadEnabled: createProductDto.imageUploadEnabled,
             productType,

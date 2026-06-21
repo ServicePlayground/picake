@@ -44,13 +44,8 @@ export enum SortBy {
 }
 
 /**
- * 옵션 필수/선택 enum
+ * 사용/미사용 enum
  */
-export enum OptionRequired {
-  REQUIRED = "REQUIRED", // 필수
-  OPTIONAL = "OPTIONAL", // 선택
-}
-
 export enum EnableStatus {
   ENABLE = "ENABLE", // 사용
   DISABLE = "DISABLE", // 미사용
@@ -141,7 +136,6 @@ export const SWAGGER_EXAMPLES = {
       },
     ],
     letteringVisible: EnableStatus.ENABLE,
-    letteringRequired: OptionRequired.OPTIONAL,
     letteringMaxLength: 20,
     imageUploadEnabled: EnableStatus.ENABLE,
     productType: "CUSTOM_CAKE",

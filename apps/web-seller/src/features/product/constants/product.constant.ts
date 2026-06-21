@@ -1,6 +1,5 @@
 import {
   EnableStatus,
-  OptionRequired,
   CakeSizeDisplayName,
   ProductCategoryType,
 } from "@/apps/web-seller/features/product/types/product.dto";
@@ -13,11 +12,6 @@ export const SALES_STATUS_OPTIONS = [
 export const VISIBILITY_STATUS_OPTIONS = [
   { value: EnableStatus.ENABLE, label: "노출" },
   { value: EnableStatus.DISABLE, label: "숨김" },
-] as const;
-
-export const OPTION_REQUIRED_OPTIONS = [
-  { value: OptionRequired.REQUIRED, label: "필수" },
-  { value: OptionRequired.OPTIONAL, label: "선택" },
 ] as const;
 
 export const ENABLE_DISABLE_OPTIONS = [

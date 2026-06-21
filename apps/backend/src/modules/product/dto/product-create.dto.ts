@@ -11,7 +11,6 @@ import {
 } from "class-validator";
 import { Type } from "class-transformer";
 import {
-  OptionRequired,
   EnableStatus,
   ProductCategoryType,
   CakeSizeDisplayName,
@@ -211,15 +210,6 @@ export class CreateProductRequestDto {
   @IsNotEmpty()
   @IsEnum(EnableStatus)
   letteringVisible: EnableStatus;
-
-  @ApiPropertyOptional({
-    description: "레터링 문구 사용 (필수/선택)",
-    enum: OptionRequired,
-    example: OptionRequired.REQUIRED,
-  })
-  @IsNotEmpty()
-  @IsEnum(OptionRequired)
-  letteringRequired: OptionRequired;
 
   @ApiPropertyOptional({
     description: "레터링 최대 글자 수",

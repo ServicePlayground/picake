@@ -175,7 +175,6 @@ const SEED_PRODUCT_BASE = {
   ],
   LETTERING: {
     VISIBLE: "ENABLE",
-    REQUIRED: "OPTIONAL",
     MAX_LENGTH: 20,
   },
   SEARCH_TAGS: ["생일케이크", "초콜릿", "당일배송"],
@@ -594,7 +593,6 @@ async function upsertProducts(stores: Awaited<ReturnType<typeof upsertStores>>) 
         cakeSizeOptions: SEED_PRODUCT_BASE.SIZE_OPTIONS,
         cakeFlavorOptions: SEED_PRODUCT_BASE.FLAVOR_OPTIONS,
         letteringVisible: SEED_PRODUCT_BASE.LETTERING.VISIBLE as "ENABLE" | "DISABLE",
-        letteringRequired: SEED_PRODUCT_BASE.LETTERING.REQUIRED as "REQUIRED" | "OPTIONAL",
         letteringMaxLength: SEED_PRODUCT_BASE.LETTERING.MAX_LENGTH,
         imageUploadEnabled,
         productType,
