@@ -18,7 +18,7 @@ import {
   GoogleRegisterRequestDto,
 } from "@apps/backend/modules/auth/dto/auth-google-oauth.dto";
 import { LoggerUtil } from "@apps/backend/common/utils/logger.util";
-import { buildInitialNicknameFromName } from "@apps/backend/modules/auth/utils/google-register-nickname.util";
+import { buildInitialNickname } from "@apps/backend/modules/auth/utils/register-nickname.util";
 import { SentryUtil } from "@apps/backend/common/utils/sentry.util";
 import { TermsService } from "@apps/backend/modules/terms/terms.service";
 
@@ -352,7 +352,7 @@ export class AuthGoogleOauthService {
           googleEmail,
           phone: normalizedPhone,
           name: trimmedName,
-          nickname: buildInitialNicknameFromName(trimmedName),
+          nickname: buildInitialNickname(),
           isPhoneVerified: true,
           lastLoginAt: now,
         },
@@ -438,7 +438,7 @@ export class AuthGoogleOauthService {
           googleEmail,
           phone: normalizedPhone,
           name: trimmedName,
-          nickname: buildInitialNicknameFromName(trimmedName),
+          nickname: buildInitialNickname(),
           isPhoneVerified: true,
           lastLoginAt: now,
           sellerVerificationStatus: "REGISTERED",
