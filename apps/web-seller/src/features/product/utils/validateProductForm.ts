@@ -45,6 +45,15 @@ export const validateProductForm = (
     newErrors.letteringMaxLength = "최대 글자 수는 1 이상 입력해주세요.";
   }
 
+  if (
+    form.cakeFlavorOptions &&
+    form.cakeFlavorOptions.length > 0 &&
+    form.cakeFlavorOptions.some((option) => !option.displayName?.trim())
+  ) {
+    newErrors.cakeFlavorOptions =
+      "입력되지 않은 케이크 옵션명이 있습니다. 확인 후 다시 시도해 주세요.";
+  }
+
   // 상품정보제공고시 검증
   if (!form.productNoticeFoodType?.trim()) {
     newErrors.productNoticeFoodType = "식품의 유형을 입력해주세요.";
