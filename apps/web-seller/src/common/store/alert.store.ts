@@ -1,5 +1,7 @@
 import { create } from "zustand";
 
+export const ALERT_ERROR_TITLE = "알림";
+
 export interface AlertItem {
   id: string;
   message: string;
@@ -21,8 +23,13 @@ export const useAlertStore = create<AlertStore>((set) => ({
 
   addAlert: (alert) => {
     const id = `alert-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    const title =
+      alert.title === "오류"
+        ? ALERT_ERROR_TITLE
+        : alert.title ?? (alert.severity === "error" ? ALERT_ERROR_TITLE : undefined);
     const newAlert: AlertItem = {
       ...alert,
+      title,
       id,
       autoHideDuration: alert.autoHideDuration ?? 6000, // 기본 6초
     };

@@ -38,7 +38,6 @@ export function useSendPhoneVerification() {
     onError: (error) => {
       addAlert({
         message: getApiMessage.error(error),
-        title: "오류",
         severity: "error",
       });
     },
@@ -54,7 +53,6 @@ export function useVerifyPhoneCode() {
     onError: (error) => {
       addAlert({
         message: getApiMessage.error(error),
-        title: "오류",
         severity: "error",
       });
     },
@@ -75,7 +73,6 @@ export function useGoogleRegister() {
     onError: (error) => {
       addAlert({
         message: getApiMessage.error(error),
-        title: "오류",
         severity: "error",
       });
     },
@@ -96,7 +93,6 @@ export function useKakaoRegister() {
     onError: (error) => {
       addAlert({
         message: getApiMessage.error(error),
-        title: "오류",
         severity: "error",
       });
     },
@@ -112,7 +108,6 @@ export function useFindAccount() {
     onError: (error) => {
       addAlert({
         message: getApiMessage.error(error),
-        title: "오류",
         severity: "error",
       });
     },

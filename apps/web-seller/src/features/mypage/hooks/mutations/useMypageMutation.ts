@@ -26,7 +26,6 @@ export function useUpdateMypageProfile() {
     onError: (error) => {
       addAlert({
         message: getApiMessage.error(error),
-        title: "오류",
         severity: "error",
       });
     },
@@ -51,7 +50,6 @@ export function useMypageChangePhone() {
     onError: (error) => {
       addAlert({
         message: getApiMessage.error(error),
-        title: "오류",
         severity: "error",
       });
     },
@@ -74,7 +72,6 @@ export function useMypageWithdraw() {
     onError: (error) => {
       addAlert({
         message: getApiMessage.error(error),
-        title: "오류",
         severity: "error",
       });
     },
