@@ -11,7 +11,6 @@ export const recentApi = {
   getRecentProducts: async (params: {
     page: number;
     limit: number;
-    sortBy: string;
   }): Promise<RecentProductsResponse> => {
     const response = await consumerClient.get("/mypage/recent/products", { params });
     return response.data.data;
