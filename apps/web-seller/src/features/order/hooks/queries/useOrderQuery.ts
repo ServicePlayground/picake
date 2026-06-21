@@ -108,3 +108,28 @@ export function useCalendarDayOrders(storeId: string, pickupDayKey: string | nul
 
   return query;
 }
+
+/** 스토어 캘린더: 픽업 월(YYYY-MM-DD ~ YYYY-MM-DD) 주문 목록 */
+export function useCalendarMonthOrders(
+  storeId: string,
+  pickupStartKey: string,
+  pickupEndKey: string,
+) {
+  const query = useQuery<OrderListResponseDto>({
+    queryKey: orderQueryKeys.calendarMonthByStore(storeId, pickupStartKey, pickupEndKey),
+    queryFn: () =>
+      orderApi.getOrders({
+        page: 1,
+        limit: 200,
+        sortBy: OrderSortBy.LATEST,
+        storeId,
+        pickupStartDate: pickupStartKey,
+        pickupEndDate: pickupEndKey,
+      }),
+    enabled: !!storeId && !!pickupStartKey && !!pickupEndKey,
+  });
+
+  useQueryErrorAlert(query);
+
+  return query;
+}

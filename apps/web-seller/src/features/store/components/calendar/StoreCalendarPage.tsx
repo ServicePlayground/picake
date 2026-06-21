@@ -27,7 +27,8 @@ import {
 import { ROUTES } from "@/apps/web-seller/common/constants/paths.constant";
 import { useStoreDetail } from "@/apps/web-seller/features/store/hooks/queries/useStoreQuery";
 import { useUpdateStoreBusinessCalendar } from "@/apps/web-seller/features/store/hooks/mutations/useStoreMutation";
-import { useCalendarDayOrders } from "@/apps/web-seller/features/order/hooks/queries/useOrderQuery";
+import { useCalendarMonthOrders } from "@/apps/web-seller/features/order/hooks/queries/useOrderQuery";
+import type { OrderResponseDto } from "@/apps/web-seller/features/order/types/order.dto";
 import {
   getOrderStatusBadgeVariant,
   getOrderStatusLabel,
@@ -40,6 +41,7 @@ import {
   overridesRecordFromApi,
   parseDateKey,
   toDateKey,
+  toSeoulDateKeyFromUtc,
   toStoreBusinessCalendarDto,
   type DayOverride,
   WEEKDAY_LABELS_KO,
@@ -109,6 +111,20 @@ function computeNextOverridesMap(
   return next;
 }
 
+function sortOrdersByPickupTime(orders: OrderResponseDto[]): OrderResponseDto[] {
+  return [...orders].sort(
+    (a, b) => new Date(a.pickupDate).getTime() - new Date(b.pickupDate).getTime(),
+  );
+}
+
+function reservationDisplayName(order: OrderResponseDto): string {
+  return order.reservationContactName?.trim() || "예약자 미입력";
+}
+
+function reservationDisplayPhone(order: OrderResponseDto): string {
+  return order.reservationPhone?.trim() || "—";
+}
+
 export const StoreCalendarPage: React.FC = () => {
   const { storeId } = useParams<{ storeId: string }>();
   const {
@@ -130,11 +146,30 @@ export const StoreCalendarPage: React.FC = () => {
   const [overrides, setOverrides] = React.useState<Record<string, DayOverride>>({});
   const [selectedKey, setSelectedKey] = React.useState<string | null>(null);
 
+  const year = monthCursor.getFullYear();
+  const month = monthCursor.getMonth();
+  const monthStartKey = toDateKey(new Date(year, month, 1));
+  const monthEndKey = toDateKey(new Date(year, month + 1, 0));
+
   const {
-    data: ordersList,
-    isLoading: ordersLoading,
-    isError: ordersError,
-  } = useCalendarDayOrders(storeId ?? "", selectedKey);
+    data: monthOrdersList,
+    isLoading: monthOrdersLoading,
+    isError: monthOrdersError,
+  } = useCalendarMonthOrders(storeId ?? "", monthStartKey, monthEndKey);
+
+  const ordersByDateKey = React.useMemo(() => {
+    const map = new Map<string, OrderResponseDto[]>();
+    for (const order of monthOrdersList?.data ?? []) {
+      const key = toSeoulDateKeyFromUtc(order.pickupDate);
+      const list = map.get(key) ?? [];
+      list.push(order);
+      map.set(key, list);
+    }
+    for (const [key, list] of map) {
+      map.set(key, sortOrdersByPickupTime(list));
+    }
+    return map;
+  }, [monthOrdersList]);
 
   const [draftOpen, setDraftOpen] = React.useState(true);
   const [draftStart, setDraftStart] = React.useState("00:00");
@@ -223,10 +258,16 @@ export const StoreCalendarPage: React.FC = () => {
     }
   };
 
-  const year = monthCursor.getFullYear();
-  const month = monthCursor.getMonth();
   const firstWeekday = new Date(year, month, 1).getDay();
   const dim = daysInMonth(monthCursor);
+
+  const ordersForSelectedDay = React.useMemo(() => {
+    if (!selectedKey) return [];
+    return ordersByDateKey.get(selectedKey) ?? [];
+  }, [selectedKey, ordersByDateKey]);
+
+  const ordersLoading = monthOrdersLoading;
+  const ordersError = monthOrdersError;
 
   const cells: ({ key: string; day: number } | null)[] = [];
   for (let i = 0; i < firstWeekday; i += 1) cells.push(null);
@@ -278,13 +319,6 @@ export const StoreCalendarPage: React.FC = () => {
     : "";
 
   const selectedUsesOverride = selectedKey ? Boolean(overrides[selectedKey]) : false;
-
-  const ordersForSelectedDay = React.useMemo(() => {
-    if (!selectedKey || !ordersList?.data?.length) return [];
-    return [...ordersList.data].sort(
-      (a, b) => new Date(a.pickupDate).getTime() - new Date(b.pickupDate).getTime(),
-    );
-  }, [selectedKey, ordersList]);
 
   const saving = updateCalendar.isPending;
 
@@ -437,7 +471,7 @@ export const StoreCalendarPage: React.FC = () => {
                   {cells.map((cell, i) => {
                     if (!cell) {
                       return (
-                        <div key={`empty-${i}`} className="min-h-[5.25rem] sm:min-h-[5.75rem]" />
+                        <div key={`empty-${i}`} className="min-h-[6.5rem] sm:min-h-[7rem]" />
                       );
                     }
                     const eff = effectiveForDate(
@@ -449,17 +483,21 @@ export const StoreCalendarPage: React.FC = () => {
                     );
                     const hasOverride = Boolean(overrides[cell.key]);
                     const isSelected = selectedKey === cell.key;
+                    const dayOrders = ordersByDateKey.get(cell.key) ?? [];
+                    const previewOrders = dayOrders.slice(0, 2);
+                    const hiddenOrderCount = dayOrders.length - previewOrders.length;
                     return (
                       <button
                         key={cell.key}
                         type="button"
                         onClick={() => setSelectedKey(cell.key)}
                         className={[
-                          "flex min-h-[5.25rem] flex-col rounded-md border p-2 text-left transition-colors sm:min-h-[5.75rem] sm:p-2.5",
+                          "flex min-h-[6.5rem] flex-col rounded-md border p-2 text-left transition-colors sm:min-h-[7rem] sm:p-2.5",
                           isSelected
                             ? "border-primary bg-primary/10 ring-2 ring-primary/30"
                             : "border-border hover:bg-accent/50",
                           !eff.isOpen ? "bg-zinc-100" : "",
+                          dayOrders.length > 0 ? "border-blue-200/80" : "",
                         ].join(" ")}
                       >
                         <span className="text-lg font-semibold leading-none tabular-nums sm:text-xl">
@@ -482,6 +520,27 @@ export const StoreCalendarPage: React.FC = () => {
                           >
                             {formatBusinessHoursShortLabel(eff.isOpen, eff.start, eff.end)}
                           </span>
+                          {dayOrders.length > 0 ? (
+                            <div className="mt-0.5 flex flex-col gap-0.5 border-t border-border/60 pt-1">
+                              <span className="text-[10px] font-semibold leading-tight text-blue-700 sm:text-xs">
+                                예약 {dayOrders.length}건
+                              </span>
+                              {previewOrders.map((order) => (
+                                <span
+                                  key={order.id}
+                                  className="truncate text-[10px] leading-tight text-foreground/85 sm:text-xs"
+                                  title={`${formatSeoulPickupHm(order.pickupDate)} ${reservationDisplayName(order)} ${reservationDisplayPhone(order)}`}
+                                >
+                                  {formatSeoulPickupHm(order.pickupDate)} {reservationDisplayName(order)}
+                                </span>
+                              ))}
+                              {hiddenOrderCount > 0 ? (
+                                <span className="text-[10px] leading-tight text-muted-foreground sm:text-xs">
+                                  +{hiddenOrderCount}건 더
+                                </span>
+                              ) : null}
+                            </div>
+                          ) : null}
                         </div>
                       </button>
                     );
@@ -547,6 +606,18 @@ export const StoreCalendarPage: React.FC = () => {
                                   </StatusBadge>
                                 </div>
                                 <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 border-t border-border/60 pt-3 text-xs sm:grid-cols-3">
+                                  <div className="min-w-0 sm:col-span-1">
+                                    <dt className="text-muted-foreground">예약자명</dt>
+                                    <dd className="mt-0.5 truncate font-medium text-foreground">
+                                      {reservationDisplayName(o)}
+                                    </dd>
+                                  </div>
+                                  <div className="min-w-0 sm:col-span-1">
+                                    <dt className="text-muted-foreground">휴대폰</dt>
+                                    <dd className="mt-0.5 truncate font-medium tabular-nums text-foreground">
+                                      {reservationDisplayPhone(o)}
+                                    </dd>
+                                  </div>
                                   <div className="min-w-0 sm:col-span-1">
                                     <dt className="text-muted-foreground">주문번호</dt>
                                     <dd className="mt-0.5 truncate font-medium text-foreground">
