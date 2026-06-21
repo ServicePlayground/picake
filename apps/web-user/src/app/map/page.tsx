@@ -66,6 +66,7 @@ export default function MapPage() {
   const { location: userLocation, refresh: refreshUserLocation } = useUserLocation();
 
   const [kakaoLoaded, setKakaoLoaded] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
   const [selectedStore, setSelectedStore] = useState<StoreInfo | null>(null);
   const [listSortBy, setListSortBy] = useState<MapListSortBy>("distance");
   const [listFilter, setListFilter] = useState<StoreListFilter>({});
@@ -435,11 +436,19 @@ export default function MapPage() {
     (center: { lat: number; lng: number }, suppressKakaoUnopenedMarkers: boolean) => {
       if (!window.kakao?.maps || !mapContainerRef.current || mapInstanceRef.current) return;
       window.kakao.maps.load(() => {
+        // userLocation 도착 전·후로 initializeMap이 중복 호출되면 load 콜백이 2번 실행될 수 있음
+        if (mapInstanceRef.current) return;
+
         const map = new window.kakao.maps.Map(mapContainerRef.current, {
           center: new window.kakao.maps.LatLng(center.lat, center.lng),
           level: 5,
         });
         mapInstanceRef.current = map;
+        setMapReady(true);
+
+        if (typeof map.relayout === "function") {
+          map.relayout();
+        }
 
         if (suppressKakaoUnopenedMarkers) clearKakaoMarkers();
         drawPlatformStoreMarkersRef.current();
@@ -453,6 +462,8 @@ export default function MapPage() {
         window.kakao.maps.event.addListener(map, "idle", () => {
           if (isCenteringFromClickRef.current) {
             isCenteringFromClickRef.current = false;
+            // panTo 직후 CustomOverlay가 보이지 않는 경우가 있어 이동 완료 시 현재위치 마커 재적용
+            updateUserLocationMarker(userLocationRef.current ?? null);
             return;
           }
           drawPlatformStoreMarkersRef.current();
@@ -548,11 +559,11 @@ export default function MapPage() {
     usedUserLocationForCenterRef.current = true;
   }, [userLocation, searchQuery, pickupFilter, searchPlaces]);
 
-  // 현재위치 변경 시 지도 위 현재위치 마커(점) 갱신
+  // 현재위치 변경 또는 지도 준비 완료 시 현재위치 마커(점) 갱신
   useEffect(() => {
-    if (!mapInstanceRef.current) return;
+    if (!mapReady || !mapInstanceRef.current) return;
     updateUserLocationMarker(userLocation ?? null);
-  }, [userLocation, updateUserLocationMarker]);
+  }, [userLocation, updateUserLocationMarker, mapReady]);
 
   // 플랫폼 스토어 전체 조회 후 캐시. 지도 있으면 마커 그리기, 검색 모드가 아니면 미입점 검색
   useEffect(() => {
