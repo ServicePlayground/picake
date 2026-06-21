@@ -13,6 +13,7 @@ import {
   CakeSizeOptionDto,
   CakeFlavorOptionDto,
   ProductCategoryType,
+  CakeSizeDisplayName,
 } from "@/apps/web-seller/features/product/types/product.dto";
 import type { ProductForm } from "@/apps/web-seller/features/product/types/product.ui";
 import { ProductCreationBasicInfoSection } from "@/apps/web-seller/features/product/components/sections/ProductCreationBasicInfoSection";
@@ -38,8 +39,22 @@ export const defaultForm: ProductForm = {
   salePrice: 0,
   salesStatus: EnableStatus.ENABLE,
   visibilityStatus: EnableStatus.ENABLE,
-  cakeSizeOptions: [],
-  cakeFlavorOptions: [],
+  cakeSizeOptions: [
+    {
+      visible: EnableStatus.ENABLE,
+      displayName: CakeSizeDisplayName.DOSIRAK,
+      lengthCm: 0,
+      price: 0,
+      description: "1~2인용",
+    },
+  ],
+  cakeFlavorOptions: [
+    {
+      visible: EnableStatus.ENABLE,
+      displayName: "초콜릿",
+      price: 0,
+    },
+  ],
   letteringVisible: EnableStatus.ENABLE,
   letteringRequired: OptionRequired.OPTIONAL,
   letteringMaxLength: 0,
