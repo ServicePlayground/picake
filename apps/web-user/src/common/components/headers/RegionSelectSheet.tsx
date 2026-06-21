@@ -1,13 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import clsx from "clsx";
 import { Button } from "@/apps/web-user/common/components/buttons/Button";
-import { Modal } from "@/apps/web-user/common/components/modals/Modal";
-import { Toast } from "@/apps/web-user/common/components/toast/Toast";
 import {
   matchAddressToRegion,
-  findNearestActiveRegion,
   RegionMatchResult,
 } from "@/apps/web-user/common/utils/region-match.util";
 import { RegionData } from "@/apps/web-user/features/store/types/region.type";
@@ -25,6 +22,8 @@ interface RegionSelectSheetProps {
   regions: RegionData[];
   currentResult: RegionMatchResult | null;
   onSelect: (result: RegionMatchResult) => void;
+  /** GPS 결과가 비활성 지역일 때 호출 — 상위(Header)에서 inactiveModal 띄움 */
+  onGpsInactive?: (result: RegionMatchResult) => void;
 }
 
 export function RegionSelectSheet({
@@ -33,16 +32,13 @@ export function RegionSelectSheet({
   regions,
   currentResult,
   onSelect,
+  onGpsInactive,
 }: RegionSelectSheetProps) {
-  const { address, latitude, longitude, setLocation, setAddress } = useUserCurrentLocationStore();
+  const { address, setLocation, setAddress } = useUserCurrentLocationStore();
   const [isWaitingForLocation, setIsWaitingForLocation] = useState(false);
-  const [showOpenAlarmToast, setShowOpenAlarmToast] = useState(false);
-  const [inactiveModal, setInactiveModal] = useState<{
-    visible: boolean;
-    type: "seoul" | "outside";
-    currentLabel: string;
-    nearest: RegionMatchResult | null;
-  }>({ visible: false, type: "seoul", currentLabel: "", nearest: null });
+  // "현재 위치로 설정" 클릭 시점의 address. GPS 응답이 도착해서 address가 실제로 바뀌었는지 비교용.
+  // 이걸 안 두면 setIsWaitingForLocation(true)가 즉시 useEffect를 발화시켜 stale address로 매칭 처리해버림.
+  const addressBeforeGpsRef = useRef<string | null>(null);
 
   const listableRegions = regions.filter((r) => {
     if (r.depth1.label === "전국") return false;
@@ -52,11 +48,12 @@ export function RegionSelectSheet({
   const [selectedDepth1, setSelectedDepth1] = useState(
     currentResult?.depth1Label ?? listableRegions[0]?.depth1.label ?? "",
   );
-  const [checkedLabels, setCheckedLabels] = useState<Set<string>>(new Set());
-  const [initialState, setInitialState] = useState<{ depth1: string; labels: Set<string> }>({
-    depth1: "",
-    labels: new Set(),
-  });
+  // depth1별 체크 상태를 따로 보관. depth1 탭 전환 시 다른 탭의 체크가 유지되도록.
+  const [checkedByDepth1, setCheckedByDepth1] = useState<Map<string, Set<string>>>(new Map());
+  const [initialState, setInitialState] = useState<{
+    depth1: string;
+    checkedByDepth1: Map<string, Set<string>>;
+  }>({ depth1: "", checkedByDepth1: new Map() });
 
   // 시트가 열릴 때 초기 상태 세팅
   useEffect(() => {
@@ -82,8 +79,17 @@ export function RegionSelectSheet({
       initialLabels = new Set();
     }
 
-    setCheckedLabels(initialLabels);
-    setInitialState({ depth1: initialDepth1, labels: new Set(initialLabels) });
+    const initialMap = new Map<string, Set<string>>();
+    if (initialLabels.size > 0) {
+      initialMap.set(initialDepth1, initialLabels);
+    }
+    setCheckedByDepth1(initialMap);
+    setInitialState({
+      depth1: initialDepth1,
+      checkedByDepth1: new Map(
+        Array.from(initialMap.entries()).map(([k, v]) => [k, new Set(v)]),
+      ),
+    });
   }, [isOpen]);
 
   // 스크롤 방지
@@ -95,38 +101,26 @@ export function RegionSelectSheet({
   }, [isOpen]);
 
   // 위치 대기 중 address가 업데이트되면 자동으로 매칭 처리
+  // address가 클릭 직전 값과 동일하면 GPS 응답이 아직 도착 안 한 stale 상태이므로 무시.
   useEffect(() => {
     if (!isWaitingForLocation || !address) return;
+    if (address === addressBeforeGpsRef.current) return;
     setIsWaitingForLocation(false);
     processMatchResult(matchAddressToRegion(address, regions));
   }, [address, isWaitingForLocation]);
 
-  // 매칭 결과 처리
+  // 매칭 결과 처리 — 비활성 모달은 Header가 일원화해서 띄움
   // - 활성 지역: onSelect 후 시트 닫기
-  // - 비활성 지역: 시트를 먼저 닫고 모달 표시 (z-index 충돌 방지)
+  // - 비활성 지역: onGpsInactive 콜백으로 상위에 위임 후 시트 닫기
   const processMatchResult = (result: RegionMatchResult | null) => {
-    if (!result) {
-      onClose();
-      return;
+    if (result) {
+      if (result.storeCount > 0) {
+        onSelect(result);
+      } else {
+        onGpsInactive?.(result);
+      }
     }
-    if (result.storeCount > 0) {
-      onSelect(result);
-      onClose();
-      return;
-    }
-    onClose(); // 시트 먼저 닫기
-    const isSeoul = result.depth1Label === "서울";
-    if (isSeoul) {
-      const nearest = findNearestActiveRegion(regions, result.depth1Label, latitude, longitude);
-      setInactiveModal({ visible: true, type: "seoul", currentLabel: result.label, nearest });
-    } else {
-      setInactiveModal({
-        visible: true,
-        type: "outside",
-        currentLabel: result.depth1Label,
-        nearest: null,
-      });
-    }
+    onClose();
   };
 
   const getActiveItems = (depth1Label: string) => {
@@ -134,40 +128,74 @@ export function RegionSelectSheet({
     return region?.depth2.filter((d) => d.label !== "전지역" && d.storeCount > 0) ?? [];
   };
 
-  const currentActiveItems = getActiveItems(selectedDepth1);
-  const showAllRegion = currentActiveItems.length >= 3;
-  const isAllChecked =
-    currentActiveItems.length > 0 && checkedLabels.size === currentActiveItems.length;
+  const getCheckedLabels = (depth1Label: string): Set<string> =>
+    checkedByDepth1.get(depth1Label) ?? new Set<string>();
 
-  const handleDepth1Change = (depth1Label: string) => {
-    setSelectedDepth1(depth1Label);
-    setCheckedLabels(new Set());
+  const isAllCheckedForDepth1 = (depth1Label: string): boolean => {
+    const items = getActiveItems(depth1Label);
+    const checks = getCheckedLabels(depth1Label);
+    return items.length > 0 && checks.size === items.length;
   };
 
+  const currentActiveItems = getActiveItems(selectedDepth1);
+  const currentCheckedLabels = getCheckedLabels(selectedDepth1);
+  const showAllRegion = currentActiveItems.length >= 2;
+  const isAllChecked = isAllCheckedForDepth1(selectedDepth1);
+
+  const handleDepth1Change = (depth1Label: string) => {
+    // 같은 depth1을 다시 눌렀을 때 체크 상태(ALL 배지 포함)가 리셋되지 않도록 가드.
+    if (depth1Label === selectedDepth1) return;
+    // 탭만 전환 — 다른 depth1의 체크는 그대로 유지.
+    setSelectedDepth1(depth1Label);
+  };
+
+  // 새로 체크가 발생한 depth1만 남기고 다른 depth1의 체크를 모두 비움.
+  // (단일 depth1만 동시에 체크 유지하는 규칙. 탭 전환만으론 안 비움, 다른 depth1에서 새 체크가 발생할 때 비움.)
   const handleAllRegionToggle = () => {
     if (isAllChecked) {
-      setCheckedLabels(new Set());
+      setCheckedByDepth1((prev) => {
+        const next = new Map(prev);
+        next.delete(selectedDepth1);
+        return next;
+      });
     } else {
-      setCheckedLabels(new Set(currentActiveItems.map((d) => d.label)));
+      const onlyCurrent = new Map<string, Set<string>>();
+      onlyCurrent.set(selectedDepth1, new Set(currentActiveItems.map((d) => d.label)));
+      setCheckedByDepth1(onlyCurrent);
     }
   };
 
   const handleDepth2Toggle = (label: string) => {
-    setCheckedLabels((prev) => {
-      const next = new Set(prev);
-      if (next.has(label)) {
-        next.delete(label);
-      } else {
-        next.add(label);
+    setCheckedByDepth1((prev) => {
+      const currentSet = prev.get(selectedDepth1) ?? new Set<string>();
+      const isUnchecking = currentSet.has(label);
+      if (isUnchecking) {
+        // 같은 depth1에서 해제 — 다른 depth1엔 영향 없음
+        const next = new Map(prev);
+        const newSet = new Set(currentSet);
+        newSet.delete(label);
+        if (newSet.size === 0) {
+          next.delete(selectedDepth1);
+        } else {
+          next.set(selectedDepth1, newSet);
+        }
+        return next;
       }
+      // 새로 체크 — 다른 depth1의 체크 전부 비우고 현재 depth1에만 set
+      const newSet = new Set(currentSet);
+      newSet.add(label);
+      const next = new Map<string, Set<string>>();
+      next.set(selectedDepth1, newSet);
       return next;
     });
   };
 
   const handleSetCurrentLocation = () => {
     // 캐시된 address 무시 - 항상 신선한 GPS 요청
+    addressBeforeGpsRef.current = address;
     setIsWaitingForLocation(true);
     if (isWebViewEnvironment()) {
+      // 웹뷰: window.receiveLocation → setAddress가 외부에서 호출됨. address 변경 시 useEffect가 처리.
       requestLocationFromWebView();
     } else if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -175,10 +203,11 @@ export function RegionSelectSheet({
           const { latitude, longitude } = position.coords;
           setLocation(latitude, longitude);
           const addr = await reverseGeocode(latitude, longitude);
+          setIsWaitingForLocation(false);
           if (addr) {
             setAddress(addr);
-          } else {
-            setIsWaitingForLocation(false);
+            // 동일 위치 재클릭 시 setAddress가 no-op이 되어 useEffect 미발화 케이스를 피하기 위해 직접 처리.
+            processMatchResult(matchAddressToRegion(addr, regions));
           }
         },
         () => setIsWaitingForLocation(false),
@@ -189,7 +218,7 @@ export function RegionSelectSheet({
   };
 
   const handleConfirm = () => {
-    if (checkedLabels.size === 0) {
+    if (currentCheckedLabels.size === 0) {
       onClose();
       return;
     }
@@ -200,12 +229,12 @@ export function RegionSelectSheet({
         storeCount: totalStoreCount,
         depth1Label: selectedDepth1,
       });
-    } else if (checkedLabels.size === 1) {
-      const label = Array.from(checkedLabels)[0];
+    } else if (currentCheckedLabels.size === 1) {
+      const label = Array.from(currentCheckedLabels)[0];
       const item = currentActiveItems.find((d) => d.label === label)!;
       onSelect({ label: item.label, storeCount: item.storeCount, depth1Label: selectedDepth1 });
     } else {
-      const selectedItems = currentActiveItems.filter((d) => checkedLabels.has(d.label));
+      const selectedItems = currentActiveItems.filter((d) => currentCheckedLabels.has(d.label));
       const totalStoreCount = selectedItems.reduce((sum, d) => sum + d.storeCount, 0);
       onSelect({
         label: `${selectedItems[0].label} 외 ${selectedItems.length - 1}곳`,
@@ -216,178 +245,128 @@ export function RegionSelectSheet({
     onClose();
   };
 
-  const handleInactiveClose = () => {};
-
-  const handleInactiveConfirm = () => {
-    if (inactiveModal.nearest) {
-      onSelect(inactiveModal.nearest);
-    }
-    setInactiveModal((prev) => ({ ...prev, visible: false }));
-  };
-
-  const handleInactiveCancel = () => {
-    setInactiveModal((prev) => ({ ...prev, visible: false }));
-  };
-
-  const handleOutsideConfirm = () => {
-    setInactiveModal((prev) => ({ ...prev, visible: false }));
-    setTimeout(() => setShowOpenAlarmToast(true), 500);
-  };
-
-  // 시트도 닫혀있고 모달/토스트도 없으면 아무것도 렌더링 안 함
-  if (!isOpen && !inactiveModal.visible && !showOpenAlarmToast) return null;
+  if (!isOpen) return null;
 
   return (
-    <>
-      {/* 지역 선택 시트 */}
-      {isOpen && (
-        <div className="fixed inset-0 z-[200] flex flex-col bg-white max-w-[638px] mx-auto">
-          {/* 헤더 */}
-          <div className="h-[52px] shrink-0 flex items-center justify-between px-5">
-            <div className="flex items-center gap-4">
+    <div className="fixed inset-0 z-[200] flex flex-col bg-white max-w-[638px] mx-auto">
+      {/* 헤더 */}
+      <div className="h-[52px] shrink-0 flex items-center justify-between px-5">
+        <div className="flex items-center gap-4">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex items-center justify-center border-none bg-transparent text-gray-900 cursor-pointer p-0"
+            aria-label="뒤로가기"
+          >
+            <Icon name="chevronLeft" width={24} height={24} className="text-gray-900" />
+          </button>
+          <h2 className="font-bold text-gray-900">지역 설정</h2>
+        </div>
+        <button
+          type="button"
+          onClick={handleSetCurrentLocation}
+          disabled={isWaitingForLocation}
+          className="flex items-center gap-1"
+        >
+          <Icon name="currentLocation" width={16} height={16} className="text-blue-400" />
+          <span className="text-xs font-bold text-blue-400">현재 위치로 설정</span>
+        </button>
+      </div>
+
+      {/* 본문 */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* 좌측: depth1 목록 */}
+        <div className="w-[120px] shrink-0 overflow-y-auto bg-gray-50">
+          {listableRegions.map((region) => {
+            const isSelected = region.depth1.label === selectedDepth1;
+            const checkedCount = getCheckedLabels(region.depth1.label).size;
+            const isAll = isAllCheckedForDepth1(region.depth1.label);
+
+            return (
               <button
+                key={region.depth1.label}
                 type="button"
-                onClick={onClose}
-                className="flex items-center justify-center border-none bg-transparent text-gray-900 cursor-pointer p-0"
-                aria-label="뒤로가기"
+                onClick={() => handleDepth1Change(region.depth1.label)}
+                className={clsx(
+                  "w-full px-6 h-[52px] text-sm text-left text-gray-900 transition-colors flex items-center justify-between gap-1 border-b border-gray-100",
+                  isSelected ? "bg-white font-bold" : "font-medium",
+                )}
               >
-                <Icon name="chevronLeft" width={24} height={24} className="text-gray-900" />
+                <span className="truncate">{region.depth1.label}</span>
+                {checkedCount > 0 && (
+                  <span className="text-sm shrink-0 text-primary">
+                    {isAll ? "ALL" : checkedCount}
+                  </span>
+                )}
               </button>
-              <h2 className="font-bold text-gray-900">지역 설정</h2>
-            </div>
+            );
+          })}
+        </div>
+
+        {/* 우측: depth2 목록 */}
+        <div className="flex-1 overflow-y-auto">
+          {showAllRegion && (
             <button
               type="button"
-              onClick={handleSetCurrentLocation}
-              disabled={isWaitingForLocation}
-              className="flex items-center gap-1"
+              onClick={handleAllRegionToggle}
+              className="w-full flex items-center justify-between px-6 h-[52px] text-sm text-gray-900 font-bold transition-colors"
             >
-              <Icon name="currentLocation" width={16} height={16} className="text-blue-400" />
-              <span className="text-xs font-bold text-blue-400">현재 위치로 설정</span>
-            </button>
-          </div>
-
-          {/* 본문 */}
-          <div className="flex flex-1 overflow-hidden">
-            {/* 좌측: depth1 목록 */}
-            <div className="w-[120px] shrink-0 overflow-y-auto bg-gray-50">
-              {listableRegions.map((region) => {
-                const isSelected = region.depth1.label === selectedDepth1;
-                const activeCount = getActiveItems(region.depth1.label).length;
-                const showAll = isSelected && isAllChecked;
-
-                return (
-                  <button
-                    key={region.depth1.label}
-                    type="button"
-                    onClick={() => handleDepth1Change(region.depth1.label)}
-                    className={clsx(
-                      "w-full px-6 h-[52px] text-sm text-left text-gray-900 transition-colors flex items-center justify-between gap-1 border-b border-gray-100",
-                      isSelected ? "bg-white font-bold" : "font-medium",
-                    )}
-                  >
-                    <span className="truncate">{region.depth1.label}</span>
-                    <span className="text-sm shrink-0 text-primary">
-                      {showAll ? "ALL" : activeCount}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* 우측: depth2 목록 */}
-            <div className="flex-1 overflow-y-auto">
-              {showAllRegion && (
-                <button
-                  type="button"
-                  onClick={handleAllRegionToggle}
-                  className="w-full flex items-center justify-between px-6 h-[52px] text-sm text-gray-900 font-bold transition-colors"
-                >
-                  <span>전지역</span>
-                  {isAllChecked && (
-                    <Icon name="check" width={16} height={16} className="text-red-400" />
-                  )}
-                </button>
+              <span>전지역</span>
+              {isAllChecked && (
+                <Icon name="check" width={16} height={16} className="text-red-400" />
               )}
+            </button>
+          )}
 
-              {currentActiveItems.map((item) => {
-                const isChecked = checkedLabels.has(item.label);
-                return (
-                  <button
-                    key={item.label}
-                    type="button"
-                    onClick={() => handleDepth2Toggle(item.label)}
-                    className="w-full flex items-center justify-between px-6 h-[52px] text-sm text-gray-900 font-bold transition-colors"
-                  >
-                    <span>{item.label}</span>
-                    {isChecked && (
-                      <Icon name="check" width={16} height={16} className="text-red-400" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* 푸터 */}
-          <div className="shrink-0 px-5 py-4 border-t border-gray-100 flex gap-2">
-            <span style={{ flex: 3 }}>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setSelectedDepth1(initialState.depth1);
-                  setCheckedLabels(new Set(initialState.labels));
-                }}
-                className="flex items-center justify-center gap-[6px]"
+          {currentActiveItems.map((item) => {
+            const isChecked = currentCheckedLabels.has(item.label);
+            return (
+              <button
+                key={item.label}
+                type="button"
+                onClick={() => handleDepth2Toggle(item.label)}
+                className="w-full flex items-center justify-between px-6 h-[52px] text-sm text-gray-900 font-bold transition-colors"
               >
-                <Icon name="reset" width={20} height={20} className="text-gray-900" />
-                초기화
-              </Button>
-            </span>
-            <span style={{ flex: 7 }}>
-              <Button variant="primary" onClick={handleConfirm} disabled={checkedLabels.size === 0}>
-                선택완료
-              </Button>
-            </span>
-          </div>
+                <span>{item.label}</span>
+                {isChecked && <Icon name="check" width={16} height={16} className="text-red-400" />}
+              </button>
+            );
+          })}
         </div>
-      )}
+      </div>
 
-      {/* 비활성 지역 모달 (서울 내) - 시트가 닫힌 뒤 렌더링되어 z-index 충돌 없음 */}
-      <Modal
-        isOpen={inactiveModal.visible && inactiveModal.type === "seoul"}
-        onClose={handleInactiveClose}
-        title={`아직 ${inactiveModal.currentLabel} 매장은 준비중입니다. 가까운 동네에서 픽업해보시겠어요?`}
-        confirmText="근처매장보기"
-        confirmVariant="primary"
-        cancelText="취소"
-        cancelVariant="outline"
-        onConfirm={handleInactiveConfirm}
-        onCancel={handleInactiveCancel}
-      />
-
-      {/* 비활성 지역 모달 (서울 외) */}
-      <Modal
-        isOpen={inactiveModal.visible && inactiveModal.type === "outside"}
-        onClose={handleInactiveClose}
-        title={`아직 ${inactiveModal.currentLabel}까지는 달려가는중이에요! 오픈 알람할때 가장 먼저 알려드릴까요?`}
-        confirmText="우리 동네 오픈알림"
-        confirmVariant="primary"
-        cancelText="취소"
-        cancelVariant="outline"
-        onConfirm={handleOutsideConfirm}
-        onCancel={handleInactiveCancel}
-        confirmFlex={7}
-        cancelFlex={3}
-      />
-
-      {showOpenAlarmToast && (
-        <Toast
-          message="오픈시 알람을 보내드릴게요!"
-          iconName="checkCircle"
-          iconClassName="text-green-400"
-          onClose={() => setShowOpenAlarmToast(false)}
-        />
-      )}
-    </>
+      {/* 푸터 */}
+      <div className="shrink-0 px-5 py-4 border-t border-gray-100 flex gap-2">
+        <span style={{ flex: 3 }}>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setSelectedDepth1(initialState.depth1);
+              setCheckedByDepth1(
+                new Map(
+                  Array.from(initialState.checkedByDepth1.entries()).map(([k, v]) => [
+                    k,
+                    new Set(v),
+                  ]),
+                ),
+              );
+            }}
+            className="flex items-center justify-center gap-[6px]"
+          >
+            <Icon name="reset" width={20} height={20} className="text-gray-900" />
+            초기화
+          </Button>
+        </span>
+        <span style={{ flex: 7 }}>
+          <Button
+            variant="primary"
+            onClick={handleConfirm}
+            disabled={currentCheckedLabels.size === 0}
+          >
+            선택완료
+          </Button>
+        </span>
+      </div>
+    </div>
   );
 }
