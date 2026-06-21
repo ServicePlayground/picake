@@ -54,14 +54,15 @@ export const StoreRefundCancellationPolicyFields: React.FC<Props> = ({
               <span className="text-sm text-muted-foreground shrink-0">픽업</span>
               <div className="w-[72px] shrink-0 sm:w-[100px]">
                 <Input
-                  type="number"
-                  min={0}
-                  max={999}
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={3}
                   required
                   aria-label={`픽업 며칠 전 (${index + 1}번째)`}
                   value={row.daysBeforePickup ?? ""}
                   onChange={(e) => {
-                    const raw = e.target.value;
+                    // type="text"에서도 숫자 검증이 동작하도록 숫자만 추출해 파싱한다.
+                    const raw = e.target.value.replace(/[^\d]/g, "");
                     const n = raw === "" ? undefined : Number.parseInt(raw, 10);
                     onChange(
                       updateRefundRuleAt(policy, index, {
