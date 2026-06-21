@@ -67,7 +67,11 @@ export const ImageSlider: React.FC<ImageSliderProps> = ({
         <button
           key={image.id}
           type="button"
-          onClick={() => onImageClick?.(image, index)}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onImageClick?.(image, index);
+          }}
           className="flex-shrink-0 rounded-xl overflow-hidden"
           style={{ width: imageWidth, height: imageHeight }}
         >

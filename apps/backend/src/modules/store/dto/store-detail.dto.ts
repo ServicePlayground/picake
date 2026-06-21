@@ -9,6 +9,24 @@ import { SWAGGER_EXAMPLES as UPLOAD_SWAGGER_EXAMPLES } from "@apps/backend/modul
 import { StoreAddressDto } from "@apps/backend/modules/store/dto/store-common.dto";
 import { StoreBusinessCalendarDto } from "@apps/backend/modules/store/dto/store-business-calendar.dto";
 import { RefundCancellationPolicyDto } from "@apps/backend/modules/store/dto/store-refund-cancellation-policy.dto";
+import { SWAGGER_EXAMPLES as PRODUCT_SWAGGER_EXAMPLES } from "@apps/backend/modules/product/constants/product.constants";
+
+/**
+ * 스토어 상품 대표이미지 (상품당 1장)
+ */
+export class StoreProductRepresentativeImageDto {
+  @ApiProperty({
+    description: "상품 ID",
+    example: PRODUCT_SWAGGER_EXAMPLES.PRODUCT_DATA.id,
+  })
+  productId: string;
+
+  @ApiProperty({
+    description: "상품 대표이미지 URL",
+    example: UPLOAD_SWAGGER_EXAMPLES.FILE_URL,
+  })
+  imageUrl: string;
+}
 
 /**
  * 스토어 응답 DTO
@@ -150,14 +168,22 @@ export class StoreResponseDto extends StoreAddressDto {
   totalReviewCount: number;
 
   @ApiProperty({
-    description: "해당 스토어의 모든 상품 대표이미지 URL 배열 (상품당 1장)",
-    type: [String],
+    description: "해당 스토어의 모든 상품 대표이미지 (상품당 1장)",
+    type: [StoreProductRepresentativeImageDto],
     example: [
-      "https://s3.ap-northeast-1.amazonaws.com/picake-uploads/uploads/product1.png",
-      "https://s3.ap-northeast-1.amazonaws.com/picake-uploads/uploads/product2.png",
+      {
+        productId: "prod_123456789",
+        imageUrl:
+          "https://s3.ap-northeast-1.amazonaws.com/picake-uploads/uploads/product1.png",
+      },
+      {
+        productId: "prod_987654321",
+        imageUrl:
+          "https://s3.ap-northeast-1.amazonaws.com/picake-uploads/uploads/product2.png",
+      },
     ],
   })
-  productRepresentativeImageUrls: string[];
+  productRepresentativeImages: StoreProductRepresentativeImageDto[];
 
   @ApiPropertyOptional({
     description: "해당 스토어 상품 중 최소 금액 (노출·판매중인 상품만, 없으면 null)",

@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ImageSlider } from "@/apps/web-user/common/components/sliders/ImageSlider";
 import { useLikedStores } from "@/apps/web-user/features/like/hooks/queries/useLikedStores";
 import { StoreInfo } from "@/apps/web-user/features/store/types/store.type";
@@ -19,6 +20,7 @@ import { useAuthStore } from "@/apps/web-user/common/store/auth.store";
 import { useLoginSheetStore } from "@/apps/web-user/common/store/login-sheet.store";
 
 export function LikedStoreListSection() {
+  const router = useRouter();
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const { mutate: addLike } = useAddStoreLike();
   const { mutate: removeLike } = useRemoveStoreLike();
@@ -124,15 +126,16 @@ export function LikedStoreListSection() {
                   {shortenAddress(store.roadAddress)}
                 </span>
               </div>
-              {store.productRepresentativeImageUrls.length > 0 && (
+              {store.productRepresentativeImages.length > 0 && (
                 <ImageSlider
-                  images={store.productRepresentativeImageUrls.map((url, i) => ({
-                    id: `${store.id}-${i}`,
-                    url,
+                  images={store.productRepresentativeImages.map((item) => ({
+                    id: item.productId,
+                    url: item.imageUrl,
                   }))}
                   imageWidth={160}
                   imageHeight={120}
                   edgeToEdge={20}
+                  onImageClick={(image) => router.push(PATHS.PRODUCT.DETAIL(image.id))}
                 />
               )}
             </Link>

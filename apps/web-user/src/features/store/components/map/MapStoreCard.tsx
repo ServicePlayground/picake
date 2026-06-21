@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Icon } from "@/apps/web-user/common/components/icons";
 import type {
   StoreBusinessCalendar,
@@ -82,6 +83,7 @@ export function MapStoreCardContent({
   imageGap = DEFAULT_IMAGE_GAP,
   variant = "card",
 }: MapStoreCardContentProps) {
+  const router = useRouter();
   const [isLiked, setIsLiked] = useState(store.isLiked ?? false);
   const [likeCount, setLikeCount] = useState(store.likeCount);
   const { mutate: addLike, isPending: isAddingLike } = useAddStoreLike();
@@ -127,12 +129,11 @@ export function MapStoreCardContent({
     }
   };
 
-  const productImages = store.productRepresentativeImageUrls ?? [];
+  const productImages = store.productRepresentativeImages ?? [];
   const isList = variant === "list";
 
   return (
-    <Link
-      href={PATHS.STORE.DETAIL(store.id)}
+    <div
       className="block overflow-hidden"
       style={{
         ...(isList
@@ -154,9 +155,11 @@ export function MapStoreCardContent({
             marginBottom: 14,
           }}
         >
-          {productImages.map((url, index) => (
-            <div
-              key={`${store.id}-img-${index}`}
+          {productImages.map((item) => (
+            <button
+              key={item.productId}
+              type="button"
+              onClick={() => router.push(PATHS.PRODUCT.DETAIL(item.productId))}
               className="flex-shrink-0 overflow-hidden bg-gray-100"
               style={{
                 scrollSnapAlign: "start",
@@ -166,19 +169,19 @@ export function MapStoreCardContent({
               }}
             >
               <Image
-                src={url}
-                alt={`${store.name} 상품 ${index + 1}`}
+                src={item.imageUrl}
+                alt={`${store.name} 상품`}
                 width={imageWidth}
                 height={imageHeight}
                 className="w-full h-full object-cover"
                 unoptimized
               />
-            </div>
+            </button>
           ))}
         </div>
       )}
 
-      <div>
+      <Link href={PATHS.STORE.DETAIL(store.id)} className="block">
         {productImages.length === 0 && <div className="pt-2" />}
         <div className="flex items-center justify-between gap-2" style={{ marginBottom: 6 }}>
           <div className="flex min-w-0 flex-1 items-center" style={{ gap: 4 }}>
@@ -252,8 +255,8 @@ export function MapStoreCardContent({
             )}
           </div>
         )}
-      </div>
-    </Link>
+      </Link>
+    </div>
   );
 }
 
