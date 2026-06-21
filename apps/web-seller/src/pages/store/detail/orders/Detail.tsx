@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useOrderDetail } from "@/apps/web-seller/features/order/hooks/queries/useOrderQuery";
 import { useUpdateOrderStatus } from "@/apps/web-seller/features/order/hooks/mutations/useOrderMutation";
@@ -19,6 +19,8 @@ import {
   getOrderStatusSellerHintBody,
   ORDER_STATUS_FLOW_LINES_FOR_SELLER,
 } from "@/apps/web-seller/features/order/utils/order-status-seller-guide.util";
+import { OrderStatusGuideHelpButton } from "@/apps/web-seller/features/order/components/OrderStatusGuideHelpButton";
+import { OrderStatusGuideModal } from "@/apps/web-seller/features/order/components/OrderStatusGuideModal";
 import { PaymentPendingCountdown } from "@/apps/web-seller/features/order/components/detail/PaymentPendingCountdown";
 import { OrderStatusFlowStepper } from "@/apps/web-seller/features/order/components/detail/OrderStatusFlowStepper";
 import { OrderDetailSpreadsheetView } from "@/apps/web-seller/features/order/components/detail/OrderDetailSpreadsheetView";
@@ -28,15 +30,12 @@ import {
   ORDER_DETAIL_PAGE_META,
   ORDER_DETAIL_PAGE_TITLE,
   ORDER_DETAIL_SHEET,
-  ORDER_DETAIL_SHEET_HEADER,
-  ORDER_DETAIL_SHEET_TITLE,
   ORDER_DETAIL_TD_BLOCK,
 } from "@/apps/web-seller/features/order/constants/order-detail-page.constant";
 import {
   SheetSectionRow,
   SheetTable,
 } from "@/apps/web-seller/features/order/components/detail/OrderDetailSheetTable";
-import { CircleHelp, X } from "lucide-react";
 import { cn } from "@/apps/web-seller/common/utils/classname.util";
 import { ContentLoading } from "@/apps/web-seller/common/components/loading/ContentLoading";
 
@@ -62,15 +61,6 @@ export const StoreDetailOrderDetailPage: React.FC = () => {
   const [reasonTarget, setReasonTarget] = useState<ReasonTarget>(null);
   const [reasonText, setReasonText] = useState("");
   const [flowGuideOpen, setFlowGuideOpen] = useState(false);
-
-  useEffect(() => {
-    if (!flowGuideOpen) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setFlowGuideOpen(false);
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [flowGuideOpen]);
 
   if (!storeId || !orderId) {
     return (
@@ -193,15 +183,12 @@ export const StoreDetailOrderDetailPage: React.FC = () => {
                       <StatusBadge variant={variant} className="text-xs font-semibold">
                         {getOrderStatusLabel(status)}
                       </StatusBadge>
-                      <button
-                        type="button"
+                      <OrderStatusGuideHelpButton
                         onClick={() => setFlowGuideOpen(true)}
-                        className="-m-0.5 inline-flex shrink-0 items-center justify-center rounded-full p-1 text-slate-400 transition-colors hover:bg-slate-200/80 hover:text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35"
-                        aria-label="상태별 상세 안내 전체 흐름 보기"
+                        className="p-1"
+                        ariaLabel="상태별 상세 안내 전체 흐름 보기"
                         title="상태별 상세 안내 · 전체 흐름"
-                      >
-                        <CircleHelp className="h-[17px] w-[17px]" strokeWidth={2} aria-hidden />
-                      </button>
+                      />
                     </div>
                     <p className={cn(ORDER_DETAIL_BODY, "min-w-0 flex-1")}>
                       {getOrderStatusSellerHintBody(status)}
@@ -373,58 +360,12 @@ export const StoreDetailOrderDetailPage: React.FC = () => {
         onReferenceImageClick={(url) => setLightboxImage(url)}
       />
 
-      {flowGuideOpen && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="order-flow-guide-title"
-        >
-          <button
-            type="button"
-            className="absolute inset-0 bg-slate-900/45 backdrop-blur-[1px]"
-            onClick={() => setFlowGuideOpen(false)}
-            aria-label="안내 닫기"
-          />
-          <div
-            className="relative z-10 flex max-h-[min(88vh,720px)] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-slate-300/90 bg-white shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div
-              className={cn(
-                ORDER_DETAIL_SHEET_HEADER,
-                "flex shrink-0 items-center justify-between gap-3",
-              )}
-            >
-              <h2 id="order-flow-guide-title" className={ORDER_DETAIL_SHEET_TITLE}>
-                상태별 상세 안내 · 전체 흐름
-              </h2>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 shrink-0 text-slate-500 hover:text-slate-900"
-                onClick={() => setFlowGuideOpen(false)}
-                aria-label="닫기"
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3 sm:px-4">
-              <ul className="space-y-2.5 text-[13px] leading-relaxed text-slate-700">
-                {ORDER_STATUS_FLOW_LINES_FOR_SELLER.map((line, i) => (
-                  <li key={i} className="flex gap-3">
-                    <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-[11px] font-semibold text-slate-600">
-                      {i + 1}
-                    </span>
-                    <span>{line}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-      )}
+      <OrderStatusGuideModal
+        open={flowGuideOpen}
+        onClose={() => setFlowGuideOpen(false)}
+        ariaLabel="상태별 상세 안내 · 전체 흐름"
+        numberedLines={ORDER_STATUS_FLOW_LINES_FOR_SELLER}
+      />
 
       {lightboxImage && (
         <ImageLightbox
