@@ -17,7 +17,7 @@ import {
 import type { ProductForm } from "@/apps/web-seller/features/product/types/product.ui";
 import { ProductCreationBasicInfoSection } from "@/apps/web-seller/features/product/components/sections/ProductCreationBasicInfoSection";
 import { ProductCreationCakeOptionsSection } from "@/apps/web-seller/features/product/components/sections/ProductCreationCakeOptionsSection";
-import { ProductCreationLetteringPolicySection } from "@/apps/web-seller/features/product/components/sections/ProductCreationLetteringPolicySection";
+import { ProductCreationOptionsSection } from "@/apps/web-seller/features/product/components/sections/ProductCreationOptionsSection";
 import { ProductCreationDetailDescriptionSection } from "@/apps/web-seller/features/product/components/sections/ProductCreationDetailDescriptionSection";
 import { ProductCreationProductNoticeSection } from "@/apps/web-seller/features/product/components/sections/ProductCreationProductNoticeSection";
 import { validateProductForm } from "@/apps/web-seller/features/product/utils/validateProductForm";
@@ -289,8 +289,8 @@ export const ProductCreationForm: React.FC<Props> = ({
                 onCakeFlavorOptionsChange={handleCakeFlavorOptionsChange}
               />
 
-              {/* 레터링 정책 섹션 */}
-              <ProductCreationLetteringPolicySection
+              {/* 옵션 섹션 */}
+              <ProductCreationOptionsSection
                 form={form}
                 errors={errors}
                 onLetteringVisibleChange={handleLetteringVisibleChange}

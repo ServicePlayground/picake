@@ -7,7 +7,7 @@ import { NumberInput } from "@/apps/web-seller/common/components/inputs/NumberIn
 import { Label } from "@/apps/web-seller/common/components/labels/Label";
 import { Card, CardContent } from "@/apps/web-seller/common/components/cards/Card";
 
-export interface ProductCreationLetteringPolicySectionProps {
+export interface ProductCreationOptionsSectionProps {
   form: ProductForm;
   errors: Partial<Record<keyof ProductForm, string>>;
   onLetteringVisibleChange: (value: EnableStatus) => void;
@@ -16,10 +16,8 @@ export interface ProductCreationLetteringPolicySectionProps {
   disabled?: boolean;
 }
 
-// 상품 등록 폼 - 레터링 정책 섹션
-export const ProductCreationLetteringPolicySection: React.FC<
-  ProductCreationLetteringPolicySectionProps
-> = ({
+// 상품 등록 폼 - 옵션 섹션
+export const ProductCreationOptionsSection: React.FC<ProductCreationOptionsSectionProps> = ({
   form,
   errors,
   onLetteringVisibleChange,
@@ -30,7 +28,7 @@ export const ProductCreationLetteringPolicySection: React.FC<
   return (
     <Card>
       <CardContent className="p-6">
-        <h2 className="text-xl font-semibold mb-2">레터링 정책</h2>
+        <h2 className="text-xl font-semibold mb-2">옵션</h2>
         <div className="border-t mb-6" />
 
         <div className="grid grid-cols-1 gap-6">
