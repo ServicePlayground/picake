@@ -62,6 +62,14 @@ export const StoreDetailProductListPage: React.FC = () => {
     setSizes([]);
   }, []);
 
+  const handleResetSizes = useCallback(() => {
+    setSizes([]);
+  }, []);
+
+  const handleResetCategories = useCallback(() => {
+    setProductCategoryTypes([]);
+  }, []);
+
   const hasActiveFilters =
     search.trim() !== "" ||
     salesStatus !== undefined ||
@@ -117,13 +125,23 @@ export const StoreDetailProductListPage: React.FC = () => {
       <div className="space-y-4 rounded-lg border bg-card p-4">
         {/* 통계 및 정렬 */}
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-2">
             <div className="text-sm text-muted-foreground">
               총 <span className="font-semibold text-foreground">{totalItems}</span>개의 상품
             </div>
             {hasActiveFilters && (
               <Button variant="outline" size="sm" onClick={handleResetFilters}>
-                필터 초기화
+                전체 초기화
+              </Button>
+            )}
+            {sizes.length > 0 && (
+              <Button variant="outline" size="sm" onClick={handleResetSizes}>
+                사이즈 초기화
+              </Button>
+            )}
+            {productCategoryTypes.length > 0 && (
+              <Button variant="outline" size="sm" onClick={handleResetCategories}>
+                카테고리 초기화
               </Button>
             )}
           </div>
