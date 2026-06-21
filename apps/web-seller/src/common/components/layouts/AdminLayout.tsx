@@ -1,55 +1,13 @@
-import React, { useState, useEffect, useMemo, useRef } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { BaseButton as Button } from "@/apps/web-seller/common/components/buttons/BaseButton";
-import { Menu, User, LogOut, Bell, UserCircle } from "lucide-react";
+import { Menu, User, LogOut, UserCircle } from "lucide-react";
 import { AdminSidebar } from "@/apps/web-seller/common/components/sidebar/AdminSidebar";
 import { ROUTES } from "@/apps/web-seller/common/constants/paths.constant";
 import { useAuthStore } from "@/apps/web-seller/features/auth/store/auth.store";
 import { useLogout } from "@/apps/web-seller/features/auth/hooks/mutations/useAuthMutation";
-import {
-  SellerNotificationScope,
-  useSellerNotifications,
-} from "@/apps/web-seller/features/notification/components/providers/SellerNotificationProvider";
-import { cn } from "@/apps/web-seller/common/utils/classname.util";
-
-function AdminHeaderNotificationButton() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const notif = useSellerNotifications();
-
-  const storeId = useMemo(() => {
-    const m = location.pathname.match(/^\/stores\/([^/]+)/);
-    return m ? m[1] : null;
-  }, [location.pathname]);
-
-  if (!storeId || !notif) {
-    return null;
-  }
-
-  const unread = notif.unreadCount;
-
-  return (
-    <Button
-      variant="ghost"
-      size="icon"
-      type="button"
-      onClick={() => navigate(ROUTES.STORE_DETAIL_NOTIFICATIONS_LIST(storeId))}
-      className="relative mr-1 shrink-0 text-zinc-700 hover:bg-zinc-100"
-      aria-label={unread > 0 ? `알림 ${unread}건 읽지 않음` : "알림"}
-    >
-      <Bell className="h-6 w-6" />
-      {unread > 0 ? (
-        <span
-          className={cn(
-            "absolute -right-0.5 -top-0.5 flex min-h-[1.125rem] min-w-[1.125rem] items-center justify-center rounded-full bg-rose-600 px-1 text-[10px] font-bold leading-none text-white",
-          )}
-        >
-          {unread > 99 ? "99+" : unread}
-        </span>
-      ) : null}
-    </Button>
-  );
-}
+import { SellerNotificationScope } from "@/apps/web-seller/features/notification/components/providers/SellerNotificationProvider";
+import { AdminHeaderNotificationDropdown } from "@/apps/web-seller/features/notification/components/AdminHeaderNotificationDropdown";
 
 const drawerWidth = 300;
 
@@ -137,7 +95,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
             </Button>
             {isAuthenticated && (
               <div className="flex items-center">
-                <AdminHeaderNotificationButton />
+                <AdminHeaderNotificationDropdown />
                 <div ref={profileMenuRef} className="relative flex shrink-0 items-center">
                   <Button
                     variant="ghost"
