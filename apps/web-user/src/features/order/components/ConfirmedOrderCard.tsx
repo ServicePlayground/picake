@@ -60,6 +60,7 @@ export function ConfirmedOrderCard({ order }: { order: OrderResponse }) {
           onClose={() => setIsInquirySheetOpen(false)}
           kakaoChannelUrl={null}
           instagramUrl={null}
+          phoneNumber={order.storePhoneNumber}
         />,
         document.body,
       )}

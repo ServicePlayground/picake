@@ -176,6 +176,7 @@ function PastOrderItem({ order, isLast }: { order: OrderResponse; isLast: boolea
         onClose={() => setIsInquirySheetOpen(false)}
         kakaoChannelUrl={null}
         instagramUrl={null}
+        phoneNumber={order.storePhoneNumber}
       />
     </div>
   );
