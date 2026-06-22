@@ -15,6 +15,7 @@ import { ProfileEditBottomSheet } from "@/apps/web-user/features/mypage/componen
 import { useUpdateMypageProfile } from "@/apps/web-user/features/mypage/hooks/mutations/useUpdateMypageProfile";
 import { Toast } from "@/apps/web-user/common/components/toast/Toast";
 import { useLoginSheetStore } from "@/apps/web-user/common/store/login-sheet.store";
+import { useScrollRestoration } from "@/apps/web-user/common/hooks/useScrollRestoration";
 
 function getLoginInfo(user: {
   googleId: string;
@@ -59,6 +60,8 @@ const TERMS_MENU = [
 export default function MypagePage() {
   const { isAuthenticated } = useAuthStore();
   const hasHydrated = useAuthHasHydrated();
+  // 메뉴 클릭 후 뒤로가기 시 클릭했던 스크롤 위치로 복원 (레이아웃이 정해지는 hydration 이후 활성화)
+  useScrollRestoration("/mypage", hasHydrated);
   const { data: user } = useMypageProfile();
   const openLoginSheet = useLoginSheetStore((s) => s.openLoginSheet);
   const [isProfileEditOpen, setIsProfileEditOpen] = useState(false);
@@ -70,7 +73,11 @@ export default function MypagePage() {
       .flatMap((p) => p.data)
       .filter(
         (o) =>
-          o.orderStatus === OrderStatus.CONFIRMED || o.orderStatus === OrderStatus.PICKUP_PENDING,
+          o.orderStatus === OrderStatus.RESERVATION_REQUESTED ||
+          o.orderStatus === OrderStatus.PAYMENT_PENDING ||
+          o.orderStatus === OrderStatus.PAYMENT_COMPLETED ||
+          o.orderStatus === OrderStatus.CONFIRMED ||
+          o.orderStatus === OrderStatus.PICKUP_PENDING,
       ).length ?? 0;
 
   return (

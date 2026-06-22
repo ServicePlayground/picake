@@ -58,7 +58,10 @@ export default function RootWrapperLayout({ children }: RootWrapperLayoutProps) 
     <AuthProvider>
       <BuildInfoLogger />
       <AlarmRealtimeListener />
-      <div className="w-full sm:w-[640px] h-screen mx-auto sm:border-x border-gray-200 overflow-y-auto overflow-x-hidden scrollbar-hide">
+      <div
+        id="root-scroll-container"
+        className="w-full sm:w-[640px] h-screen mx-auto sm:border-x border-gray-200 overflow-y-auto overflow-x-hidden scrollbar-hide"
+      >
         <Header variant={headerVariant} title={headerTitle} />
         <div>{children}</div>
         <Alert />
