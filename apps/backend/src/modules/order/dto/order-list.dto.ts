@@ -66,6 +66,14 @@ export class OrderListRequestDto extends PaginationRequestDto {
   orderNumber?: string;
 
   @ApiPropertyOptional({
+    description: "(검색) 상품명 (부분 일치)",
+    example: "딸기 케이크",
+  })
+  @IsOptional()
+  @IsString()
+  productName?: string;
+
+  @ApiPropertyOptional({
     description: "(필터) 픽업 예정/지난 예약",
     enum: OrderType,
     example: OrderType.UPCOMING,

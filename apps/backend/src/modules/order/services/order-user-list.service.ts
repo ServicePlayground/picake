@@ -43,6 +43,7 @@ export class OrderUserListService {
       startDate,
       endDate,
       orderNumber,
+      productName,
       pickupStartDate,
       pickupEndDate,
     } = query;
@@ -76,6 +77,9 @@ export class OrderUserListService {
     }
     if (orderNumber) {
       where.orderNumber = { contains: orderNumber };
+    }
+    if (productName) {
+      where.productName = { contains: productName };
     }
 
     const totalItems = await this.prisma.order.count({ where });

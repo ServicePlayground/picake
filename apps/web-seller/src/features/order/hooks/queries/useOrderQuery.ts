@@ -21,6 +21,7 @@ export function useOrderList({
   pickupStartDate,
   pickupEndDate,
   orderNumber,
+  productName,
   type,
 }: Partial<OrderListQueryParams> & { page: number; limit: number; sortBy: OrderSortBy }) {
   const query = useQuery<OrderListResponseDto>({
@@ -35,6 +36,7 @@ export function useOrderList({
       pickupStartDate,
       pickupEndDate,
       orderNumber,
+      productName,
       type,
     }),
     queryFn: () => {
@@ -63,6 +65,9 @@ export function useOrderList({
       }
       if (orderNumber) {
         params.orderNumber = orderNumber;
+      }
+      if (productName) {
+        params.productName = productName;
       }
       if (type) {
         params.type = type;

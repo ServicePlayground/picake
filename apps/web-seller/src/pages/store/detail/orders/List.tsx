@@ -35,14 +35,16 @@ export const StoreDetailOrderListPage: React.FC = () => {
   const [orderStatus, setOrderStatus] = useState<OrderStatus | undefined>(undefined);
   const [type, setType] = useState<OrderType | undefined>(undefined);
   const [orderNumber, setOrderNumber] = useState<string>("");
+  const [productName, setProductName] = useState<string>("");
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [pickupStartDate, setPickupStartDate] = useState<string>("");
   const [pickupEndDate, setPickupEndDate] = useState<string>("");
   const [statusGuideOpen, setStatusGuideOpen] = useState(false);
 
-  // 주문 번호 검색 debounce (과도한 API 호출 방지)
+  // 검색 debounce (과도한 API 호출 방지)
   const debouncedOrderNumber = useDebouncedValue(orderNumber, DEBOUNCE_DELAY_MS);
+  const debouncedProductName = useDebouncedValue(productName, DEBOUNCE_DELAY_MS);
 
   // 필터나 정렬이 변경되면 페이지를 1로 리셋
   useEffect(() => {
@@ -51,6 +53,7 @@ export const StoreDetailOrderListPage: React.FC = () => {
     orderStatus,
     type,
     debouncedOrderNumber,
+    debouncedProductName,
     startDate,
     endDate,
     pickupStartDate,
@@ -63,6 +66,7 @@ export const StoreDetailOrderListPage: React.FC = () => {
     setOrderStatus(undefined);
     setType(undefined);
     setOrderNumber("");
+    setProductName("");
     setStartDate("");
     setEndDate("");
     setPickupStartDate("");
@@ -73,6 +77,7 @@ export const StoreDetailOrderListPage: React.FC = () => {
     orderStatus !== undefined ||
     type !== undefined ||
     orderNumber.trim() !== "" ||
+    productName.trim() !== "" ||
     startDate !== "" ||
     endDate !== "" ||
     pickupStartDate !== "" ||
@@ -94,6 +99,7 @@ export const StoreDetailOrderListPage: React.FC = () => {
     orderStatus,
     type,
     orderNumber: debouncedOrderNumber.trim() || undefined,
+    productName: debouncedProductName.trim() || undefined,
     startDate: startDate || undefined,
     endDate: endDate || undefined,
     pickupStartDate: pickupStartDate || undefined,
@@ -125,8 +131,8 @@ export const StoreDetailOrderListPage: React.FC = () => {
           )}
         </div>
 
-        {/* 필터 — 상품 목록과 동일 그리드로 인풋 너비 정렬 */}
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
+        {/* 필터 */}
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
           {/* 주문 번호 검색 */}
           <div className="min-w-0 space-y-1">
             <Label>주문 번호</Label>
@@ -134,6 +140,16 @@ export const StoreDetailOrderListPage: React.FC = () => {
               placeholder="주문 번호 검색"
               value={orderNumber}
               onChange={(e) => setOrderNumber(e.target.value)}
+            />
+          </div>
+
+          {/* 상품명 검색 */}
+          <div className="min-w-0 space-y-1">
+            <Label>상품명</Label>
+            <Input
+              placeholder="상품명 검색"
+              value={productName}
+              onChange={(e) => setProductName(e.target.value)}
             />
           </div>
 

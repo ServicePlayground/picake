@@ -45,6 +45,7 @@ export class OrderSellerListService {
       startDate,
       endDate,
       orderNumber,
+      productName,
       type,
       pickupStartDate,
       pickupEndDate,
@@ -110,6 +111,13 @@ export class OrderSellerListService {
     if (orderNumber) {
       where.orderNumber = {
         contains: orderNumber,
+      };
+    }
+
+    // 상품명 검색
+    if (productName) {
+      where.productName = {
+        contains: productName,
       };
     }
 
