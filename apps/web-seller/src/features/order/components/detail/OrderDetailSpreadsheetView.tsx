@@ -94,6 +94,92 @@ export const OrderDetailSpreadsheetView: React.FC<OrderDetailSpreadsheetViewProp
 
   return (
     <div className="space-y-4">
+      {/* 주문 항목 */}
+      <div className={ORDER_DETAIL_SHEET}>
+        <div className={ORDER_DETAIL_SHEET_HEADER}>
+          <h2 className={ORDER_DETAIL_SHEET_TITLE}>주문 항목</h2>
+        </div>
+        <div className="overflow-x-auto">
+          <SheetTable className="min-w-[800px]">
+            <thead>
+              <tr>
+                <th className={ORDER_DETAIL_TH_COL}>#</th>
+                <th className={ORDER_DETAIL_TH_COL}>사이즈</th>
+                <th className={ORDER_DETAIL_TH_COL}>맛</th>
+                <th className={cn(ORDER_DETAIL_TH_COL, "text-right")}>수량</th>
+                <th className={cn(ORDER_DETAIL_TH_COL, "text-right")}>단가</th>
+                <th className={cn(ORDER_DETAIL_TH_COL, "text-right")}>소계</th>
+                <th className={ORDER_DETAIL_TH_COL}>레터링</th>
+                <th className={ORDER_DETAIL_TH_COL}>요청</th>
+                <th className={ORDER_DETAIL_TH_COL}>참고 이미지</th>
+              </tr>
+            </thead>
+            <tbody>
+              {order.orderItems.map((item, index) => {
+                const lineTotal = item.itemPrice * item.quantity;
+                return (
+                  <tr key={item.id} className="even:bg-slate-50/40">
+                    <td
+                      className={cn(
+                        ORDER_DETAIL_TD_CELL,
+                        "text-center tabular-nums text-slate-500",
+                      )}
+                    >
+                      {index + 1}
+                    </td>
+                    <td className={cn(ORDER_DETAIL_TD_CELL, "min-w-[120px] whitespace-pre-wrap")}>
+                      {formatSizeLine(item)}
+                    </td>
+                    <td className={cn(ORDER_DETAIL_TD_CELL, "min-w-[100px] whitespace-pre-wrap")}>
+                      {formatFlavorLine(item)}
+                    </td>
+                    <td className={cn(ORDER_DETAIL_TD_CELL, "text-right tabular-nums")}>
+                      {item.quantity}
+                    </td>
+                    <td className={cn(ORDER_DETAIL_TD_CELL, "text-right tabular-nums")}>
+                      {item.itemPrice.toLocaleString()}원
+                    </td>
+                    <td
+                      className={cn(
+                        ORDER_DETAIL_TD_CELL,
+                        "text-right font-semibold tabular-nums text-slate-900",
+                      )}
+                    >
+                      {lineTotal.toLocaleString()}원
+                    </td>
+                    <td className={cn(ORDER_DETAIL_TD_CELL, "max-w-[180px] whitespace-pre-wrap")}>
+                      {item.letteringMessage?.trim() || "—"}
+                    </td>
+                    <td className={cn(ORDER_DETAIL_TD_CELL, "max-w-[200px] whitespace-pre-wrap")}>
+                      {item.requestMessage?.trim() || "—"}
+                    </td>
+                    <td className={cn(ORDER_DETAIL_TD_CELL, "min-w-[100px]")}>
+                      {item.imageUrls && item.imageUrls.length > 0 ? (
+                        <div className="flex flex-wrap gap-1.5">
+                          {item.imageUrls.map((url, idx) => (
+                            <button
+                              key={`${item.id}-img-${idx}`}
+                              type="button"
+                              onClick={() => onReferenceImageClick(item.imageUrls, idx)}
+                              className="relative h-9 w-9 shrink-0 overflow-hidden rounded border border-slate-200 bg-slate-100 transition hover:border-primary hover:ring-1 hover:ring-primary/30 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
+                              aria-label={`참고 이미지 ${idx + 1} 크게 보기`}
+                            >
+                              <img src={url} alt="" className="h-full w-full object-cover" />
+                            </button>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className={ORDER_DETAIL_MUTED}>—</span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </SheetTable>
+        </div>
+      </div>
+
       {/* 주문 기본 정보 */}
       <div className={ORDER_DETAIL_SHEET}>
         <div className={ORDER_DETAIL_SHEET_HEADER}>
@@ -189,92 +275,6 @@ export const OrderDetailSpreadsheetView: React.FC<OrderDetailSpreadsheetViewProp
           </div>
         </div>
       )}
-
-      {/* 주문 항목 */}
-      <div className={ORDER_DETAIL_SHEET}>
-        <div className={ORDER_DETAIL_SHEET_HEADER}>
-          <h2 className={ORDER_DETAIL_SHEET_TITLE}>주문 항목</h2>
-        </div>
-        <div className="overflow-x-auto">
-          <SheetTable className="min-w-[800px]">
-            <thead>
-              <tr>
-                <th className={ORDER_DETAIL_TH_COL}>#</th>
-                <th className={ORDER_DETAIL_TH_COL}>사이즈</th>
-                <th className={ORDER_DETAIL_TH_COL}>맛</th>
-                <th className={cn(ORDER_DETAIL_TH_COL, "text-right")}>수량</th>
-                <th className={cn(ORDER_DETAIL_TH_COL, "text-right")}>단가</th>
-                <th className={cn(ORDER_DETAIL_TH_COL, "text-right")}>소계</th>
-                <th className={ORDER_DETAIL_TH_COL}>레터링</th>
-                <th className={ORDER_DETAIL_TH_COL}>요청</th>
-                <th className={ORDER_DETAIL_TH_COL}>참고 이미지</th>
-              </tr>
-            </thead>
-            <tbody>
-              {order.orderItems.map((item, index) => {
-                const lineTotal = item.itemPrice * item.quantity;
-                return (
-                  <tr key={item.id} className="even:bg-slate-50/40">
-                    <td
-                      className={cn(
-                        ORDER_DETAIL_TD_CELL,
-                        "text-center tabular-nums text-slate-500",
-                      )}
-                    >
-                      {index + 1}
-                    </td>
-                    <td className={cn(ORDER_DETAIL_TD_CELL, "min-w-[120px] whitespace-pre-wrap")}>
-                      {formatSizeLine(item)}
-                    </td>
-                    <td className={cn(ORDER_DETAIL_TD_CELL, "min-w-[100px] whitespace-pre-wrap")}>
-                      {formatFlavorLine(item)}
-                    </td>
-                    <td className={cn(ORDER_DETAIL_TD_CELL, "text-right tabular-nums")}>
-                      {item.quantity}
-                    </td>
-                    <td className={cn(ORDER_DETAIL_TD_CELL, "text-right tabular-nums")}>
-                      {item.itemPrice.toLocaleString()}원
-                    </td>
-                    <td
-                      className={cn(
-                        ORDER_DETAIL_TD_CELL,
-                        "text-right font-semibold tabular-nums text-slate-900",
-                      )}
-                    >
-                      {lineTotal.toLocaleString()}원
-                    </td>
-                    <td className={cn(ORDER_DETAIL_TD_CELL, "max-w-[180px] whitespace-pre-wrap")}>
-                      {item.letteringMessage?.trim() || "—"}
-                    </td>
-                    <td className={cn(ORDER_DETAIL_TD_CELL, "max-w-[200px] whitespace-pre-wrap")}>
-                      {item.requestMessage?.trim() || "—"}
-                    </td>
-                    <td className={cn(ORDER_DETAIL_TD_CELL, "min-w-[100px]")}>
-                      {item.imageUrls && item.imageUrls.length > 0 ? (
-                        <div className="flex flex-wrap gap-1.5">
-                          {item.imageUrls.map((url, idx) => (
-                            <button
-                              key={`${item.id}-img-${idx}`}
-                              type="button"
-                              onClick={() => onReferenceImageClick(item.imageUrls, idx)}
-                              className="relative h-9 w-9 shrink-0 overflow-hidden rounded border border-slate-200 bg-slate-100 transition hover:border-primary hover:ring-1 hover:ring-primary/30 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
-                              aria-label={`참고 이미지 ${idx + 1} 크게 보기`}
-                            >
-                              <img src={url} alt="" className="h-full w-full object-cover" />
-                            </button>
-                          ))}
-                        </div>
-                      ) : (
-                        <span className={ORDER_DETAIL_MUTED}>—</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </SheetTable>
-        </div>
-      </div>
     </div>
   );
 };

@@ -15,10 +15,7 @@ import {
   getOrderStatusLabel,
 } from "@/apps/web-seller/features/order/utils/order-status-ui.util";
 import { StatusBadge } from "@/apps/web-seller/common/components/badges/StatusBadge";
-import {
-  getOrderStatusSellerHintBody,
-  ORDER_STATUS_FLOW_LINES_FOR_SELLER,
-} from "@/apps/web-seller/features/order/utils/order-status-seller-guide.util";
+import { ORDER_STATUS_FLOW_LINES_FOR_SELLER } from "@/apps/web-seller/features/order/utils/order-status-seller-guide.util";
 import { OrderStatusGuideHelpButton } from "@/apps/web-seller/features/order/components/OrderStatusGuideHelpButton";
 import { OrderStatusGuideModal } from "@/apps/web-seller/features/order/components/OrderStatusGuideModal";
 import { PaymentPendingCountdown } from "@/apps/web-seller/features/order/components/detail/PaymentPendingCountdown";
@@ -26,7 +23,6 @@ import { OrderStatusFlowStepper } from "@/apps/web-seller/features/order/compone
 import { OrderDetailSpreadsheetView } from "@/apps/web-seller/features/order/components/detail/OrderDetailSpreadsheetView";
 import {
   ORDER_DETAIL_ACTION_BTN,
-  ORDER_DETAIL_BODY,
   ORDER_DETAIL_PAGE_META,
   ORDER_DETAIL_PAGE_TITLE,
   ORDER_DETAIL_SHEET,
@@ -173,39 +169,22 @@ export const StoreDetailOrderDetailPage: React.FC = () => {
       </div>
 
       <div className={ORDER_DETAIL_SHEET}>
-        <div className={ORDER_DETAIL_SHEET_HEADER}>
-          <h2 className={ORDER_DETAIL_SHEET_TITLE}>주문 처리</h2>
-        </div>
-
-        <OrderStatusFlowStepper status={status} />
-
-        <div className="overflow-x-auto">
-          <SheetTable>
-            <tbody>
-              <SheetSectionRow>현재 상태</SheetSectionRow>
-              <tr>
-                <td colSpan={2} className={ORDER_DETAIL_TD_BLOCK}>
-                  <div className="flex min-w-0 flex-wrap items-start gap-x-2 gap-y-1">
-                    <div className="flex shrink-0 flex-wrap items-center gap-2">
-                      <StatusBadge variant={variant} className="text-xs font-semibold">
-                        {getOrderStatusLabel(status)}
-                      </StatusBadge>
-                      <OrderStatusGuideHelpButton
-                        onClick={() => setFlowGuideOpen(true)}
-                        className="p-1"
-                        ariaLabel="상태별 상세 안내 전체 흐름 보기"
-                        title="상태별 상세 안내 · 전체 흐름"
-                      />
-                    </div>
-                    <p className={cn(ORDER_DETAIL_BODY, "min-w-0 flex-1")}>
-                      {getOrderStatusSellerHintBody(status)}
-                    </p>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </SheetTable>
-        </div>
+        <OrderStatusFlowStepper
+          status={status}
+          headerExtra={
+            <>
+              <StatusBadge variant={variant} className="text-xs font-semibold">
+                {getOrderStatusLabel(status)}
+              </StatusBadge>
+              <OrderStatusGuideHelpButton
+                onClick={() => setFlowGuideOpen(true)}
+                className="p-1"
+                ariaLabel="상태별 상세 안내 전체 흐름 보기"
+                title="상태별 상세 안내 · 전체 흐름"
+              />
+            </>
+          }
+        />
 
         {status === OrderStatus.PAYMENT_PENDING && (
           <div className="border-t border-slate-300 bg-slate-50/80 px-4 py-3">
@@ -257,109 +236,98 @@ export const StoreDetailOrderDetailPage: React.FC = () => {
         )}
 
         {hasAnyActions && (
-          <div className="overflow-x-auto border-t border-slate-300">
-            <SheetTable>
-              <tbody>
-                <SheetSectionRow>작업</SheetSectionRow>
-                <tr>
-                  <td colSpan={2} className={ORDER_DETAIL_TD_BLOCK}>
-                    <div className="flex w-full flex-wrap gap-2">
-                      {showAcceptReservation && (
-                        <Button
-                          className={ORDER_DETAIL_ACTION_BTN}
-                          onClick={() =>
-                            requestActionConfirm(() =>
-                              updateOrderStatusMutation.mutate({
-                                orderId: order.id,
-                                request: { orderStatus: OrderStatus.PAYMENT_PENDING },
-                              }),
-                            )
-                          }
-                          disabled={updateOrderStatusMutation.isPending}
-                        >
-                          {updateOrderStatusMutation.isPending ? "처리 중..." : "예약 확인"}
-                        </Button>
-                      )}
-                      {showConfirmReservation && (
-                        <Button
-                          className={ORDER_DETAIL_ACTION_BTN}
-                          onClick={() =>
-                            requestActionConfirm(() =>
-                              updateOrderStatusMutation.mutate({
-                                orderId: order.id,
-                                request: { orderStatus: OrderStatus.CONFIRMED },
-                              }),
-                            )
-                          }
-                          disabled={updateOrderStatusMutation.isPending}
-                        >
-                          {updateOrderStatusMutation.isPending ? "처리 중..." : "예약 확정"}
-                        </Button>
-                      )}
-                      {showPickupDone && (
-                        <Button
-                          className={ORDER_DETAIL_ACTION_BTN}
-                          onClick={() =>
-                            requestActionConfirm(() =>
-                              updateOrderStatusMutation.mutate({
-                                orderId: order.id,
-                                request: { orderStatus: OrderStatus.PICKUP_COMPLETED },
-                              }),
-                            )
-                          }
-                          disabled={updateOrderStatusMutation.isPending}
-                        >
-                          {updateOrderStatusMutation.isPending ? "처리 중..." : "픽업 완료"}
-                        </Button>
-                      )}
-                      {showRefundDone && (
-                        <Button
-                          className={ORDER_DETAIL_ACTION_BTN}
-                          onClick={() =>
-                            requestActionConfirm(() =>
-                              updateOrderStatusMutation.mutate({
-                                orderId: order.id,
-                                request: { orderStatus: OrderStatus.CANCEL_REFUND_COMPLETED },
-                              }),
-                            )
-                          }
-                          disabled={updateOrderStatusMutation.isPending}
-                        >
-                          {updateOrderStatusMutation.isPending ? "처리 중..." : "취소환불 완료"}
-                        </Button>
-                      )}
-                      {showCancelOrder && (
-                        <Button
-                          variant="destructive"
-                          className={ORDER_DETAIL_ACTION_BTN}
-                          onClick={() => startReason(OrderStatus.CANCEL_COMPLETED)}
-                        >
-                          예약 취소
-                        </Button>
-                      )}
-                      {showNoShow && (
-                        <Button
-                          variant="destructive"
-                          className={ORDER_DETAIL_ACTION_BTN}
-                          onClick={() => startReason(OrderStatus.NO_SHOW)}
-                        >
-                          노쇼 처리
-                        </Button>
-                      )}
-                      {showRefundPending && (
-                        <Button
-                          variant="outline"
-                          className={cn(ORDER_DETAIL_ACTION_BTN, "border-slate-300 bg-white")}
-                          onClick={() => startReason(OrderStatus.CANCEL_REFUND_PENDING)}
-                        >
-                          취소환불대기로 변경
-                        </Button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </SheetTable>
+          <div className="flex flex-wrap gap-2 px-3 pb-4 pt-4">
+            {showAcceptReservation && (
+              <Button
+                className={ORDER_DETAIL_ACTION_BTN}
+                onClick={() =>
+                  requestActionConfirm(() =>
+                    updateOrderStatusMutation.mutate({
+                      orderId: order.id,
+                      request: { orderStatus: OrderStatus.PAYMENT_PENDING },
+                    }),
+                  )
+                }
+                disabled={updateOrderStatusMutation.isPending}
+              >
+                {updateOrderStatusMutation.isPending ? "처리 중..." : "예약 확인"}
+              </Button>
+            )}
+            {showConfirmReservation && (
+              <Button
+                className={ORDER_DETAIL_ACTION_BTN}
+                onClick={() =>
+                  requestActionConfirm(() =>
+                    updateOrderStatusMutation.mutate({
+                      orderId: order.id,
+                      request: { orderStatus: OrderStatus.CONFIRMED },
+                    }),
+                  )
+                }
+                disabled={updateOrderStatusMutation.isPending}
+              >
+                {updateOrderStatusMutation.isPending ? "처리 중..." : "예약 확정"}
+              </Button>
+            )}
+            {showPickupDone && (
+              <Button
+                className={ORDER_DETAIL_ACTION_BTN}
+                onClick={() =>
+                  requestActionConfirm(() =>
+                    updateOrderStatusMutation.mutate({
+                      orderId: order.id,
+                      request: { orderStatus: OrderStatus.PICKUP_COMPLETED },
+                    }),
+                  )
+                }
+                disabled={updateOrderStatusMutation.isPending}
+              >
+                {updateOrderStatusMutation.isPending ? "처리 중..." : "픽업 완료"}
+              </Button>
+            )}
+            {showRefundDone && (
+              <Button
+                className={ORDER_DETAIL_ACTION_BTN}
+                onClick={() =>
+                  requestActionConfirm(() =>
+                    updateOrderStatusMutation.mutate({
+                      orderId: order.id,
+                      request: { orderStatus: OrderStatus.CANCEL_REFUND_COMPLETED },
+                    }),
+                  )
+                }
+                disabled={updateOrderStatusMutation.isPending}
+              >
+                {updateOrderStatusMutation.isPending ? "처리 중..." : "취소환불 완료"}
+              </Button>
+            )}
+            {showCancelOrder && (
+              <Button
+                variant="destructive"
+                className={ORDER_DETAIL_ACTION_BTN}
+                onClick={() => startReason(OrderStatus.CANCEL_COMPLETED)}
+              >
+                예약 취소
+              </Button>
+            )}
+            {showNoShow && (
+              <Button
+                variant="destructive"
+                className={ORDER_DETAIL_ACTION_BTN}
+                onClick={() => startReason(OrderStatus.NO_SHOW)}
+              >
+                노쇼 처리
+              </Button>
+            )}
+            {showRefundPending && (
+              <Button
+                variant="outline"
+                className={cn(ORDER_DETAIL_ACTION_BTN, "border-slate-300 bg-white")}
+                onClick={() => startReason(OrderStatus.CANCEL_REFUND_PENDING)}
+              >
+                취소환불대기로 변경
+              </Button>
+            )}
           </div>
         )}
       </div>
