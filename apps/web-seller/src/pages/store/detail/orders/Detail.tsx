@@ -21,6 +21,7 @@ import { OrderStatusGuideModal } from "@/apps/web-seller/features/order/componen
 import { PaymentPendingCountdown } from "@/apps/web-seller/features/order/components/detail/PaymentPendingCountdown";
 import { OrderStatusFlowStepper } from "@/apps/web-seller/features/order/components/detail/OrderStatusFlowStepper";
 import { OrderDetailSpreadsheetView } from "@/apps/web-seller/features/order/components/detail/OrderDetailSpreadsheetView";
+import { CancelOrderModal } from "@/apps/web-seller/features/order/components/detail/CancelOrderModal";
 import {
   ORDER_DETAIL_ACTION_BTN,
   ORDER_DETAIL_PAGE_META,
@@ -38,11 +39,7 @@ import { cn } from "@/apps/web-seller/common/utils/classname.util";
 import { ContentLoading } from "@/apps/web-seller/common/components/loading/ContentLoading";
 import { useConfirmStore } from "@/apps/web-seller/common/store/confirm.store";
 
-type ReasonTarget =
-  | OrderStatus.CANCEL_COMPLETED
-  | OrderStatus.NO_SHOW
-  | OrderStatus.CANCEL_REFUND_PENDING
-  | null;
+type ReasonTarget = OrderStatus.NO_SHOW | OrderStatus.CANCEL_REFUND_PENDING | null;
 
 const IRREVERSIBLE_ACTION_CONFIRM_MESSAGE =
   "이 작업은 처리 후 되돌릴 수 없습니다. 계속하시겠습니까?";
@@ -55,6 +52,7 @@ export const StoreDetailOrderDetailPage: React.FC = () => {
   const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
   const [reasonTarget, setReasonTarget] = useState<ReasonTarget>(null);
   const [reasonText, setReasonText] = useState("");
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [flowGuideOpen, setFlowGuideOpen] = useState(false);
 
   if (!storeId || !orderId) {
@@ -101,9 +99,7 @@ export const StoreDetailOrderDetailPage: React.FC = () => {
       const request: UpdateOrderStatusRequestDto = {
         orderStatus: reasonTarget,
       };
-      if (reasonTarget === OrderStatus.CANCEL_COMPLETED) {
-        request.sellerCancelReason = trimmed;
-      } else if (reasonTarget === OrderStatus.NO_SHOW) {
+      if (reasonTarget === OrderStatus.NO_SHOW) {
         request.sellerNoShowReason = trimmed;
       } else if (reasonTarget === OrderStatus.CANCEL_REFUND_PENDING) {
         request.sellerCancelRefundPendingReason = trimmed;
@@ -118,6 +114,22 @@ export const StoreDetailOrderDetailPage: React.FC = () => {
         },
       );
     });
+  };
+
+  const handleCancelOrderConfirm = (reason: string) => {
+    if (!orderId) return;
+    updateOrderStatusMutation.mutate(
+      {
+        orderId,
+        request: {
+          orderStatus: OrderStatus.CANCEL_COMPLETED,
+          sellerCancelReason: reason,
+        },
+      },
+      {
+        onSuccess: () => setCancelModalOpen(false),
+      },
+    );
   };
 
   const cancelReasonFlow = () => {
@@ -151,9 +163,7 @@ export const StoreDetailOrderDetailPage: React.FC = () => {
       showRefundPending);
 
   const reasonFieldLabel =
-    reasonTarget === OrderStatus.CANCEL_COMPLETED
-      ? "예약 취소 사유 (필수)"
-      : reasonTarget === OrderStatus.NO_SHOW
+    reasonTarget === OrderStatus.NO_SHOW
         ? "노쇼 사유 (필수)"
         : reasonTarget === OrderStatus.CANCEL_REFUND_PENDING
           ? "취소환불대기 전환 사유 (필수)"
@@ -303,17 +313,17 @@ export const StoreDetailOrderDetailPage: React.FC = () => {
             )}
             {showCancelOrder && (
               <Button
-                variant="destructive"
-                className={ORDER_DETAIL_ACTION_BTN}
-                onClick={() => startReason(OrderStatus.CANCEL_COMPLETED)}
+                variant="outline"
+                className={cn(ORDER_DETAIL_ACTION_BTN, "border-slate-300 bg-white")}
+                onClick={() => setCancelModalOpen(true)}
               >
                 예약 취소
               </Button>
             )}
             {showNoShow && (
               <Button
-                variant="destructive"
-                className={ORDER_DETAIL_ACTION_BTN}
+                variant="outline"
+                className={cn(ORDER_DETAIL_ACTION_BTN, "border-slate-300 bg-white")}
                 onClick={() => startReason(OrderStatus.NO_SHOW)}
               >
                 노쇼 처리
@@ -352,6 +362,13 @@ export const StoreDetailOrderDetailPage: React.FC = () => {
           onClose={() => setLightbox(null)}
         />
       )}
+
+      <CancelOrderModal
+        open={cancelModalOpen}
+        isPending={updateOrderStatusMutation.isPending}
+        onClose={() => setCancelModalOpen(false)}
+        onConfirm={handleCancelOrderConfirm}
+      />
     </div>
   );
 };
