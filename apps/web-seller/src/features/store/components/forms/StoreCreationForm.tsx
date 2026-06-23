@@ -7,6 +7,7 @@ import {
   validateDetailAddress,
   validateBankAccountNumber,
   validateAccountHolderName,
+  STORE_DESCRIPTION_MAX_LENGTH,
 } from "@/apps/web-seller/features/store/utils/validator.util";
 import { STORE_BANK_OPTIONS } from "@/apps/web-seller/features/store/constants/store.constants";
 import type { StoreBankName } from "@/apps/web-seller/features/store/types/store.dto";
@@ -170,15 +171,23 @@ export const StoreCreationForm: React.FC<Props> = ({
                 <textarea
                   placeholder="맛있는 케이크를 판매하는 스토어입니다."
                   rows={4}
+                  maxLength={STORE_DESCRIPTION_MAX_LENGTH}
                   value={form.description || ""}
                   onChange={handleChange("description")}
                   className={`flex min-h-[80px] w-full rounded-md border ${
                     errors.description ? "border-destructive" : "border-input"
                   } bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50`}
                 />
-                {errors.description && (
-                  <p className="text-sm text-destructive mt-1">{errors.description}</p>
-                )}
+                <div className="mt-1 flex items-center justify-between">
+                  {errors.description ? (
+                    <p className="text-sm text-destructive">{errors.description}</p>
+                  ) : (
+                    <span />
+                  )}
+                  <span className="text-xs text-muted-foreground">
+                    [{(form.description || "").length}/{STORE_DESCRIPTION_MAX_LENGTH}]
+                  </span>
+                </div>
               </div>
               <div>
                 <Label className="after:content-['*'] after:ml-0.5 after:text-destructive">
