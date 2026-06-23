@@ -107,7 +107,8 @@ textarea {
 }
 
 /* ------------------------------ Swiper 커스텀 스타일 ------------------------------ */
-.product-image-gallery .swiper-pagination-fraction {
+.product-image-gallery .swiper-pagination-fraction,
+.store-feed-gallery .swiper-pagination-fraction {
   bottom: 16px;
   left: auto;
   right: 20px;

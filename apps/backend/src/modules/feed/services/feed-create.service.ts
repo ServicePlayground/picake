@@ -26,6 +26,7 @@ export class FeedCreateService {
           storeId: createFeedDto.storeId,
           title: createFeedDto.title,
           content: FeedSanitizeUtil.sanitizeHtml(createFeedDto.content),
+          imageUrls: createFeedDto.imageUrls ?? [],
         },
       });
 

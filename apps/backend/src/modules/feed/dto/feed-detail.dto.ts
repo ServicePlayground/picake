@@ -26,10 +26,17 @@ export class FeedResponseDto {
   title: string;
 
   @ApiProperty({
-    description: "피드 내용 (HTML 에디터 형식)",
+    description: "피드 내용 (텍스트)",
     example: SWAGGER_EXAMPLES.CONTENT,
   })
   content: string;
+
+  @ApiProperty({
+    description: "피드 이미지 URL 목록",
+    type: [String],
+    example: SWAGGER_EXAMPLES.IMAGE_URLS,
+  })
+  imageUrls: string[];
 
   @ApiProperty({
     description: "스토어 로고 이미지 URL",

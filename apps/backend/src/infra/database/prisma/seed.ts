@@ -219,18 +219,23 @@ const SEED_PRODUCT_IMAGES = {
 const SEED_STORE_FEEDS = {
   FEED1: {
     TITLE: "신제품 출시 안내",
-    CONTENT:
-      "<p>안녕하세요! 새로운 케이크가 출시되었습니다.</p><p>맛있고 예쁜 케이크로 여러분을 찾아뵙겠습니다.</p>",
+    CONTENT: "안녕하세요! 새로운 케이크가 출시되었습니다.\n맛있고 예쁜 케이크로 여러분을 찾아뵙겠습니다.",
+    IMAGE_URLS: [
+      "https://static-staging.picakes.com/uploads/1779605188940_c6dd594b.jpeg",
+      "https://static-staging.picakes.com/uploads/1779605200087_f0d30173.jpeg",
+    ],
     CREATED_AT: new Date("2024-01-20T10:00:00Z"),
   },
   FEED2: {
     TITLE: "이벤트 안내",
-    CONTENT: "<p>특별 이벤트를 진행합니다!</p><p>지금 주문하시면 10% 할인 혜택을 드립니다.</p>",
+    CONTENT: "특별 이벤트를 진행합니다!\n지금 주문하시면 10% 할인 혜택을 드립니다.",
+    IMAGE_URLS: ["https://static-staging.picakes.com/uploads/1779605188940_c6dd594b.jpeg"],
     CREATED_AT: new Date("2024-01-21T14:30:00Z"),
   },
   FEED3: {
     TITLE: "배송 안내",
-    CONTENT: "<p>배송 관련 안내드립니다.</p><p>주문 후 2-3일 내 배송됩니다.</p>",
+    CONTENT: "배송 관련 안내드립니다.\n주문 후 2-3일 내 배송됩니다.",
+    IMAGE_URLS: [],
     CREATED_AT: new Date("2024-01-22T09:15:00Z"),
   },
 };
@@ -767,6 +772,7 @@ async function seedStoreFeeds() {
               storeId: store.id,
               title: SEED_STORE_FEEDS.FEED1.TITLE,
               content: SEED_STORE_FEEDS.FEED1.CONTENT,
+              imageUrls: SEED_STORE_FEEDS.FEED1.IMAGE_URLS,
               createdAt: SEED_STORE_FEEDS.FEED1.CREATED_AT,
             },
           }),
@@ -777,6 +783,7 @@ async function seedStoreFeeds() {
               storeId: store.id,
               title: SEED_STORE_FEEDS.FEED2.TITLE,
               content: SEED_STORE_FEEDS.FEED2.CONTENT,
+              imageUrls: SEED_STORE_FEEDS.FEED2.IMAGE_URLS,
               createdAt: SEED_STORE_FEEDS.FEED2.CREATED_AT,
             },
           }),
@@ -790,6 +797,7 @@ async function seedStoreFeeds() {
               storeId: store.id,
               title: SEED_STORE_FEEDS.FEED3.TITLE,
               content: SEED_STORE_FEEDS.FEED3.CONTENT,
+              imageUrls: SEED_STORE_FEEDS.FEED3.IMAGE_URLS,
               createdAt: SEED_STORE_FEEDS.FEED3.CREATED_AT,
             },
           }),

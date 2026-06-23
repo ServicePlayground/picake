@@ -7,7 +7,8 @@ export interface Feed {
   id: string;
   storeId: string;
   title: string;
-  content: string; // HTML 형식
+  content: string; // 텍스트 형식
+  imageUrls: string[];
   storeLogoImageUrl: string | null;
   createdAt: Date;
   updatedAt: Date;

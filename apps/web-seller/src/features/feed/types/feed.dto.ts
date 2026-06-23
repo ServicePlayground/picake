@@ -12,6 +12,7 @@ export interface FeedResponseDto {
   storeId: string;
   title: string;
   content: string;
+  imageUrls: string[];
   storeLogoImageUrl: string | null;
   createdAt: Date;
   updatedAt: Date;
@@ -29,6 +30,7 @@ export interface CreateFeedRequestDto {
   storeId: string;
   title: string;
   content: string;
+  imageUrls: string[];
 }
 
 export interface CreateFeedResponseDto {
@@ -38,6 +40,7 @@ export interface CreateFeedResponseDto {
 export interface UpdateFeedRequestDto {
   title: string;
   content: string;
+  imageUrls: string[];
 }
 
 export interface UpdateFeedResponseDto {

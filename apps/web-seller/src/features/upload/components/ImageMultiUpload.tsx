@@ -20,6 +20,7 @@ export interface ImageMultiUploadProps {
   width?: number | string; // 컨테이너 너비
   height?: number | string; // 컨테이너 높이
   enableDragDrop?: boolean; // 드래그앤드롭 활성화 여부
+  showMinResolutionHint?: boolean; // 최소 해상도 안내 문구 표시 여부
 }
 
 export const ImageMultiUpload: React.FC<ImageMultiUploadProps> = ({
@@ -31,6 +32,7 @@ export const ImageMultiUpload: React.FC<ImageMultiUploadProps> = ({
   width,
   height,
   enableDragDrop = true,
+  showMinResolutionHint = true,
 }) => {
   const [uploadErrors, setUploadErrors] = useState<Record<number, string>>({});
   const [singleImageError, setSingleImageError] = useState<string | null>(null); // 단일 이미지 모드용 오류
@@ -245,8 +247,12 @@ export const ImageMultiUpload: React.FC<ImageMultiUploadProps> = ({
         <p className="text-xs text-muted-foreground mt-1">
           허용 파일 형식: {accept}
           <br />
-          최소 해상도 {width}x{height} 권장
-          <br />
+          {showMinResolutionHint && width && height && (
+            <>
+              최소 해상도 {width}x{height} 권장
+              <br />
+            </>
+          )}
           최대 파일 크기: {maxSize / (1024 * 1024)}MB
           <br />
         </p>
@@ -344,8 +350,12 @@ export const ImageMultiUpload: React.FC<ImageMultiUploadProps> = ({
       <p className="text-xs text-muted-foreground mt-1">
         허용 파일 형식: {accept}
         <br />
-        최소 해상도 {width}x{height} 권장
-        <br />
+        {showMinResolutionHint && width && height && (
+          <>
+            최소 해상도 {width}x{height} 권장
+            <br />
+          </>
+        )}
         최대 파일 크기: {maxSize / (1024 * 1024)}MB
         <br />
         최대 이미지 개수: {maxImages}개<br />

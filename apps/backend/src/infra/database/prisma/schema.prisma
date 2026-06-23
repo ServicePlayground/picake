@@ -536,8 +536,9 @@ model StoreFeed {
   storeId String @map("store_id") // 스토어 ID
 
   // 비즈니스 필드
-  title   String // 피드 제목
-  content String @db.Text // 피드 내용 (HTML 에디터 형식)
+  title     String // 피드 제목
+  content   String   @db.Text // 피드 내용 (텍스트)
+  imageUrls String[] @default([]) @map("image_urls") // 피드 이미지 URL 목록 (최대 5장)
 
   // 시스템 필드
   createdAt DateTime @default(now()) @map("created_at")

@@ -2,9 +2,13 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Pagination } from "swiper/modules";
+import DOMPurify from "dompurify";
 import { Feed } from "@/apps/web-user/features/feed/types/feed.type";
 import { useStoreFeeds } from "@/apps/web-user/features/feed/hooks/queries/useStoreFeeds";
-import DOMPurify from "dompurify";
+import "swiper/css";
+import "swiper/css/pagination";
 
 interface StoreDetailFeedSectionProps {
   storeId: string;
@@ -14,7 +18,7 @@ interface FeedItemProps {
   feed: Feed;
 }
 
-// HTML에서 이미지 URL 추출
+// HTML에서 이미지 URL 추출 (레거시 HTML 콘텐츠 호환용)
 function extractImagesFromHtml(html: string): string[] {
   const imgRegex = /<img[^>]+src="([^">]+)"/g;
   const images: string[] = [];
@@ -33,14 +37,39 @@ function decodeHtmlEntities(text: string): string {
   return textarea.value;
 }
 
-// HTML에서 텍스트만 추출
+// HTML에서 텍스트만 추출 (레거시 HTML 콘텐츠 호환용)
 function extractTextFromHtml(html: string): string {
-  // 태그 제거
   const withoutTags = html.replace(/<[^>]*>/g, " ");
-  // HTML 엔티티 디코딩
   const decoded = decodeHtmlEntities(withoutTags);
-  // 연속 공백 제거 및 트림
   return decoded.replace(/\s+/g, " ").trim();
+}
+
+// 피드 이미지 캐러셀 (좌우 스와이프, 고정 정사각형 규격)
+function FeedImageCarousel({ images, title }: { images: string[]; title: string }) {
+  return (
+    <div className="store-feed-gallery mb-[12px] rounded-lg overflow-hidden">
+      <Swiper
+        modules={[Pagination]}
+        pagination={{ type: "fraction" }}
+        loop={images.length > 1}
+        className="w-full aspect-square"
+      >
+        {images.map((image, index) => (
+          <SwiperSlide key={index}>
+            <div className="w-full h-full relative">
+              <Image
+                src={image}
+                alt={`${title} - 이미지 ${index + 1}`}
+                fill
+                className="object-cover"
+                unoptimized
+              />
+            </div>
+          </SwiperSlide>
+        ))}
+      </Swiper>
+    </div>
+  );
 }
 
 function FeedItem({ feed }: FeedItemProps) {
@@ -48,10 +77,17 @@ function FeedItem({ feed }: FeedItemProps) {
   const [isTruncated, setIsTruncated] = useState(false);
   const contentRef = useRef<HTMLParagraphElement>(null);
 
-  // HTML에서 이미지와 텍스트 추출
-  const sanitizedHtml = DOMPurify.sanitize(feed.content);
-  const images = extractImagesFromHtml(sanitizedHtml);
-  const textContent = extractTextFromHtml(sanitizedHtml);
+  // 신규 피드는 imageUrls 사용, 레거시 HTML 콘텐츠는 본문에서 추출
+  const hasHtmlContent = /<[^>]+>/.test(feed.content);
+  const images =
+    feed.imageUrls && feed.imageUrls.length > 0
+      ? feed.imageUrls
+      : hasHtmlContent
+        ? extractImagesFromHtml(DOMPurify.sanitize(feed.content))
+        : [];
+  const textContent = hasHtmlContent
+    ? extractTextFromHtml(DOMPurify.sanitize(feed.content))
+    : feed.content;
 
   useEffect(() => {
     const el = contentRef.current;
@@ -88,26 +124,17 @@ function FeedItem({ feed }: FeedItemProps) {
         </div>
       </div>
 
-      {/* 이미지 */}
-      {images.length > 0 && (
-        <div className="mb-[12px] rounded-lg overflow-hidden">
-          <Image
-            src={images[0]}
-            alt={feed.title}
-            width={600}
-            height={400}
-            className="w-full h-auto object-cover"
-            unoptimized
-          />
-        </div>
-      )}
+      {/* 이미지 (여러 장일 경우 좌우 스와이프) */}
+      {images.length > 0 && <FeedImageCarousel images={images} title={feed.title} />}
 
       {/* 텍스트 내용 */}
       {textContent && (
         <div>
           <p
             ref={contentRef}
-            className={`text-sm text-gray-700 leading-[145%] ${!isExpanded ? "line-clamp-4" : ""}`}
+            className={`text-sm text-gray-700 leading-[145%] whitespace-pre-wrap ${
+              !isExpanded ? "line-clamp-4" : ""
+            }`}
           >
             {textContent}
           </p>

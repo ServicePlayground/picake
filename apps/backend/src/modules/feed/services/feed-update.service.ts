@@ -40,6 +40,7 @@ export class FeedUpdateService {
         data: {
           title: updateFeedDto.title,
           content: FeedSanitizeUtil.sanitizeHtml(updateFeedDto.content),
+          imageUrls: updateFeedDto.imageUrls ?? [],
         },
       });
 
