@@ -190,6 +190,9 @@ export class SellerStoreController {
   @SwaggerResponse(200, { dataDto: UpdateStoreBusinessCalendarResponseDto })
   @SwaggerAuthResponses()
   @SwaggerResponse(400, {
+    dataExample: createMessageObject(STORE_ERROR_MESSAGES.BUSINESS_CALENDAR_ORDER_CONFLICT),
+  })
+  @SwaggerResponse(400, {
     dataExample: createMessageObject(STORE_ERROR_MESSAGES.BUSINESS_CALENDAR_STANDARD_TIME_ORDER),
   })
   @SwaggerResponse(403, { dataExample: createMessageObject(STORE_ERROR_MESSAGES.FORBIDDEN) })

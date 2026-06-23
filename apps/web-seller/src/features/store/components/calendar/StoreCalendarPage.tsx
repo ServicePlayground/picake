@@ -25,6 +25,7 @@ import {
   SelectValue,
 } from "@/apps/web-seller/common/components/selects/Select";
 import { ROUTES } from "@/apps/web-seller/common/constants/paths.constant";
+import { useAlertStore } from "@/apps/web-seller/common/store/alert.store";
 import { useStoreDetail } from "@/apps/web-seller/features/store/hooks/queries/useStoreQuery";
 import { useUpdateStoreBusinessCalendar } from "@/apps/web-seller/features/store/hooks/mutations/useStoreMutation";
 import { useCalendarMonthOrders } from "@/apps/web-seller/features/order/hooks/queries/useOrderQuery";
@@ -46,6 +47,10 @@ import {
   type DayOverride,
   WEEKDAY_LABELS_KO,
 } from "@/apps/web-seller/features/store/utils/store-calendar.util";
+import {
+  findCalendarOrderConflicts,
+  formatCalendarConflictMessage,
+} from "@/apps/web-seller/features/store/utils/store-calendar-conflict.util";
 const HALF_HOUR_OPTIONS = buildHalfHourTimeOptions();
 
 function startOfMonth(d: Date): Date {
@@ -133,6 +138,7 @@ export const StoreCalendarPage: React.FC = () => {
     isError: storeError,
   } = useStoreDetail(storeId ?? "");
   const updateCalendar = useUpdateStoreBusinessCalendar();
+  const { addAlert } = useAlertStore();
 
   const [weeklyOffDays, setWeeklyOffDays] = React.useState<Set<number>>(() => new Set());
   const [standardStart, setStandardStart] = React.useState("00:00");
@@ -221,6 +227,7 @@ export const StoreCalendarPage: React.FC = () => {
       nextStandardStart: string,
       nextStandardEnd: string,
       nextOverrides: Record<string, DayOverride>,
+      ordersForClientCheck?: OrderResponseDto[],
     ) => {
       if (!storeId) return;
       const dto = toStoreBusinessCalendarDto(
@@ -229,9 +236,22 @@ export const StoreCalendarPage: React.FC = () => {
         nextStandardEnd,
         nextOverrides,
       );
+
+      if (ordersForClientCheck) {
+        const conflicts = findCalendarOrderConflicts(dto, ordersForClientCheck);
+        if (conflicts.length > 0) {
+          addAlert({
+            severity: "error",
+            message: formatCalendarConflictMessage(conflicts),
+            autoHideDuration: null,
+          });
+          return;
+        }
+      }
+
       await updateCalendar.mutateAsync({ storeId, request: dto });
     },
-    [storeId, updateCalendar],
+    [storeId, updateCalendar, addAlert],
   );
 
   const toggleBasicDraftWeekly = (day: number) => {
@@ -280,10 +300,16 @@ export const StoreCalendarPage: React.FC = () => {
   const goNextMonth = () => setMonthCursor(new Date(year, month + 1, 1));
 
   const runDetailPersist = React.useCallback(
-    (nextOverrides: Record<string, DayOverride>) => {
+    (nextOverrides: Record<string, DayOverride>, ordersForClientCheck: OrderResponseDto[]) => {
       void (async () => {
         try {
-          await persistCalendar(weeklyOffDays, standardStart, standardEnd, nextOverrides);
+          await persistCalendar(
+            weeklyOffDays,
+            standardStart,
+            standardEnd,
+            nextOverrides,
+            ordersForClientCheck,
+          );
         } catch {
           /* onError */
         }
@@ -292,9 +318,9 @@ export const StoreCalendarPage: React.FC = () => {
     [persistCalendar, weeklyOffDays, standardStart, standardEnd],
   );
 
-  const handleSaveClick = () => {
-    if (!selectedKey) return;
-    const next = computeNextOverridesMap(
+  const draftOverrides = React.useMemo(() => {
+    if (!selectedKey) return overrides;
+    return computeNextOverridesMap(
       overrides,
       selectedKey,
       draftOpen,
@@ -304,7 +330,41 @@ export const StoreCalendarPage: React.FC = () => {
       standardStart,
       standardEnd,
     );
-    runDetailPersist(next);
+  }, [
+    selectedKey,
+    overrides,
+    draftOpen,
+    draftStart,
+    draftEnd,
+    weeklyOff,
+    standardStart,
+    standardEnd,
+  ]);
+
+  const detailSaveConflicts = React.useMemo(() => {
+    if (!selectedKey) return [];
+    const dto = toStoreBusinessCalendarDto(
+      weeklyOffDays,
+      standardStart,
+      standardEnd,
+      draftOverrides,
+    );
+    return findCalendarOrderConflicts(dto, ordersForSelectedDay);
+  }, [
+    selectedKey,
+    weeklyOffDays,
+    standardStart,
+    standardEnd,
+    draftOverrides,
+    ordersForSelectedDay,
+  ]);
+
+  const detailSaveConflictMessage =
+    detailSaveConflicts.length > 0 ? formatCalendarConflictMessage(detailSaveConflicts) : null;
+
+  const handleSaveClick = () => {
+    if (!selectedKey) return;
+    runDetailPersist(draftOverrides, ordersForSelectedDay);
   };
 
   const handleCancelDetail = () => {
@@ -647,6 +707,14 @@ export const StoreCalendarPage: React.FC = () => {
                     <div className="space-y-3">
                       <Label className="text-base font-medium">영업 여부</Label>
                       <p className="text-sm text-muted-foreground">저장 시 서버에 반영됩니다.</p>
+                      {detailSaveConflictMessage ? (
+                        <div
+                          role="alert"
+                          className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm leading-relaxed text-rose-800 whitespace-pre-line"
+                        >
+                          {detailSaveConflictMessage}
+                        </div>
+                      ) : null}
                       <div className="flex gap-4">
                         <label className="flex cursor-pointer items-center gap-2 text-base">
                           <input
@@ -730,7 +798,11 @@ export const StoreCalendarPage: React.FC = () => {
                       >
                         취소
                       </Button>
-                      <Button type="button" onClick={handleSaveClick} disabled={saving}>
+                      <Button
+                        type="button"
+                        onClick={handleSaveClick}
+                        disabled={saving || detailSaveConflicts.length > 0}
+                      >
                         저장
                       </Button>
                     </div>

@@ -83,6 +83,7 @@ export function useUpdateStoreBusinessCalendar() {
       addAlert({
         severity: "error",
         message: getApiMessage.error(error),
+        autoHideDuration: null,
       });
     },
   });
