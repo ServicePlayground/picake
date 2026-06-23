@@ -17,6 +17,7 @@ import {
   OrderStatus,
   OrderType,
 } from "@/apps/web-seller/features/order/types/order.dto";
+
 import { ORDER_STATUS_FILTER_OPTIONS } from "@/apps/web-seller/features/order/utils/order-status-ui.util";
 import { ORDER_STATUS_LIST_GUIDE_ITEMS } from "@/apps/web-seller/features/order/utils/order-status-seller-guide.util";
 import { OrderStatusGuideHelpButton } from "@/apps/web-seller/features/order/components/OrderStatusGuideHelpButton";
@@ -111,30 +112,17 @@ export const StoreDetailOrderListPage: React.FC = () => {
 
       {/* 필터 및 정렬 */}
       <div className="space-y-4 rounded-lg border bg-card p-4">
-        {/* 통계 및 정렬 */}
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="text-sm text-muted-foreground">
-              총 <span className="font-semibold text-foreground">{meta?.totalItems || 0}</span>개의
-              주문
-            </div>
-            {hasActiveFilters && (
-              <Button variant="outline" size="sm" onClick={handleResetFilters}>
-                필터 초기화
-              </Button>
-            )}
+        {/* 통계 */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="text-sm text-muted-foreground">
+            총 <span className="font-semibold text-foreground">{meta?.totalItems || 0}</span>개의
+            주문
           </div>
-          <Select value={sortBy} onValueChange={(value) => setSortBy(value as OrderSortBy)}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="정렬 선택" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={OrderSortBy.LATEST}>최신순</SelectItem>
-              <SelectItem value={OrderSortBy.OLDEST}>오래된순</SelectItem>
-              <SelectItem value={OrderSortBy.PRICE_DESC}>금액 높은순</SelectItem>
-              <SelectItem value={OrderSortBy.PRICE_ASC}>금액 낮은순</SelectItem>
-            </SelectContent>
-          </Select>
+          {hasActiveFilters && (
+            <Button variant="outline" size="sm" onClick={handleResetFilters}>
+              필터 초기화
+            </Button>
+          )}
         </div>
 
         {/* 필터 — 상품 목록과 동일 그리드로 인풋 너비 정렬 */}
@@ -232,7 +220,7 @@ export const StoreDetailOrderListPage: React.FC = () => {
         <ContentLoading variant="section" message="주문을 불러오는 중…" className="py-12" />
       ) : (
         <>
-          <OrderList orders={orders} />
+          <OrderList orders={orders} sortBy={sortBy} onSortChange={setSortBy} />
 
           {/* 페이지네이션 */}
           {meta && meta.totalPages > 1 && (

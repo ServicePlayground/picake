@@ -56,15 +56,12 @@ function buildNotesRows(order: OrderResponseDto): NotesRow[] {
 }
 
 function formatSizeLine(item: OrderResponseDto["orderItems"][number]): string {
-  const parts: string[] = [];
-  if (item.sizeDisplayName) {
-    let s = item.sizeDisplayName;
-    if (item.sizeLengthCm) s += ` (${item.sizeLengthCm}cm)`;
-    if (item.sizeDescription) s += ` — ${item.sizeDescription}`;
-    if (item.sizePrice && item.sizePrice > 0) s += ` (+${item.sizePrice.toLocaleString()}원)`;
-    parts.push(s);
-  }
-  return parts.join("") || "—";
+  if (!item.sizeDisplayName) return "—";
+  let s = item.sizeDisplayName;
+  if (item.sizeLengthCm) s += ` (${item.sizeLengthCm}cm)`;
+  if (item.sizeDescription) s += ` — ${item.sizeDescription}`;
+  if (item.sizePrice && item.sizePrice > 0) s += ` (+${item.sizePrice.toLocaleString()}원)`;
+  return s;
 }
 
 function formatFlavorLine(item: OrderResponseDto["orderItems"][number]): string {
@@ -76,7 +73,6 @@ function formatFlavorLine(item: OrderResponseDto["orderItems"][number]): string 
 
 export type OrderDetailSpreadsheetViewProps = {
   order: OrderResponseDto;
-  /** 참고 이미지 클릭 시 해당 항목의 전체 이미지 목록과 클릭한 인덱스를 전달 */
   onReferenceImageClick: (images: string[], index: number) => void;
 };
 
@@ -92,21 +88,21 @@ export const OrderDetailSpreadsheetView: React.FC<OrderDetailSpreadsheetViewProp
   const pickupHint =
     status === OrderStatus.CONFIRMED || status === OrderStatus.PAYMENT_COMPLETED
       ? status === OrderStatus.PAYMENT_COMPLETED
-        ? "고객 입금이 완료되었습니다. 예약 확정을 진행한 뒤, 픽업 예정 시각이 되면 상태가 자동으로 ‘픽업대기’로 바뀝니다."
-        : "픽업 예정 시각이 되면 상태가 자동으로 ‘픽업대기’로 바뀝니다."
+        ? "고객 입금이 완료되었습니다. 예약 확정을 진행한 뒤, 픽업 예정 시각이 되면 상태가 자동으로 '픽업대기'로 바뀝니다."
+        : "픽업 예정 시각이 되면 상태가 자동으로 '픽업대기'로 바뀝니다."
       : null;
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
+      {/* 주문 기본 정보 */}
       <div className={ORDER_DETAIL_SHEET}>
         <div className={ORDER_DETAIL_SHEET_HEADER}>
-          <h2 className={ORDER_DETAIL_SHEET_TITLE}>주문 데이터</h2>
+          <h2 className={ORDER_DETAIL_SHEET_TITLE}>주문 정보</h2>
         </div>
         <div className="overflow-x-auto">
           <SheetTable>
             <tbody>
               <SheetSectionRow>기본</SheetSectionRow>
-              <SheetKvRow label="스토어명">{order.storeName || "—"}</SheetKvRow>
               <SheetKvRow label="상품명">{order.productName || "—"}</SheetKvRow>
               <SheetKvRow label="주문 번호">{order.orderNumber}</SheetKvRow>
               <SheetKvRow label="주문 상태">
@@ -122,12 +118,12 @@ export const OrderDetailSpreadsheetView: React.FC<OrderDetailSpreadsheetViewProp
                 <span className="font-semibold text-primary">{`${order.totalPrice.toLocaleString()}원`}</span>
               </SheetKvRow>
 
-              <SheetSectionRow>입금·예약자 연락</SheetSectionRow>
+              <SheetSectionRow>예약자 연락</SheetSectionRow>
               <SheetKvRow label="입금자명">{order.depositorName?.trim() || "—"}</SheetKvRow>
               <SheetKvRow label="예약자명">
                 {order.reservationContactName?.trim() || "—"}
               </SheetKvRow>
-              <SheetKvRow label="예약 연락처(휴대폰)">
+              <SheetKvRow label="연락처">
                 {order.reservationPhone?.trim() || "—"}
               </SheetKvRow>
 
@@ -135,28 +131,28 @@ export const OrderDetailSpreadsheetView: React.FC<OrderDetailSpreadsheetViewProp
               <SheetKvRow label="픽업일시">
                 {order.pickupDate ? new Date(order.pickupDate).toLocaleString("ko-KR") : "—"}
               </SheetKvRow>
-              <SheetKvRow label="도로명·지번 주소">
-                <div className="space-y-1 whitespace-pre-wrap">
+              <SheetKvRow label="픽업 주소">
+                <div className="space-y-0.5 whitespace-pre-wrap">
                   <div>{order.pickupRoadAddress || order.pickupAddress || "—"}</div>
                   {order.pickupAddress && order.pickupRoadAddress && (
-                    <div className="text-slate-600">{order.pickupAddress}</div>
+                    <div className="text-slate-500">{order.pickupAddress}</div>
                   )}
                   {order.pickupDetailAddress && (
-                    <div className="text-slate-600">{order.pickupDetailAddress}</div>
+                    <div className="text-slate-500">{order.pickupDetailAddress}</div>
                   )}
                 </div>
               </SheetKvRow>
-              <SheetKvRow label="우편번호">{order.pickupZonecode?.trim() || "—"}</SheetKvRow>
             </tbody>
           </SheetTable>
         </div>
         {pickupHint && (
-          <div className="border-t border-slate-300 bg-slate-50/80 px-4 py-3 text-[13px] leading-relaxed text-slate-600">
+          <div className="border-t border-slate-200 bg-slate-50 px-4 py-3 text-[13px] leading-relaxed text-slate-600">
             {pickupHint}
           </div>
         )}
       </div>
 
+      {/* 취소·환불·사유 */}
       {hasNotes && (
         <div className={ORDER_DETAIL_SHEET}>
           <div className={ORDER_DETAIL_SHEET_HEADER}>
@@ -194,16 +190,16 @@ export const OrderDetailSpreadsheetView: React.FC<OrderDetailSpreadsheetViewProp
         </div>
       )}
 
+      {/* 주문 항목 */}
       <div className={ORDER_DETAIL_SHEET}>
         <div className={ORDER_DETAIL_SHEET_HEADER}>
           <h2 className={ORDER_DETAIL_SHEET_TITLE}>주문 항목</h2>
         </div>
         <div className="overflow-x-auto">
-          <SheetTable className="min-w-[880px]">
+          <SheetTable className="min-w-[800px]">
             <thead>
               <tr>
                 <th className={ORDER_DETAIL_TH_COL}>#</th>
-                <th className={ORDER_DETAIL_TH_COL}>상품</th>
                 <th className={ORDER_DETAIL_TH_COL}>사이즈</th>
                 <th className={ORDER_DETAIL_TH_COL}>맛</th>
                 <th className={cn(ORDER_DETAIL_TH_COL, "text-right")}>수량</th>
@@ -222,13 +218,10 @@ export const OrderDetailSpreadsheetView: React.FC<OrderDetailSpreadsheetViewProp
                     <td
                       className={cn(
                         ORDER_DETAIL_TD_CELL,
-                        "text-center tabular-nums text-slate-600",
+                        "text-center tabular-nums text-slate-500",
                       )}
                     >
                       {index + 1}
-                    </td>
-                    <td className={cn(ORDER_DETAIL_TD_CELL, "min-w-[140px] font-medium")}>
-                      {order.productName || "—"}
                     </td>
                     <td className={cn(ORDER_DETAIL_TD_CELL, "min-w-[120px] whitespace-pre-wrap")}>
                       {formatSizeLine(item)}
@@ -250,13 +243,13 @@ export const OrderDetailSpreadsheetView: React.FC<OrderDetailSpreadsheetViewProp
                     >
                       {lineTotal.toLocaleString()}원
                     </td>
-                    <td className={cn(ORDER_DETAIL_TD_CELL, "max-w-[200px] whitespace-pre-wrap")}>
+                    <td className={cn(ORDER_DETAIL_TD_CELL, "max-w-[180px] whitespace-pre-wrap")}>
                       {item.letteringMessage?.trim() || "—"}
                     </td>
-                    <td className={cn(ORDER_DETAIL_TD_CELL, "max-w-[220px] whitespace-pre-wrap")}>
+                    <td className={cn(ORDER_DETAIL_TD_CELL, "max-w-[200px] whitespace-pre-wrap")}>
                       {item.requestMessage?.trim() || "—"}
                     </td>
-                    <td className={cn(ORDER_DETAIL_TD_CELL, "min-w-[120px]")}>
+                    <td className={cn(ORDER_DETAIL_TD_CELL, "min-w-[100px]")}>
                       {item.imageUrls && item.imageUrls.length > 0 ? (
                         <div className="flex flex-wrap gap-1.5">
                           {item.imageUrls.map((url, idx) => (
@@ -264,7 +257,7 @@ export const OrderDetailSpreadsheetView: React.FC<OrderDetailSpreadsheetViewProp
                               key={`${item.id}-img-${idx}`}
                               type="button"
                               onClick={() => onReferenceImageClick(item.imageUrls, idx)}
-                              className="relative h-9 w-9 shrink-0 overflow-hidden rounded border border-slate-300 bg-slate-100 transition hover:border-primary hover:ring-1 hover:ring-primary/30 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
+                              className="relative h-9 w-9 shrink-0 overflow-hidden rounded border border-slate-200 bg-slate-100 transition hover:border-primary hover:ring-1 hover:ring-primary/30 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
                               aria-label={`참고 이미지 ${idx + 1} 크게 보기`}
                             >
                               <img src={url} alt="" className="h-full w-full object-cover" />
