@@ -5,6 +5,11 @@ import {
   type StoreListParams,
 } from "@/apps/web-user/features/store/types/store.type";
 import { StoreRegionsResponse } from "@/apps/web-user/features/store/types/region.type";
+import type {
+  CreateStoreEntryRequest,
+  StoreEntryRequestExistsResponse,
+} from "@/apps/web-user/features/store/types/store-entry-request.type";
+import { MessageResponse } from "@/apps/web-user/common/types/api.type";
 
 export const storeApi = {
   // 스토어 목록 조회
@@ -20,6 +25,20 @@ export const storeApi = {
   // 서비스 가능 지역 조회
   getRegions: async (): Promise<StoreRegionsResponse> => {
     const response = await consumerClient.get("/store/regions");
+    return response.data.data;
+  },
+  // 미입점 스토어 입점 요청
+  createEntryRequest: async (data: CreateStoreEntryRequest): Promise<MessageResponse> => {
+    const response = await consumerClient.post("/store-entry-requests", data);
+    return response.data.data;
+  },
+  // 미입점 스토어 입점 요청 존재 여부 조회
+  getEntryRequestExists: async (
+    kakaoPlaceId: string,
+  ): Promise<StoreEntryRequestExistsResponse> => {
+    const response = await consumerClient.get("/store-entry-requests/exists", {
+      params: { kakaoPlaceId },
+    });
     return response.data.data;
   },
 };

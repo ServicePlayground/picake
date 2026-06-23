@@ -17,6 +17,10 @@ import { Icon } from "@/apps/web-user/common/components/icons";
 import { storeApi } from "@/apps/web-user/features/store/apis/store.api";
 import type { StoreInfo, StoreListFilter } from "@/apps/web-user/features/store/types/store.type";
 import { MapStoreCard } from "@/apps/web-user/features/store/components/map/MapStoreCard";
+import {
+  MapUnenteredStoreCard,
+  type MapUnenteredStore,
+} from "@/apps/web-user/features/store/components/map/MapUnenteredStoreCard";
 import { MapStoreListSection } from "@/apps/web-user/features/store/components/map/MapStoreListSection";
 import { MapTopSearchBar } from "@/apps/web-user/features/store/components/map/MapTopSearchBar";
 import { MapPickupDateBottomSheet } from "@/apps/web-user/features/store/components/map/MapPickupDateBottomSheet";
@@ -68,6 +72,9 @@ export default function MapPage() {
   const [kakaoLoaded, setKakaoLoaded] = useState(false);
   const [mapReady, setMapReady] = useState(false);
   const [selectedStore, setSelectedStore] = useState<StoreInfo | null>(null);
+  const [selectedUnenteredStore, setSelectedUnenteredStore] = useState<MapUnenteredStore | null>(
+    null,
+  );
   const [listSortBy, setListSortBy] = useState<MapListSortBy>("distance");
   const [listFilter, setListFilter] = useState<StoreListFilter>({});
   const [pickupFilter, setPickupFilter] = useState<MapPickupFilter | null>(null);
@@ -273,6 +280,7 @@ export default function MapPage() {
           map.panTo(position);
         }
         if (listSheetPanelOffsetRef.current > 0) closeListSheet();
+        setSelectedUnenteredStore(null);
         setSelectedStore(store);
       });
 
@@ -391,6 +399,18 @@ export default function MapPage() {
             markersRef.current.push(marker);
             window.kakao.maps.event.addListener(marker, "click", () => {
               setSelectedStore(null);
+              setSelectedUnenteredStore({
+                kakaoPlaceId: String(place.id ?? ""),
+                name: place.place_name ?? "",
+                address: place.address_name || undefined,
+                roadAddress: place.road_address_name || undefined,
+                phone: place.phone || undefined,
+                categoryName: place.category_name || undefined,
+                placeUrl: place.place_url || undefined,
+                latitude: lat,
+                longitude: lng,
+              });
+              if (listSheetPanelOffsetRef.current > 0) closeListSheet();
               if (markerImageRef.current)
                 markersRef.current.forEach((m) => m.setImage(markerImageRef.current));
               platformMarkersRef.current.forEach((m, i) => {
@@ -422,7 +442,7 @@ export default function MapPage() {
         { location: centerLatLng, useMapBounds: true },
       );
     },
-    [clearKakaoMarkers, isPlatformStoreDuplicate],
+    [clearKakaoMarkers, isPlatformStoreDuplicate, closeListSheet],
   );
 
   /** URL 검색 또는 픽업 필터 시 미입점 마커 제거, 해제 시에만 키워드 검색 재실행 */
@@ -432,6 +452,7 @@ export default function MapPage() {
     const suppress = Boolean(searchQuery || pickupFilter);
     if (suppress) {
       clearKakaoMarkers();
+      setSelectedUnenteredStore(null);
     } else if (searchStoresRef.current === null) {
       searchPlaces(mapInstanceRef.current.getCenter());
     }
@@ -503,6 +524,7 @@ export default function MapPage() {
 
         window.kakao.maps.event.addListener(map, "click", () => {
           setSelectedStore(null);
+          setSelectedUnenteredStore(null);
           if (listSheetPanelOffsetRef.current > 0) closeListSheet();
         });
 
@@ -862,7 +884,19 @@ export default function MapPage() {
         </div>
       )}
 
-      {!selectedStore && (
+      {!selectedStore && selectedUnenteredStore && (
+        <div
+          className="absolute z-30"
+          style={{ left: 16, right: 16, bottom: MAP_SELECTED_STORE_CARD_BOTTOM }}
+        >
+          <MapUnenteredStoreCard
+            key={selectedUnenteredStore.kakaoPlaceId}
+            store={selectedUnenteredStore}
+          />
+        </div>
+      )}
+
+      {!selectedStore && !selectedUnenteredStore && (
         <MapListSheetPanel
           offset={listSheetPanelOffset}
           expandedToTop={

@@ -130,11 +130,46 @@ model Consumer {
   fcmTokens          ConsumerFcmToken[]
   notificationPreferences ConsumerNotificationPreference[]
   termsAgreements    ConsumerTermsAgreement[]
+  storeEntryRequests StoreEntryRequest[]
 
   @@index([phone])
   @@index([googleId])
   @@index([kakaoId])
   @@map("consumers")
+}
+
+/// 미입점 스토어(카카오 장소) 입점 요청 — 구매자가 지도에서 "이 가게도 입점했으면" 하고 요청
+/// 동일 장소를 여러 구매자가 요청할 수 있으나, 한 구매자는 같은 장소를 한 번만 요청 가능
+model StoreEntryRequest {
+  id String @id @default(cuid())
+
+  consumerId String @map("consumer_id")
+
+  /// 카카오 로컬 장소 ID — 중복 요청 방지·동일 장소 수요 집계 기준
+  kakaoPlaceId String @map("kakao_place_id")
+
+  /// 요청 시점의 장소 스냅샷 (추후 어드민 검토·연락·실제 스토어 매칭용)
+  placeName    String  @map("place_name")
+  address      String?
+  roadAddress  String? @map("road_address")
+  phone        String?
+  categoryName String? @map("category_name")
+  placeUrl     String? @map("place_url")
+  latitude     Float?
+  longitude    Float?
+
+  /// 처리 상태 — 어드민 워크플로우 확장 대비
+  status StoreEntryRequestStatus @default(REQUESTED)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  consumer Consumer @relation(fields: [consumerId], references: [id], onDelete: Cascade)
+
+  @@unique([consumerId, kakaoPlaceId])
+  @@index([kakaoPlaceId])
+  @@index([status])
+  @@map("store_entry_requests")
 }
 
 /// 판매자 앱(web-seller) 전용 계정
@@ -824,6 +859,15 @@ enum ProductCategoryType {
   SIMPLE         // 심플
   FLOWER         // 꽃
   PHOTO          // 사진
+}
+
+/// 미입점 스토어 입점 요청 처리 상태
+enum StoreEntryRequestStatus {
+  REQUESTED // 요청됨
+  REVIEWING // 검토중
+  APPROVED // 승인됨
+  REJECTED // 반려됨
+  COMPLETED // 입점 완료
 }
 
 /// 판매자 검증·온보딩
