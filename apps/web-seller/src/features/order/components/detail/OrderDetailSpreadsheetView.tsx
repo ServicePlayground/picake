@@ -76,7 +76,8 @@ function formatFlavorLine(item: OrderResponseDto["orderItems"][number]): string 
 
 export type OrderDetailSpreadsheetViewProps = {
   order: OrderResponseDto;
-  onReferenceImageClick: (url: string) => void;
+  /** 참고 이미지 클릭 시 해당 항목의 전체 이미지 목록과 클릭한 인덱스를 전달 */
+  onReferenceImageClick: (images: string[], index: number) => void;
 };
 
 export const OrderDetailSpreadsheetView: React.FC<OrderDetailSpreadsheetViewProps> = ({
@@ -262,7 +263,7 @@ export const OrderDetailSpreadsheetView: React.FC<OrderDetailSpreadsheetViewProp
                             <button
                               key={`${item.id}-img-${idx}`}
                               type="button"
-                              onClick={() => onReferenceImageClick(url)}
+                              onClick={() => onReferenceImageClick(item.imageUrls, idx)}
                               className="relative h-9 w-9 shrink-0 overflow-hidden rounded border border-slate-300 bg-slate-100 transition hover:border-primary hover:ring-1 hover:ring-primary/30 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
                               aria-label={`참고 이미지 ${idx + 1} 크게 보기`}
                             >

@@ -56,7 +56,7 @@ export const StoreDetailOrderDetailPage: React.FC = () => {
   const { data: order, isLoading } = useOrderDetail(orderId || "");
   const updateOrderStatusMutation = useUpdateOrderStatus();
   const openConfirmModal = useConfirmStore((state) => state.showConfirm);
-  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [lightbox, setLightbox] = useState<{ images: string[]; index: number } | null>(null);
   const [reasonTarget, setReasonTarget] = useState<ReasonTarget>(null);
   const [reasonText, setReasonText] = useState("");
   const [flowGuideOpen, setFlowGuideOpen] = useState(false);
@@ -366,7 +366,7 @@ export const StoreDetailOrderDetailPage: React.FC = () => {
 
       <OrderDetailSpreadsheetView
         order={order}
-        onReferenceImageClick={(url) => setLightboxImage(url)}
+        onReferenceImageClick={(images, index) => setLightbox({ images, index })}
       />
 
       <OrderStatusGuideModal
@@ -376,11 +376,12 @@ export const StoreDetailOrderDetailPage: React.FC = () => {
         numberedLines={ORDER_STATUS_FLOW_LINES_FOR_SELLER}
       />
 
-      {lightboxImage && (
+      {lightbox && (
         <ImageLightbox
-          src={lightboxImage}
+          images={lightbox.images}
+          initialIndex={lightbox.index}
           alt="주문 참고 이미지"
-          onClose={() => setLightboxImage(null)}
+          onClose={() => setLightbox(null)}
         />
       )}
     </div>
