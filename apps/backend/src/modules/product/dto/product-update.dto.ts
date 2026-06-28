@@ -11,7 +11,6 @@ import {
 } from "class-validator";
 import { Type } from "class-transformer";
 import {
-  OptionRequired,
   EnableStatus,
   ProductCategoryType,
 } from "@apps/backend/modules/product/constants/product.constants";
@@ -70,6 +69,15 @@ export class UpdateProductRequestDto {
   images?: string[];
 
   @ApiPropertyOptional({
+    description: "정가",
+    example: PRODUCT_SWAGGER_EXAMPLES.PRODUCT_DATA.originalPrice,
+  })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  originalPrice?: number;
+
+  @ApiPropertyOptional({
     description: "판매가",
     example: PRODUCT_SWAGGER_EXAMPLES.PRODUCT_DATA.salePrice,
   })
@@ -126,15 +134,6 @@ export class UpdateProductRequestDto {
   @IsOptional()
   @IsEnum(EnableStatus)
   letteringVisible?: EnableStatus;
-
-  @ApiPropertyOptional({
-    description: "레터링 문구 사용 (필수/선택)",
-    enum: OptionRequired,
-    example: OptionRequired.REQUIRED,
-  })
-  @IsOptional()
-  @IsEnum(OptionRequired)
-  letteringRequired?: OptionRequired;
 
   @ApiPropertyOptional({
     description: "레터링 최대 글자 수",

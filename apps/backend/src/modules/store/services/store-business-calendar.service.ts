@@ -10,6 +10,11 @@ import {
 import { StoreOwnershipUtil } from "@apps/backend/modules/store/utils/store-ownership.util";
 import { isStoreBusinessFullDayWindow } from "@apps/backend/modules/store/constants/store-business-calendar.constants";
 import {
+  findStoreBusinessCalendarOrderConflicts,
+  formatStoreBusinessCalendarConflictMessage,
+  STORE_BUSINESS_CALENDAR_BLOCKING_ORDER_STATUSES,
+} from "@apps/backend/modules/store/utils/store-business-calendar-order-conflict.util";
+import {
   businessCalendarStateFromStoreRow,
   parseHalfHourTimeToMinutes,
   type StoreBusinessCalendarState,
@@ -30,6 +35,9 @@ export class StoreBusinessCalendarService {
     await StoreOwnershipUtil.verifyStoreOwnership(this.prisma, storeId, user.sub);
 
     this.validateTimeRanges(dto);
+
+    const proposedState = this.dtoToState(dto);
+    await this.assertNoActiveOrderConflicts(storeId, proposedState);
 
     const normalizedOverrides = this.normalizeOverridesFromDto(dto.dayOverrides);
 
@@ -87,6 +95,40 @@ export class StoreBusinessCalendarService {
         closeTime: o.closeTime,
       })),
     };
+  }
+
+  private async assertNoActiveOrderConflicts(
+    storeId: string,
+    proposedState: StoreBusinessCalendarState,
+  ): Promise<void> {
+    const activeOrders = await this.prisma.order.findMany({
+      where: {
+        storeId,
+        orderStatus: { in: [...STORE_BUSINESS_CALENDAR_BLOCKING_ORDER_STATUSES] },
+        pickupDate: { not: null },
+      },
+      select: {
+        id: true,
+        orderNumber: true,
+        orderStatus: true,
+        pickupDate: true,
+      },
+    });
+
+    const conflicts = findStoreBusinessCalendarOrderConflicts(proposedState, activeOrders);
+    if (conflicts.length === 0) return;
+
+    throw new BadRequestException({
+      message: formatStoreBusinessCalendarConflictMessage(conflicts),
+      code: "BUSINESS_CALENDAR_ORDER_CONFLICT",
+      conflicts: conflicts.map((c) => ({
+        orderId: c.orderId,
+        orderNumber: c.orderNumber,
+        orderStatus: c.orderStatus,
+        pickupDateSeoulKey: c.pickupDateSeoulKey,
+        pickupTimeSeoul: c.pickupTimeSeoul,
+      })),
+    });
   }
 
   private validateTimeRanges(dto: StoreBusinessCalendarDto) {

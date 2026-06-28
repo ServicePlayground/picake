@@ -9,15 +9,15 @@ import {
 } from "@/apps/web-seller/common/components/tabs/Tabs";
 import {
   EnableStatus,
-  OptionRequired,
   CakeSizeOptionDto,
   CakeFlavorOptionDto,
   ProductCategoryType,
+  CakeSizeDisplayName,
 } from "@/apps/web-seller/features/product/types/product.dto";
 import type { ProductForm } from "@/apps/web-seller/features/product/types/product.ui";
 import { ProductCreationBasicInfoSection } from "@/apps/web-seller/features/product/components/sections/ProductCreationBasicInfoSection";
 import { ProductCreationCakeOptionsSection } from "@/apps/web-seller/features/product/components/sections/ProductCreationCakeOptionsSection";
-import { ProductCreationLetteringPolicySection } from "@/apps/web-seller/features/product/components/sections/ProductCreationLetteringPolicySection";
+import { ProductCreationOptionsSection } from "@/apps/web-seller/features/product/components/sections/ProductCreationOptionsSection";
 import { ProductCreationDetailDescriptionSection } from "@/apps/web-seller/features/product/components/sections/ProductCreationDetailDescriptionSection";
 import { ProductCreationProductNoticeSection } from "@/apps/web-seller/features/product/components/sections/ProductCreationProductNoticeSection";
 import { validateProductForm } from "@/apps/web-seller/features/product/utils/validateProductForm";
@@ -34,14 +34,28 @@ interface Props {
 export const defaultForm: ProductForm = {
   images: [],
   name: "",
-  salePrice: 0,
+  originalPrice: undefined,
+  salePrice: undefined,
   salesStatus: EnableStatus.ENABLE,
   visibilityStatus: EnableStatus.ENABLE,
-  cakeSizeOptions: [],
-  cakeFlavorOptions: [],
+  cakeSizeOptions: [
+    {
+      visible: EnableStatus.ENABLE,
+      displayName: CakeSizeDisplayName.DOSIRAK,
+      lengthCm: 0,
+      price: 0,
+      description: "1~2인용",
+    },
+  ],
+  cakeFlavorOptions: [
+    {
+      visible: EnableStatus.ENABLE,
+      displayName: "초콜릿",
+      price: 0,
+    },
+  ],
   letteringVisible: EnableStatus.ENABLE,
-  letteringRequired: OptionRequired.OPTIONAL,
-  letteringMaxLength: 0,
+  letteringMaxLength: undefined,
   imageUploadEnabled: EnableStatus.ENABLE,
   productCategoryTypes: [],
   searchTags: [],
@@ -99,7 +113,14 @@ export const ProductCreationForm: React.FC<Props> = ({
       onChange?.(next);
     };
 
-  const handleSalePriceChange = (value: number) => {
+  const handleOriginalPriceChange = (value: number | undefined) => {
+    if (disabled) return;
+    const next = { ...form, originalPrice: value };
+    setForm(next);
+    onChange?.(next);
+  };
+
+  const handleSalePriceChange = (value: number | undefined) => {
     if (disabled) return;
     const next = { ...form, salePrice: value };
     setForm(next);
@@ -156,13 +177,7 @@ export const ProductCreationForm: React.FC<Props> = ({
     onChange?.(next);
   };
 
-  const handleLetteringRequiredChange = (value: OptionRequired) => {
-    const next = { ...form, letteringRequired: value };
-    setForm(next);
-    onChange?.(next);
-  };
-
-  const handleLetteringMaxLengthChange = (value: number) => {
+  const handleLetteringMaxLengthChange = (value: number | undefined) => {
     if (disabled) return;
     const next = { ...form, letteringMaxLength: value };
     setForm(next);
@@ -255,6 +270,7 @@ export const ProductCreationForm: React.FC<Props> = ({
                 onMainImageChange={handleMainImageChange}
                 onAdditionalImagesChange={handleAdditionalImagesChange}
                 onChange={handleChange}
+                onOriginalPriceChange={handleOriginalPriceChange}
                 onSalePriceChange={handleSalePriceChange}
                 disabled={disabled}
               />
@@ -267,12 +283,11 @@ export const ProductCreationForm: React.FC<Props> = ({
                 onCakeFlavorOptionsChange={handleCakeFlavorOptionsChange}
               />
 
-              {/* 레터링 정책 섹션 */}
-              <ProductCreationLetteringPolicySection
+              {/* 옵션 섹션 */}
+              <ProductCreationOptionsSection
                 form={form}
                 errors={errors}
                 onLetteringVisibleChange={handleLetteringVisibleChange}
-                onLetteringRequiredChange={handleLetteringRequiredChange}
                 onLetteringMaxLengthChange={handleLetteringMaxLengthChange}
                 onImageUploadEnabledChange={handleImageUploadEnabledChange}
                 disabled={disabled}

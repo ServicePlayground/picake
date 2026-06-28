@@ -10,7 +10,13 @@ export const FEED_SUCCESS_MESSAGES = {
   FEED_DELETED: "피드가 삭제되었습니다.",
 } as const;
 
+/**
+ * 피드 이미지 최대 등록 개수
+ */
+export const FEED_MAX_IMAGES = 5;
+
 export const SWAGGER_EXAMPLES = {
   TITLE: "신제품 출시 안내",
-  CONTENT: "<p>새로운 케이크가 출시되었습니다!</p>",
+  CONTENT: "새로운 케이크가 출시되었습니다!",
+  IMAGE_URLS: ["https://example.com/feed-image1.jpg", "https://example.com/feed-image2.jpg"],
 };

@@ -10,8 +10,11 @@ import { Card, CardContent } from "@/apps/web-seller/common/components/cards/Car
 import { BaseButton as Button } from "@/apps/web-seller/common/components/buttons/BaseButton";
 import { BaseInput as Input } from "@/apps/web-seller/common/components/inputs/BaseInput";
 import { Label } from "@/apps/web-seller/common/components/labels/Label";
-import { RichTextEditor } from "@/apps/web-seller/common/components/editors/RichTextEditor";
+import { Textarea } from "@/apps/web-seller/common/components/textareas/Textarea";
+import { ImageMultiUpload } from "@/apps/web-seller/features/upload/components/ImageMultiUpload";
 import { ContentLoading } from "@/apps/web-seller/common/components/loading/ContentLoading";
+
+const FEED_MAX_IMAGES = 5;
 
 export const StoreDetailFeedDetailPage: React.FC = () => {
   const { storeId, feedId } = useParams<{ storeId: string; feedId: string }>();
@@ -21,6 +24,7 @@ export const StoreDetailFeedDetailPage: React.FC = () => {
   const { data: feed, isLoading } = useFeedDetail(storeId || "", feedId || "");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
+  const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [titleError, setTitleError] = useState("");
   const [contentError, setContentError] = useState("");
 
@@ -29,6 +33,7 @@ export const StoreDetailFeedDetailPage: React.FC = () => {
     if (feed) {
       setTitle(feed.title);
       setContent(feed.content);
+      setImageUrls(feed.imageUrls ?? []);
     }
   }, [feed]);
 
@@ -70,7 +75,7 @@ export const StoreDetailFeedDetailPage: React.FC = () => {
       setTitleError("");
     }
 
-    if (!content.trim() || content.trim() === "<p><br></p>") {
+    if (!content.trim()) {
       setContentError("내용을 입력해주세요.");
       isValid = false;
     } else {
@@ -82,6 +87,7 @@ export const StoreDetailFeedDetailPage: React.FC = () => {
     const request: UpdateFeedRequestDto = {
       title: title.trim(),
       content,
+      imageUrls,
     };
 
     await updateFeedMutation.mutateAsync({ storeId, feedId, request });
@@ -118,18 +124,33 @@ export const StoreDetailFeedDetailPage: React.FC = () => {
               {titleError && <p className="text-sm text-destructive">{titleError}</p>}
             </div>
 
+            {/* 이미지 */}
+            <div className="space-y-2">
+              <Label>이미지</Label>
+              <ImageMultiUpload
+                value={imageUrls}
+                onChange={setImageUrls}
+                maxImages={FEED_MAX_IMAGES}
+                width={160}
+                height={160}
+                enableDragDrop={true}
+                showMinResolutionHint={false}
+              />
+            </div>
+
             {/* 내용 */}
             <div className="space-y-2">
               <Label htmlFor="content">내용</Label>
-              <RichTextEditor
+              <Textarea
+                id="content"
                 value={content}
-                onChange={(value) => {
-                  setContent(value);
+                onChange={(e) => {
+                  setContent(e.target.value);
                   if (contentError) setContentError("");
                 }}
-                placeholder="피드 내용을 입력해주세요. 이미지, 텍스트, 링크 등을 활용하여 작성할 수 있습니다."
-                minHeight={400}
-                error={!!contentError}
+                placeholder="피드 내용을 입력해주세요."
+                rows={8}
+                className={contentError ? "border-destructive" : ""}
               />
               {contentError && <p className="text-sm text-destructive">{contentError}</p>}
             </div>

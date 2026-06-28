@@ -7,7 +7,7 @@ export function useRecentProducts({ limit = 20 }: { limit?: number } = {}) {
   const query = useInfiniteQuery<RecentProductsResponse>({
     queryKey: recentQueryKeys.recentProducts(),
     queryFn: ({ pageParam = 1 }) =>
-      recentApi.getRecentProducts({ page: pageParam as number, limit, sortBy: "latest" }),
+      recentApi.getRecentProducts({ page: pageParam as number, limit }),
     getNextPageParam: (lastPage) =>
       lastPage.meta.hasNext ? lastPage.meta.currentPage + 1 : undefined,
     initialPageParam: 1,

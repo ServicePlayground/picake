@@ -66,7 +66,7 @@ export function ReviewList({
             <ReviewItem key={review.id} review={review} onImageClick={handleReviewImageClick} />
           ))
         ) : (
-          <p className="text-sm text-gray-500 py-4">{emptyMessage}</p>
+          <p className="text-sm text-gray-500 py-4 text-center">{emptyMessage}</p>
         )}
       </div>
 

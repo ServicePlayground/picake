@@ -26,7 +26,7 @@ export function useCreateStore() {
       });
       // 스토어 쿼리 무효화
       queryClient.invalidateQueries({ queryKey: storeQueryKeys.all });
-      navigate(ROUTES.STORE_DETAIL_HOME(response.id));
+      navigate(ROUTES.STORE_DETAIL_CALENDAR(response.id));
     },
     onError: (error) => {
       addAlert({
@@ -83,6 +83,7 @@ export function useUpdateStoreBusinessCalendar() {
       addAlert({
         severity: "error",
         message: getApiMessage.error(error),
+        autoHideDuration: null,
       });
     },
   });

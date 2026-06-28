@@ -21,6 +21,7 @@ export function useOrderList({
   pickupStartDate,
   pickupEndDate,
   orderNumber,
+  productName,
   type,
 }: Partial<OrderListQueryParams> & { page: number; limit: number; sortBy: OrderSortBy }) {
   const query = useQuery<OrderListResponseDto>({
@@ -35,6 +36,7 @@ export function useOrderList({
       pickupStartDate,
       pickupEndDate,
       orderNumber,
+      productName,
       type,
     }),
     queryFn: () => {
@@ -63,6 +65,9 @@ export function useOrderList({
       }
       if (orderNumber) {
         params.orderNumber = orderNumber;
+      }
+      if (productName) {
+        params.productName = productName;
       }
       if (type) {
         params.type = type;
@@ -102,6 +107,31 @@ export function useCalendarDayOrders(storeId: string, pickupDayKey: string | nul
         pickupEndDate: pickupDayKey!,
       }),
     enabled: !!storeId && !!pickupDayKey,
+  });
+
+  useQueryErrorAlert(query);
+
+  return query;
+}
+
+/** 스토어 캘린더: 픽업 월(YYYY-MM-DD ~ YYYY-MM-DD) 주문 목록 */
+export function useCalendarMonthOrders(
+  storeId: string,
+  pickupStartKey: string,
+  pickupEndKey: string,
+) {
+  const query = useQuery<OrderListResponseDto>({
+    queryKey: orderQueryKeys.calendarMonthByStore(storeId, pickupStartKey, pickupEndKey),
+    queryFn: () =>
+      orderApi.getOrders({
+        page: 1,
+        limit: 200,
+        sortBy: OrderSortBy.LATEST,
+        storeId,
+        pickupStartDate: pickupStartKey,
+        pickupEndDate: pickupEndKey,
+      }),
+    enabled: !!storeId && !!pickupStartKey && !!pickupEndKey,
   });
 
   useQueryErrorAlert(query);

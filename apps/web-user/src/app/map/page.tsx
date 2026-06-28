@@ -17,6 +17,10 @@ import { Icon } from "@/apps/web-user/common/components/icons";
 import { storeApi } from "@/apps/web-user/features/store/apis/store.api";
 import type { StoreInfo, StoreListFilter } from "@/apps/web-user/features/store/types/store.type";
 import { MapStoreCard } from "@/apps/web-user/features/store/components/map/MapStoreCard";
+import {
+  MapUnenteredStoreCard,
+  type MapUnenteredStore,
+} from "@/apps/web-user/features/store/components/map/MapUnenteredStoreCard";
 import { MapStoreListSection } from "@/apps/web-user/features/store/components/map/MapStoreListSection";
 import { MapTopSearchBar } from "@/apps/web-user/features/store/components/map/MapTopSearchBar";
 import { MapPickupDateBottomSheet } from "@/apps/web-user/features/store/components/map/MapPickupDateBottomSheet";
@@ -66,7 +70,11 @@ export default function MapPage() {
   const { location: userLocation, refresh: refreshUserLocation } = useUserLocation();
 
   const [kakaoLoaded, setKakaoLoaded] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
   const [selectedStore, setSelectedStore] = useState<StoreInfo | null>(null);
+  const [selectedUnenteredStore, setSelectedUnenteredStore] = useState<MapUnenteredStore | null>(
+    null,
+  );
   const [listSortBy, setListSortBy] = useState<MapListSortBy>("distance");
   const [listFilter, setListFilter] = useState<StoreListFilter>({});
   const [pickupFilter, setPickupFilter] = useState<MapPickupFilter | null>(null);
@@ -124,7 +132,8 @@ export default function MapPage() {
   const selectedMarkerRef = useRef<any | null>(null);
   const isCenteringFromClickRef = useRef(false); // 마커 클릭으로 panTo 한 직후 idle에서 재처리 방지
   const usedUserLocationForCenterRef = useRef(false); // 이미 현재위치로 중심 잡았는지
-  const userLocationOverlayRef = useRef<any | null>(null);
+  const userLocationMarkerRef = useRef<any | null>(null); // 현재위치(파란 점) 마커
+  const userLocationMarkerImageRef = useRef<any | null>(null); // 현재위치 마커 이미지(1회 생성 후 재사용)
   const userLocationRef = useRef<{ latitude: number; longitude: number } | null>(null); // load 콜백에서 최신 위치 참조용
   const searchQueryRef = useRef<string | null>(searchQuery);
   const pickupFilterRef = useRef<MapPickupFilter | null>(pickupFilter);
@@ -271,6 +280,7 @@ export default function MapPage() {
           map.panTo(position);
         }
         if (listSheetPanelOffsetRef.current > 0) closeListSheet();
+        setSelectedUnenteredStore(null);
         setSelectedStore(store);
       });
 
@@ -301,25 +311,42 @@ export default function MapPage() {
     return () => window.clearInterval(id);
   }, []);
 
-  /** 현재위치 오버레이(점) 표시/제거 */
+  /**
+   * 현재위치(파란 점) 마커 표시/제거.
+   * CustomOverlay(HTML img)는 지도 생성 직후·panTo 도중 렌더되지 않는 카카오 타이밍 이슈가 있어
+   * 스토어 마커와 동일하게 Marker + MarkerImage로 그린다.
+   */
   const updateUserLocationMarker = useCallback(
     (location: { latitude: number; longitude: number } | null) => {
       const map = mapInstanceRef.current;
       if (!window.kakao?.maps || !map) return;
-      if (userLocationOverlayRef.current) {
-        userLocationOverlayRef.current.setMap(null);
-        userLocationOverlayRef.current = null;
+      if (!location) {
+        if (userLocationMarkerRef.current) {
+          userLocationMarkerRef.current.setMap(null);
+          userLocationMarkerRef.current = null;
+        }
+        return;
       }
-      if (!location) return;
       const position = new window.kakao.maps.LatLng(location.latitude, location.longitude);
-      userLocationOverlayRef.current = new window.kakao.maps.CustomOverlay({
-        map,
-        position,
-        content:
-          '<img src="/images/contents/map-current-position.png" alt="현재 위치" style="width:34px;height:34px;pointer-events:none;display:block" />',
-        yAnchor: 0.5,
-        xAnchor: 0.5,
-      });
+      if (!userLocationMarkerImageRef.current) {
+        userLocationMarkerImageRef.current = new window.kakao.maps.MarkerImage(
+          "/images/contents/map-current-position.png",
+          new window.kakao.maps.Size(34, 34),
+          { offset: new window.kakao.maps.Point(17, 17) }, // 좌표가 점 중앙에 오도록
+        );
+      }
+      if (userLocationMarkerRef.current) {
+        userLocationMarkerRef.current.setPosition(position);
+        userLocationMarkerRef.current.setMap(map);
+      } else {
+        userLocationMarkerRef.current = new window.kakao.maps.Marker({
+          map,
+          position,
+          image: userLocationMarkerImageRef.current,
+          clickable: false,
+          zIndex: 1, // 스토어 마커 위에 항상 보이도록
+        });
+      }
     },
     [],
   );
@@ -372,6 +399,18 @@ export default function MapPage() {
             markersRef.current.push(marker);
             window.kakao.maps.event.addListener(marker, "click", () => {
               setSelectedStore(null);
+              setSelectedUnenteredStore({
+                kakaoPlaceId: String(place.id ?? ""),
+                name: place.place_name ?? "",
+                address: place.address_name || undefined,
+                roadAddress: place.road_address_name || undefined,
+                phone: place.phone || undefined,
+                categoryName: place.category_name || undefined,
+                placeUrl: place.place_url || undefined,
+                latitude: lat,
+                longitude: lng,
+              });
+              if (listSheetPanelOffsetRef.current > 0) closeListSheet();
               if (markerImageRef.current)
                 markersRef.current.forEach((m) => m.setImage(markerImageRef.current));
               platformMarkersRef.current.forEach((m, i) => {
@@ -403,7 +442,7 @@ export default function MapPage() {
         { location: centerLatLng, useMapBounds: true },
       );
     },
-    [clearKakaoMarkers, isPlatformStoreDuplicate],
+    [clearKakaoMarkers, isPlatformStoreDuplicate, closeListSheet],
   );
 
   /** URL 검색 또는 픽업 필터 시 미입점 마커 제거, 해제 시에만 키워드 검색 재실행 */
@@ -413,6 +452,7 @@ export default function MapPage() {
     const suppress = Boolean(searchQuery || pickupFilter);
     if (suppress) {
       clearKakaoMarkers();
+      setSelectedUnenteredStore(null);
     } else if (searchStoresRef.current === null) {
       searchPlaces(mapInstanceRef.current.getCenter());
     }
@@ -435,11 +475,19 @@ export default function MapPage() {
     (center: { lat: number; lng: number }, suppressKakaoUnopenedMarkers: boolean) => {
       if (!window.kakao?.maps || !mapContainerRef.current || mapInstanceRef.current) return;
       window.kakao.maps.load(() => {
+        // userLocation 도착 전·후로 initializeMap이 중복 호출되면 load 콜백이 2번 실행될 수 있음
+        if (mapInstanceRef.current) return;
+
         const map = new window.kakao.maps.Map(mapContainerRef.current, {
           center: new window.kakao.maps.LatLng(center.lat, center.lng),
           level: 5,
         });
         mapInstanceRef.current = map;
+        setMapReady(true);
+
+        if (typeof map.relayout === "function") {
+          map.relayout();
+        }
 
         if (suppressKakaoUnopenedMarkers) clearKakaoMarkers();
         drawPlatformStoreMarkersRef.current();
@@ -476,6 +524,7 @@ export default function MapPage() {
 
         window.kakao.maps.event.addListener(map, "click", () => {
           setSelectedStore(null);
+          setSelectedUnenteredStore(null);
           if (listSheetPanelOffsetRef.current > 0) closeListSheet();
         });
 
@@ -548,11 +597,11 @@ export default function MapPage() {
     usedUserLocationForCenterRef.current = true;
   }, [userLocation, searchQuery, pickupFilter, searchPlaces]);
 
-  // 현재위치 변경 시 지도 위 현재위치 마커(점) 갱신
+  // 현재위치 변경 또는 지도 준비 완료 시 현재위치 마커(점) 갱신
   useEffect(() => {
-    if (!mapInstanceRef.current) return;
+    if (!mapReady || !mapInstanceRef.current) return;
     updateUserLocationMarker(userLocation ?? null);
-  }, [userLocation, updateUserLocationMarker]);
+  }, [userLocation, updateUserLocationMarker, mapReady]);
 
   // 플랫폼 스토어 전체 조회 후 캐시. 지도 있으면 마커 그리기, 검색 모드가 아니면 미입점 검색
   useEffect(() => {
@@ -835,7 +884,19 @@ export default function MapPage() {
         </div>
       )}
 
-      {!selectedStore && (
+      {!selectedStore && selectedUnenteredStore && (
+        <div
+          className="absolute z-30"
+          style={{ left: 16, right: 16, bottom: MAP_SELECTED_STORE_CARD_BOTTOM }}
+        >
+          <MapUnenteredStoreCard
+            key={selectedUnenteredStore.kakaoPlaceId}
+            store={selectedUnenteredStore}
+          />
+        </div>
+      )}
+
+      {!selectedStore && !selectedUnenteredStore && (
         <MapListSheetPanel
           offset={listSheetPanelOffset}
           expandedToTop={

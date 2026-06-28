@@ -23,6 +23,7 @@ export class FeedMapperUtil {
     storeId: string;
     title: string;
     content: string;
+    imageUrls: string[];
     createdAt: Date;
     updatedAt: Date;
     store: {
@@ -34,6 +35,7 @@ export class FeedMapperUtil {
       storeId: feed.storeId,
       title: feed.title,
       content: feed.content,
+      imageUrls: feed.imageUrls,
       storeLogoImageUrl: feed.store.logoImageUrl ?? null,
       createdAt: feed.createdAt,
       updatedAt: feed.updatedAt,

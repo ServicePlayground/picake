@@ -137,9 +137,39 @@ export default function Header({ variant = "main", title, onBackClick }: HeaderP
   // 근처매장보기: 가장 가까운 활성 지역으로 override
   const handleInactiveConfirm = () => {
     if (inactiveModal.nearest) {
+      const effectiveRegion =
+        overrideResult ?? ((matchResult?.storeCount ?? 0) > 0 ? matchResult : null);
+      if (effectiveRegion?.label !== inactiveModal.nearest.label) {
+        isRegionChanging.current = true;
+        setRegionToast("loading");
+      }
       setOverrideResult(inactiveModal.nearest);
     }
     setInactiveModal((prev) => ({ ...prev, visible: false }));
+  };
+
+  // RegionSelectSheet에서 "현재 위치로 설정" 클릭 → GPS가 비활성 지역을 잡았을 때 호출.
+  // 저장된 override 때문에 Header.tsx의 자동 effect가 모달을 띄우지 못하는 경우를 보완하기 위해
+  // 모달을 강제로 띄움.
+  const handleGpsInactive = (result: RegionMatchResult) => {
+    if (!regionsData?.regions) return;
+    const isSeoul = result.depth1Label === "서울";
+    if (isSeoul) {
+      const nearest = findNearestActiveRegion(
+        regionsData.regions,
+        result.depth1Label,
+        latitude,
+        longitude,
+      );
+      setInactiveModal({ visible: true, type: "seoul", currentLabel: result.label, nearest });
+    } else {
+      setInactiveModal({
+        visible: true,
+        type: "outside",
+        currentLabel: result.depth1Label,
+        nearest: null,
+      });
+    }
   };
 
   // 취소: 강남구(디폴트)로 리셋
@@ -245,7 +275,7 @@ export default function Header({ variant = "main", title, onBackClick }: HeaderP
       <header className="sticky top-0 left-0 right-0 z-50 bg-white max-w-[638px] mx-auto px-5 flex justify-between items-center h-[46px]">
         <LocationButton />
         <button
-          onClick={() => router.push(PATHS.HOME)}
+          onClick={() => router.back()}
           className="text-sm font-bold text-gray-500 underline"
         >
           취소
@@ -317,10 +347,15 @@ export default function Header({ variant = "main", title, onBackClick }: HeaderP
           regions={regionsData.regions}
           currentResult={overrideResult ?? matchResult}
           onSelect={(result) => {
-            isRegionChanging.current = true;
-            setRegionToast("loading");
+            const effectiveRegion =
+              overrideResult ?? ((matchResult?.storeCount ?? 0) > 0 ? matchResult : null);
+            if (effectiveRegion?.label !== result.label) {
+              isRegionChanging.current = true;
+              setRegionToast("loading");
+            }
             setOverrideResult(result);
           }}
+          onGpsInactive={handleGpsInactive}
         />
       )}
 
@@ -332,7 +367,7 @@ export default function Header({ variant = "main", title, onBackClick }: HeaderP
           variant="column"
           position="center"
           duration={10000}
-          onClose={() => {}}
+          onClose={() => setRegionToast(null)}
         />
       )}
 

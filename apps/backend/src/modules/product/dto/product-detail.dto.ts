@@ -1,6 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
-  OptionRequired,
   EnableStatus,
   ProductType,
   ProductCategoryType,
@@ -67,6 +66,12 @@ export class ProductResponseDto extends PickupAddressDto {
   images: string[];
 
   @ApiProperty({
+    description: "정가",
+    example: SWAGGER_EXAMPLES.PRODUCT_DATA.originalPrice,
+  })
+  originalPrice: number;
+
+  @ApiProperty({
     description: "판매가",
     example: SWAGGER_EXAMPLES.PRODUCT_DATA.salePrice,
   })
@@ -106,13 +111,6 @@ export class ProductResponseDto extends PickupAddressDto {
     example: EnableStatus.ENABLE,
   })
   letteringVisible: EnableStatus;
-
-  @ApiProperty({
-    description: "레터링 문구 사용 (필수/선택)",
-    enum: OptionRequired,
-    example: OptionRequired.OPTIONAL,
-  })
-  letteringRequired: OptionRequired;
 
   @ApiProperty({
     description: "레터링 최대 글자 수",

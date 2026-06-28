@@ -149,39 +149,6 @@ export function OrderCancelView({ order }: OrderCancelViewProps) {
                 </div>
               </div>
             ))}
-            {order.orderItems.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-center gap-3 border border-gray-100 rounded-2lg p-3 bg-white flex-shrink-0 w-[278px]"
-              >
-                <div className="relative w-[72px] h-[72px] flex-shrink-0 rounded overflow-hidden">
-                  {productImage ? (
-                    <Image
-                      src={productImage}
-                      alt={order.productName}
-                      fill
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-gray-200" />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="mb-0.5 text-xs text-gray-500">{order.storeName}</p>
-                  <p className="mb-2 text-sm text-gray-900 truncate">{order.productName}</p>
-                  <p className="text-2xs text-gray-400 truncate">
-                    {[
-                      item.sizeDisplayName &&
-                        `${item.sizeDisplayName}(+${item.sizePrice?.toLocaleString() ?? 0}원)`,
-                      item.flavorDisplayName &&
-                        `${item.flavorDisplayName}(+${item.flavorPrice?.toLocaleString() ?? 0}원)`,
-                    ]
-                      .filter(Boolean)
-                      .join(" / ")}
-                  </p>
-                </div>
-              </div>
-            ))}
           </div>
         </section>
 

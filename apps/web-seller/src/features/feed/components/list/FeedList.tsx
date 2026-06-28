@@ -35,6 +35,7 @@ export const FeedList: React.FC<FeedListProps> = ({ feeds }) => {
       {feeds.map((feed) => {
         const createdAt =
           feed.createdAt instanceof Date ? feed.createdAt : new Date(feed.createdAt);
+        const thumbnailUrl = feed.imageUrls?.[0] ?? feed.storeLogoImageUrl;
 
         return (
           <div
@@ -42,12 +43,12 @@ export const FeedList: React.FC<FeedListProps> = ({ feeds }) => {
             onClick={() => handleFeedClick(feed.id)}
             className="group flex cursor-pointer items-center gap-4 rounded-lg border bg-card p-4 shadow-sm transition-all hover:shadow-md"
           >
-            {/* 피드 썸네일 (스토어 로고 또는 플레이스홀더) */}
+            {/* 피드 썸네일 (피드 이미지 → 스토어 로고 → 플레이스홀더) */}
             <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded bg-muted">
-              {feed.storeLogoImageUrl ? (
+              {thumbnailUrl ? (
                 <img
-                  src={feed.storeLogoImageUrl}
-                  alt="스토어"
+                  src={thumbnailUrl}
+                  alt="피드"
                   className="h-full w-full object-cover transition-transform group-hover:scale-105"
                 />
               ) : (

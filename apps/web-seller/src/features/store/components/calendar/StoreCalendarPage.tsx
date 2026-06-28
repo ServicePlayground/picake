@@ -25,9 +25,11 @@ import {
   SelectValue,
 } from "@/apps/web-seller/common/components/selects/Select";
 import { ROUTES } from "@/apps/web-seller/common/constants/paths.constant";
+import { useAlertStore } from "@/apps/web-seller/common/store/alert.store";
 import { useStoreDetail } from "@/apps/web-seller/features/store/hooks/queries/useStoreQuery";
 import { useUpdateStoreBusinessCalendar } from "@/apps/web-seller/features/store/hooks/mutations/useStoreMutation";
-import { useCalendarDayOrders } from "@/apps/web-seller/features/order/hooks/queries/useOrderQuery";
+import { useCalendarMonthOrders } from "@/apps/web-seller/features/order/hooks/queries/useOrderQuery";
+import type { OrderResponseDto } from "@/apps/web-seller/features/order/types/order.dto";
 import {
   getOrderStatusBadgeVariant,
   getOrderStatusLabel,
@@ -40,10 +42,15 @@ import {
   overridesRecordFromApi,
   parseDateKey,
   toDateKey,
+  toSeoulDateKeyFromUtc,
   toStoreBusinessCalendarDto,
   type DayOverride,
   WEEKDAY_LABELS_KO,
 } from "@/apps/web-seller/features/store/utils/store-calendar.util";
+import {
+  findCalendarOrderConflicts,
+  formatCalendarConflictMessage,
+} from "@/apps/web-seller/features/store/utils/store-calendar-conflict.util";
 const HALF_HOUR_OPTIONS = buildHalfHourTimeOptions();
 
 function startOfMonth(d: Date): Date {
@@ -109,6 +116,20 @@ function computeNextOverridesMap(
   return next;
 }
 
+function sortOrdersByPickupTime(orders: OrderResponseDto[]): OrderResponseDto[] {
+  return [...orders].sort(
+    (a, b) => new Date(a.pickupDate).getTime() - new Date(b.pickupDate).getTime(),
+  );
+}
+
+function reservationDisplayName(order: OrderResponseDto): string {
+  return order.reservationContactName?.trim() || "예약자 미입력";
+}
+
+function reservationDisplayPhone(order: OrderResponseDto): string {
+  return order.reservationPhone?.trim() || "—";
+}
+
 export const StoreCalendarPage: React.FC = () => {
   const { storeId } = useParams<{ storeId: string }>();
   const {
@@ -117,6 +138,7 @@ export const StoreCalendarPage: React.FC = () => {
     isError: storeError,
   } = useStoreDetail(storeId ?? "");
   const updateCalendar = useUpdateStoreBusinessCalendar();
+  const { addAlert } = useAlertStore();
 
   const [weeklyOffDays, setWeeklyOffDays] = React.useState<Set<number>>(() => new Set());
   const [standardStart, setStandardStart] = React.useState("00:00");
@@ -130,11 +152,30 @@ export const StoreCalendarPage: React.FC = () => {
   const [overrides, setOverrides] = React.useState<Record<string, DayOverride>>({});
   const [selectedKey, setSelectedKey] = React.useState<string | null>(null);
 
+  const year = monthCursor.getFullYear();
+  const month = monthCursor.getMonth();
+  const monthStartKey = toDateKey(new Date(year, month, 1));
+  const monthEndKey = toDateKey(new Date(year, month + 1, 0));
+
   const {
-    data: ordersList,
-    isLoading: ordersLoading,
-    isError: ordersError,
-  } = useCalendarDayOrders(storeId ?? "", selectedKey);
+    data: monthOrdersList,
+    isLoading: monthOrdersLoading,
+    isError: monthOrdersError,
+  } = useCalendarMonthOrders(storeId ?? "", monthStartKey, monthEndKey);
+
+  const ordersByDateKey = React.useMemo(() => {
+    const map = new Map<string, OrderResponseDto[]>();
+    for (const order of monthOrdersList?.data ?? []) {
+      const key = toSeoulDateKeyFromUtc(order.pickupDate);
+      const list = map.get(key) ?? [];
+      list.push(order);
+      map.set(key, list);
+    }
+    for (const [key, list] of map) {
+      map.set(key, sortOrdersByPickupTime(list));
+    }
+    return map;
+  }, [monthOrdersList]);
 
   const [draftOpen, setDraftOpen] = React.useState(true);
   const [draftStart, setDraftStart] = React.useState("00:00");
@@ -186,6 +227,7 @@ export const StoreCalendarPage: React.FC = () => {
       nextStandardStart: string,
       nextStandardEnd: string,
       nextOverrides: Record<string, DayOverride>,
+      ordersForClientCheck?: OrderResponseDto[],
     ) => {
       if (!storeId) return;
       const dto = toStoreBusinessCalendarDto(
@@ -194,9 +236,22 @@ export const StoreCalendarPage: React.FC = () => {
         nextStandardEnd,
         nextOverrides,
       );
+
+      if (ordersForClientCheck) {
+        const conflicts = findCalendarOrderConflicts(dto, ordersForClientCheck);
+        if (conflicts.length > 0) {
+          addAlert({
+            severity: "error",
+            message: formatCalendarConflictMessage(conflicts),
+            autoHideDuration: null,
+          });
+          return;
+        }
+      }
+
       await updateCalendar.mutateAsync({ storeId, request: dto });
     },
-    [storeId, updateCalendar],
+    [storeId, updateCalendar, addAlert],
   );
 
   const toggleBasicDraftWeekly = (day: number) => {
@@ -223,10 +278,16 @@ export const StoreCalendarPage: React.FC = () => {
     }
   };
 
-  const year = monthCursor.getFullYear();
-  const month = monthCursor.getMonth();
   const firstWeekday = new Date(year, month, 1).getDay();
   const dim = daysInMonth(monthCursor);
+
+  const ordersForSelectedDay = React.useMemo(() => {
+    if (!selectedKey) return [];
+    return ordersByDateKey.get(selectedKey) ?? [];
+  }, [selectedKey, ordersByDateKey]);
+
+  const ordersLoading = monthOrdersLoading;
+  const ordersError = monthOrdersError;
 
   const cells: ({ key: string; day: number } | null)[] = [];
   for (let i = 0; i < firstWeekday; i += 1) cells.push(null);
@@ -239,10 +300,16 @@ export const StoreCalendarPage: React.FC = () => {
   const goNextMonth = () => setMonthCursor(new Date(year, month + 1, 1));
 
   const runDetailPersist = React.useCallback(
-    (nextOverrides: Record<string, DayOverride>) => {
+    (nextOverrides: Record<string, DayOverride>, ordersForClientCheck: OrderResponseDto[]) => {
       void (async () => {
         try {
-          await persistCalendar(weeklyOffDays, standardStart, standardEnd, nextOverrides);
+          await persistCalendar(
+            weeklyOffDays,
+            standardStart,
+            standardEnd,
+            nextOverrides,
+            ordersForClientCheck,
+          );
         } catch {
           /* onError */
         }
@@ -251,9 +318,9 @@ export const StoreCalendarPage: React.FC = () => {
     [persistCalendar, weeklyOffDays, standardStart, standardEnd],
   );
 
-  const handleSaveClick = () => {
-    if (!selectedKey) return;
-    const next = computeNextOverridesMap(
+  const draftOverrides = React.useMemo(() => {
+    if (!selectedKey) return overrides;
+    return computeNextOverridesMap(
       overrides,
       selectedKey,
       draftOpen,
@@ -263,7 +330,41 @@ export const StoreCalendarPage: React.FC = () => {
       standardStart,
       standardEnd,
     );
-    runDetailPersist(next);
+  }, [
+    selectedKey,
+    overrides,
+    draftOpen,
+    draftStart,
+    draftEnd,
+    weeklyOff,
+    standardStart,
+    standardEnd,
+  ]);
+
+  const detailSaveConflicts = React.useMemo(() => {
+    if (!selectedKey) return [];
+    const dto = toStoreBusinessCalendarDto(
+      weeklyOffDays,
+      standardStart,
+      standardEnd,
+      draftOverrides,
+    );
+    return findCalendarOrderConflicts(dto, ordersForSelectedDay);
+  }, [
+    selectedKey,
+    weeklyOffDays,
+    standardStart,
+    standardEnd,
+    draftOverrides,
+    ordersForSelectedDay,
+  ]);
+
+  const detailSaveConflictMessage =
+    detailSaveConflicts.length > 0 ? formatCalendarConflictMessage(detailSaveConflicts) : null;
+
+  const handleSaveClick = () => {
+    if (!selectedKey) return;
+    runDetailPersist(draftOverrides, ordersForSelectedDay);
   };
 
   const handleCancelDetail = () => {
@@ -278,13 +379,6 @@ export const StoreCalendarPage: React.FC = () => {
     : "";
 
   const selectedUsesOverride = selectedKey ? Boolean(overrides[selectedKey]) : false;
-
-  const ordersForSelectedDay = React.useMemo(() => {
-    if (!selectedKey || !ordersList?.data?.length) return [];
-    return [...ordersList.data].sort(
-      (a, b) => new Date(a.pickupDate).getTime() - new Date(b.pickupDate).getTime(),
-    );
-  }, [selectedKey, ordersList]);
 
   const saving = updateCalendar.isPending;
 
@@ -415,7 +509,7 @@ export const StoreCalendarPage: React.FC = () => {
           <div className="grid gap-6 lg:grid-cols-[1fr_minmax(280px,360px)]">
             <Card>
               <CardContent className="p-4 sm:p-5">
-                <div className="mb-4 flex items-center justify-between">
+                <div className="mb-4 flex items-center justify-center gap-1">
                   <Button type="button" variant="ghost" size="icon" onClick={goPrevMonth}>
                     <ChevronLeft className="h-5 w-5" />
                   </Button>
@@ -437,7 +531,7 @@ export const StoreCalendarPage: React.FC = () => {
                   {cells.map((cell, i) => {
                     if (!cell) {
                       return (
-                        <div key={`empty-${i}`} className="min-h-[5.25rem] sm:min-h-[5.75rem]" />
+                        <div key={`empty-${i}`} className="min-h-[6.5rem] sm:min-h-[7rem]" />
                       );
                     }
                     const eff = effectiveForDate(
@@ -449,17 +543,21 @@ export const StoreCalendarPage: React.FC = () => {
                     );
                     const hasOverride = Boolean(overrides[cell.key]);
                     const isSelected = selectedKey === cell.key;
+                    const dayOrders = ordersByDateKey.get(cell.key) ?? [];
+                    const previewOrders = dayOrders.slice(0, 2);
+                    const hiddenOrderCount = dayOrders.length - previewOrders.length;
                     return (
                       <button
                         key={cell.key}
                         type="button"
                         onClick={() => setSelectedKey(cell.key)}
                         className={[
-                          "flex min-h-[5.25rem] flex-col rounded-md border p-2 text-left transition-colors sm:min-h-[5.75rem] sm:p-2.5",
+                          "flex min-h-[6.5rem] flex-col rounded-md border p-2 text-left transition-colors sm:min-h-[7rem] sm:p-2.5",
                           isSelected
                             ? "border-primary bg-primary/10 ring-2 ring-primary/30"
                             : "border-border hover:bg-accent/50",
                           !eff.isOpen ? "bg-zinc-100" : "",
+                          dayOrders.length > 0 ? "border-blue-200/80" : "",
                         ].join(" ")}
                       >
                         <span className="text-lg font-semibold leading-none tabular-nums sm:text-xl">
@@ -482,6 +580,27 @@ export const StoreCalendarPage: React.FC = () => {
                           >
                             {formatBusinessHoursShortLabel(eff.isOpen, eff.start, eff.end)}
                           </span>
+                          {dayOrders.length > 0 ? (
+                            <div className="mt-0.5 flex flex-col gap-0.5 border-t border-border/60 pt-1">
+                              <span className="text-[10px] font-semibold leading-tight text-blue-700 sm:text-xs">
+                                예약 {dayOrders.length}건
+                              </span>
+                              {previewOrders.map((order) => (
+                                <span
+                                  key={order.id}
+                                  className="truncate text-[10px] leading-tight text-foreground/85 sm:text-xs"
+                                  title={`${formatSeoulPickupHm(order.pickupDate)} ${reservationDisplayName(order)} ${reservationDisplayPhone(order)}`}
+                                >
+                                  {formatSeoulPickupHm(order.pickupDate)} {reservationDisplayName(order)}
+                                </span>
+                              ))}
+                              {hiddenOrderCount > 0 ? (
+                                <span className="text-[10px] leading-tight text-muted-foreground sm:text-xs">
+                                  +{hiddenOrderCount}건 더
+                                </span>
+                              ) : null}
+                            </div>
+                          ) : null}
                         </div>
                       </button>
                     );
@@ -548,6 +667,18 @@ export const StoreCalendarPage: React.FC = () => {
                                 </div>
                                 <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 border-t border-border/60 pt-3 text-xs sm:grid-cols-3">
                                   <div className="min-w-0 sm:col-span-1">
+                                    <dt className="text-muted-foreground">예약자명</dt>
+                                    <dd className="mt-0.5 truncate font-medium text-foreground">
+                                      {reservationDisplayName(o)}
+                                    </dd>
+                                  </div>
+                                  <div className="min-w-0 sm:col-span-1">
+                                    <dt className="text-muted-foreground">휴대폰</dt>
+                                    <dd className="mt-0.5 truncate font-medium tabular-nums text-foreground">
+                                      {reservationDisplayPhone(o)}
+                                    </dd>
+                                  </div>
+                                  <div className="min-w-0 sm:col-span-1">
                                     <dt className="text-muted-foreground">주문번호</dt>
                                     <dd className="mt-0.5 truncate font-medium text-foreground">
                                       {o.orderNumber}
@@ -576,6 +707,14 @@ export const StoreCalendarPage: React.FC = () => {
                     <div className="space-y-3">
                       <Label className="text-base font-medium">영업 여부</Label>
                       <p className="text-sm text-muted-foreground">저장 시 서버에 반영됩니다.</p>
+                      {detailSaveConflictMessage ? (
+                        <div
+                          role="alert"
+                          className="rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm leading-relaxed text-rose-800 whitespace-pre-line"
+                        >
+                          {detailSaveConflictMessage}
+                        </div>
+                      ) : null}
                       <div className="flex gap-4">
                         <label className="flex cursor-pointer items-center gap-2 text-base">
                           <input
@@ -659,7 +798,11 @@ export const StoreCalendarPage: React.FC = () => {
                       >
                         취소
                       </Button>
-                      <Button type="button" onClick={handleSaveClick} disabled={saving}>
+                      <Button
+                        type="button"
+                        onClick={handleSaveClick}
+                        disabled={saving || detailSaveConflicts.length > 0}
+                      >
                         저장
                       </Button>
                     </div>

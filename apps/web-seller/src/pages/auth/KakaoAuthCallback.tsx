@@ -126,7 +126,6 @@ export function KakaoAuthCallbackPage() {
         navigate(ROUTES.AUTH.LOGIN, { replace: true });
         addAlert({
           message: getApiMessage.error(error),
-          title: "오류",
           severity: "error",
         });
       }

@@ -29,6 +29,8 @@ import { NoticeModule } from "@apps/backend/modules/notice/notice.module";
 import { ConsumerNoticeController } from "@apps/backend/apis/consumer/controllers/notice.controller";
 import { QnaModule } from "@apps/backend/modules/qna/qna.module";
 import { ConsumerQnaController } from "@apps/backend/apis/consumer/controllers/qna.controller";
+import { StoreEntryRequestModule } from "@apps/backend/modules/store-entry-request/store-entry-request.module";
+import { ConsumerStoreEntryRequestController } from "@apps/backend/apis/consumer/controllers/store-entry-request.controller";
 
 /**
  * Consumer(구매자) API 모듈 — 경로 prefix `consumer`, JWT aud `consumer`
@@ -51,6 +53,7 @@ import { ConsumerQnaController } from "@apps/backend/apis/consumer/controllers/q
     TermsModule,
     NoticeModule,
     QnaModule,
+    StoreEntryRequestModule,
     // ChatModule,
   ],
   controllers: [
@@ -69,6 +72,7 @@ import { ConsumerQnaController } from "@apps/backend/apis/consumer/controllers/q
     ConsumerTermsController,
     ConsumerNoticeController,
     ConsumerQnaController,
+    ConsumerStoreEntryRequestController,
     // ConsumerChatController,
   ],
 })

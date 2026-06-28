@@ -1,33 +1,26 @@
 import React from "react";
-import { EnableStatus, OptionRequired } from "@/apps/web-seller/features/product/types/product.dto";
+import { EnableStatus } from "@/apps/web-seller/features/product/types/product.dto";
 import type { ProductForm } from "@/apps/web-seller/features/product/types/product.ui";
-import {
-  OPTION_REQUIRED_OPTIONS,
-  ENABLE_DISABLE_OPTIONS,
-} from "@/apps/web-seller/features/product/constants/product.constant";
+import { ENABLE_DISABLE_OPTIONS } from "@/apps/web-seller/features/product/constants/product.constant";
 import { SelectBox } from "@/apps/web-seller/common/components/selects/SelectBox";
 import { NumberInput } from "@/apps/web-seller/common/components/inputs/NumberInput";
 import { Label } from "@/apps/web-seller/common/components/labels/Label";
 import { Card, CardContent } from "@/apps/web-seller/common/components/cards/Card";
 
-export interface ProductCreationLetteringPolicySectionProps {
+export interface ProductCreationOptionsSectionProps {
   form: ProductForm;
   errors: Partial<Record<keyof ProductForm, string>>;
   onLetteringVisibleChange: (value: EnableStatus) => void;
-  onLetteringRequiredChange: (value: OptionRequired) => void;
-  onLetteringMaxLengthChange: (value: number) => void;
+  onLetteringMaxLengthChange: (value: number | undefined) => void;
   onImageUploadEnabledChange: (value: EnableStatus) => void;
   disabled?: boolean;
 }
 
-// 상품 등록 폼 - 레터링 정책 섹션
-export const ProductCreationLetteringPolicySection: React.FC<
-  ProductCreationLetteringPolicySectionProps
-> = ({
+// 상품 등록 폼 - 옵션 섹션
+export const ProductCreationOptionsSection: React.FC<ProductCreationOptionsSectionProps> = ({
   form,
   errors,
   onLetteringVisibleChange,
-  onLetteringRequiredChange,
   onLetteringMaxLengthChange,
   onImageUploadEnabledChange,
   disabled = false,
@@ -35,7 +28,7 @@ export const ProductCreationLetteringPolicySection: React.FC<
   return (
     <Card>
       <CardContent className="p-6">
-        <h2 className="text-xl font-semibold mb-2">레터링 정책</h2>
+        <h2 className="text-xl font-semibold mb-2">옵션</h2>
         <div className="border-t mb-6" />
 
         <div className="grid grid-cols-1 gap-6">
@@ -50,33 +43,24 @@ export const ProductCreationLetteringPolicySection: React.FC<
             />
           </div>
 
-          <div>
-            <SelectBox
-              label="레터링 문구 필수 여부"
-              value={form.letteringRequired}
-              onChange={(value) => onLetteringRequiredChange(value as OptionRequired)}
-              options={OPTION_REQUIRED_OPTIONS}
-              error={errors.letteringRequired}
-              required
-            />
-          </div>
-
-          <div>
-            <Label className="after:content-['*'] after:ml-0.5 after:text-destructive">
-              최대 글자 수
-            </Label>
-            <NumberInput
-              value={form.letteringMaxLength}
-              onChange={(v) => onLetteringMaxLengthChange(v ?? 0)}
-              placeholder=""
-              min={0}
-              className={errors.letteringMaxLength ? "border-destructive" : ""}
-              disabled={disabled}
-            />
-            {errors.letteringMaxLength && (
-              <p className="text-sm text-destructive mt-1">{errors.letteringMaxLength}</p>
-            )}
-          </div>
+          {form.letteringVisible === EnableStatus.ENABLE && (
+            <div>
+              <Label className="after:content-['*'] after:ml-0.5 after:text-destructive">
+                최대 글자 수
+              </Label>
+              <NumberInput
+                value={form.letteringMaxLength}
+                onChange={onLetteringMaxLengthChange}
+                placeholder="예: 10"
+                min={1}
+                className={errors.letteringMaxLength ? "border-destructive" : ""}
+                disabled={disabled}
+              />
+              {errors.letteringMaxLength && (
+                <p className="text-sm text-destructive mt-1">{errors.letteringMaxLength}</p>
+              )}
+            </div>
+          )}
 
           <div>
             <SelectBox

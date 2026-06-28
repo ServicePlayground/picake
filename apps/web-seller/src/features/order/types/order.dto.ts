@@ -109,6 +109,8 @@ export interface OrderListRequestDto {
   startDate?: string;
   endDate?: string;
   orderNumber?: string;
+  /** 상품명 부분 일치 검색 */
+  productName?: string;
   type?: OrderType;
   /** YYYY-MM-DD, Asia/Seoul 달력 (백엔드 pickupStartDate) */
   pickupStartDate?: string;

@@ -17,7 +17,11 @@ import {
   OrderStatus,
   OrderType,
 } from "@/apps/web-seller/features/order/types/order.dto";
+
 import { ORDER_STATUS_FILTER_OPTIONS } from "@/apps/web-seller/features/order/utils/order-status-ui.util";
+import { ORDER_STATUS_LIST_GUIDE_ITEMS } from "@/apps/web-seller/features/order/utils/order-status-seller-guide.util";
+import { OrderStatusGuideHelpButton } from "@/apps/web-seller/features/order/components/OrderStatusGuideHelpButton";
+import { OrderStatusGuideModal } from "@/apps/web-seller/features/order/components/OrderStatusGuideModal";
 import { useDebouncedValue } from "@/apps/web-seller/common/hooks/useDebouncedValue";
 import { ContentLoading } from "@/apps/web-seller/common/components/loading/ContentLoading";
 
@@ -31,13 +35,16 @@ export const StoreDetailOrderListPage: React.FC = () => {
   const [orderStatus, setOrderStatus] = useState<OrderStatus | undefined>(undefined);
   const [type, setType] = useState<OrderType | undefined>(undefined);
   const [orderNumber, setOrderNumber] = useState<string>("");
+  const [productName, setProductName] = useState<string>("");
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [pickupStartDate, setPickupStartDate] = useState<string>("");
   const [pickupEndDate, setPickupEndDate] = useState<string>("");
+  const [statusGuideOpen, setStatusGuideOpen] = useState(false);
 
-  // 주문 번호 검색 debounce (과도한 API 호출 방지)
+  // 검색 debounce (과도한 API 호출 방지)
   const debouncedOrderNumber = useDebouncedValue(orderNumber, DEBOUNCE_DELAY_MS);
+  const debouncedProductName = useDebouncedValue(productName, DEBOUNCE_DELAY_MS);
 
   // 필터나 정렬이 변경되면 페이지를 1로 리셋
   useEffect(() => {
@@ -46,6 +53,7 @@ export const StoreDetailOrderListPage: React.FC = () => {
     orderStatus,
     type,
     debouncedOrderNumber,
+    debouncedProductName,
     startDate,
     endDate,
     pickupStartDate,
@@ -58,6 +66,7 @@ export const StoreDetailOrderListPage: React.FC = () => {
     setOrderStatus(undefined);
     setType(undefined);
     setOrderNumber("");
+    setProductName("");
     setStartDate("");
     setEndDate("");
     setPickupStartDate("");
@@ -68,6 +77,7 @@ export const StoreDetailOrderListPage: React.FC = () => {
     orderStatus !== undefined ||
     type !== undefined ||
     orderNumber.trim() !== "" ||
+    productName.trim() !== "" ||
     startDate !== "" ||
     endDate !== "" ||
     pickupStartDate !== "" ||
@@ -89,6 +99,7 @@ export const StoreDetailOrderListPage: React.FC = () => {
     orderStatus,
     type,
     orderNumber: debouncedOrderNumber.trim() || undefined,
+    productName: debouncedProductName.trim() || undefined,
     startDate: startDate || undefined,
     endDate: endDate || undefined,
     pickupStartDate: pickupStartDate || undefined,
@@ -107,34 +118,21 @@ export const StoreDetailOrderListPage: React.FC = () => {
 
       {/* 필터 및 정렬 */}
       <div className="space-y-4 rounded-lg border bg-card p-4">
-        {/* 통계 및 정렬 */}
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="text-sm text-muted-foreground">
-              총 <span className="font-semibold text-foreground">{meta?.totalItems || 0}</span>개의
-              주문
-            </div>
-            {hasActiveFilters && (
-              <Button variant="outline" size="sm" onClick={handleResetFilters}>
-                필터 초기화
-              </Button>
-            )}
+        {/* 통계 */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="text-sm text-muted-foreground">
+            총 <span className="font-semibold text-foreground">{meta?.totalItems || 0}</span>개의
+            주문
           </div>
-          <Select value={sortBy} onValueChange={(value) => setSortBy(value as OrderSortBy)}>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="정렬 선택" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={OrderSortBy.LATEST}>최신순</SelectItem>
-              <SelectItem value={OrderSortBy.OLDEST}>오래된순</SelectItem>
-              <SelectItem value={OrderSortBy.PRICE_DESC}>금액 높은순</SelectItem>
-              <SelectItem value={OrderSortBy.PRICE_ASC}>금액 낮은순</SelectItem>
-            </SelectContent>
-          </Select>
+          {hasActiveFilters && (
+            <Button variant="outline" size="sm" onClick={handleResetFilters}>
+              필터 초기화
+            </Button>
+          )}
         </div>
 
-        {/* 필터 — 상품 목록과 동일 그리드로 인풋 너비 정렬 */}
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
+        {/* 필터 */}
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
           {/* 주문 번호 검색 */}
           <div className="min-w-0 space-y-1">
             <Label>주문 번호</Label>
@@ -145,9 +143,22 @@ export const StoreDetailOrderListPage: React.FC = () => {
             />
           </div>
 
+          {/* 상품명 검색 */}
+          <div className="min-w-0 space-y-1">
+            <Label>상품명</Label>
+            <Input
+              placeholder="상품명 검색"
+              value={productName}
+              onChange={(e) => setProductName(e.target.value)}
+            />
+          </div>
+
           {/* 주문 상태 필터 */}
           <div className="min-w-0 space-y-1">
-            <Label>주문 상태</Label>
+            <Label className="inline-flex items-center gap-1">
+              주문 상태
+              <OrderStatusGuideHelpButton onClick={() => setStatusGuideOpen(true)} />
+            </Label>
             <Select
               value={orderStatus || "ALL"}
               onValueChange={(value) =>
@@ -225,7 +236,7 @@ export const StoreDetailOrderListPage: React.FC = () => {
         <ContentLoading variant="section" message="주문을 불러오는 중…" className="py-12" />
       ) : (
         <>
-          <OrderList orders={orders} />
+          <OrderList orders={orders} sortBy={sortBy} onSortChange={setSortBy} />
 
           {/* 페이지네이션 */}
           {meta && meta.totalPages > 1 && (
@@ -253,6 +264,12 @@ export const StoreDetailOrderListPage: React.FC = () => {
           )}
         </>
       )}
+
+      <OrderStatusGuideModal
+        open={statusGuideOpen}
+        onClose={() => setStatusGuideOpen(false)}
+        items={ORDER_STATUS_LIST_GUIDE_ITEMS}
+      />
     </div>
   );
 };

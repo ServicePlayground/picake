@@ -22,6 +22,7 @@ function getProgressIndex(status: OrderStatus): number | null {
 export interface OrderStatusFlowStepperProps {
   status: OrderStatus;
   className?: string;
+  headerExtra?: React.ReactNode;
 }
 
 /**
@@ -30,13 +31,17 @@ export interface OrderStatusFlowStepperProps {
 export const OrderStatusFlowStepper: React.FC<OrderStatusFlowStepperProps> = ({
   status,
   className,
+  headerExtra,
 }) => {
   const progressIndex = getProgressIndex(status);
   const isTerminal = progressIndex === null;
 
   return (
     <div className={cn(className)}>
-      <div className={ORDER_DETAIL_INNER_SECTION_HEAD}>주문 진행 단계</div>
+      <div className={cn(ORDER_DETAIL_INNER_SECTION_HEAD, "flex items-center gap-2")}>
+        <span>주문 진행 단계</span>
+        {headerExtra && <div className="flex items-center gap-2">{headerExtra}</div>}
+      </div>
       <div className="-mx-1 overflow-x-auto px-4 py-4 sm:px-4">
         <div className="flex min-w-0 items-center gap-0 px-1">
           {MAIN_FLOW.map((stepStatus, idx) => {

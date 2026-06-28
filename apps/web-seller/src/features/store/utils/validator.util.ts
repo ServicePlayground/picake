@@ -29,6 +29,11 @@ export const validateStoreName = (name: string): string | null => {
 };
 
 /**
+ * 스토어 설명 최대 글자 수
+ */
+export const STORE_DESCRIPTION_MAX_LENGTH = 250;
+
+/**
  * 스토어 설명 유효성 검증 및 에러 메시지 반환
  */
 export const validateStoreDescription = (description: string | undefined): string | null => {
@@ -38,8 +43,8 @@ export const validateStoreDescription = (description: string | undefined): strin
   }
 
   // 250자 초과 검증
-  if (description.length > 250) {
-    return "스토어 설명은 250자 이하로 입력해주세요.";
+  if (description.length > STORE_DESCRIPTION_MAX_LENGTH) {
+    return `스토어 설명은 ${STORE_DESCRIPTION_MAX_LENGTH}자 이하로 입력해주세요.`;
   }
 
   // HTML 태그 검증 (< > 태그가 포함되어 있는지 확인)

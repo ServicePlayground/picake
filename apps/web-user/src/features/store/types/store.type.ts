@@ -65,6 +65,11 @@ export interface StoreListParams extends StoreListFilter {
   pickupFilterPeriod?: StoreListPickupFilterPeriod;
 }
 
+export interface StoreProductRepresentativeImage {
+  productId: string;
+  imageUrl: string;
+}
+
 export interface StoreInfo {
   id: string;
   userId: string;
@@ -95,7 +100,7 @@ export interface StoreInfo {
   averageRating: number; // 해당 스토어의 모든 상품 후기들의 평균 별점
   totalReviewCount: number; // 해당 스토어의 모든 상품 후기 개수
   // 상품 대표이미지 (상품당 1장)
-  productRepresentativeImageUrls: string[];
+  productRepresentativeImages: StoreProductRepresentativeImage[];
   // 상품 중 최소 금액 (노출·판매중인 상품만, 없으면 null)
   minProductPrice: number | null;
   /** 영업 캘린더 (스토어 목록·상세 API) */

@@ -119,9 +119,10 @@ export function ProductFilterModal({
             }}
           >
             <input
-              type="number"
+              type="text"
+              inputMode="numeric"
               value={minPriceInput}
-              onChange={(e) => setMinPriceInput(e.target.value)}
+              onChange={(e) => setMinPriceInput(e.target.value.replace(/[^\d]/g, ""))}
               placeholder="최소 가격"
               style={{
                 flex: 1,
@@ -143,9 +144,10 @@ export function ProductFilterModal({
             />
             <span style={{ color: "#6b7280", fontSize: "14px" }}>~</span>
             <input
-              type="number"
+              type="text"
+              inputMode="numeric"
               value={maxPriceInput}
-              onChange={(e) => setMaxPriceInput(e.target.value)}
+              onChange={(e) => setMaxPriceInput(e.target.value.replace(/[^\d]/g, ""))}
               placeholder="최대 가격"
               style={{
                 flex: 1,

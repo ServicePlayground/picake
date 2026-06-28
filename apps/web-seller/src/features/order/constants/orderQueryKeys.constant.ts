@@ -13,4 +13,7 @@ export const orderQueryKeys = {
   /** 스토어 캘린더용: 스토어 + 선택한 픽업일(YYYY-MM-DD)별 주문 */
   calendarByStore: (storeId: string, pickupDayKey: string | null) =>
     ["order", "calendar-by-store", storeId, pickupDayKey] as const,
+  /** 스토어 캘린더용: 스토어 + 픽업 월(YYYY-MM-DD ~ YYYY-MM-DD)별 주문 */
+  calendarMonthByStore: (storeId: string, pickupStartKey: string, pickupEndKey: string) =>
+    ["order", "calendar-month-by-store", storeId, pickupStartKey, pickupEndKey] as const,
 } as const;

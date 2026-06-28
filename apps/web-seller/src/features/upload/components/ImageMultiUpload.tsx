@@ -20,6 +20,7 @@ export interface ImageMultiUploadProps {
   width?: number | string; // 컨테이너 너비
   height?: number | string; // 컨테이너 높이
   enableDragDrop?: boolean; // 드래그앤드롭 활성화 여부
+  showMinResolutionHint?: boolean; // 최소 해상도 안내 문구 표시 여부
 }
 
 export const ImageMultiUpload: React.FC<ImageMultiUploadProps> = ({
@@ -31,6 +32,7 @@ export const ImageMultiUpload: React.FC<ImageMultiUploadProps> = ({
   width,
   height,
   enableDragDrop = true,
+  showMinResolutionHint = true,
 }) => {
   const [uploadErrors, setUploadErrors] = useState<Record<number, string>>({});
   const [singleImageError, setSingleImageError] = useState<string | null>(null); // 단일 이미지 모드용 오류
@@ -63,57 +65,88 @@ export const ImageMultiUpload: React.FC<ImageMultiUploadProps> = ({
     }
   };
 
-  // 공통 파일 처리 핸들러
-  const processFile = async (file: File, index?: number) => {
-    if (!file) return;
+  const resetFileInput = () => {
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  // 공통 파일 처리 핸들러 (단일 파일)
+  const processFile = async (
+    file: File,
+    index?: number,
+    currentUrls: string[] = value,
+  ): Promise<string | null> => {
+    if (!file) return null;
 
     // 파일 타입 유효성 검증
     const fileTypeError = validateFileType(file, accept);
     if (fileTypeError) {
       setError(fileTypeError, index);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      return;
+      return null;
     }
 
     // 파일 크기 유효성 검증
     const fileSizeError = validateFileSize(file, maxSize);
     if (fileSizeError) {
       setError(fileSizeError, index);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      return;
+      return null;
     }
 
     // 최대 이미지 개수 유효성 검증
-    const maxImagesError = validateMaxImages(value.length, maxImages);
+    const maxImagesError = validateMaxImages(currentUrls.length, maxImages);
     if (maxImagesError) {
       setError(maxImagesError, index);
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      return;
+      return null;
     }
 
     // 오류 초기화 및 업로드 상태 설정
     clearError(index);
-    const targetIndex = isSingleMode ? 0 : (index ?? value.length);
-    if (targetIndex !== undefined) {
-      setUploadingIndex(targetIndex);
-    }
+    const targetIndex = isSingleMode ? 0 : (index ?? currentUrls.length);
+    setUploadingIndex(targetIndex);
 
     try {
       const response = await uploadMutation.mutateAsync(file);
       // 단일 이미지 모드에서는 기존 이미지를 교체, 다중 이미지 모드에서는 추가
-      const newUrls = isSingleMode ? [response.fileUrl] : [...value, response.fileUrl];
+      const newUrls = isSingleMode ? [response.fileUrl] : [...currentUrls, response.fileUrl];
       onChange?.(newUrls);
+      return response.fileUrl;
     } catch (error) {
-      // 업로드 실패 시 오류 메시지 설정 (이미 onError에서 alert가 표시되므로 여기서는 로컬 오류만 설정)
       const errorMessage =
         error instanceof Error
           ? error.message
           : "이미지 업로드 중 오류가 발생했습니다. 다시 시도해주세요.";
       setError(errorMessage, index);
+      return null;
     } finally {
       setUploadingIndex(null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
     }
+  };
+
+  // 다중 파일 처리 핸들러
+  const processFiles = async (files: FileList | File[]) => {
+    const fileArray = Array.from(files);
+    if (fileArray.length === 0) return;
+
+    if (isSingleMode) {
+      await processFile(fileArray[0], 0);
+      resetFileInput();
+      return;
+    }
+
+    let currentUrls = [...value];
+
+    for (const file of fileArray) {
+      if (currentUrls.length >= maxImages) {
+        setError(`최대 ${maxImages}개의 이미지만 업로드할 수 있습니다.`, currentUrls.length);
+        break;
+      }
+
+      const uploadedUrl = await processFile(file, currentUrls.length, currentUrls);
+      if (uploadedUrl) {
+        currentUrls = [...currentUrls, uploadedUrl];
+      }
+    }
+
+    resetFileInput();
   };
 
   // 파일 선택 핸들러
@@ -121,12 +154,12 @@ export const ImageMultiUpload: React.FC<ImageMultiUploadProps> = ({
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
-    // 첫 번째 파일만 처리 (1개씩만 선택)
     if (value.length >= maxImages) {
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      resetFileInput();
       return;
     }
-    await processFile(files[0], value.length);
+
+    await processFiles(files);
   };
 
   // 드래그 앤 드롭 핸들러
@@ -152,9 +185,9 @@ export const ImageMultiUpload: React.FC<ImageMultiUploadProps> = ({
     if (!enableDragDrop) return;
     e.preventDefault();
     setIsDragging(false);
-    const file = e.dataTransfer.files?.[0];
-    if (!file) return;
-    await processFile(file, value.length);
+    const files = e.dataTransfer.files;
+    if (!files || files.length === 0) return;
+    await processFiles(files);
   };
 
   // 이미지 삭제 핸들러
@@ -245,8 +278,12 @@ export const ImageMultiUpload: React.FC<ImageMultiUploadProps> = ({
         <p className="text-xs text-muted-foreground mt-1">
           허용 파일 형식: {accept}
           <br />
-          최소 해상도 {width}x{height} 권장
-          <br />
+          {showMinResolutionHint && width && height && (
+            <>
+              최소 해상도 {width}x{height} 권장
+              <br />
+            </>
+          )}
           최대 파일 크기: {maxSize / (1024 * 1024)}MB
           <br />
         </p>
@@ -261,6 +298,7 @@ export const ImageMultiUpload: React.FC<ImageMultiUploadProps> = ({
         ref={fileInputRef}
         type="file"
         accept={accept}
+        multiple={!isSingleMode}
         onChange={handleFileSelect}
         className="hidden"
       />
@@ -316,21 +354,33 @@ export const ImageMultiUpload: React.FC<ImageMultiUploadProps> = ({
           >
             <div
               className={cn(
-                "relative w-full h-full box-border rounded-md overflow-hidden border border-dashed bg-muted/50 flex items-center justify-center cursor-pointer hover:border-primary hover:bg-muted transition-colors",
+                "relative w-full h-full box-border rounded-md overflow-hidden border border-dashed bg-muted/50 flex items-center justify-center transition-colors",
                 isDragging && enableDragDrop && "border-primary bg-muted",
+                isUploading
+                  ? "cursor-not-allowed opacity-60"
+                  : "cursor-pointer hover:border-primary hover:bg-muted",
               )}
-              onClick={handleButtonClick}
+              onClick={isUploading ? undefined : handleButtonClick}
               onDragOver={enableDragDrop ? handleDragOver : undefined}
               onDragEnter={enableDragDrop ? handleDragEnter : undefined}
               onDragLeave={enableDragDrop ? handleDragLeave : undefined}
               onDrop={enableDragDrop ? handleDrop : undefined}
             >
-              <div className="flex flex-col items-center gap-1">
-                <CloudUpload className="h-8 w-8 text-muted-foreground" />
-                <p className="text-xs text-muted-foreground text-center px-2">
-                  {enableDragDrop ? "이미지를 클릭하거나 드래그하여 업로드" : "이미지 추가"}
-                </p>
-              </div>
+              {isUploading ? (
+                <div className="flex flex-col items-center gap-1">
+                  <LoadingSpinner size="lg" className="text-muted-foreground" aria-hidden />
+                  <p className="text-xs text-muted-foreground">업로드 중...</p>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-1">
+                  <CloudUpload className="h-8 w-8 text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground text-center px-2">
+                    {enableDragDrop
+                      ? "이미지를 클릭하거나 드래그하여 업로드 (여러 장 선택 가능)"
+                      : "이미지 추가 (여러 장 선택 가능)"}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -344,8 +394,12 @@ export const ImageMultiUpload: React.FC<ImageMultiUploadProps> = ({
       <p className="text-xs text-muted-foreground mt-1">
         허용 파일 형식: {accept}
         <br />
-        최소 해상도 {width}x{height} 권장
-        <br />
+        {showMinResolutionHint && width && height && (
+          <>
+            최소 해상도 {width}x{height} 권장
+            <br />
+          </>
+        )}
         최대 파일 크기: {maxSize / (1024 * 1024)}MB
         <br />
         최대 이미지 개수: {maxImages}개<br />

@@ -19,6 +19,8 @@ export const STORE_ERROR_MESSAGES = {
     "날짜별 설정에서 영업으로 둔 경우 시작·종료 시각을 모두 입력해야 합니다.",
   BUSINESS_CALENDAR_OVERRIDE_TIME_ORDER:
     "날짜별 영업의 시작 시각은 종료 시각보다 이전이어야 합니다.",
+  BUSINESS_CALENDAR_ORDER_CONFLICT:
+    "진행 중인 예약과 영업 설정이 맞지 않아 저장할 수 없습니다.",
   PICKUP_FILTER_DATE_PERIOD_PAIR:
     "pickupFilterDate(YYYY-MM-DD)와 pickupFilterPeriod는 함께 생략하거나 함께 지정해야 합니다.",
 } as const;

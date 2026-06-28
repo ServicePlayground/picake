@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Product } from "@/apps/web-user/features/product/types/product.type";
 import { Icon } from "@/apps/web-user/common/components/icons";
 import { useAddProductLike } from "@/apps/web-user/features/like/hooks/mutations/useAddProductLike";
@@ -9,6 +10,7 @@ import { useRemoveProductLike } from "@/apps/web-user/features/like/hooks/mutati
 import { formatAddress } from "@/apps/web-user/common/utils/address.util";
 import { useAuthStore } from "@/apps/web-user/common/store/auth.store";
 import { useLoginSheetStore } from "@/apps/web-user/common/store/login-sheet.store";
+import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 
 interface CakeListItemProps {
   product: Product;
@@ -18,6 +20,7 @@ interface CakeListItemProps {
 export function CakeListItem({ product, onCardClick }: CakeListItemProps) {
   const [isLiked, setIsLiked] = useState(product.isLiked ?? false);
 
+  const router = useRouter();
   const { mutate: addLike, isPending: isAddingLike } = useAddProductLike();
   const { mutate: removeLike, isPending: isRemovingLike } = useRemoveProductLike();
   const isLikeLoading = isAddingLike || isRemovingLike;
@@ -37,6 +40,11 @@ export function CakeListItem({ product, onCardClick }: CakeListItemProps) {
     } else {
       addLike(product.id, { onError: () => setIsLiked(false) });
     }
+  };
+
+  const handleStoreClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    router.push(PATHS.STORE.DETAIL(product.storeId));
   };
 
   return (
@@ -85,7 +93,11 @@ export function CakeListItem({ product, onCardClick }: CakeListItemProps) {
           </span>
         </div>
       </div>
-      <div className="inline-flex items-center gap-1 py-1 px-2 text-2xs font-bold text-gray-700 bg-gray-50 rounded-full max-w-full">
+      <button
+        type="button"
+        onClick={handleStoreClick}
+        className="inline-flex items-center gap-1 py-1 px-2 text-2xs font-bold text-gray-700 bg-gray-50 rounded-full max-w-full"
+      >
         <span>
           {formatAddress(product.pickupAddress)} ·{" "}
           {product.productNoticeProducer.length > 10
@@ -93,7 +105,7 @@ export function CakeListItem({ product, onCardClick }: CakeListItemProps) {
             : product.productNoticeProducer}
         </span>
         <Icon name="arrow" width={16} height={16} className="text-gray-700 rotate-90" />
-      </div>
+      </button>
     </div>
   );
 }

@@ -29,7 +29,8 @@ export interface ProductCreationBasicInfoSectionProps {
   onChange: (
     key: keyof ProductForm,
   ) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  onSalePriceChange: (value: number) => void;
+  onOriginalPriceChange: (value: number | undefined) => void;
+  onSalePriceChange: (value: number | undefined) => void;
   disabled?: boolean;
 }
 
@@ -44,6 +45,7 @@ export const ProductCreationBasicInfoSection: React.FC<ProductCreationBasicInfoS
   onMainImageChange,
   onAdditionalImagesChange,
   onChange,
+  onOriginalPriceChange,
   onSalePriceChange,
   disabled = false,
 }) => {
@@ -94,12 +96,28 @@ export const ProductCreationBasicInfoSection: React.FC<ProductCreationBasicInfoS
             </div>
             <div>
               <Label className="after:content-['*'] after:ml-0.5 after:text-destructive">
+                정가
+              </Label>
+              <NumberInput
+                value={form.originalPrice}
+                onChange={onOriginalPriceChange}
+                placeholder="예: 50000"
+                min={0}
+                className={errors.originalPrice ? "border-destructive" : ""}
+                disabled={disabled}
+              />
+              {errors.originalPrice && (
+                <p className="text-sm text-destructive mt-1">{errors.originalPrice}</p>
+              )}
+            </div>
+            <div>
+              <Label className="after:content-['*'] after:ml-0.5 after:text-destructive">
                 판매가
               </Label>
               <NumberInput
                 value={form.salePrice}
-                onChange={(v) => onSalePriceChange(v ?? 0)}
-                placeholder=""
+                onChange={onSalePriceChange}
+                placeholder="예: 45000"
                 min={0}
                 className={errors.salePrice ? "border-destructive" : ""}
                 disabled={disabled}

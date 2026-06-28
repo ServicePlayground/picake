@@ -1,7 +1,7 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty, IsString } from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { ArrayMaxSize, IsArray, IsNotEmpty, IsOptional, IsString, MaxLength } from "class-validator";
 import { SWAGGER_EXAMPLES as STORE_SWAGGER_EXAMPLES } from "@apps/backend/modules/store/constants/store.constants";
-import { SWAGGER_EXAMPLES } from "@apps/backend/modules/feed/constants/feed.constants";
+import { FEED_MAX_IMAGES, SWAGGER_EXAMPLES } from "@apps/backend/modules/feed/constants/feed.constants";
 
 /**
  * 피드 생성 요청 DTO
@@ -24,12 +24,24 @@ export class CreateFeedRequestDto {
   title: string;
 
   @ApiProperty({
-    description: "피드 내용 (HTML 에디터 형식)",
+    description: "피드 내용 (텍스트)",
     example: SWAGGER_EXAMPLES.CONTENT,
   })
   @IsNotEmpty()
   @IsString()
   content: string;
+
+  @ApiPropertyOptional({
+    description: `피드 이미지 URL 목록 (선택, 최대 ${FEED_MAX_IMAGES}장)`,
+    type: [String],
+    example: SWAGGER_EXAMPLES.IMAGE_URLS,
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(FEED_MAX_IMAGES)
+  @IsString({ each: true })
+  @MaxLength(2048, { each: true })
+  imageUrls?: string[];
 }
 
 /**

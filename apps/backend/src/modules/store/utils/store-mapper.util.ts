@@ -138,9 +138,10 @@ export class StoreMapperUtil {
         averageRating = Math.round((totalRating / totalReviewCount) * 10) / 10; // 소수점 첫째자리까지
       }
 
-      const productRepresentativeImageUrls = productIds
-        .map((id) => productRepresentativeImage.get(id))
-        .filter((url): url is string => !!url);
+      const productRepresentativeImages = productIds.flatMap((id) => {
+        const imageUrl = productRepresentativeImage.get(id);
+        return imageUrl ? [{ productId: id, imageUrl }] : [];
+      });
 
       const saleablePrices = storeSaleablePrices.get(store.id) ?? [];
       const minProductPrice = saleablePrices.length > 0 ? Math.min(...saleablePrices) : null;
@@ -187,7 +188,7 @@ export class StoreMapperUtil {
         likeCount: store.likeCount,
         averageRating,
         totalReviewCount,
-        productRepresentativeImageUrls,
+        productRepresentativeImages,
         minProductPrice,
         businessCalendar,
         refundCancellationPolicy,

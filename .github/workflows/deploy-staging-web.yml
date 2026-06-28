@@ -8,28 +8,32 @@ on:
       - "web-seller/staging-*"
       - "web-admin/staging-*"
 
-permissions: {}
+permissions:
+  contents: read
+
+env:
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
 
 jobs:
   deploy-vercel:
     runs-on: ubuntu-latest
 
     steps:
-      # 태그에서 프로젝트명과 환경 추출 (예: web-user/staging-v1.0.0)
       - name: Extract project name and environment from tag
         id: extract-project
         run: |
           TAG_NAME=${GITHUB_REF#refs/tags/}
-          PROJECT_NAME=$(echo $TAG_NAME | cut -d'/' -f1)
-          ENV_NAME=$(echo $TAG_NAME | cut -d'/' -f2 | cut -d'-' -f1)
-          echo "project=$PROJECT_NAME" >> $GITHUB_OUTPUT
-          echo "environment=$ENV_NAME" >> $GITHUB_OUTPUT
-          echo "tag=$TAG_NAME" >> $GITHUB_OUTPUT
+          PROJECT_NAME=$(echo "$TAG_NAME" | cut -d'/' -f1)
+          ENV_NAME=$(echo "$TAG_NAME" | cut -d'/' -f2 | cut -d'-' -f1)
+          echo "project=$PROJECT_NAME" >> "$GITHUB_OUTPUT"
+          echo "environment=$ENV_NAME" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG_NAME" >> "$GITHUB_OUTPUT"
+          echo "app_dir=apps/$PROJECT_NAME" >> "$GITHUB_OUTPUT"
           echo "📦 Tag: $TAG_NAME"
           echo "📁 Project: $PROJECT_NAME"
           echo "🌍 Environment: $ENV_NAME"
 
-      # 프로젝트명과 환경 유효성 검증
       - name: Validate project name and environment
         run: |
           PROJECT=${{ steps.extract-project.outputs.project }}
@@ -37,66 +41,194 @@ jobs:
 
           if [[ "$PROJECT" != "web-user" && "$PROJECT" != "web-seller" && "$PROJECT" != "web-admin" ]]; then
             echo "❌ Invalid project name: $PROJECT"
-            echo "Valid project names: web-user, web-seller, web-admin"
             exit 1
           fi
 
           if [[ "$ENV" != "staging" ]]; then
             echo "❌ Invalid environment: $ENV"
-            echo "Valid environment: staging"
             exit 1
           fi
 
           echo "✅ Valid project: $PROJECT"
           echo "✅ Valid environment: $ENV"
 
-      # 프로젝트별 Vercel 웹훅 URL 설정
-      - name: Set project-specific webhook URL
-        id: set-webhook
+      - name: Set Vercel project id
+        id: vercel-project
         run: |
           PROJECT=${{ steps.extract-project.outputs.project }}
 
-          case $PROJECT in
+          case "$PROJECT" in
             web-user)
-              echo "webhook_url=${{ secrets.VERCEL_WEBHOOK_URL_WEB_USER_STAGING }}" >> $GITHUB_OUTPUT
+              PROJECT_ID="${{ secrets.VERCEL_PROJECT_ID_WEB_USER_STAGING }}"
               ;;
             web-seller)
-              echo "webhook_url=${{ secrets.VERCEL_WEBHOOK_URL_WEB_SELLER_STAGING }}" >> $GITHUB_OUTPUT
+              PROJECT_ID="${{ secrets.VERCEL_PROJECT_ID_WEB_SELLER_STAGING }}"
               ;;
             web-admin)
-              echo "webhook_url=${{ secrets.VERCEL_WEBHOOK_URL_WEB_ADMIN_STAGING }}" >> $GITHUB_OUTPUT
+              PROJECT_ID="${{ secrets.VERCEL_PROJECT_ID_WEB_ADMIN_STAGING }}"
               ;;
           esac
 
-      # Vercel 웹훅을 통한 배포 트리거
-      - name: Trigger Vercel deployment via webhook
-        run: |
-          PROJECT=${{ steps.extract-project.outputs.project }}
-          TAG_NAME=${{ steps.extract-project.outputs.tag }}
-          WEBHOOK_URL=${{ steps.set-webhook.outputs.webhook_url }}
-
-          echo "🚀 Triggering deployment for $PROJECT (staging) via Vercel webhook..."
-          echo "📋 Tag: $TAG_NAME"
-          echo "🔗 Webhook URL: ${WEBHOOK_URL:0:50}..." # URL 일부만 표시 (보안)
-
-          if [ -z "$WEBHOOK_URL" ]; then
-            echo "❌ Error: Webhook URL is not set for $PROJECT"
-            echo "Please set VERCEL_WEBHOOK_URL_${PROJECT^^}_STAGING secret in GitHub repository settings"
+          if [ -z "$PROJECT_ID" ]; then
+            echo "❌ VERCEL_PROJECT_ID is not set for $PROJECT"
+            echo "Add VERCEL_PROJECT_ID_*_STAGING to GitHub repository secrets"
             exit 1
           fi
 
-          # Vercel 웹훅 호출
-          echo "📤 Calling Vercel webhook..."
-          HTTP_STATUS=$(curl -s -o /tmp/vercel_response.txt -w "%{http_code}" \
+          echo "id=$PROJECT_ID" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # packageManager: yarn@4.x — setup-node의 cache: yarn은 Corepack 전 Yarn 1.x를 호출해 실패함
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Get Yarn cache directory
+        id: yarn-cache-dir
+        run: echo "dir=$(yarn config get cacheFolder)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Yarn dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.yarn-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@latest
+
+      # 모노레포: apps/<app>에서 vercel CLI를 실행하면 rootDirectory가 중복되어
+      # apps/web-user/apps/web-user 경로가 되며 "spawn sh ENOENT"가 발생함 → 저장소 루트에서 실행
+      - name: Pull Vercel environment
+        env:
+          VERCEL_PROJECT_ID: ${{ steps.vercel-project.outputs.id }}
+        run: |
+          if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_ORG_ID" ]; then
+            echo "❌ VERCEL_TOKEN and VERCEL_ORG_ID secrets are required"
+            exit 1
+          fi
+
+          rm -rf apps/*/.vercel .vercel
+
+          vercel pull --yes --environment=production --token="$VERCEL_TOKEN" \
+            2>&1 | tee /tmp/vercel-pull.log
+
+          # 의존성은 위에서 루트 yarn install 완료 — vercel build의 install 단계 스킵
+          jq '.installCommand = "true"' .vercel/project.json > .vercel/project.json.tmp
+          mv .vercel/project.json.tmp .vercel/project.json
+
+      - name: Build with Vercel
+        id: vercel-build
+        env:
+          VERCEL_PROJECT_ID: ${{ steps.vercel-project.outputs.id }}
+        run: |
+          set -o pipefail
+          vercel build --prod --token="$VERCEL_TOKEN" \
+            2>&1 | tee /tmp/vercel-build.log
+          echo "result=success" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy to Vercel
+        id: vercel-deploy
+        env:
+          VERCEL_PROJECT_ID: ${{ steps.vercel-project.outputs.id }}
+        run: |
+          set -o pipefail
+          vercel deploy --prebuilt --prod --yes --token="$VERCEL_TOKEN" \
+            2>&1 | tee /tmp/vercel-deploy.log
+
+          DEPLOY_URL=$(grep -Eo 'https://[a-zA-Z0-9./_-]+' /tmp/vercel-deploy.log | tail -n 1)
+          if [ -z "$DEPLOY_URL" ]; then
+            echo "❌ Could not parse deployment URL from Vercel CLI output"
+            exit 1
+          fi
+
+          echo "url=$DEPLOY_URL" >> "$GITHUB_OUTPUT"
+          echo "✅ Deployed: $DEPLOY_URL"
+
+      - name: Notify Discord
+        if: always()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL_WEB_FE }}
+          PROJECT: ${{ steps.extract-project.outputs.project }}
+          TAG: ${{ steps.extract-project.outputs.tag }}
+          ENVIRONMENT: ${{ steps.extract-project.outputs.environment }}
+          DEPLOY_URL: ${{ steps.vercel-deploy.outputs.url }}
+          JOB_STATUS: ${{ job.status }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "⚠️ DISCORD_WEBHOOK_URL_WEB_FE is not set — skipping notification"
+            exit 0
+          fi
+
+          case "$JOB_STATUS" in
+            success) STATUS_LABEL="✅ 배포 성공"; COLOR=5763719 ;;
+            failure) STATUS_LABEL="❌ 배포 실패"; COLOR=15548997 ;;
+            cancelled) STATUS_LABEL="⚠️ 배포 취소"; COLOR=9807270 ;;
+            *) STATUS_LABEL="ℹ️ 배포 종료 ($JOB_STATUS)"; COLOR=3447003 ;;
+          esac
+
+          LOG_SOURCE="/tmp/vercel-build.log"
+          if [ ! -s "$LOG_SOURCE" ]; then
+            LOG_SOURCE="/tmp/vercel-pull.log"
+          fi
+          if [ ! -s "$LOG_SOURCE" ]; then
+            LOG_SOURCE="/tmp/vercel-deploy.log"
+          fi
+
+          LOG_SNIPPET="로그 파일 없음"
+          if [ -s "$LOG_SOURCE" ]; then
+            LOG_SNIPPET=$(tail -c 900 "$LOG_SOURCE" | sed 's/```/``\`/g')
+          fi
+
+          DEPLOY_FIELD="${DEPLOY_URL:-배포 URL 없음 (빌드/배포 단계 실패)}"
+          if [ -n "$DEPLOY_URL" ]; then
+            DEPLOY_FIELD="[$DEPLOY_URL]($DEPLOY_URL)"
+          fi
+
+          PAYLOAD=$(jq -n \
+            --arg title "$STATUS_LABEL — $PROJECT (staging)" \
+            --argjson color "$COLOR" \
+            --arg project "$PROJECT" \
+            --arg tag "$TAG" \
+            --arg environment "$ENVIRONMENT" \
+            --arg deploy "$DEPLOY_FIELD" \
+            --arg run_url "$RUN_URL" \
+            --arg log "$LOG_SNIPPET" \
+            '{
+              embeds: [{
+                title: $title,
+                color: $color,
+                fields: [
+                  { name: "프로젝트", value: $project, inline: true },
+                  { name: "환경", value: $environment, inline: true },
+                  { name: "태그", value: ("`" + $tag + "`"), inline: false },
+                  { name: "배포 URL", value: $deploy, inline: false },
+                  { name: "GitHub Actions", value: ("[워크플로우 로그](" + $run_url + ")"), inline: false },
+                  { name: "Vercel 로그 (마지막 900자)", value: ("```\n" + $log + "\n```"), inline: false }
+                ],
+                timestamp: (now | strftime("%Y-%m-%dT%H:%M:%SZ"))
+              }]
+            }')
+
+          HTTP_STATUS=$(curl -s -o /tmp/discord_response.txt -w "%{http_code}" \
             -X POST \
             -H "Content-Type: application/json" \
-            "$WEBHOOK_URL")
+            -d "$PAYLOAD" \
+            "$DISCORD_WEBHOOK_URL")
 
           if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
-            echo "✅ Webhook triggered successfully (HTTP $HTTP_STATUS)"
-            cat /tmp/vercel_response.txt 2>/dev/null || echo "No response body"
+            echo "✅ Discord notification sent (HTTP $HTTP_STATUS)"
           else
-            echo "❌ Webhook call failed (HTTP $HTTP_STATUS)"
-            cat /tmp/vercel_response.txt
-            exit 1
+            echo "⚠️ Discord notification failed (HTTP $HTTP_STATUS) — deploy result is unchanged"
+            cat /tmp/discord_response.txt
           fi

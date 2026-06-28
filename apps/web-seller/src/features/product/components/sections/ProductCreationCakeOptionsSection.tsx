@@ -34,7 +34,7 @@ export interface ProductCreationCakeOptionsSectionProps {
 // 상품 등록 폼 - 케이크 옵션 섹션
 export const ProductCreationCakeOptionsSection: React.FC<
   ProductCreationCakeOptionsSectionProps
-> = ({ form, onCakeSizeOptionsChange, onCakeFlavorOptionsChange }) => {
+> = ({ form, errors, onCakeSizeOptionsChange, onCakeFlavorOptionsChange }) => {
   const [sizeOptions, setSizeOptions] = useState<CakeSizeOptionDto[]>(form.cakeSizeOptions || []);
   const [flavorOptions, setFlavorOptions] = useState<CakeFlavorOptionDto[]>(
     form.cakeFlavorOptions || [],
@@ -301,8 +301,13 @@ export const ProductCreationCakeOptionsSection: React.FC<
                             onChange={(e) =>
                               handleFlavorOptionChange(index, "displayName", e.target.value)
                             }
-                            className="w-full"
+                            className={`w-full ${errors.cakeFlavorOptions && !option.displayName?.trim() ? "border-destructive" : ""}`}
                           />
+                          {errors.cakeFlavorOptions && !option.displayName?.trim() && (
+                            <p className="text-sm text-destructive mt-1">
+                              {errors.cakeFlavorOptions}
+                            </p>
+                          )}
                         </td>
                         <td className="px-4 py-3">
                           <NumberInput

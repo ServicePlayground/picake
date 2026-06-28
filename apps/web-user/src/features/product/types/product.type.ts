@@ -23,12 +23,6 @@ export enum VisibilityStatus {
   DISABLE = "DISABLE",
 }
 
-export enum LetteringRequired {
-  REQUIRED = "REQUIRED",
-  OPTIONAL = "OPTIONAL",
-  DISABLED = "DISABLED",
-}
-
 export enum ImageUploadEnabled {
   ENABLE = "ENABLE",
   DISABLE = "DISABLE",
@@ -83,6 +77,7 @@ export interface Product {
   storeId: string;
   name: string;
   images: string[];
+  originalPrice: number;
   salePrice: number;
   likeCount: number;
   isLiked: boolean | null;
@@ -93,7 +88,6 @@ export interface Product {
   cakeSizeOptions: CakeSizeOption[];
   cakeFlavorOptions: CakeFlavorOption[];
   letteringVisible: VisibleStatus;
-  letteringRequired: LetteringRequired;
   letteringMaxLength: number;
   imageUploadEnabled: ImageUploadEnabled;
   productType: ProductType;

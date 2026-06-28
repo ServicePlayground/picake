@@ -8,6 +8,7 @@ import {
 import { JwtVerifiedPayload } from "@apps/backend/modules/auth/types/auth.types";
 import { Prisma } from "@apps/backend/infra/database/prisma/generated/client";
 import { ProductOwnershipUtil } from "@apps/backend/modules/product/utils/product-ownership.util";
+import { validateProductPrices } from "@apps/backend/modules/product/utils/product-price.util";
 import { LoggerUtil } from "@apps/backend/common/utils/logger.util";
 
 @Injectable()
@@ -36,6 +37,8 @@ export class ProductCreateService {
       createProductDto.storeId,
       user.sub,
     );
+
+    validateProductPrices(createProductDto.originalPrice, createProductDto.salePrice);
 
     try {
       return await this.prisma.$transaction(
@@ -80,13 +83,13 @@ export class ProductCreateService {
             },
             name: createProductDto.name,
             images: createProductDto.images || [],
+            originalPrice: createProductDto.originalPrice,
             salePrice: createProductDto.salePrice,
             salesStatus: createProductDto.salesStatus,
             visibilityStatus: createProductDto.visibilityStatus,
             cakeSizeOptions: cakeSizeOptionsWithId as unknown as Prisma.InputJsonValue,
             cakeFlavorOptions: cakeFlavorOptionsWithId as unknown as Prisma.InputJsonValue,
             letteringVisible: createProductDto.letteringVisible,
-            letteringRequired: createProductDto.letteringRequired,
             letteringMaxLength: createProductDto.letteringMaxLength,
             imageUploadEnabled: createProductDto.imageUploadEnabled,
             productType,

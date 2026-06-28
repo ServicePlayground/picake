@@ -11,7 +11,6 @@ import {
 } from "class-validator";
 import { Type } from "class-transformer";
 import {
-  OptionRequired,
   EnableStatus,
   ProductCategoryType,
   CakeSizeDisplayName,
@@ -146,6 +145,15 @@ export class CreateProductRequestDto {
   images: string[];
 
   @ApiProperty({
+    description: "정가",
+    example: PRODUCT_SWAGGER_EXAMPLES.PRODUCT_DATA.originalPrice,
+  })
+  @IsNotEmpty()
+  @IsNumber()
+  @Min(0)
+  originalPrice: number;
+
+  @ApiProperty({
     description: "판매가",
     example: PRODUCT_SWAGGER_EXAMPLES.PRODUCT_DATA.salePrice,
   })
@@ -202,15 +210,6 @@ export class CreateProductRequestDto {
   @IsNotEmpty()
   @IsEnum(EnableStatus)
   letteringVisible: EnableStatus;
-
-  @ApiPropertyOptional({
-    description: "레터링 문구 사용 (필수/선택)",
-    enum: OptionRequired,
-    example: OptionRequired.REQUIRED,
-  })
-  @IsNotEmpty()
-  @IsEnum(OptionRequired)
-  letteringRequired: OptionRequired;
 
   @ApiPropertyOptional({
     description: "레터링 최대 글자 수",

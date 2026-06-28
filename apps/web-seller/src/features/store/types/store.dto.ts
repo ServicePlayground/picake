@@ -70,6 +70,12 @@ export interface RefundCancellationPolicyDto {
   rules: RefundRuleItemDto[];
 }
 
+/** 스토어 상품 대표이미지 (상품당 1장) */
+export interface StoreProductRepresentativeImageDto {
+  productId: string;
+  imageUrl: string;
+}
+
 export interface StoreResponseDto extends StoreAddressDto {
   id: string;
   userId: string;
@@ -96,8 +102,8 @@ export interface StoreResponseDto extends StoreAddressDto {
   isLiked?: boolean | null;
   averageRating: number;
   totalReviewCount: number;
-  /** 해당 스토어의 모든 상품 대표이미지 URL 배열 (상품당 1장) */
-  productRepresentativeImageUrls: string[];
+  /** 해당 스토어의 모든 상품 대표이미지 (상품당 1장) */
+  productRepresentativeImages: StoreProductRepresentativeImageDto[];
   /** 상품 중 최소 금액 (노출·판매중인 상품만, 없으면 null) */
   minProductPrice: number | null;
   /** 영업 캘린더 (백엔드 StoreResponseDto.businessCalendar, 구버전 API는 생략될 수 있음) */

@@ -8,6 +8,7 @@ import {
 import { JwtVerifiedPayload } from "@apps/backend/modules/auth/types/auth.types";
 import { Prisma } from "@apps/backend/infra/database/prisma/generated/client";
 import { ProductOwnershipUtil } from "@apps/backend/modules/product/utils/product-ownership.util";
+import { validateProductPrices } from "@apps/backend/modules/product/utils/product-price.util";
 import { LoggerUtil } from "@apps/backend/common/utils/logger.util";
 
 @Injectable()
@@ -81,10 +82,17 @@ export class ProductUpdateService {
     const product = await this.prisma.product.findUnique({
       where: { id },
       select: {
+        originalPrice: true,
+        salePrice: true,
         cakeSizeOptions: true,
         cakeFlavorOptions: true,
       },
     });
+
+    const nextOriginalPrice = updateProductDto.originalPrice ?? product!.originalPrice;
+    const nextSalePrice = updateProductDto.salePrice ?? product!.salePrice;
+
+    validateProductPrices(nextOriginalPrice, nextSalePrice);
 
     const updateData: Prisma.ProductUpdateInput = {};
 
@@ -93,6 +101,9 @@ export class ProductUpdateService {
     }
     if (updateProductDto.images !== undefined) {
       updateData.images = updateProductDto.images;
+    }
+    if (updateProductDto.originalPrice !== undefined) {
+      updateData.originalPrice = updateProductDto.originalPrice;
     }
     if (updateProductDto.salePrice !== undefined) {
       updateData.salePrice = updateProductDto.salePrice;
@@ -130,9 +141,6 @@ export class ProductUpdateService {
     }
     if (updateProductDto.letteringVisible !== undefined) {
       updateData.letteringVisible = updateProductDto.letteringVisible;
-    }
-    if (updateProductDto.letteringRequired !== undefined) {
-      updateData.letteringRequired = updateProductDto.letteringRequired;
     }
     if (updateProductDto.letteringMaxLength !== undefined) {
       updateData.letteringMaxLength = updateProductDto.letteringMaxLength;

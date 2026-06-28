@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Header from "@/apps/web-user/common/components/headers/Header";
 import { Toast } from "@/apps/web-user/common/components/toast/Toast";
 import { useOrderDetail } from "@/apps/web-user/features/order/hooks/queries/useOrderDetail";
@@ -10,10 +10,8 @@ import {
   PendingToast,
   usePendingToastStore,
 } from "@/apps/web-user/common/store/pending-toast.store";
-import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 
 export default function OrderDetailPage() {
-  const router = useRouter();
   const params = useParams<{ orderId: string }>();
   const orderId = params?.orderId ?? "";
   const { data: order, isLoading } = useOrderDetail(orderId);
@@ -28,11 +26,7 @@ export default function OrderDetailPage() {
 
   return (
     <div>
-      <Header
-        variant="back-title"
-        title="예약 상세"
-        onBackClick={() => router.push(PATHS.MY_ORDERS)}
-      />
+      <Header variant="back-title" title="예약 상세" />
       {isLoading ? (
         <div className="px-5 py-8 space-y-4 animate-pulse">
           <div className="h-5 w-40 bg-gray-100 rounded" />
