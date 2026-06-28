@@ -22,6 +22,9 @@ export const StoreDetailProductCreatePage: React.FC = () => {
     const request: CreateProductRequestDto = {
       ...data,
       storeId,
+      originalPrice: data.originalPrice!,
+      salePrice: data.salePrice!,
+      letteringMaxLength: data.letteringMaxLength ?? 1,
     };
 
     await createProductMutation.mutateAsync(request);

@@ -34,8 +34,8 @@ interface Props {
 export const defaultForm: ProductForm = {
   images: [],
   name: "",
-  originalPrice: 0,
-  salePrice: 0,
+  originalPrice: undefined,
+  salePrice: undefined,
   salesStatus: EnableStatus.ENABLE,
   visibilityStatus: EnableStatus.ENABLE,
   cakeSizeOptions: [
@@ -55,7 +55,7 @@ export const defaultForm: ProductForm = {
     },
   ],
   letteringVisible: EnableStatus.ENABLE,
-  letteringMaxLength: 1,
+  letteringMaxLength: undefined,
   imageUploadEnabled: EnableStatus.ENABLE,
   productCategoryTypes: [],
   searchTags: [],
@@ -113,14 +113,14 @@ export const ProductCreationForm: React.FC<Props> = ({
       onChange?.(next);
     };
 
-  const handleOriginalPriceChange = (value: number) => {
+  const handleOriginalPriceChange = (value: number | undefined) => {
     if (disabled) return;
     const next = { ...form, originalPrice: value };
     setForm(next);
     onChange?.(next);
   };
 
-  const handleSalePriceChange = (value: number) => {
+  const handleSalePriceChange = (value: number | undefined) => {
     if (disabled) return;
     const next = { ...form, salePrice: value };
     setForm(next);
@@ -172,18 +172,12 @@ export const ProductCreationForm: React.FC<Props> = ({
   };
 
   const handleLetteringVisibleChange = (value: EnableStatus) => {
-    const next = {
-      ...form,
-      letteringVisible: value,
-      ...(value === EnableStatus.ENABLE && form.letteringMaxLength < 1
-        ? { letteringMaxLength: 1 }
-        : {}),
-    };
+    const next = { ...form, letteringVisible: value };
     setForm(next);
     onChange?.(next);
   };
 
-  const handleLetteringMaxLengthChange = (value: number) => {
+  const handleLetteringMaxLengthChange = (value: number | undefined) => {
     if (disabled) return;
     const next = { ...form, letteringMaxLength: value };
     setForm(next);
