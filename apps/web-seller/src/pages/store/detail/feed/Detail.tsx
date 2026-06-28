@@ -126,7 +126,7 @@ export const StoreDetailFeedDetailPage: React.FC = () => {
 
             {/* 이미지 */}
             <div className="space-y-2">
-              <Label>이미지 (최대 {FEED_MAX_IMAGES}장)</Label>
+              <Label>이미지</Label>
               <ImageMultiUpload
                 value={imageUrls}
                 onChange={setImageUrls}
