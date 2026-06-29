@@ -89,12 +89,16 @@ export default function MypagePage() {
           <Link href={PATHS.SEARCH} className="flex items-center justify-center">
             <Icon name="search" width={24} height={24} className="text-gray-900" />
           </Link>
-          <Link href={PATHS.ALARM} className="flex items-center justify-center">
-            <Icon name="alarm" width={24} height={24} className="text-gray-900" />
-          </Link>
-          <Link href={PATHS.SETTING} className="flex items-center justify-center">
-            <Icon name="setting" width={24} height={24} className="text-gray-900" />
-          </Link>
+          {hasHydrated && isAuthenticated && (
+            <>
+              <Link href={PATHS.ALARM} className="flex items-center justify-center">
+                <Icon name="alarm" width={24} height={24} className="text-gray-900" />
+              </Link>
+              <Link href={PATHS.SETTING} className="flex items-center justify-center">
+                <Icon name="setting" width={24} height={24} className="text-gray-900" />
+              </Link>
+            </>
+          )}
         </div>
       </header>
 
