@@ -211,15 +211,23 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
       aria-modal="true"
       aria-label="이미지 확대 보기"
     >
-      {/* 상단 바: 카운터 + 닫기 */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center justify-between p-4">
-        {total > 1 ? (
-          <span className="pointer-events-auto rounded-full bg-black/50 px-3 py-1 text-sm font-medium text-white/90 backdrop-blur">
-            {index + 1} / {total}
-          </span>
-        ) : (
-          <span />
-        )}
+      {/* 상단 네비게이션 + 닫기 */}
+      {total > 1 && (
+        <div className="absolute inset-x-0 top-0 z-10 flex justify-center p-4">
+          <div className="flex items-center gap-0.5 rounded-full bg-black/55 px-2 py-1.5 shadow-xl backdrop-blur">
+            <ToolbarButton onClick={goPrev} label="이전 이미지 (←)">
+              <ChevronLeft className="h-5 w-5" />
+            </ToolbarButton>
+            <span className="min-w-12 px-1 text-center text-sm font-medium tabular-nums text-white/90">
+              {index + 1} / {total}
+            </span>
+            <ToolbarButton onClick={goNext} label="다음 이미지 (→)">
+              <ChevronRight className="h-5 w-5" />
+            </ToolbarButton>
+          </div>
+        </div>
+      )}
+      <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center justify-end p-4">
         <ToolbarButton onClick={onClose} label="닫기 (Esc)">
           <X className="h-5 w-5" />
         </ToolbarButton>
@@ -248,26 +256,6 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
           style={imageStyle}
         />
       </div>
-
-      {/* 좌우 네비게이션 */}
-      {total > 1 && (
-        <>
-          <ToolbarButton
-            onClick={goPrev}
-            label="이전 이미지 (←)"
-            className="absolute left-3 top-1/2 z-10 -translate-y-1/2 h-11 w-11"
-          >
-            <ChevronLeft className="h-6 w-6" />
-          </ToolbarButton>
-          <ToolbarButton
-            onClick={goNext}
-            label="다음 이미지 (→)"
-            className="absolute right-3 top-1/2 z-10 -translate-y-1/2 h-11 w-11"
-          >
-            <ChevronRight className="h-6 w-6" />
-          </ToolbarButton>
-        </>
-      )}
 
       {/* 하단 툴바 */}
       <div className="absolute inset-x-0 bottom-0 z-10 flex justify-center p-4">

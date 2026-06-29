@@ -188,31 +188,6 @@ export const OrderDetailSpreadsheetView: React.FC<OrderDetailSpreadsheetViewProp
         <div className="overflow-x-auto">
           <SheetTable>
             <tbody>
-              <SheetSectionRow>기본</SheetSectionRow>
-              <SheetKvRow label="상품명">{order.productName || "—"}</SheetKvRow>
-              <SheetKvRow label="주문 번호">{order.orderNumber}</SheetKvRow>
-              <SheetKvRow label="주문 상태">
-                <StatusBadge variant={variant} className="text-xs font-semibold">
-                  {getOrderStatusLabel(status)}
-                </StatusBadge>
-              </SheetKvRow>
-              <SheetKvRow label="주문일시">
-                {new Date(order.createdAt).toLocaleString("ko-KR")}
-              </SheetKvRow>
-              <SheetKvRow label="총 수량">{`${order.totalQuantity}개`}</SheetKvRow>
-              <SheetKvRow label="총 금액">
-                <span className="font-semibold text-primary">{`${order.totalPrice.toLocaleString()}원`}</span>
-              </SheetKvRow>
-
-              <SheetSectionRow>예약자 연락</SheetSectionRow>
-              <SheetKvRow label="입금자명">{order.depositorName?.trim() || "—"}</SheetKvRow>
-              <SheetKvRow label="예약자명">
-                {order.reservationContactName?.trim() || "—"}
-              </SheetKvRow>
-              <SheetKvRow label="연락처">
-                {order.reservationPhone?.trim() || "—"}
-              </SheetKvRow>
-
               <SheetSectionRow>픽업</SheetSectionRow>
               <SheetKvRow label="픽업일시">
                 {order.pickupDate ? new Date(order.pickupDate).toLocaleString("ko-KR") : "—"}
@@ -227,6 +202,31 @@ export const OrderDetailSpreadsheetView: React.FC<OrderDetailSpreadsheetViewProp
                     <div className="text-slate-500">{order.pickupDetailAddress}</div>
                   )}
                 </div>
+              </SheetKvRow>
+
+              <SheetSectionRow>예약자 연락</SheetSectionRow>
+              <SheetKvRow label="입금자명">{order.depositorName?.trim() || "—"}</SheetKvRow>
+              <SheetKvRow label="예약자명">
+                {order.reservationContactName?.trim() || "—"}
+              </SheetKvRow>
+              <SheetKvRow label="연락처">
+                {order.reservationPhone?.trim() || "—"}
+              </SheetKvRow>
+
+              <SheetSectionRow>기본</SheetSectionRow>
+              <SheetKvRow label="상품명">{order.productName || "—"}</SheetKvRow>
+              <SheetKvRow label="주문 번호">{order.orderNumber}</SheetKvRow>
+              <SheetKvRow label="주문 상태">
+                <StatusBadge variant={variant} className="text-xs font-semibold">
+                  {getOrderStatusLabel(status)}
+                </StatusBadge>
+              </SheetKvRow>
+              <SheetKvRow label="주문일시">
+                {new Date(order.createdAt).toLocaleString("ko-KR")}
+              </SheetKvRow>
+              <SheetKvRow label="총 수량">{`${order.totalQuantity}개`}</SheetKvRow>
+              <SheetKvRow label="총 금액">
+                <span className="font-semibold text-primary">{`${order.totalPrice.toLocaleString()}원`}</span>
               </SheetKvRow>
             </tbody>
           </SheetTable>

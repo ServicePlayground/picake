@@ -11,7 +11,7 @@ export interface ProductCreationOptionsSectionProps {
   form: ProductForm;
   errors: Partial<Record<keyof ProductForm, string>>;
   onLetteringVisibleChange: (value: EnableStatus) => void;
-  onLetteringMaxLengthChange: (value: number) => void;
+  onLetteringMaxLengthChange: (value: number | undefined) => void;
   onImageUploadEnabledChange: (value: EnableStatus) => void;
   disabled?: boolean;
 }
@@ -50,8 +50,8 @@ export const ProductCreationOptionsSection: React.FC<ProductCreationOptionsSecti
               </Label>
               <NumberInput
                 value={form.letteringMaxLength}
-                onChange={(v) => onLetteringMaxLengthChange(v ?? 0)}
-                placeholder=""
+                onChange={onLetteringMaxLengthChange}
+                placeholder="예: 10"
                 min={1}
                 className={errors.letteringMaxLength ? "border-destructive" : ""}
                 disabled={disabled}

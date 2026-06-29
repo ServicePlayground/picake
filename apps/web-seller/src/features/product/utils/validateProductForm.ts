@@ -41,7 +41,12 @@ export const validateProductForm = (
     newErrors.salePrice = "판매가는 정가보다 클 수 없습니다.";
   }
 
-  if (form.letteringVisible === EnableStatus.ENABLE && form.letteringMaxLength < 1) {
+  if (
+    form.letteringVisible === EnableStatus.ENABLE &&
+    (form.letteringMaxLength === null ||
+      form.letteringMaxLength === undefined ||
+      form.letteringMaxLength < 1)
+  ) {
     newErrors.letteringMaxLength = "최대 글자 수는 1 이상 입력해주세요.";
   }
 

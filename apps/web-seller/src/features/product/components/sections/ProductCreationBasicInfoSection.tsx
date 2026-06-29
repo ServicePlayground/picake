@@ -29,8 +29,8 @@ export interface ProductCreationBasicInfoSectionProps {
   onChange: (
     key: keyof ProductForm,
   ) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  onOriginalPriceChange: (value: number) => void;
-  onSalePriceChange: (value: number) => void;
+  onOriginalPriceChange: (value: number | undefined) => void;
+  onSalePriceChange: (value: number | undefined) => void;
   disabled?: boolean;
 }
 
@@ -100,8 +100,8 @@ export const ProductCreationBasicInfoSection: React.FC<ProductCreationBasicInfoS
               </Label>
               <NumberInput
                 value={form.originalPrice}
-                onChange={(v) => onOriginalPriceChange(v ?? 0)}
-                placeholder=""
+                onChange={onOriginalPriceChange}
+                placeholder="예: 50000"
                 min={0}
                 className={errors.originalPrice ? "border-destructive" : ""}
                 disabled={disabled}
@@ -116,8 +116,8 @@ export const ProductCreationBasicInfoSection: React.FC<ProductCreationBasicInfoS
               </Label>
               <NumberInput
                 value={form.salePrice}
-                onChange={(v) => onSalePriceChange(v ?? 0)}
-                placeholder=""
+                onChange={onSalePriceChange}
+                placeholder="예: 45000"
                 min={0}
                 className={errors.salePrice ? "border-destructive" : ""}
                 disabled={disabled}
