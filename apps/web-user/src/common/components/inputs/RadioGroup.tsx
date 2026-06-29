@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { cn } from "@/apps/web-user/common/lib/utils";
 
 /**
  * Radio 옵션 타입
@@ -44,6 +45,8 @@ interface RadioGroupProps<T = string> {
   name?: string;
   /** 컨테이너 추가 클래스명 */
   className?: string;
+  /** 라벨 추가 클래스명 (기본 스타일 오버라이드용) */
+  labelClassName?: string;
 }
 
 export const RadioGroup = <T extends string | number = string>({
@@ -55,13 +58,20 @@ export const RadioGroup = <T extends string | number = string>({
   disabled = false,
   name,
   className = "",
+  labelClassName = "",
 }: RadioGroupProps<T>) => {
   const autoName = React.useId();
   const groupName = name ?? autoName;
 
   return (
     <div className={`w-full ${className}`.trim()}>
-      {label && <p className="block mb-[10px] text-sm font-bold text-gray-900">{label}</p>}
+      {label && (
+        <p
+          className={cn("block mb-[10px] text-sm font-bold text-gray-900", labelClassName)}
+        >
+          {label}
+        </p>
+      )}
       <div className="flex flex-col gap-2.5">
         {options.map((option) => {
           const isSelected = option.value === value;
