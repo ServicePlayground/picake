@@ -82,7 +82,7 @@ export class GetProductsRequestDto extends PaginationRequestDto {
 
   @ApiPropertyOptional({
     description:
-      "(필터) 상품 카테고리 타입 - 1개 또는 여러 개. 해당 타입 중 하나라도 가지면 조회 (생일, 연인, 친구, 가족, 기념일, 당일픽업, 레터링, 캐릭터, 심플, 꽃, 사진)",
+      "(필터) 상품 카테고리 타입 - 1개 또는 여러 개. 해당 타입 중 하나라도 가지면 조회 (생일, 연인, 친구, 가족, 기념일, 당일픽업, 커스텀, 캐릭터, 심플, 꽃, 사진)",
     enum: ProductCategoryType,
     isArray: true,
     example: [ProductCategoryType.BIRTHDAY],

@@ -239,7 +239,7 @@ export class CreateProductRequestDto {
 
   @ApiPropertyOptional({
     description:
-      "상품 카테고리 타입 (없거나 여러 개) - 생일, 연인, 친구, 가족, 기념일, 당일픽업, 레터링, 캐릭터, 심플, 꽃, 사진",
+      "상품 카테고리 타입 (없거나 여러 개) - 생일, 연인, 친구, 가족, 기념일, 당일픽업, 커스텀, 캐릭터, 심플, 꽃, 사진",
     enum: ProductCategoryType,
     isArray: true,
     example: [ProductCategoryType.BIRTHDAY, ProductCategoryType.SIMPLE],

@@ -855,7 +855,7 @@ enum ProductCategoryType {
   FAMILY         // 가족
   ANNIVERSARY    // 기념일
   SAME_DAY_PICKUP // 당일픽업
-  LETTERING      // 레터링
+  LETTERING      // 커스텀
   CHARACTER      // 캐릭터
   SIMPLE         // 심플
   FLOWER         // 꽃

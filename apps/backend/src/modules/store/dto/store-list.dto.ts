@@ -101,7 +101,7 @@ export class GetStoresRequestDto extends PaginationRequestDto {
   @ApiPropertyOptional({
     description:
       "(필터) 상품 카테고리 유형. 상품 목록 조회(GetProductsRequestDto)와 동일한 ProductCategoryType enum. " +
-      "해당 유형 중 하나라도 가지는 상품이 있는 스토어만 조회 (레터링, 캐릭터 등).",
+      "해당 유형 중 하나라도 가지는 상품이 있는 스토어만 조회 (커스텀, 캐릭터 등).",
     enum: ProductCategoryType,
     isArray: true,
     example: [ProductCategoryType.LETTERING, ProductCategoryType.CHARACTER],

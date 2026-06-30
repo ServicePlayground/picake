@@ -92,7 +92,7 @@ export const MAP_LIST_CATEGORY_OPTIONS: { value: ProductCategoryType; label: str
   { value: ProductCategoryType.FAMILY, label: "가족" },
   { value: ProductCategoryType.ANNIVERSARY, label: "기념일" },
   { value: ProductCategoryType.SAME_DAY_PICKUP, label: "당일픽업" },
-  { value: ProductCategoryType.LETTERING, label: "레터링" },
+  { value: ProductCategoryType.LETTERING, label: "커스텀" },
   { value: ProductCategoryType.CHARACTER, label: "캐릭터" },
   { value: ProductCategoryType.SIMPLE, label: "심플" },
   { value: ProductCategoryType.FLOWER, label: "꽃" },
