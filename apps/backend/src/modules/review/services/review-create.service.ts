@@ -12,6 +12,7 @@ import {
 } from "@apps/backend/modules/order/constants/order.constants";
 import { REVIEW_ERROR_MESSAGES } from "@apps/backend/modules/review/constants/review.constants";
 import { CreateMyReviewRequestDto } from "@apps/backend/modules/review/dto/review-create.dto";
+import { MyReviewResponseDto } from "@apps/backend/modules/review/dto/review-detail.dto";
 import { ReviewMapperUtil } from "@apps/backend/modules/review/utils/review-mapper.util";
 import { LoggerUtil } from "@apps/backend/common/utils/logger.util";
 
@@ -26,7 +27,7 @@ export class ReviewCreateService {
    * 픽업 완료 주문에 대해 후기를 작성합니다.
    * 주문당 1회만 작성 가능합니다.
    */
-  async createMyReviewFromOrder(userId: string, dto: CreateMyReviewRequestDto) {
+  async createMyReviewFromOrder(userId: string, dto: CreateMyReviewRequestDto): Promise<MyReviewResponseDto> {
     const order = await this.prisma.order.findUnique({
       where: { id: dto.orderId },
       select: {
@@ -79,15 +80,9 @@ export class ReviewCreateService {
         content: dto.content,
         imageUrls: dto.imageUrls ?? [],
       },
-      include: {
-        consumer: {
-          select: ReviewMapperUtil.USER_INFO_SELECT,
-        },
-        ...ReviewMapperUtil.PRODUCT_STORE_INCLUDE,
-        ...ReviewMapperUtil.REVIEW_ORDER_INCLUDE,
-      },
+      include: ReviewMapperUtil.MY_REVIEW_INCLUDE,
     });
 
-    return ReviewMapperUtil.mapToReviewResponse(review);
+    return ReviewMapperUtil.mapToMyReviewResponse(review);
   }
 }

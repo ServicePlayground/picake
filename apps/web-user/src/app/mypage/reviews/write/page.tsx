@@ -9,6 +9,7 @@ import { useUploadFile } from "@/apps/web-user/features/upload/hooks/mutations/u
 import { useWritableReviews } from "@/apps/web-user/features/review/hooks/queries/useWritableReviews";
 import { useCreateReview } from "@/apps/web-user/features/review/hooks/mutations/useCreateReview";
 import { Toast } from "@/apps/web-user/common/components/toast/Toast";
+import { useKeyboardOpen } from "@/apps/web-user/common/hooks/useKeyboardOpen";
 import type { WritableReviewOrderItem } from "@/apps/web-user/features/review/types/review.type";
 
 const MAX_IMAGES = 5;
@@ -73,7 +74,7 @@ function OrderItemCard({
   productImage?: string;
 }) {
   return (
-    <div className="flex items-center gap-3 border border-gray-200 rounded-xl p-3">
+    <div className="flex items-center gap-3 border border-gray-200 rounded-2lg p-3">
       <div className="relative w-[72px] h-[72px] flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
         {productImage ? (
           <Image src={productImage} alt={productName} fill className="object-cover" />
@@ -115,6 +116,8 @@ export default function ReviewWritePage() {
   const { mutate: uploadFile, isPending: isUploading } = useUploadFile();
   const { mutate: createReview, isPending: isSubmitting } = useCreateReview();
   const [showSuccessToast, setShowSuccessToast] = useState(false);
+  // 모바일 키보드가 올라오면 하단 고정 버튼 숨김
+  const isKeyboardOpen = useKeyboardOpen();
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -188,7 +191,7 @@ export default function ReviewWritePage() {
             value={content}
             onChange={(e) => setContent(e.target.value)}
             placeholder="케이크 맛, 디자인에 대한 후기를 작성해주세요."
-            className="w-full h-36 p-4 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder:text-gray-400 resize-none focus:outline-none focus:border-primary"
+            className="w-full h-36 p-4 border border-gray-200 rounded-md text-sm text-gray-900 placeholder:text-gray-400 resize-none focus:outline-none focus:border-primary"
           />
         </div>
 
@@ -248,8 +251,8 @@ export default function ReviewWritePage() {
         </div>
       </div>
 
-      {/* 하단 등록 버튼 */}
-      <div className="fixed bottom-0 left-0 right-0 p-5 bg-white">
+      {/* 하단 등록 버튼 (키보드가 올라오면 숨김) */}
+      <div className={`fixed bottom-0 left-0 right-0 p-5 bg-white ${isKeyboardOpen ? "hidden" : ""}`}>
         <button
           type="button"
           onClick={handleSubmit}

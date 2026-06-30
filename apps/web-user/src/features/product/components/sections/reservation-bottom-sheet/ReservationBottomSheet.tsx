@@ -5,6 +5,7 @@ import { Modal } from "@/apps/web-user/common/components/modals/Modal";
 import { Button } from "@/apps/web-user/common/components/buttons/Button";
 import { ReservationBottomSheetProps } from "./types";
 import { useReservationBottomSheet } from "./useReservationBottomSheet";
+import { useKeyboardOpen } from "@/apps/web-user/common/hooks/useKeyboardOpen";
 import { ReservationOptionsView } from "./ReservationOptionsView";
 import { ReservationCalendarView } from "./ReservationCalendarView";
 import { ReservationConfirmView } from "./ReservationConfirmView";
@@ -108,6 +109,9 @@ export function ReservationBottomSheet({
     onClose,
   });
 
+  // 모바일 키보드가 올라오면 옵션 선택 뷰의 하단 버튼(취소/선택완료) 숨김
+  const isKeyboardOpen = useKeyboardOpen();
+
   const getTitle = () => {
     if (view === "options") return "상품 옵션 선택";
     if (view === "calendar") return "날짜 선택";
@@ -116,6 +120,8 @@ export function ReservationBottomSheet({
 
   const renderFooter = () => {
     if (view === "options") {
+      // 키보드가 올라온 동안에는 하단 버튼을 숨겨 입력 영역을 가리지 않도록 함
+      if (isKeyboardOpen) return null;
       const confirmButtonText = isAddingFromConfirm ? "추가완료" : "선택완료";
       return (
         <div className="px-[20px]">

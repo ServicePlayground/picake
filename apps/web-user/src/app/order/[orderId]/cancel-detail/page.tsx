@@ -74,7 +74,7 @@ function CancelDetailView({ order }: { order: OrderResponse }) {
 
       <section className="px-5 mb-10">
         <h2 className="text-lg font-bold text-gray-900 mb-1 py-2.5">취소 정보</h2>
-        <dl className="text-sm">
+        <dl className="text-sm space-y-2">
           <div className="flex gap-10">
             <dt className="w-[70px] text-gray-500 shrink-0">신청 일시</dt>
             <dd className="text-gray-900">{formatCancelDateTime(order.updatedAt)}</dd>
@@ -89,7 +89,7 @@ function CancelDetailView({ order }: { order: OrderResponse }) {
       {hasRefundInfo && (
         <section className="px-5">
           <h2 className="text-lg font-bold text-gray-900 mb-1 py-2.5">환불 정보</h2>
-          <dl className="text-sm">
+          <dl className="text-sm space-y-2">
             <div className="flex gap-10">
               <dt className="w-[70px] text-gray-500 shrink-0">총 결제금액</dt>
               <dd className="text-gray-900">{order.totalPrice.toLocaleString()}원</dd>

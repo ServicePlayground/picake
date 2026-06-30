@@ -45,11 +45,11 @@ export function ReservationInfoSection({
     <section className="px-5">
       <OrderDetailSectionTitle>예약 정보</OrderDetailSectionTitle>
       <dl className="space-y-2">
-        <div className="flex items-center gap-10">
+        <div className="flex items-center gap-10 pb-3 border-b border-gray-50">
           <dt className="w-[70px] text-sm text-gray-500 shrink-0">예약번호</dt>
           <dd className="text-sm text-gray-900">{order.orderNumber}</dd>
         </div>
-        <div className="flex items-center gap-10">
+        <div className="flex items-center gap-10 pt-1">
           <dt className="w-[70px] text-sm text-gray-500 shrink-0">픽업날짜</dt>
           <dd className="text-sm text-gray-900">{formatPickupDateTime(order.pickupDate)}</dd>
         </div>

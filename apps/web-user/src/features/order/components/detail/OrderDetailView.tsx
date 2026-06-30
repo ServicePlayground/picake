@@ -23,19 +23,37 @@ import { Button } from "@/apps/web-user/common/components/buttons/Button";
 import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 import { useStoreDetail } from "@/apps/web-user/features/store/hooks/queries/useStoreDetail";
 
-function getStatusNotice(status: OrderStatus): {
+function getStatusNotice(order: OrderResponse): {
   message: string;
+  description?: string;
   isRed: boolean;
 } | null {
-  switch (status) {
+  switch (order.orderStatus) {
     case OrderStatus.PAYMENT_COMPLETED:
       return { message: "판매자의 입금 확인 후 예약이 확정됩니다.", isRed: false };
     case OrderStatus.CANCEL_REFUND_PENDING:
       return { message: "환불까지 영업일 기준 1-2일 소요될 수 있습니다.", isRed: false };
-    case OrderStatus.SELLER_CANCELLED:
-      return { message: "판매자 요청으로 예약 취소되었습니다.", isRed: false };
+    case OrderStatus.CANCEL_REFUND_COMPLETED:
+      return { message: "환불 완료된 취소 건입니다.", isRed: false };
+    // 취소완료: 판매자 취소(사유 표시) / 구매자 취소(표시 안 함) / 미입금 자동취소 구분
+    case OrderStatus.CANCEL_COMPLETED:
+      if (order.sellerCancelReason) {
+        return {
+          message: "판매자 요청으로 예약 취소되었습니다.",
+          description: order.sellerCancelReason,
+          isRed: false,
+        };
+      }
+      // 구매자 취소는 안내 없음
+      if (order.userCancelReason) return null;
+      // 사유 없음 = 미입금으로 인한 자동취소
+      return { message: "미입금으로 인해 예약 취소되었습니다.", isRed: false };
     case OrderStatus.NO_SHOW:
-      return { message: "노쇼 처리된 예약입니다.", isRed: true };
+      return {
+        message: "노쇼 처리된 예약입니다.",
+        description: order.sellerNoShowReason ?? undefined,
+        isRed: true,
+      };
     default:
       return null;
   }
@@ -67,11 +85,15 @@ export function OrderDetailView({ order }: OrderDetailViewProps) {
         </div>
       )}
       {(() => {
-        const notice = getStatusNotice(order.orderStatus);
+        const notice = getStatusNotice(order);
         if (!notice) return null;
         return (
           <div className="px-5 py-4">
-            <InfoNotice tone={notice.isRed ? "red" : "gray"} message={notice.message} />
+            <InfoNotice
+              tone={notice.isRed ? "red" : "gray"}
+              message={notice.message}
+              description={notice.description}
+            />
           </div>
         );
       })()}

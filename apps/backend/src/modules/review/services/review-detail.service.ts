@@ -6,6 +6,7 @@ import { PRODUCT_ERROR_MESSAGES } from "@apps/backend/modules/product/constants/
 import { ReviewMapperUtil } from "@apps/backend/modules/review/utils/review-mapper.util";
 import { LoggerUtil } from "@apps/backend/common/utils/logger.util";
 import { PRODUCT_REVIEW_ACTIVE_FILTER } from "@apps/backend/modules/review/constants/review-query.constant";
+import { MyReviewResponseDto } from "@apps/backend/modules/review/dto/review-detail.dto";
 
 /**
  * 후기 단일 조회 서비스
@@ -60,20 +61,14 @@ export class ReviewDetailService {
    * 내가 작성한 후기 단건 조회 (마이페이지)
    * 본인 소유이며 소프트 삭제되지 않은 후기만 반환합니다.
    */
-  async getMyReviewDetailForUser(userId: string, reviewId: string) {
+  async getMyReviewDetailForUser(userId: string, reviewId: string): Promise<MyReviewResponseDto> {
     const review = await this.prisma.productReview.findFirst({
       where: {
         id: reviewId,
         consumerId: userId,
         ...PRODUCT_REVIEW_ACTIVE_FILTER,
       },
-      include: {
-        consumer: {
-          select: ReviewMapperUtil.USER_INFO_SELECT,
-        },
-        ...ReviewMapperUtil.PRODUCT_STORE_INCLUDE,
-        ...ReviewMapperUtil.REVIEW_ORDER_INCLUDE,
-      },
+      include: ReviewMapperUtil.MY_REVIEW_INCLUDE,
     });
 
     if (!review) {
@@ -83,7 +78,7 @@ export class ReviewDetailService {
       throw new NotFoundException(REVIEW_ERROR_MESSAGES.REVIEW_NOT_FOUND);
     }
 
-    return ReviewMapperUtil.mapToReviewResponse(review);
+    return ReviewMapperUtil.mapToMyReviewResponse(review);
   }
 
   /**

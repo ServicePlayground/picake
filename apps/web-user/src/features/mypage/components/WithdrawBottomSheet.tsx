@@ -89,6 +89,7 @@ export function WithdrawBottomSheet({ isOpen, onClose }: WithdrawBottomSheetProp
               value={reason}
               onChange={setReason}
               options={WITHDRAW_REASON_OPTIONS}
+              labelClassName="text-lg"
             />
             {reason === "OTHER" && (
               <input

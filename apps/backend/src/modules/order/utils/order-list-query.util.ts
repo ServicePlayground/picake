@@ -7,6 +7,7 @@ import {
 
 /** 목록 `type`(UPCOMING/PAST) 분류 시 픽업 일시와 무관하게 항상 PAST(지난 예약)로만 취급하는 상태 */
 const ORDER_STATUSES_ALWAYS_PAST_TAB: OrderStatus[] = [
+  OrderStatus.PICKUP_COMPLETED,
   OrderStatus.CANCEL_COMPLETED,
   OrderStatus.CANCEL_REFUND_COMPLETED,
   OrderStatus.NO_SHOW,
@@ -28,7 +29,7 @@ export function koreaCalendarDayEndUtc(dateStr: string): Date {
  * `type`(UPCOMING/PAST) 및 픽업일 달력 구간 필터를 `where`에 반영.
  * 둘 다 있으면 AND로 결합해 `pickupDate` 조건이 덮어쓰이지 않게 함.
  *
- * 취소완료·취소환불완료·노쇼는 픽업 일시와 무관하게 항상 PAST(지난 예약)로만 분류되며,
+ * 픽업완료·취소완료·취소환불완료·노쇼는 픽업 일시와 무관하게 항상 PAST(지난 예약)로만 분류되며,
  * UPCOMING(픽업 예정) 목록에서는 제외된다.
  */
 export function mergeOrderPickupDateConditions(

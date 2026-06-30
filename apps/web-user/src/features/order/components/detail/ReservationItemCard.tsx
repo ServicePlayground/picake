@@ -12,13 +12,6 @@ import {
 } from "@/apps/web-user/features/order/types/order.type";
 import { OrderStatusBadge } from "@/apps/web-user/features/order/components/OrderStatusBadge";
 
-function formatItemName(order: OrderResponse, item: OrderItemResponse) {
-  const parts: string[] = [order.productName];
-  if (item.sizeDisplayName) parts.push(item.sizeDisplayName);
-  if (item.flavorDisplayName) parts.push(item.flavorDisplayName);
-  return parts.join(" ");
-}
-
 interface ReservationItemCardProps {
   order: OrderResponse;
   item: OrderItemResponse;
@@ -40,6 +33,7 @@ export function ReservationItemCard({
   const isCancelled =
     !hideCancelDetailButton &&
     (order.orderStatus === OrderStatus.CANCEL_REFUND_PENDING ||
+      order.orderStatus === OrderStatus.CANCEL_REFUND_COMPLETED ||
       order.orderStatus === OrderStatus.CANCEL_COMPLETED);
 
   return (
@@ -63,13 +57,15 @@ export function ReservationItemCard({
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-start justify-between">
-              <p className={`text-xs text-gray-500 ${isCancelled ? "opacity-30" : ""}`}>예약상품</p>
+              <p className={`text-xs text-gray-500 pt-1 ${isCancelled ? "opacity-30" : ""}`}>
+                예약상품
+              </p>
               <OrderStatusBadge status={order.orderStatus} />
             </div>
             <p
               className={`text-sm text-gray-900 mt-0.5 truncate ${isCancelled ? "opacity-30" : ""}`}
             >
-              {formatItemName(order, item)} ×{item.quantity}
+              {order.productName} ×{item.quantity}
             </p>
             <p
               className={`text-base font-bold text-gray-900 mt-1 ${isCancelled ? "opacity-30" : ""}`}

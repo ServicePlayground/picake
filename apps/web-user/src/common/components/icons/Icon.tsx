@@ -58,6 +58,8 @@ import Copy from "./icons/copy.svg";
 import Multiply from "./icons/multiply.svg";
 import CardMore from "./icons/card_more.svg";
 import LogoPicake from "./icons/logo_picake.svg";
+import NoticeTop from "./icons/notice_top.svg";
+import MypageNav from "./icons/mypage_nav.svg";
 
 interface IconProps {
   name: keyof typeof iconTypes;
@@ -125,7 +127,11 @@ export const iconTypes = {
   multiply: Multiply,
   cardMore: CardMore,
   logoPicake: LogoPicake,
+  noticeTop: NoticeTop,
+  mypageNav: MypageNav,
 };
+
+export type IconName = keyof typeof iconTypes;
 
 export default function Icon({ name, width, height, className, ...props }: IconProps) {
   const IconComponent = iconTypes[name];

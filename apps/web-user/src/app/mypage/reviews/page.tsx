@@ -15,6 +15,7 @@ import Link from "next/link";
 import { Icon } from "@/apps/web-user/common/components/icons";
 import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 import { useWritableReviews } from "@/apps/web-user/features/review/hooks/queries/useWritableReviews";
+import { OrderEmptyState } from "@/apps/web-user/features/mypage/order/components/OrderEmptyState";
 
 export default function MyReviewsPage() {
   const [sortBy] = useState<ReviewSortBy>(ReviewSortBy.LATEST);
@@ -66,16 +67,18 @@ export default function MyReviewsPage() {
   return (
     <div>
       <Header variant="back-title" title={`내 후기${data ? ` ${totalCount}` : ""}`} />
-      <div className="px-5 py-3">
-        <Link
-          href={PATHS.REVIEW_LIST}
-          className="flex items-center gap-1.5 border border-primary-100 bg-primary-50 rounded-2xl text-primary py-3.5 px-4"
-        >
-          <Icon name="reviewFill" width={20} height={20} className="text-primary" />
-          <span className="text-sm font-bold">작성 가능 후기 {writableCount}개</span>
-          <Icon name="arrow" width={20} height={20} className="text-primary rotate-90 ml-auto" />
-        </Link>
-      </div>
+      {writableCount > 0 && (
+        <div className="px-5 py-3">
+          <Link
+            href={PATHS.REVIEW_LIST}
+            className="flex items-center gap-1.5 border border-primary-100 bg-primary-50 rounded-2xl text-primary py-3.5 px-4"
+          >
+            <Icon name="reviewFill" width={20} height={20} className="text-primary" />
+            <span className="text-sm font-bold">작성 가능 후기 {writableCount}개</span>
+            <Icon name="arrow" width={20} height={20} className="text-primary rotate-90 ml-auto" />
+          </Link>
+        </div>
+      )}
 
       {/* 후기 목록 */}
       <div className="px-5">
@@ -91,7 +94,7 @@ export default function MyReviewsPage() {
             />
           ))
         ) : (
-          <p className="text-sm text-gray-500 py-10 text-center">작성한 후기가 없습니다.</p>
+          <OrderEmptyState message="후기가 없어요." className="min-h-[calc(100vh-52px)]" />
         )}
       </div>
 

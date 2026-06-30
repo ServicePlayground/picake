@@ -44,16 +44,10 @@ export class ReviewUserListService {
       orderBy,
       skip,
       take: limit,
-      include: {
-        consumer: {
-          select: ReviewMapperUtil.USER_INFO_SELECT,
-        },
-        ...ReviewMapperUtil.PRODUCT_STORE_INCLUDE,
-        ...ReviewMapperUtil.REVIEW_ORDER_INCLUDE,
-      },
+      include: ReviewMapperUtil.MY_REVIEW_INCLUDE,
     });
 
-    const data = reviews.map((review) => ReviewMapperUtil.mapToReviewResponse(review));
+    const data = reviews.map((review) => ReviewMapperUtil.mapToMyReviewResponse(review));
 
     const meta = calculatePaginationMeta(page, limit, totalItems);
 

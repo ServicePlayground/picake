@@ -38,8 +38,8 @@ export function PaymentInfoSection({ order }: PaymentInfoSectionProps) {
         </div>
 
         {isPaymentPending && order.storeBankAccountNumber && (
-          <div className="relative pt-4 after:content-[''] after:absolute after:top-1 after:left-0 after:w-full after:h-px after:bg-gray-50">
-            <div className="flex items-center gap-10">
+          <div className="relative pt-4 after:content-[''] after:absolute after:top-1 after:left-0 after:w-full after:h-px after:bg-gray-50 space-y-2">
+            <div className="flex items-center gap-10 ">
               <dt className="w-[70px] text-sm text-gray-500 shrink-0">계좌번호</dt>
               <dd className="flex-1 min-w-0 flex items-center gap-1 text-sm text-gray-900">
                 <span className="truncate">

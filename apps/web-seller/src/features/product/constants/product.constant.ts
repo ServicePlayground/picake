@@ -35,7 +35,7 @@ export const PRODUCT_CATEGORY_GROUPS = [
     label: "서비스",
     options: [
       { value: ProductCategoryType.SAME_DAY_PICKUP, label: "당일픽업" },
-      { value: ProductCategoryType.LETTERING, label: "레터링" },
+      { value: ProductCategoryType.LETTERING, label: "커스텀" },
     ],
   },
   {

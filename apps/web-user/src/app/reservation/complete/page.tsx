@@ -10,6 +10,7 @@ import { Icon } from "@/apps/web-user/common/components/icons";
 import { useOrderDetail } from "@/apps/web-user/features/order/hooks/queries/useOrderDetail";
 import { useProductDetail } from "@/apps/web-user/features/product/hooks/queries/useProductDetail";
 import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
+import { Toast } from "@/apps/web-user/common/components/toast/Toast";
 
 const formatDateTime = (dateString: string | null) => {
   if (!dateString) return "";
@@ -33,6 +34,7 @@ export default function ReservationCompletePage() {
   const router = useRouter();
   const orderId = searchParams.get("orderId");
   const [openIndexes, setOpenIndexes] = useState<Set<number>>(new Set());
+  const [showCopyToast, setShowCopyToast] = useState(false);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   // 주문 상세조회
@@ -72,6 +74,22 @@ export default function ReservationCompletePage() {
   const cakeTitle = productData.name;
   const basePrice = productData.salePrice;
 
+  const pickupAddressText = [
+    orderData.pickupRoadAddress ||
+      orderData.pickupAddress ||
+      productData.pickupRoadAddress ||
+      productData.pickupAddress,
+    orderData.pickupDetailAddress,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  const handleAddressCopy = () => {
+    if (!pickupAddressText) return;
+    navigator.clipboard.writeText(pickupAddressText);
+    setShowCopyToast(true);
+  };
+
   return (
     <div className="relative h-screen">
       {cakeImageUrl && (
@@ -110,13 +128,20 @@ export default function ReservationCompletePage() {
               <span className="text-gray-500">픽업장소</span>
               <span className="flex flex-col items-end text-gray-900">
                 <span>{orderData.storeName || "스토어명 없음"}</span>
-                <span className="text-gray-400 text-2sm">
-                  {orderData.pickupRoadAddress ||
-                    orderData.pickupAddress ||
-                    productData.pickupRoadAddress ||
-                    productData.pickupAddress}
-                  {orderData.pickupDetailAddress && ` ${orderData.pickupDetailAddress}`}
-                </span>
+                <button
+                  type="button"
+                  onClick={handleAddressCopy}
+                  aria-label="주소 복사"
+                  className="flex items-start gap-[4px] text-gray-400 text-2sm text-right"
+                >
+                  <span>{pickupAddressText}</span>
+                  <Icon
+                    name="copy"
+                    width={16}
+                    height={16}
+                    className="shrink-0 mt-[1px] text-gray-400"
+                  />
+                </button>
               </span>
             </div>
             <div className="flex items-center justify-between mb-[6px] px-[16px] text-sm">
@@ -232,6 +257,16 @@ export default function ReservationCompletePage() {
       <button className="absolute top-[14px] right-[20px]" onClick={() => router.push("/")}>
         <Icon name="close" width={24} height={24} className="text-white" />
       </button>
+
+      {showCopyToast && (
+        <Toast
+          message="복사가 완료되었습니다"
+          iconName="checkCircle"
+          iconClassName="text-green-400"
+          variant="row"
+          onClose={() => setShowCopyToast(false)}
+        />
+      )}
     </div>
   );
 }
