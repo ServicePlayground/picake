@@ -47,7 +47,7 @@ export function ReviewItem({ review, onImageClick }: ReviewItemProps) {
           <span className="relative text-sm text-gray-500 before:content-[''] before:absolute before:right-[-12px] before:top-1/2 before:-translate-y-1/2 before:w-[1px] before:h-[8px] before:bg-gray-300">
             {formatDate(review.createdAt)}
           </span>
-          <span className="font-bold text-sm text-gray-900">{review.userNickname || "익명"}</span>
+          <span className="text-sm text-gray-900">{review.userNickname || "익명"}</span>
         </div>
       </div>
 

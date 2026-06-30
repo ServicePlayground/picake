@@ -294,7 +294,6 @@ export function GoogleRegisterVerificationScreen() {
                   error={phoneError}
                   placeholder="핸드폰 번호를 입력해주세요."
                   maxLength={11}
-                  style={{ fontFamily: "monospace", letterSpacing: "0.05em" }}
                   aria-invalid={!!phoneError}
                 />
               </div>

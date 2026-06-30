@@ -75,7 +75,7 @@ export function ReservationConfirmView({
             담은 상품이 없어요
           </div>
         ) : (
-          <div className="mb-[24px] rounded-lg overflow-hidden">
+          <div className="mb-[24px] rounded-lg border border-gray-100 overflow-hidden">
             <div className="flex items-center gap-[12px] py-[12px] px-[10px] text-sm bg-blue-50 border-b border-gray-100">
               <div className="flex items-center gap-[2px] font-bold text-blue-400">
                 <Icon name="takeout" width={16} height={16} className="text-blue-400" />
@@ -118,7 +118,7 @@ export function ReservationConfirmView({
                         <Button
                           variant="outline"
                           size="sm"
-                          className="font-normal rounded-2lg"
+                          className="font-normal !rounded-md"
                           onClick={() => handleEditItem(index)}
                         >
                           옵션변경
@@ -179,7 +179,7 @@ export function ReservationConfirmView({
         <InfoNotice
           message="예약 관련 연락을 위해 판매자에게 전달되는 정보입니다."
           tone="gray"
-          className="mb-6"
+          className="mb-1"
         />
         <div className="flex flex-col gap-4">
           <div className="py-3">

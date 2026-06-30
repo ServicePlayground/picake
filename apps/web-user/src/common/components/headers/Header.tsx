@@ -210,9 +210,7 @@ export default function Header({ variant = "main", title, onBackClick }: HeaderP
       >
         <Icon name="alarm" width={24} height={24} />
         {badge !== null && (
-          <span className="absolute -top-0.5 -right-1 min-w-[18px] h-[18px] px-0.5 flex items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white leading-none tabular-nums">
-            {badge}
-          </span>
+          <span className="absolute top-[1px] right-[1px] w-1 h-1 rounded-full bg-primary" />
         )}
       </Link>
     );
@@ -274,10 +272,7 @@ export default function Header({ variant = "main", title, onBackClick }: HeaderP
     return (
       <header className="sticky top-0 left-0 right-0 z-50 bg-white max-w-[638px] mx-auto px-5 flex justify-between items-center h-[46px]">
         <LocationButton />
-        <button
-          onClick={() => router.back()}
-          className="text-sm font-bold text-gray-500 underline"
-        >
+        <button onClick={() => router.back()} className="text-sm font-bold text-gray-500 underline">
           취소
         </button>
       </header>

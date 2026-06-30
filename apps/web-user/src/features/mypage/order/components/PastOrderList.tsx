@@ -35,6 +35,12 @@ function PastOrderItem({ order, isLast }: { order: OrderResponse; isLast: boolea
   const [isMapSheetOpen, setIsMapSheetOpen] = useState(false);
   const visibleItems = expanded ? order.orderItems : order.orderItems.slice(0, 2);
   const hasMore = order.orderItems.length > 2;
+  const isCancelled = [
+    OrderStatus.CANCEL_COMPLETED,
+    OrderStatus.SELLER_CANCELLED,
+    OrderStatus.BUYER_CANCELLED,
+    OrderStatus.CANCEL_REFUND_COMPLETED,
+  ].includes(order.orderStatus);
 
   return (
     <div className="relative pl-[30px]">
@@ -77,11 +83,6 @@ function PastOrderItem({ order, isLast }: { order: OrderResponse; isLast: boolea
         <div className="space-y-2 py-2.5">
           {visibleItems.map((item) => {
             const thumbnailUrl = item.imageUrls?.[0] || order.productImages?.[0];
-            const isCancelled = [
-              OrderStatus.CANCEL_COMPLETED,
-              OrderStatus.SELLER_CANCELLED,
-              OrderStatus.BUYER_CANCELLED,
-            ].includes(order.orderStatus);
             return (
               <div
                 key={item.id}
@@ -136,10 +137,11 @@ function PastOrderItem({ order, isLast }: { order: OrderResponse; isLast: boolea
         <OrderStatusNotice order={order} />
 
         {/* 스토어 문의 / 길찾기 */}
-        {/* 픽업완료, 입금대기: 버튼 없음 */}
+        {/* 픽업완료, 입금대기, 예약취소: 버튼 없음 */}
         {/* 픽업대기: 스토어 문의 + 길찾기 / 그 외: 스토어 문의만 */}
         {order.orderStatus !== OrderStatus.PICKUP_COMPLETED &&
-          order.orderStatus !== OrderStatus.PAYMENT_PENDING && (
+          order.orderStatus !== OrderStatus.PAYMENT_PENDING &&
+          !isCancelled && (
             <OrderActionButtons
               buttons={[
                 {

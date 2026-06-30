@@ -55,7 +55,7 @@ function AuthedSavedContent() {
 
 function UnauthenticatedSavedContent({ onLoginClick }: { onLoginClick: () => void }) {
   const loginPrompt = (
-    <div className="flex flex-col items-center justify-center gap-3 px-5 pt-32 pb-20">
+    <div className="flex flex-col items-center justify-center gap-3 px-5 min-h-[calc(100vh-204px)]">
       <p className="text-sm text-gray-700">더욱 편리한 이용을 위해</p>
       <button
         type="button"

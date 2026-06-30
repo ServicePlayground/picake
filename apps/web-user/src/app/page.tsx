@@ -78,7 +78,7 @@ export default function Home() {
       <div className="w-full relative -mt-[30px] pt-[20px] pb-[56px] px-[24px] z-10 rounded-t-4xl bg-white bg-[url('/images/contents/category_bg.png')] bg-top bg-no-repeat">
         <div ref={searchBarRef} className="w-full mb-[20px]">
           <SearchBar
-            placeholder="상품을 검색해보세요"
+            placeholder="어떤 케이크를 찾으시나요?"
             initialValue={searchTerm}
             onSearch={handleSearch}
             onChange={setSearchTerm}

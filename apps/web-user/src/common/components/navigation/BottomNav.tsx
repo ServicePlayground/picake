@@ -3,15 +3,15 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import { Icon } from "@/apps/web-user/common/components/icons";
+import { Icon, type IconName } from "@/apps/web-user/common/components/icons";
 import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 
-const NAV_ITEMS = [
+const NAV_ITEMS: { icon: IconName; label: string; path: string; ready: boolean }[] = [
   { icon: "home", label: "홈", path: PATHS.HOME, ready: true },
   { icon: "map", label: "지도", path: PATHS.MAP, ready: true },
   { icon: "favorite", label: "저장", path: PATHS.SAVED, ready: true },
-  { icon: "mypage", label: "MY", path: PATHS.MYPAGE, ready: true },
-] as const;
+  { icon: "mypageNav", label: "MY", path: PATHS.MYPAGE, ready: true },
+];
 
 export function BottomNav() {
   const pathname = usePathname();
@@ -29,7 +29,7 @@ export function BottomNav() {
                   href={path}
                   className={`flex flex-col items-center justify-center text-2xs font-bold ${isActive ? "text-primary" : "text-gray-400"}`}
                 >
-                  <Icon name={icon as any} width={24} height={24} />
+                  <Icon name={icon} width={24} height={24} />
                   {label}
                 </Link>
               ) : (
@@ -37,7 +37,7 @@ export function BottomNav() {
                   onClick={() => setShowComingSoon(true)}
                   className="w-full flex flex-col items-center justify-center text-2xs font-bold text-gray-400"
                 >
-                  <Icon name={icon as any} width={24} height={24} />
+                  <Icon name={icon} width={24} height={24} />
                   {label}
                 </button>
               )}
