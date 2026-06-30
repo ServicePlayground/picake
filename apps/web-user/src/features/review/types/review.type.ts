@@ -1,4 +1,5 @@
 import { PaginationMeta } from "@/apps/web-user/common/types/api.type";
+import type { OrderResponse } from "@/apps/web-user/features/order/types/order.type";
 
 /**
  * 후기 정렬 옵션
@@ -31,6 +32,8 @@ export interface Review {
  * 내 후기 정보 (상품 정보 포함)
  */
 export interface MyReview extends Review {
+  orderId: string | null;
+  order: OrderResponse | null;
   productName: string;
   productPrice: number;
   productImageUrl: string | null;

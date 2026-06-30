@@ -5,7 +5,7 @@ import { ReviewUserListService } from "@apps/backend/modules/review/services/rev
 import { ReviewDeleteService } from "@apps/backend/modules/review/services/review-delete.service";
 import { ReviewCreateService } from "@apps/backend/modules/review/services/review-create.service";
 import { CreateMyReviewRequestDto } from "@apps/backend/modules/review/dto/review-create.dto";
-import { ReviewResponseDto } from "@apps/backend/modules/review/dto/review-detail.dto";
+import { ReviewResponseDto, MyReviewResponseDto } from "@apps/backend/modules/review/dto/review-detail.dto";
 import { GetReviewsRequestDto } from "@apps/backend/modules/review/dto/review-list.dto";
 import {
   GetMyReviewsRequestDto,
@@ -67,7 +67,7 @@ export class ReviewService {
   async createMyReviewForUser(
     userId: string,
     dto: CreateMyReviewRequestDto,
-  ): Promise<ReviewResponseDto> {
+  ): Promise<MyReviewResponseDto> {
     return this.reviewCreateService.createMyReviewFromOrder(userId, dto);
   }
 
@@ -84,7 +84,7 @@ export class ReviewService {
   /**
    * 내가 작성한 후기 단건 조회 (사용자용·마이페이지)
    */
-  async getMyReviewDetailForUser(userId: string, reviewId: string): Promise<ReviewResponseDto> {
+  async getMyReviewDetailForUser(userId: string, reviewId: string): Promise<MyReviewResponseDto> {
     return this.reviewDetailService.getMyReviewDetailForUser(userId, reviewId);
   }
 

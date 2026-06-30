@@ -98,3 +98,31 @@ export class ReviewResponseDto {
   })
   order: OrderResponseDto | null;
 }
+
+/**
+ * 마이페이지 내 후기 응답 DTO
+ * `order` 연동과 함께 목록 UI용 상품 요약 필드를 제공합니다.
+ */
+export class MyReviewResponseDto extends ReviewResponseDto {
+  @ApiProperty({
+    description:
+      "상품명. 연결 주문이 있으면 주문 시점 스냅샷(`order.productName`), 없으면 현재 상품명",
+    example: "해피퍼피 생일케이크",
+  })
+  productName: string;
+
+  @ApiProperty({
+    description:
+      "상품 가격. 연결 주문이 있으면 주문 결제액(`order.totalPrice`), 없으면 현재 상품 판매가",
+    example: 35000,
+  })
+  productPrice: number;
+
+  @ApiProperty({
+    description:
+      "상품 대표 이미지 URL. 연결 주문이 있으면 주문 시점 이미지, 없으면 현재 상품 대표 이미지",
+    example: "https://example.com/product-image.jpg",
+    nullable: true,
+  })
+  productImageUrl: string | null;
+}

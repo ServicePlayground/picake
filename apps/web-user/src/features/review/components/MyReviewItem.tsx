@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { MyReview } from "@/apps/web-user/features/review/types/review.type";
+import type { OrderItemResponse } from "@/apps/web-user/features/order/types/order.type";
 import { Icon } from "@/apps/web-user/common/components/icons";
 import { ImageSlider } from "@/apps/web-user/common/components/sliders";
 import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
@@ -14,7 +15,20 @@ interface MyReviewItemProps {
   onImageClick?: (review: MyReview) => void;
 }
 
+function formatOrderItemOptions(item: OrderItemResponse): string {
+  return [
+    item.sizeDisplayName &&
+      `${item.sizeDisplayName}(+${(item.sizePrice ?? 0).toLocaleString()}원)`,
+    item.flavorDisplayName &&
+      `${item.flavorDisplayName}(+${(item.flavorPrice ?? 0).toLocaleString()}원)`,
+  ]
+    .filter(Boolean)
+    .join(" / ");
+}
+
 export function MyReviewItem({ review, onDelete, onImageClick }: MyReviewItemProps) {
+  const orderItems = review.order?.orderItems ?? [];
+  const hasOrderOptions = orderItems.length > 0;
   const [isExpanded, setIsExpanded] = useState(false);
   const [isTruncated, setIsTruncated] = useState(false);
   const [isOptionExpanded, setIsOptionExpanded] = useState(false);
@@ -97,7 +111,7 @@ export function MyReviewItem({ review, onDelete, onImageClick }: MyReviewItemPro
 
       {/* 상품 정보 */}
       <div className="relative py-3 px-4 bg-gray-50 rounded-xl">
-        <div className="flex items-center gap-3 pr-[70px]">
+        <div className={`flex items-center gap-3 ${hasOrderOptions ? "pr-[70px]" : ""}`}>
           <span className="w-[40px] h-[40px] relative rounded-lg overflow-hidden flex-shrink-0">
             {review.productImageUrl ? (
               <Image
@@ -116,20 +130,30 @@ export function MyReviewItem({ review, onDelete, onImageClick }: MyReviewItemPro
             {review.productPrice != null && <p>{formatPrice(review.productPrice)}</p>}
           </div>
         </div>
-        <button
-          type="button"
-          onClick={() => setIsOptionExpanded(!isOptionExpanded)}
-          className="absolute right-4 top-3 flex items-center gap-[2px] text-sm text-gray-500"
-        >
-          주문옵션
-          <Icon
-            name="arrow"
-            width={16}
-            height={16}
-            className={`text-gray-500 transition-transform ${isOptionExpanded ? "rotate-0" : "rotate-180"}`}
-          />
-        </button>
-        {isOptionExpanded && <p className="text-2sm text-gray-500 mt-3"></p>}
+        {hasOrderOptions && (
+          <button
+            type="button"
+            onClick={() => setIsOptionExpanded(!isOptionExpanded)}
+            className="absolute right-4 top-3 flex items-center gap-[2px] text-sm text-gray-500"
+          >
+            주문옵션
+            <Icon
+              name="arrow"
+              width={16}
+              height={16}
+              className={`text-gray-500 transition-transform ${isOptionExpanded ? "rotate-0" : "rotate-180"}`}
+            />
+          </button>
+        )}
+        {isOptionExpanded && hasOrderOptions && (
+          <div className="text-2sm text-gray-500 mt-3 space-y-1">
+            {orderItems.map((item) => {
+              const options = formatOrderItemOptions(item);
+              if (!options) return null;
+              return <p key={item.id}>{options}</p>;
+            })}
+          </div>
+        )}
       </div>
 
       {/* 리뷰 이미지 */}
