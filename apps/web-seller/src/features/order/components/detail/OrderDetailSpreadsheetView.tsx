@@ -215,6 +215,25 @@ export const OrderDetailSpreadsheetView: React.FC<OrderDetailSpreadsheetViewProp
 
               <SheetSectionRow>기본</SheetSectionRow>
               <SheetKvRow label="상품명">{order.productName || "—"}</SheetKvRow>
+              <SheetKvRow label="상품 이미지">
+                {order.productImages && order.productImages.length > 0 ? (
+                  <div className="flex flex-wrap gap-1.5">
+                    {order.productImages.map((url, idx) => (
+                      <button
+                        key={`product-img-${idx}`}
+                        type="button"
+                        onClick={() => onReferenceImageClick(order.productImages, idx)}
+                        className="relative h-14 w-14 shrink-0 overflow-hidden rounded border border-slate-200 bg-slate-100 transition hover:border-primary hover:ring-1 hover:ring-primary/30 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1"
+                        aria-label={`상품 이미지 ${idx + 1} 크게 보기`}
+                      >
+                        <img src={url} alt="" className="h-full w-full object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <span className={ORDER_DETAIL_MUTED}>—</span>
+                )}
+              </SheetKvRow>
               <SheetKvRow label="주문 번호">{order.orderNumber}</SheetKvRow>
               <SheetKvRow label="주문 상태">
                 <StatusBadge variant={variant} className="text-xs font-semibold">
