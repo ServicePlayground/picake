@@ -17,8 +17,10 @@ interface MapTopSearchBarProps {
   pickupFilter?: MapPickupFilter | null;
   /** 픽업 칩(비검색 모드) 초기화 */
   onPickupClear?: () => void;
-  /** 검색 결과 헤더 ← : 검색·픽업 유지한 채 검색 페이지로 */
+  /** 검색 결과 헤더 ← : 검색어 없이 검색 페이지로 (픽업은 유지) */
   onSearchBackClick?: () => void;
+  /** 검색 결과 헤더 검색어 영역: 검색어 유지한 채 검색 페이지로 */
+  onSearchEditClick?: () => void;
   /** 검색 결과 헤더 X : 검색어 없이 지도(픽업은 유지) */
   onSearchCloseClick?: () => void;
 }
@@ -79,6 +81,7 @@ export function MapTopSearchBar({
   pickupFilter,
   onPickupClear,
   onSearchBackClick,
+  onSearchEditClick,
   onSearchCloseClick,
 }: MapTopSearchBarProps) {
   const router = useRouter();
@@ -88,6 +91,14 @@ export function MapTopSearchBar({
       onSearchBackClick();
     } else {
       router.back();
+    }
+  };
+
+  const handleSearchEdit = () => {
+    if (onSearchEditClick) {
+      onSearchEditClick();
+    } else {
+      handleSearchBack();
     }
   };
 
@@ -145,7 +156,7 @@ export function MapTopSearchBar({
           </button>
           <button
             type="button"
-            onClick={handleSearchBack}
+            onClick={handleSearchEdit}
             className="min-w-0 flex-1 truncate border-0 bg-transparent p-0 text-left font-normal"
             style={{
               fontSize: 16,

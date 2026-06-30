@@ -44,6 +44,7 @@ import {
   buildMapPlatformStoreStatusOverlayHtml,
   shouldUseDimPlatformMapMarker,
   buildMapPageUrl,
+  buildMapSearchUrl,
   buildMapSearchUrlWithOptionalQuery,
   parseMapPickupFilterFromUrlSearchParams,
   MAP_PICKUP_URL_DATE_KEY,
@@ -822,7 +823,8 @@ export default function MapPage() {
         pickupFilter={pickupFilter}
         onCalendarClick={() => setPickupCalendarOpen(true)}
         onPickupClear={handlePickupClear}
-        onSearchBackClick={() =>
+        onSearchBackClick={() => router.push(buildMapSearchUrl(pickupFilter))}
+        onSearchEditClick={() =>
           router.push(buildMapSearchUrlWithOptionalQuery(searchQuery, pickupFilter))
         }
         onSearchCloseClick={() => router.push(buildMapPageUrl(null, pickupFilter))}

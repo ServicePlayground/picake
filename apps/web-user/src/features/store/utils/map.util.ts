@@ -175,7 +175,7 @@ export function parseMapPickupFilterFromUrlSearchParams(
 
 const MAP_SEARCH_PATH = "/map/search";
 
-/** 검색 입력 페이지 URL (?q·픽업 선택적) — 지도 검색 헤더 ← 로 이동할 때 사용 */
+/** 검색 입력 페이지 URL (?q·픽업 선택적) — 검색어 수정 등 검색어를 유지할 때 사용 */
 export function buildMapSearchUrlWithOptionalQuery(
   searchQuery: string | null | undefined,
   pickupFilter: MapPickupFilter | null,
