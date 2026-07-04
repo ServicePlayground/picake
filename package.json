@@ -49,6 +49,8 @@
   "resolutions": {
     "@grpc/grpc-js": "1.14.4",
     "@types/passport": "1.0.17",
+    "@types/react": "19.1.17",
+    "@types/react-dom": "19.1.9",
     "axios": "1.18.1",
     "dompurify": "3.4.11",
     "fast-xml-builder": "1.2.1",
