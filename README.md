@@ -45,8 +45,7 @@ yarn db:studio:dev         # 백엔드 개발 데이터베이스 스튜디오
 yarn db:reset:dev          # 백엔드 개발 데이터베이스 리셋
 
 # 빌드 및 배포
-yarn backend:build:staging     # 백엔드 스테이징 빌드
-yarn backend:build:production  # 백엔드 프로덕션 빌드
+yarn backend:build             # 백엔드 빌드 (환경은 실행 시 NODE_ENV로 주입)
 yarn web-user:build            # 사용자 웹 빌드
 yarn web-seller:build          # 판매자 웹 빌드
 yarn web-admin:build           # 관리자 웹 빌드

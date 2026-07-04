@@ -139,8 +139,10 @@ yarn web-seller:dev       # 판매자 웹 (3002)
 yarn web-admin:dev        # 관리자 웹
 
 # 빌드
-yarn backend:build:staging / yarn backend:build:production
-yarn web-user:build / yarn web-seller:build / yarn web-admin:build
+yarn backend:build # (환경은 실행 시 NODE_ENV로 주입)
+yarn web-user:build
+yarn web-seller:build
+yarn web-admin:build
 
 # 데이터베이스 (backend)
 yarn db:migrate:dev       # 마이그레이션 (개발)

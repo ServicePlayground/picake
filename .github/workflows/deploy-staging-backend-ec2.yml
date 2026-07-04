@@ -405,7 +405,7 @@ jobs:
             cd ~/picake
 
             echo "🔨 Backend build"
-            yarn run backend:build:staging || {
+            yarn run backend:build || {
               echo "❌ 빌드 실패"
               rollback_deployment
             }
