@@ -265,10 +265,10 @@ Sentry에서 태그: `responseId: 1706004000000-error-uuid-hex`
 
 백엔드와 동일 정책으로 프론트엔드에도 Sentry가 연동되어 있습니다.
 
-| 앱 | SDK | 활성화 조건 |
-| --- | --- | --- |
-| web-user | `@sentry/nextjs` | `NEXT_PUBLIC_NODE_ENV`가 staging/production이고 DSN 설정 시 |
-| web-seller | `@sentry/react` | `VITE_PUBLIC_NODE_ENV`가 staging/production이고 DSN 설정 시 |
+| 앱         | SDK              | 활성화 조건                                                 |
+| ---------- | ---------------- | ----------------------------------------------------------- |
+| web-user   | `@sentry/nextjs` | `NEXT_PUBLIC_NODE_ENV`가 staging/production이고 DSN 설정 시 |
+| web-seller | `@sentry/react`  | `VITE_PUBLIC_NODE_ENV`가 staging/production이고 DSN 설정 시 |
 
 - development 환경에서는 Sentry 비활성화
 - API 에러는 5xx·네트워크 오류만 전송 (4xx 제외)
