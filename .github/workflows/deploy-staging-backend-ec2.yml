@@ -268,6 +268,13 @@ jobs:
             # 옵션 1: EC2 PostgreSQL 사용 (비용 절감)
             DATABASE_URL=postgresql://picake_admin:${{ secrets.STAGING_DATABASE_PASSWORD }}@localhost:5432/picake_staging_db?schema=public
 
+            # SWAGGER - staging
+            SWAGGER_USERNAME=${{ secrets.STAGING_SWAGGER_USERNAME }}
+            SWAGGER_PASSWORD=${{ secrets.STAGING_SWAGGER_PASSWORD }}
+
+            # Sentry - staging
+            SENTRY_DSN=${{ secrets.STAGING_SENTRY_DSN }}
+
             # GOOGLE OAuth (Consumer) - staging
             GOOGLE_CLIENT_ID=${{ secrets.STAGING_GOOGLE_CLIENT_ID }}
             GOOGLE_CLIENT_SECRET=${{ secrets.STAGING_GOOGLE_CLIENT_SECRET }}
@@ -277,38 +284,34 @@ jobs:
             GOOGLE_CLIENT_SECRET_SELLER=${{ secrets.STAGING_GOOGLE_CLIENT_SECRET_SELLER }}
             GOOGLE_REDIRECT_URI_SELLER=/auth/login/google
 
-            # KAKAO (Consumer) - staging
+            # KAKAO (Consumer) - development & staging & production (공용)
             KAKAO_CLIENT_ID=${{ secrets.STAGING_KAKAO_CLIENT_ID }}
             KAKAO_CLIENT_SECRET=${{ secrets.STAGING_KAKAO_CLIENT_SECRET }}
             KAKAO_REDIRECT_URI=/auth/login/kakao
-            # KAKAO (Seller) - staging
+            # KAKAO (Seller) - development & staging & production (공용)
             KAKAO_CLIENT_ID_SELLER=${{ secrets.STAGING_KAKAO_CLIENT_ID_SELLER }}
             KAKAO_CLIENT_SECRET_SELLER=${{ secrets.STAGING_KAKAO_CLIENT_SECRET_SELLER }}
             KAKAO_REDIRECT_URI_SELLER=/auth/login/kakao
-
-            # SWAGGER - staging
-            SWAGGER_USERNAME=${{ secrets.STAGING_SWAGGER_USERNAME }}
-            SWAGGER_PASSWORD=${{ secrets.STAGING_SWAGGER_PASSWORD }}
-
-            # Sentry - staging
-            SENTRY_DSN=${{ secrets.STAGING_SENTRY_DSN }}
 
             # FIREBASE Admin SDK - development & staging & production (공용)
             FIREBASE_PROJECT_ID=${{ secrets.STAGING_FIREBASE_PROJECT_ID }}
             FIREBASE_PRIVATE_KEY=${{ secrets.STAGING_FIREBASE_PRIVATE_KEY }}
             FIREBASE_CLIENT_EMAIL=${{ secrets.STAGING_FIREBASE_CLIENT_EMAIL }}
 
-            # NTS API
-            NTS_API_URL=https://api.odcloud.kr/api
-            KFTC_API_URL=https://apis.data.go.kr
-            DATA_GO_KR_API_KEY=${{ secrets.STAGING_DATA_GO_KR_API_KEY }}
-
-            # AWS S3
+            # AWS - development & staging & production (공용)
             AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }}
             AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }}
             AWS_REGION=ap-northeast-2
+            # AWS S3 Bucket - development & staging (공용)
             S3_BUCKET=${{ secrets.STAGING_S3_BUCKET }}
             CLOUDFRONT_DOMAIN=${{ secrets.STAGING_CLOUDFRONT_DOMAIN }}
+
+            # NTS API - development & staging & production (공용)
+            NTS_API_URL=https://api.odcloud.kr/api
+            # KFTC API - development & staging & production (공용)
+            KFTC_API_URL=https://apis.data.go.kr
+            # DATA_GO_KR_API_KEY - development & staging & production (공용)
+            DATA_GO_KR_API_KEY=${{ secrets.STAGING_DATA_GO_KR_API_KEY }}
             EOF
 
             # 환경 변수 파일 권한 설정
