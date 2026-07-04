@@ -7,6 +7,7 @@ import { ErrorBoundaryProvider } from "@/apps/web-user/common/components/provide
 import { PostHogProvider } from "@/apps/web-user/common/components/providers/PostHogProvider";
 import { LoadingFallback } from "@/apps/web-user/common/components/fallbacks/LoadingFallback";
 import RootWrapperLayout from "@/apps/web-user/common/components/layouts/RootWrapperLayout";
+import { SITE_BASE_URL, SITE_LOGO_URL, SITE_NAME } from "@/apps/web-user/common/constants/site.constants";
 
 const pretendard = localFont({
   src: "../../public/fonts/PretendardVariable.woff2",
@@ -14,10 +15,6 @@ const pretendard = localFont({
   display: "swap",
   weight: "45 920",
 });
-
-/** 서비스 기본 URL */
-export const BASE_URL = "https://picakes.com";
-const LOGO_URL = `${BASE_URL}/images/logo/logo_picake.svg`;
 
 /**
  * 루트 레이아웃 메타데이터
@@ -45,28 +42,28 @@ export const metadata: Metadata = {
     "피케이크",
     "케이크 배달",
   ],
-  authors: [{ name: "Picake", url: BASE_URL }],
-  creator: "Picake",
-  publisher: "Picake",
+  authors: [{ name: SITE_NAME, url: SITE_BASE_URL }],
+  creator: SITE_NAME,
+  publisher: SITE_NAME,
 
   // Canonical URL
   alternates: {
-    canonical: BASE_URL,
-    languages: { "ko-KR": BASE_URL },
+    canonical: SITE_BASE_URL,
+    languages: { "ko-KR": SITE_BASE_URL },
   },
 
   // Open Graph - 카카오톡, 인스타그램, 페이스북 등 SNS 공유 미리보기
   openGraph: {
     type: "website",
     locale: "ko_KR",
-    url: BASE_URL,
-    siteName: "Picake",
+    url: SITE_BASE_URL,
+    siteName: SITE_NAME,
     title: "Picake - 케이크 주문 플랫폼",
     description:
       "Picake에서 내 주변 케이크 전문 매장을 찾고 예약하세요. 생일케이크, 레터링케이크, 커스텀케이크 등 다양한 케이크를 간편하게 주문할 수 있어요.",
     images: [
       {
-        url: LOGO_URL,
+        url: SITE_LOGO_URL,
         width: 100,
         height: 100,
         alt: "Picake - 케이크 주문 플랫폼",
@@ -83,7 +80,7 @@ export const metadata: Metadata = {
     title: "Picake - 케이크 주문 플랫폼",
     description:
       "Picake에서 내 주변 케이크 전문 매장을 찾고 예약하세요. 생일케이크, 레터링케이크, 커스텀케이크 등 다양한 케이크를 간편하게 주문할 수 있어요.",
-    images: [LOGO_URL],
+    images: [SITE_LOGO_URL],
   },
 
   // 검색엔진 크롤링 정책
@@ -99,7 +96,7 @@ export const metadata: Metadata = {
     },
   },
 
-  applicationName: "Picake",
+  applicationName: SITE_NAME,
   category: "Food & Dining",
   referrer: "origin-when-cross-origin",
 };
