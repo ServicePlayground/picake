@@ -6,6 +6,7 @@ import axios, { AxiosInstance } from "axios";
 import {
   AUTH_ERROR_MESSAGES,
   AUDIENCE,
+  OAUTH_REDIRECT_PATHS,
   PhoneVerificationPurpose,
 } from "@apps/backend/modules/auth/constants/auth.constants";
 import { KakaoUserInfo } from "@apps/backend/modules/auth/types/auth.types";
@@ -47,9 +48,9 @@ export class AuthKakaoOauthService {
     this.kakaoClientIdSeller = configService.get<string>("KAKAO_CLIENT_ID_SELLER")!;
     this.kakaoClientSecretSeller = configService.get<string>("KAKAO_CLIENT_SECRET_SELLER") ?? "";
     this.consumerBase = this.configService.get<string>("PUBLIC_USER_DOMAIN")!;
-    this.consumerPath = this.configService.get<string>("KAKAO_REDIRECT_URI")!;
+    this.consumerPath = OAUTH_REDIRECT_PATHS.KAKAO;
     this.sellerBase = this.configService.get<string>("PUBLIC_SELLER_DOMAIN")!;
-    this.sellerPath = this.configService.get<string>("KAKAO_REDIRECT_URI_SELLER")!;
+    this.sellerPath = OAUTH_REDIRECT_PATHS.KAKAO;
     this.httpClient = axios.create({
       timeout: 30000,
       headers: {

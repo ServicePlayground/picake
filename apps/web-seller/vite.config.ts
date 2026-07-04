@@ -6,10 +6,8 @@ import path from "path";
 export default defineConfig({
   plugins: [react()],
   define: {
-    /** Vercel 빌드 시 자동으로 설정되는 커밋 전체 SHA */
-    "import.meta.env.VITE_PUBLIC_VERCEL_GIT_COMMIT_SHA": JSON.stringify(
-      process.env.VERCEL_GIT_COMMIT_SHA ?? "",
-    ),
+    /** GitHub Actions 빌드 커밋 SHA를 클라이언트에 주입합니다. */
+    "import.meta.env.VITE_PUBLIC_GITHUB_SHA": JSON.stringify(process.env.GITHUB_SHA ?? ""),
   },
   resolve: {
     alias: {
@@ -22,6 +20,16 @@ export default defineConfig({
   },
   build: {
     outDir: "dist",
-    sourcemap: true,
+    sourcemap: process.env.NODE_ENV !== "production",
+    target: "es2020",
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "vendor-react": ["react", "react-dom", "react-router-dom"],
+          "vendor-query": ["@tanstack/react-query"],
+          "vendor-editor": ["react-quill"],
+        },
+      },
+    },
   },
 });

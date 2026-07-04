@@ -54,7 +54,9 @@ export function OrderList({ orders, sortBy, onSortChange }: OrderListProps) {
   };
 
   const togglePriceSort = () => {
-    onSortChange(sortBy === OrderSortBy.PRICE_DESC ? OrderSortBy.PRICE_ASC : OrderSortBy.PRICE_DESC);
+    onSortChange(
+      sortBy === OrderSortBy.PRICE_DESC ? OrderSortBy.PRICE_ASC : OrderSortBy.PRICE_DESC,
+    );
   };
 
   const dateSortActive = sortBy === OrderSortBy.LATEST || sortBy === OrderSortBy.OLDEST;
@@ -86,17 +88,11 @@ export function OrderList({ orders, sortBy, onSortChange }: OrderListProps) {
                 <SortIndicator active={dateSortActive} asc={sortBy === OrderSortBy.OLDEST} />
               </th>
               <th
-                className={cn(
-                  thBase,
-                  "cursor-pointer select-none text-right hover:text-slate-800",
-                )}
+                className={cn(thBase, "cursor-pointer select-none text-right hover:text-slate-800")}
                 onClick={togglePriceSort}
               >
                 금액
-                <SortIndicator
-                  active={priceSortActive}
-                  asc={sortBy === OrderSortBy.PRICE_ASC}
-                />
+                <SortIndicator active={priceSortActive} asc={sortBy === OrderSortBy.PRICE_ASC} />
               </th>
             </tr>
           </thead>
@@ -118,13 +114,13 @@ export function OrderList({ orders, sortBy, onSortChange }: OrderListProps) {
                     {getOrderStatusLabel(order.orderStatus)}
                   </StatusBadge>
                 </td>
-                <td className={cn(tdBase, "whitespace-nowrap")}>
-                  {formatDate(order.pickupDate)}
-                </td>
+                <td className={cn(tdBase, "whitespace-nowrap")}>{formatDate(order.pickupDate)}</td>
                 <td className={cn(tdBase, "whitespace-nowrap text-slate-500")}>
                   {formatDate(order.createdAt)}
                 </td>
-                <td className={cn(tdBase, "whitespace-nowrap text-right font-semibold tabular-nums")}>
+                <td
+                  className={cn(tdBase, "whitespace-nowrap text-right font-semibold tabular-nums")}
+                >
                   {order.totalPrice.toLocaleString()}원
                 </td>
               </tr>

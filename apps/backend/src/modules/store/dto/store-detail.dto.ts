@@ -173,13 +173,11 @@ export class StoreResponseDto extends StoreAddressDto {
     example: [
       {
         productId: "prod_123456789",
-        imageUrl:
-          "https://s3.ap-northeast-1.amazonaws.com/picake-uploads/uploads/product1.png",
+        imageUrl: "https://s3.ap-northeast-1.amazonaws.com/picake-uploads/uploads/product1.png",
       },
       {
         productId: "prod_987654321",
-        imageUrl:
-          "https://s3.ap-northeast-1.amazonaws.com/picake-uploads/uploads/product2.png",
+        imageUrl: "https://s3.ap-northeast-1.amazonaws.com/picake-uploads/uploads/product2.png",
       },
     ],
   })

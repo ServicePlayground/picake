@@ -1,4 +1,5 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { QUERY_STALE_TIME } from "@/apps/web-user/common/constants/query-cache.constants";
 import { useQueryErrorAlert } from "@/apps/web-user/common/hooks/useQueryErrorAlert";
 import { useAuthStore } from "@/apps/web-user/common/store/auth.store";
 import { orderApi } from "@/apps/web-user/features/order/apis/order.api";
@@ -19,6 +20,7 @@ export function useMyOrders(params?: { type?: "UPCOMING" | "PAST"; limit?: numbe
       lastPage.meta.hasNext ? lastPage.meta.currentPage + 1 : undefined,
     initialPageParam: 1,
     enabled: isAuthenticated,
+    staleTime: QUERY_STALE_TIME.REALTIME,
   });
 
   useQueryErrorAlert(query);

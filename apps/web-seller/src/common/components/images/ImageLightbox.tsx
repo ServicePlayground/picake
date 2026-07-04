@@ -45,7 +45,9 @@ export const ImageLightbox: React.FC<ImageLightboxProps> = ({
   onClose,
 }) => {
   const total = images.length;
-  const [index, setIndex] = useState(() => Math.min(Math.max(initialIndex, 0), Math.max(total - 1, 0)));
+  const [index, setIndex] = useState(() =>
+    Math.min(Math.max(initialIndex, 0), Math.max(total - 1, 0)),
+  );
   const [transform, setTransform] = useState<Transform>(INITIAL_TRANSFORM);
 
   const dragState = useRef<{

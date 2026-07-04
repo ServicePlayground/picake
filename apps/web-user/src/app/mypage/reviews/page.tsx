@@ -6,7 +6,7 @@ import { ReviewSortBy } from "@/apps/web-user/features/review/types/review.type"
 import { useMyReviews } from "@/apps/web-user/features/review/hooks/queries/useMyReviews";
 import { useDeleteMyReview } from "@/apps/web-user/features/review/hooks/mutations/useDeleteMyReview";
 import { MyReviewItem } from "@/apps/web-user/features/review/components/MyReviewItem";
-import { ReviewDetailModal } from "@/apps/web-user/features/product/components/modals/ReviewDetailModal";
+import { ReviewDetailModal } from "@/apps/web-user/features/product/components/modals/ReviewDetailModal.dynamic";
 import { Toast } from "@/apps/web-user/common/components/toast/Toast";
 import { Modal } from "@/apps/web-user/common/components/modals/Modal";
 import { MyReviewsSkeleton } from "@/apps/web-user/common/components/skeleton/MyReviewsSkeleton";

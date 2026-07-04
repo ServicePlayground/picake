@@ -1,6 +1,7 @@
 import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from "axios";
 import { useAuthStore } from "@/apps/web-user/common/store/auth.store";
 import { useAlertStore } from "@/apps/web-user/common/store/alert.store";
+import { captureSentryApiError } from "@/apps/web-user/common/utils/sentry.util";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_DOMAIN;
 
@@ -51,6 +52,8 @@ const responseErrorHandler = async (error: AxiosError<{ data?: { message?: strin
     });
     return Promise.resolve();
   }
+
+  captureSentryApiError(error);
 
   return Promise.reject(error);
 };

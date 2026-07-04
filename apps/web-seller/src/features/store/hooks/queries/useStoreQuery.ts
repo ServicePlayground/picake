@@ -1,4 +1,5 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { QUERY_STALE_TIME } from "@/apps/web-seller/common/constants/query-cache.constants";
 import { useQueryErrorAlert } from "@/apps/web-seller/common/hooks/useQueryErrorAlert";
 import { storeApi } from "@/apps/web-seller/features/store/apis/store.api";
 import {
@@ -36,6 +37,7 @@ export function useStoreList({
     },
     initialPageParam: 1,
     enabled: isAuthenticated,
+    staleTime: QUERY_STALE_TIME.STORE,
   });
 
   useQueryErrorAlert(query);
@@ -49,6 +51,7 @@ export function useStoreDetail(storeId: string) {
     queryKey: storeQueryKeys.detail(storeId),
     queryFn: () => storeApi.getStoreDetail(storeId),
     enabled: !!storeId,
+    staleTime: QUERY_STALE_TIME.STORE,
   });
 
   useQueryErrorAlert(query);

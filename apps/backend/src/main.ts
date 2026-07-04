@@ -21,6 +21,7 @@ import { PrismaService } from "@apps/backend/infra/database/prisma.service";
 import { initializeSentry } from "@apps/backend/common/config/sentry.config";
 import { LoggerUtil } from "@apps/backend/common/utils/logger.util";
 import { SentryUtil } from "@apps/backend/common/utils/sentry.util";
+import { isNonProduction } from "@apps/backend/common/utils/environment.util";
 
 /**
  * NestJS 애플리케이션의 진입점
@@ -119,7 +120,7 @@ async function bootstrap(): Promise<void> {
   );
 
   // HTTP 요청 로깅 (개발/검증 환경에서만)
-  if (nodeEnv !== "production") {
+  if (isNonProduction(nodeEnv)) {
     app.use(morgan("combined"));
   }
 
@@ -139,7 +140,7 @@ async function bootstrap(): Promise<void> {
   app.setGlobalPrefix(API_PREFIX);
 
   // Swagger User / Seller (development와 staging 환경에서만 활성화)
-  if (nodeEnv !== "production") {
+  if (isNonProduction(nodeEnv)) {
     // 스웨거 Basic Auth 미들웨어 설정
     const swaggerUsername = configService.get("SWAGGER_USERNAME");
     const swaggerPassword = configService.get("SWAGGER_PASSWORD");

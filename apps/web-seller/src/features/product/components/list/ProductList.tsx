@@ -40,6 +40,10 @@ export function ProductList({ products }: ProductListProps) {
                 <img
                   src={images[0]}
                   alt={product.name}
+                  width={64}
+                  height={64}
+                  loading="lazy"
+                  decoding="async"
                   className="h-full w-full object-cover transition-transform group-hover:scale-105"
                 />
               ) : (

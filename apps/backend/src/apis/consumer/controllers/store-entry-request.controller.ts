@@ -36,7 +36,8 @@ export class ConsumerStoreEntryRequestController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: "(로그인 필요) 입점 요청 추가",
-    description: "미입점 스토어(카카오 장소)에 대한 입점 요청을 등록합니다. 동일 장소 중복 요청은 불가합니다.",
+    description:
+      "미입점 스토어(카카오 장소)에 대한 입점 요청을 등록합니다. 동일 장소 중복 요청은 불가합니다.",
   })
   @SwaggerResponse(201, { dataDto: CreateStoreEntryRequestResponseDto })
   @SwaggerAuthResponses()

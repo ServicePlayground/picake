@@ -9,11 +9,13 @@ interface QueryProviderProps {
 }
 
 export function QueryProvider({ children }: QueryProviderProps) {
+  const isDevelopment = import.meta.env.VITE_PUBLIC_NODE_ENV === "development";
+
   return (
     <QueryClientProvider client={queryClient}>
       {children}
       {/* 개발 환경에서만 DevTools 표시 */}
-      {process.env.NODE_ENV === "development" && <ReactQueryDevtools initialIsOpen={false} />}
+      {isDevelopment && <ReactQueryDevtools initialIsOpen={false} />}
     </QueryClientProvider>
   );
 }

@@ -44,7 +44,10 @@ import {
 } from "@apps/backend/modules/review/dto/review-writable-list.dto";
 import { ReviewDeleteResponseDto } from "@apps/backend/modules/review/dto/review-delete.dto";
 import { CreateMyReviewRequestDto } from "@apps/backend/modules/review/dto/review-create.dto";
-import { ReviewResponseDto, MyReviewResponseDto } from "@apps/backend/modules/review/dto/review-detail.dto";
+import {
+  ReviewResponseDto,
+  MyReviewResponseDto,
+} from "@apps/backend/modules/review/dto/review-detail.dto";
 import { REVIEW_ERROR_MESSAGES } from "@apps/backend/modules/review/constants/review.constants";
 import {
   GetStoresRequestDto,

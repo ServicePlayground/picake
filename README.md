@@ -34,7 +34,7 @@ yarn install
 yarn backend:dev          # 백엔드 개발 서버 (포트: 3000)
 yarn web-user:dev         # 사용자 웹 개발 서버 (포트: 3001)
 yarn web-seller:dev       # 판매자 웹 개발 서버 (포트: 3002)
-yarn web-admin:dev        # 관리자 웹 개발 서버
+yarn web-admin:dev        # 관리자 웹 개발 서버 (포트: 3003)
 
 # 데이터베이스 관리
 yarn db:seed:dev           # 백엔드 개발 데이터베이스 시드 (development)
@@ -42,7 +42,6 @@ yarn db:seed:staging       # 백엔드 스테이징 데이터베이스 시드 (s
 yarn db:migrate:dev        # 백엔드 개발 데이터베이스 마이그레이션
 yarn db:migrate:status     # 백엔드 데이터베이스 마이그레이션 상태 확인
 yarn db:studio:dev         # 백엔드 개발 데이터베이스 스튜디오
-yarn db:reset:dev          # 백엔드 개발 데이터베이스 리셋
 
 # 빌드 및 배포
 yarn backend:build             # 백엔드 빌드 (환경은 실행 시 NODE_ENV로 주입)
@@ -163,6 +162,7 @@ hotfix/xxx (긴급 수정 브랜치)
 - `[COMMON]` - Common
 - `[WEB-SELLER]` - Web Seller
 - `[WEB-USER]` - Web User
+- `[WEB-ADMIN]` - Web Admin
 - `[BE]` - Backend
 
 #### 커밋 타입
@@ -203,15 +203,11 @@ hotfix/xxx (긴급 수정 브랜치)
 - **[판매자 인증 가이드](./docs/common/feature/판매자%20인증.md)**: 웹 애플리케이션 환경에서의 판매자 인증 시스템 가이드
 - **[스토어 등록(3단계) 가이드](<./docs/common/feature/스토어%20등록(3단계)%20-%20가이드.md>)**: 스토어 등록(3단계) 가이드
 
-#### 취약점 관련
-
-- **[AWS 인프라 운영 단계 문제점 분석](./docs/common/취약점/AWS%20인프라%20운영%20단계%20문제점%20분석%20-%20가이드.md)**: AWS 인프라 운영 단계에서 발생할 수 있는 문제점 분석
-- **[백엔드 운영 단계 문제점 분석](./docs/common/취약점/백엔드%20운영%20단계%20문제점%20분석%20-%20가이드.md)**: 백엔드 운영 단계에서 발생할 수 있는 문제점 분석
-
 ### 백엔드 문서
 
 - **[Backend README](./docs/backend/README.md)**: 백엔드 서비스 개요 및 사용법
 - **[Backend 기술 스택 가이드](./docs/backend/기술%20스택%20-%20가이드.md)**: 백엔드 기술 스택 및 아키텍처 (로컬 데이터베이스 설정 포함)
+- **[Backend Sentry 가이드](./docs/backend/Sentry%20에러%20로깅%20통합%20설계%20-%20가이드.md)**: Sentry 에러 로깅 구조 (백엔드·프론트엔드)
 
 ### 프론트엔드 문서
 

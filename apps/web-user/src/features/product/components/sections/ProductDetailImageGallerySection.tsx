@@ -5,9 +5,6 @@ import Image from "next/image";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination, Thumbs } from "swiper/modules";
 import type { Swiper as SwiperType } from "swiper";
-import "swiper/css";
-import "swiper/css/pagination";
-import "swiper/css/thumbs";
 
 interface ProductDetailImageGallerySectionProps {
   images: string[];

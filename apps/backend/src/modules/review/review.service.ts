@@ -5,7 +5,7 @@ import { ReviewUserListService } from "@apps/backend/modules/review/services/rev
 import { ReviewDeleteService } from "@apps/backend/modules/review/services/review-delete.service";
 import { ReviewCreateService } from "@apps/backend/modules/review/services/review-create.service";
 import { CreateMyReviewRequestDto } from "@apps/backend/modules/review/dto/review-create.dto";
-import { ReviewResponseDto, MyReviewResponseDto } from "@apps/backend/modules/review/dto/review-detail.dto";
+import { MyReviewResponseDto } from "@apps/backend/modules/review/dto/review-detail.dto";
 import { GetReviewsRequestDto } from "@apps/backend/modules/review/dto/review-list.dto";
 import {
   GetMyReviewsRequestDto,

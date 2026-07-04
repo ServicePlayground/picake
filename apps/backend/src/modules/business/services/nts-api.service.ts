@@ -4,10 +4,12 @@ import axios, { AxiosInstance } from "axios";
 import { BusinessValidationRequestDto } from "@apps/backend/modules/business/dto/business-request.dto";
 import {
   B_STT_CD,
+  BUSINESS_API_URLS,
   NTS_API_ERROR_MESSAGES,
 } from "@apps/backend/modules/business/constants/business.contants";
 import { LoggerUtil } from "@apps/backend/common/utils/logger.util";
 import { SentryUtil } from "@apps/backend/common/utils/sentry.util";
+import { isProduction } from "@apps/backend/common/utils/environment.util";
 
 /**
  * 국세청 사업자등록정보 진위확인·상태조회 API 전용 서비스
@@ -15,19 +17,19 @@ import { SentryUtil } from "@apps/backend/common/utils/sentry.util";
  */
 @Injectable()
 export class NtsApiService {
-  private readonly ntsApiUrl?: string;
+  private readonly ntsApiUrl: string;
   private readonly dataGoKrApiKey?: string;
   private readonly axiosInstance: AxiosInstance;
   private readonly nodeEnv?: string;
 
   constructor(private readonly configService: ConfigService) {
-    this.ntsApiUrl = this.configService.get<string>("NTS_API_URL");
+    this.ntsApiUrl = BUSINESS_API_URLS.NTS;
     this.dataGoKrApiKey = this.configService.get<string>("DATA_GO_KR_API_KEY");
     this.nodeEnv = this.configService.get<string>("NODE_ENV");
 
-    if (!this.ntsApiUrl || !this.dataGoKrApiKey) {
-      LoggerUtil.log("NTS_API_URL 또는 DATA_GO_KR_API_KEY가 설정되지 않았습니다.");
-      throw new Error("NTS_API_URL 또는 DATA_GO_KR_API_KEY가 설정되지 않았습니다.");
+    if (!this.dataGoKrApiKey) {
+      LoggerUtil.log("DATA_GO_KR_API_KEY가 설정되지 않았습니다.");
+      throw new Error("DATA_GO_KR_API_KEY가 설정되지 않았습니다.");
     }
 
     // axios 인스턴스 생성 (타임아웃 설정 포함)
@@ -89,15 +91,8 @@ export class NtsApiService {
    */
   async verifyBusinessRegistration(validationDto: BusinessValidationRequestDto) {
     try {
-      const isProduction = this.nodeEnv === "production";
-
-      if (!this.ntsApiUrl) {
-        LoggerUtil.log("NTS_API_URL가 설정되지 않았습니다.");
-        throw new Error("NTS_API_URL가 설정되지 않았습니다.");
-      }
-
       // production 환경이 아닌 경우 검증 통과
-      if (!isProduction) {
+      if (!isProduction(this.nodeEnv)) {
         LoggerUtil.log(`[${this.nodeEnv}] 사업자등록번호 진위확인 건너뜀`);
         return;
       }

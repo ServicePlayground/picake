@@ -1,5 +1,6 @@
 import { Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
+import { isDevelopmentOrStaging } from "@apps/backend/common/utils/environment.util";
 
 /**
  * 로깅 유틸리티 함수
@@ -31,7 +32,7 @@ export class LoggerUtil {
       return true;
     }
     // 개발(development)과 검증(staging) 환경에서만 로깅을 수행합니다.
-    return this.nodeEnv === "development" || this.nodeEnv === "staging";
+    return isDevelopmentOrStaging(this.nodeEnv);
   }
 
   /**

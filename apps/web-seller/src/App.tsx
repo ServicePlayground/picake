@@ -9,6 +9,7 @@ import {
 import { AuthInitializerProvider } from "@/apps/web-seller/features/auth/components/providers/AuthInitializer";
 import { ErrorBoundaryProvider } from "./common/components/providers/ErrorBoundaryProvider";
 import { QueryProvider } from "./common/components/providers/QueryProvider";
+import { PostHogProvider, PostHogPageView } from "./common/components/providers/PostHogProvider";
 import { LoadingFallback } from "./common/components/fallbacks/LoadingFallback";
 import { Alert } from "./common/components/alerts/Alert";
 import { ConfirmAlert } from "./common/components/alerts/ConfirmAlert";
@@ -18,37 +19,42 @@ const App: React.FC = () => {
   return (
     <ErrorBoundaryProvider>
       <QueryProvider>
-        <BuildInfoLogger />
-        <Router>
-          <Alert />
-          <ConfirmAlert />
-          <Suspense fallback={<LoadingFallback />}>
-            <Routes>
-              {/* 인증 관련 경로 (AdminLayout 밖) */}
-              {AUTH_ROUTE_CONFIG.map((route) => {
-                const Element = route.element;
-                return <Route key={route.path} path={route.path} element={<Element />} />;
-              })}
-              {/* 관리자 관련 경로 (AdminLayout 안) */}
-              <Route
-                path="/*"
-                element={
-                  <AuthInitializerProvider>
-                    <AdminLayout>
-                      <Routes>
-                        {ADMIN_ROUTE_CONFIG.map((route) => {
-                          const Element = route.element;
-                          return <Route key={route.path} path={route.path} element={<Element />} />;
-                        })}
-                        <Route path="*" element={<Navigate to={ROUTES.ROOT} replace />} />
-                      </Routes>
-                    </AdminLayout>
-                  </AuthInitializerProvider>
-                }
-              />
-            </Routes>
-          </Suspense>
-        </Router>
+        <PostHogProvider>
+          <BuildInfoLogger />
+          <Router>
+            <PostHogPageView />
+            <Alert />
+            <ConfirmAlert />
+            <Suspense fallback={<LoadingFallback />}>
+              <Routes>
+                {/* 인증 관련 경로 (AdminLayout 밖) */}
+                {AUTH_ROUTE_CONFIG.map((route) => {
+                  const Element = route.element;
+                  return <Route key={route.path} path={route.path} element={<Element />} />;
+                })}
+                {/* 관리자 관련 경로 (AdminLayout 안) */}
+                <Route
+                  path="/*"
+                  element={
+                    <AuthInitializerProvider>
+                      <AdminLayout>
+                        <Routes>
+                          {ADMIN_ROUTE_CONFIG.map((route) => {
+                            const Element = route.element;
+                            return (
+                              <Route key={route.path} path={route.path} element={<Element />} />
+                            );
+                          })}
+                          <Route path="*" element={<Navigate to={ROUTES.ROOT} replace />} />
+                        </Routes>
+                      </AdminLayout>
+                    </AuthInitializerProvider>
+                  }
+                />
+              </Routes>
+            </Suspense>
+          </Router>
+        </PostHogProvider>
       </QueryProvider>
     </ErrorBoundaryProvider>
   );

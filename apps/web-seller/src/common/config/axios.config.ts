@@ -1,6 +1,7 @@
 import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from "axios";
 import { getAccessToken, removeAccessToken } from "@/apps/web-seller/common/utils/token.util";
 import { ROUTES } from "@/apps/web-seller/common/constants/paths.constant";
+import { captureSentryApiError } from "@/apps/web-seller/common/utils/sentry.util";
 
 const API_BASE_URL = import.meta.env.VITE_PUBLIC_API_DOMAIN;
 
@@ -45,6 +46,8 @@ const responseErrorHandler = async (error: AxiosError<any>) => {
     window.location.href = ROUTES.AUTH.LOGIN;
     return Promise.resolve();
   }
+
+  captureSentryApiError(error);
 
   return Promise.reject(error);
 };

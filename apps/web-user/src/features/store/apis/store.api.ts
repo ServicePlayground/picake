@@ -33,9 +33,7 @@ export const storeApi = {
     return response.data.data;
   },
   // 미입점 스토어 입점 요청 존재 여부 조회
-  getEntryRequestExists: async (
-    kakaoPlaceId: string,
-  ): Promise<StoreEntryRequestExistsResponse> => {
+  getEntryRequestExists: async (kakaoPlaceId: string): Promise<StoreEntryRequestExistsResponse> => {
     const response = await consumerClient.get("/store-entry-requests/exists", {
       params: { kakaoPlaceId },
     });

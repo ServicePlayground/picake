@@ -17,8 +17,7 @@ interface MyReviewItemProps {
 
 function formatOrderItemOptions(item: OrderItemResponse): string {
   return [
-    item.sizeDisplayName &&
-      `${item.sizeDisplayName}(+${(item.sizePrice ?? 0).toLocaleString()}원)`,
+    item.sizeDisplayName && `${item.sizeDisplayName}(+${(item.sizePrice ?? 0).toLocaleString()}원)`,
     item.flavorDisplayName &&
       `${item.flavorDisplayName}(+${(item.flavorPrice ?? 0).toLocaleString()}원)`,
   ]
