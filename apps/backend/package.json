@@ -4,8 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "NODE_ENV=development nest start --watch",
-    "build:staging": "NODE_ENV=staging nest build",
-    "build:production": "NODE_ENV=production nest build",
+    "build": "nest build",
     "postinstall": "prisma generate --schema ./src/infra/database/prisma/schema.prisma",
     "db:reset:dev": "dotenv -e ./.env.development -- prisma migrate reset --force --schema ./src/infra/database/prisma/schema.prisma",
     "db:reset:staging": "dotenv -e ./.env.staging -- prisma migrate reset --force --schema ./src/infra/database/prisma/schema.prisma",

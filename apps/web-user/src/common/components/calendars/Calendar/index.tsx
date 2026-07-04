@@ -267,7 +267,9 @@ export const Calendar: React.FC<CalendarProps> = ({
                 disabled && "cursor-not-allowed opacity-50",
                 // 활성화된 날짜 스타일 (선택되지 않은 경우)
                 isCurrentMonthDate && !disabled && !isSelectedDate && "text-[#21272C]",
-                isTodayDate && !isSelectedDate && "bg-blue-50 text-[#21272C]",
+                isTodayDate &&
+                  !isSelectedDate &&
+                  "bg-[var(--primary-or-50,#FFEFEB)] text-[var(--primary-or-400,#FF653E)]",
                 // 선택된 날짜 스타일
                 isSelectedDate && "bg-[#FF653E] text-white hover:bg-[#FF653E]/90 focus:ring-0",
                 !isTodayDate &&

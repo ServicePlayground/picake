@@ -45,8 +45,7 @@ yarn db:studio:dev         # 백엔드 개발 데이터베이스 스튜디오
 yarn db:reset:dev          # 백엔드 개발 데이터베이스 리셋
 
 # 빌드 및 배포
-yarn backend:build:staging     # 백엔드 스테이징 빌드
-yarn backend:build:production  # 백엔드 프로덕션 빌드
+yarn backend:build             # 백엔드 빌드 (환경은 실행 시 NODE_ENV로 주입)
 yarn web-user:build            # 사용자 웹 빌드
 yarn web-seller:build          # 판매자 웹 빌드
 yarn web-admin:build           # 관리자 웹 빌드
@@ -73,17 +72,17 @@ yarn web-seller:storybook       # 판매자 스토리북 실행
 
 각 프로젝트별 태그 형식은 다음과 같습니다:
 
-| 프로젝트     | 태그 형식              | 배포 플랫폼 | 예시                        |
-| ------------ | ---------------------- | ----------- | --------------------------- |
-| `backend`    | `backend/staging-*`    | AWS EC2     | `backend/staging-v1.0.0`    |
-| `web-user`   | `web-user/staging-*`   | Vercel      | `web-user/staging-v1.0.0`   |
-| `web-seller` | `web-seller/staging-*` | Vercel      | `web-seller/staging-v1.0.0` |
-| `web-admin`  | `web-admin/staging-*`  | Vercel      | `web-admin/staging-v1.0.0`  |
+| 프로젝트     | 태그 형식                                          | 배포 플랫폼 | 예시                         |
+| ------------ | -------------------------------------------------- | ----------- | ---------------------------- |
+| `backend`    | `backend/staging-*`                                | AWS EC2     | `backend/staging-v1.0.0`     |
+| `web-user`   | `web-user/staging-*` · `web-user/production-*`     | Vercel      | `web-user/production-v1.0.0` |
+| `web-seller` | `web-seller/staging-*` · `web-seller/production-*` | Vercel      | `web-seller/staging-v1.0.0`  |
+| `web-admin`  | `web-admin/staging-*` · `web-admin/production-*`   | Vercel      | `web-admin/staging-v1.0.0`   |
 
 **태그 구조:** `{프로젝트명}/{환경}-{버전}`
 
-- **프로젝트명**: `backend`, `web-user`, `web-seller`
-- **환경**: `staging` (현재 지원)
+- **프로젝트명**: `backend`, `web-user`, `web-seller`, `web-admin`
+- **환경**: `staging`, `production`
 - **버전**: 자유 형식 (예: `v1.0.0`, `v1.0.1`, `2024.01.01`)
 
 #### 배포 프로세스

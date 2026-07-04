@@ -90,4 +90,4 @@
 # 4. 프론트엔드 Vercel 도메인 연동
 
 1. Vercel > 도메인 > Add Domain > 생성 후 > Value 확인
-2. AWS > Route53 > 호스팅 영역 > picakes.com > 레코드 생성 > Type: CNAME, Value: vercel-dns.com
+2. AWS > Route53 > 호스팅 영역 > picakes.com > 레코드 생성 > (Type: CNAME, Value: vercel-dns.com) 또는 (루트도메인 picakes.com인 경우 Type: A, Value: x.x.x.x)
