@@ -30,7 +30,7 @@
     "@nestjs/websockets": "^11.1.12",
     "@prisma/client": "6.16.3",
     "@sentry/nestjs": "^10.38.0",
-    "axios": "^1.12.2",
+    "axios": "^1.18.1",
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
