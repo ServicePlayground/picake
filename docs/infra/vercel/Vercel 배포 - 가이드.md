@@ -61,11 +61,27 @@ Picake 프로젝트의 web-user, web-seller, web-admin 애플리케이션을 Ver
 #### 2.3 환경변수 설정
 
 1. Vercel 대시보드 → 프로젝트 설정 → Environment Variables
-2. 필요한 환경변수 추가
+2. 필요한 환경변수 추가 (값은 팀 내부에서 관리, 문서에 기록하지 않음)
 
-- https://vercel.com/account/settings/tokens url직접 입력 -> 토큰 생성 및 깃허브 VERCEL_TOKEN secrets 설정
-- Vercel → 팀 선택 → Settings → General → Team ID 복사 및 깃허브 VERCEL_ORG_ID secrets 설정
-- Vercel → 팀 선택 → 각 프로젝트 -> Settings -> General -> Project ID 복사 및 깃허브 VERCEL_PROJECT_ID secrets 설정
+**web-user (예시 키)**
+
+- `NEXT_PUBLIC_NODE_ENV`, `NEXT_PUBLIC_API_DOMAIN`
+- `NEXT_PUBLIC_GOOGLE_CLIENT_ID`, `NEXT_PUBLIC_KAKAO_REST_API_KEY`, `NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY`
+- `NEXT_PUBLIC_SENTRY_DSN` (staging/production)
+- `NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST`
+
+**web-seller / web-admin (예시 키)**
+
+- `VITE_PUBLIC_NODE_ENV`, `VITE_PUBLIC_API_DOMAIN`
+- `VITE_PUBLIC_GOOGLE_CLIENT_ID`, `VITE_PUBLIC_KAKAO_RESTAPI_KEY`
+- `VITE_PUBLIC_SENTRY_DSN` (staging/production)
+- `VITE_PUBLIC_POSTHOG_KEY`, `VITE_PUBLIC_POSTHOG_HOST`
+
+**GitHub Actions Secrets (배포용)**
+
+- Vercel 계정 설정에서 API 토큰 생성 후 GitHub `VERCEL_TOKEN` Secret 설정
+- Vercel → 팀 선택 → Settings → General → Team ID 복사 및 GitHub `VERCEL_ORG_ID` Secret 설정
+- Vercel → 각 프로젝트 → Settings → General → Project ID 복사 및 GitHub `VERCEL_PROJECT_ID_*` Secret 설정
 
 | Secret                                    | 설명                              |
 | ----------------------------------------- | --------------------------------- |
@@ -105,7 +121,7 @@ Picake 프로젝트의 web-user, web-seller, web-admin 애플리케이션을 Ver
 
 ### 4. 도메인 구성 (선택사항)
 
-커스텀 도메인 설정은 [AWS Route53(도메인) - 가이드](<../aws/(구버전)/AWS Route53(도메인) - 가이드.md>)를 참고하세요.
+커스텀 도메인 설정은 [EC2 배포 가이드](../aws/EC2_Route53_S3_CloudFront.md)의 Route53 섹션을 참고하세요.
 
 ## 참고 자료
 

@@ -1,5 +1,7 @@
 # AWS App Runner(backend) - 가이드
 
+> ⚠️ **구버전 참고 문서**입니다. 현재 백엔드 배포는 [EC2 배포 가이드](../EC2_Route53_S3_CloudFront.md)를 사용합니다.
+
 #### 1. Docker 빌드(Docker 이미지: 앱이 돌아가는 환경(운영체제, 코드 등)을 통째로 담은 상자)
 
 1. 공식홈페이지 > Docker Desktop 설치
