@@ -67,24 +67,32 @@ Picake 프로젝트의 web-user, web-seller, web-admin 애플리케이션을 Ver
 - Vercel → 팀 선택 → Settings → General → Team ID 복사 및 깃허브 VERCEL_ORG_ID secrets 설정
 - Vercel → 팀 선택 → 각 프로젝트 -> Settings -> General -> Project ID 복사 및 깃허브 VERCEL_PROJECT_ID secrets 설정
 
-| Secret                                 | 설명                           |
-| -------------------------------------- | ------------------------------ |
-| `VERCEL_TOKEN`                         | Vercel API 토큰                |
-| `VERCEL_ORG_ID`                        | Vercel 팀/개인 Org ID          |
-| `VERCEL_PROJECT_ID_WEB_USER_STAGING`   | web-user-staging 프로젝트 ID   |
-| `VERCEL_PROJECT_ID_WEB_SELLER_STAGING` | web-seller-staging 프로젝트 ID |
-| `VERCEL_PROJECT_ID_WEB_ADMIN_STAGING`  | web-admin-staging 프로젝트 ID  |
-| `DISCORD_WEBHOOK_URL_WEB_FE`           | 배포 결과 Discord 알림 웹훅    |
+| Secret                                    | 설명                              |
+| ----------------------------------------- | --------------------------------- |
+| `VERCEL_TOKEN`                            | Vercel API 토큰                   |
+| `VERCEL_ORG_ID`                           | Vercel 팀/개인 Org ID             |
+| `VERCEL_PROJECT_ID_WEB_USER_STAGING`      | web-user-staging 프로젝트 ID      |
+| `VERCEL_PROJECT_ID_WEB_SELLER_STAGING`    | web-seller-staging 프로젝트 ID    |
+| `VERCEL_PROJECT_ID_WEB_ADMIN_STAGING`     | web-admin-staging 프로젝트 ID     |
+| `VERCEL_PROJECT_ID_WEB_USER_PRODUCTION`   | web-user-production 프로젝트 ID   |
+| `VERCEL_PROJECT_ID_WEB_SELLER_PRODUCTION` | web-seller-production 프로젝트 ID |
+| `VERCEL_PROJECT_ID_WEB_ADMIN_PRODUCTION`  | web-admin-production 프로젝트 ID  |
+| `DISCORD_WEBHOOK_URL_WEB_FE`              | 배포 결과 Discord 알림 웹훅       |
+
+> production 환경으로 배포하려면 해당 프로젝트의 `_PRODUCTION` Secret이 설정돼 있어야 합니다.
+> 미설정 상태로 production 태그를 푸시하면 워크플로가 명확한 에러와 함께 중단됩니다.
 
 ### 3. GitHub 워크플로 (태그 기반 + Discord 알림)
 
-`.github/workflows/deploy-staging-web.yml`에서 태그 푸시 시 Vercel CLI로 빌드·배포하고, 성공/실패 시 Discord로 알립니다.
+`.github/workflows/deploy-web.yml`에서 태그 푸시 시 Vercel CLI로 빌드·배포하고, 성공/실패 시 Discord로 알립니다.
 
 **워크플로 트리거:**
 
-- `web-user/staging-*` 태그 푸시 시 web-user 배포
-- `web-seller/staging-*` 태그 푸시 시 web-seller 배포
-- `web-admin/staging-*` 태그 푸시 시 web-admin 배포
+- `web-user/staging-*` · `web-user/production-*` 태그 푸시 시 web-user 배포
+- `web-seller/staging-*` · `web-seller/production-*` 태그 푸시 시 web-seller 배포
+- `web-admin/staging-*` · `web-admin/production-*` 태그 푸시 시 web-admin 배포
+
+환경(`staging`/`production`)에 따라 대응하는 Vercel 프로젝트 ID Secret을 자동 선택합니다.
 
 **워크플로 동작:**
 
@@ -93,11 +101,11 @@ Picake 프로젝트의 web-user, web-seller, web-admin 애플리케이션을 Ver
 3. `vercel pull` → `vercel build` → `vercel deploy` (배포 완료까지 대기)
 4. Discord에 성공/실패, 배포 URL, GitHub Actions 로그 링크, Vercel 빌드 로그 일부 전송
 
-자세한 워크플로 내용은 `.github/workflows/deploy-staging-web.yml` 파일을 참고하세요.
+자세한 워크플로 내용은 `.github/workflows/deploy-web.yml` 파일을 참고하세요.
 
 ### 4. 도메인 구성 (선택사항)
 
-커스텀 도메인 설정은 [AWS Route53(도메인) - 가이드](<../aws/AWS%20Route53(도메인)%20-%20가이드.md>)를 참고하세요.
+커스텀 도메인 설정은 [AWS Route53(도메인) - 가이드](<../aws/(구버전)/AWS Route53(도메인) - 가이드.md>)를 참고하세요.
 
 ## 참고 자료
 
