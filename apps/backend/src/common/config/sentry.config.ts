@@ -1,5 +1,6 @@
 import * as Sentry from "@sentry/nestjs";
 import { ConfigService } from "@nestjs/config";
+import { isStagingOrProduction } from "@apps/backend/common/utils/environment.util";
 
 /**
  * Sentry 초기화 설정
@@ -14,7 +15,7 @@ export function initializeSentry(configService: ConfigService): void {
   const sentryDsn = configService.get<string>("SENTRY_DSN");
 
   // 검증(staging) 또는 상용(production) 환경에서 Sentry 초기화
-  if ((nodeEnv === "staging" || nodeEnv === "production") && sentryDsn) {
+  if (isStagingOrProduction(nodeEnv) && sentryDsn) {
     Sentry.init({
       dsn: sentryDsn,
       environment: nodeEnv, // 환경 태그 추가

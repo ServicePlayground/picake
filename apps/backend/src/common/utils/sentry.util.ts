@@ -1,6 +1,7 @@
 import * as Sentry from "@sentry/nestjs";
 import { ConfigService } from "@nestjs/config";
 import { LoggerUtil } from "./logger.util";
+import { isStagingOrProduction } from "@apps/backend/common/utils/environment.util";
 
 /**
  * Sentry 유틸리티
@@ -30,7 +31,7 @@ export class SentryUtil {
       return true;
     }
     // 검증(staging)과 상용(production) 환경에서만 Sentry 전송을 수행합니다.
-    return this.nodeEnv === "staging" || this.nodeEnv === "production";
+    return isStagingOrProduction(this.nodeEnv);
   }
 
   /**

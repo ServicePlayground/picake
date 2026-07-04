@@ -8,6 +8,7 @@ import {
 } from "@apps/backend/modules/business/constants/business.contants";
 import { LoggerUtil } from "@apps/backend/common/utils/logger.util";
 import { SentryUtil } from "@apps/backend/common/utils/sentry.util";
+import { isProduction } from "@apps/backend/common/utils/environment.util";
 
 /**
  * 공정거래위원회 통신판매사업자 등록상세 조회 API 전용 서비스
@@ -89,15 +90,13 @@ export class KftcApiService {
    */
   async getOnlineTradingCompanyDetail(detailDto: OnlineTradingCompanyDetailRequestDto) {
     try {
-      const isProduction = this.nodeEnv === "production";
-
       if (!this.dataGoKrApiKey) {
         LoggerUtil.log("DATA_GO_KR_API_KEY가 설정되지 않았습니다.");
         throw new Error("DATA_GO_KR_API_KEY가 설정되지 않았습니다.");
       }
 
       // production 환경이 아닌 경우 검증 통과
-      if (!isProduction) {
+      if (!isProduction(this.nodeEnv)) {
         LoggerUtil.log(`[${this.nodeEnv}] 통신판매사업자 등록상세 조회 건너뜀`);
         return;
       }

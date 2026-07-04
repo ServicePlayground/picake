@@ -1,13 +1,5 @@
-import {
-  ExceptionFilter,
-  Catch,
-  ArgumentsHost,
-  HttpException,
-  HttpStatus,
-  Inject,
-} from "@nestjs/common";
+import { ExceptionFilter, Catch, ArgumentsHost, HttpException, HttpStatus } from "@nestjs/common";
 import { Response } from "express";
-import { ConfigService } from "@nestjs/config";
 import { randomUUID } from "crypto";
 import { randomBytes } from "crypto";
 import { SensitiveDataUtil } from "@apps/backend/common/utils/sensitive-data.util";
@@ -20,12 +12,6 @@ import { LoggerUtil } from "@apps/backend/common/utils/logger.util";
  */
 @Catch()
 export class ErrorResponseInterceptor implements ExceptionFilter {
-  private readonly nodeEnv: string;
-
-  constructor(@Inject(ConfigService) private readonly configService: ConfigService) {
-    this.nodeEnv = this.configService.get<string>("NODE_ENV", "development");
-  }
-
   /**
    * 예외를 처리하고 클라이언트에게 응답을 전송합니다.
    * @param exception - 발생한 예외 객체

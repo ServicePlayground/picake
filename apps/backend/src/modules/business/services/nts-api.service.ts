@@ -9,6 +9,7 @@ import {
 } from "@apps/backend/modules/business/constants/business.contants";
 import { LoggerUtil } from "@apps/backend/common/utils/logger.util";
 import { SentryUtil } from "@apps/backend/common/utils/sentry.util";
+import { isProduction } from "@apps/backend/common/utils/environment.util";
 
 /**
  * 국세청 사업자등록정보 진위확인·상태조회 API 전용 서비스
@@ -90,10 +91,8 @@ export class NtsApiService {
    */
   async verifyBusinessRegistration(validationDto: BusinessValidationRequestDto) {
     try {
-      const isProduction = this.nodeEnv === "production";
-
       // production 환경이 아닌 경우 검증 통과
-      if (!isProduction) {
+      if (!isProduction(this.nodeEnv)) {
         LoggerUtil.log(`[${this.nodeEnv}] 사업자등록번호 진위확인 건너뜀`);
         return;
       }

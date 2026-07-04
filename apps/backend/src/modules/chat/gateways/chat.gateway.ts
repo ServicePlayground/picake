@@ -21,6 +21,7 @@ import { ChatPermissionUtil } from "@apps/backend/modules/chat/utils/chat-permis
 import { CHAT_ERROR_MESSAGES } from "@apps/backend/modules/chat/constants/chat.constants";
 import { SentryUtil } from "@apps/backend/common/utils/sentry.util";
 import { LoggerUtil } from "@apps/backend/common/utils/logger.util";
+import { createWebSocketCorsOptions } from "@apps/backend/common/utils/cors.util";
 
 /**
  * WebSocket 게이트웨이
@@ -28,10 +29,8 @@ import { LoggerUtil } from "@apps/backend/common/utils/logger.util";
  * 실시간 채팅을 위한 WebSocket 연결을 관리합니다.
  */
 @WebSocketGateway({
-  cors: {
-    origin: true,
-    credentials: true,
-  },
+  // HTTP(main.ts)와 동일하게 CORS_ORIGIN allowlist 정책을 사용합니다.
+  cors: createWebSocketCorsOptions(),
   // Socket.IO 엔드포인트 경로 명시 (배포 환경에서 WebSocket 연결 문제 해결)
   path: "/socket.io/",
   // 배포 환경에서 WebSocket 연결 안정성을 위한 추가 옵션
