@@ -87,6 +87,15 @@ export const AUDIENCE = {
 } as const;
 export type AudienceConst = (typeof AUDIENCE)[keyof typeof AUDIENCE];
 
+/**
+ * OAuth 공급자별 프론트 콜백 경로.
+ * 환경별 차이는 도메인에서 처리하고, 경로는 코드 상수로 고정합니다.
+ */
+export const OAUTH_REDIRECT_PATHS = {
+  GOOGLE: "/auth/login/google",
+  KAKAO: "/auth/login/kakao",
+} as const;
+
 /** 관리자 `Admin.password_hash` bcrypt cost — `AuthAdminService.register`·`prisma/seed` 동일 */
 export const ADMIN_BCRYPT_SALT_ROUNDS = 12;
 

@@ -36,6 +36,11 @@ export const BUSINESS_ERROR_MESSAGES = {
   PERMISSION_MANAGEMENT_NUMBER_ALREADY_EXISTS: "이미 등록된 통신판매업번호입니다.",
 } as const;
 
+export const BUSINESS_API_URLS = {
+  NTS: "https://api.odcloud.kr/api",
+  KFTC: "https://apis.data.go.kr",
+} as const;
+
 export enum B_STT_CD {
   ACTIVE = "01", // 계속사업자
   INACTIVE = "02", // 휴업자
