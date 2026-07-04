@@ -66,9 +66,7 @@ export const RadioGroup = <T extends string | number = string>({
   return (
     <div className={`w-full ${className}`.trim()}>
       {label && (
-        <p
-          className={cn("block mb-[10px] text-sm font-bold text-gray-900", labelClassName)}
-        >
+        <p className={cn("block mb-[10px] text-sm font-bold text-gray-900", labelClassName)}>
           {label}
         </p>
       )}

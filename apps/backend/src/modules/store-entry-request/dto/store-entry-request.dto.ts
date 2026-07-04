@@ -1,5 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsLatitude, IsLongitude, IsNotEmpty, IsOptional, IsString, MaxLength } from "class-validator";
+import {
+  IsLatitude,
+  IsLongitude,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from "class-validator";
 import { StoreEntryRequestStatus } from "@apps/backend/infra/database/prisma/generated/client";
 import { STORE_ENTRY_REQUEST_SUCCESS_MESSAGES } from "@apps/backend/modules/store-entry-request/constants/store-entry-request.constants";
 
@@ -38,13 +45,19 @@ export class CreateStoreEntryRequestDto {
   @MaxLength(50)
   phone?: string;
 
-  @ApiPropertyOptional({ description: "카카오 카테고리명", example: "음식점 > 카페 > 제과,베이커리" })
+  @ApiPropertyOptional({
+    description: "카카오 카테고리명",
+    example: "음식점 > 카페 > 제과,베이커리",
+  })
   @IsOptional()
   @IsString()
   @MaxLength(255)
   categoryName?: string;
 
-  @ApiPropertyOptional({ description: "카카오 장소 상세 URL", example: "http://place.map.kakao.com/26338954" })
+  @ApiPropertyOptional({
+    description: "카카오 장소 상세 URL",
+    example: "http://place.map.kakao.com/26338954",
+  })
   @IsOptional()
   @IsString()
   @MaxLength(2048)

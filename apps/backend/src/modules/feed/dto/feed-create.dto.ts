@@ -1,7 +1,17 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { ArrayMaxSize, IsArray, IsNotEmpty, IsOptional, IsString, MaxLength } from "class-validator";
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from "class-validator";
 import { SWAGGER_EXAMPLES as STORE_SWAGGER_EXAMPLES } from "@apps/backend/modules/store/constants/store.constants";
-import { FEED_MAX_IMAGES, SWAGGER_EXAMPLES } from "@apps/backend/modules/feed/constants/feed.constants";
+import {
+  FEED_MAX_IMAGES,
+  SWAGGER_EXAMPLES,
+} from "@apps/backend/modules/feed/constants/feed.constants";
 
 /**
  * 피드 생성 요청 DTO

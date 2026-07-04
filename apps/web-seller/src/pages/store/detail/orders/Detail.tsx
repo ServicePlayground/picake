@@ -27,8 +27,6 @@ import {
   ORDER_DETAIL_PAGE_META,
   ORDER_DETAIL_PAGE_TITLE,
   ORDER_DETAIL_SHEET,
-  ORDER_DETAIL_SHEET_HEADER,
-  ORDER_DETAIL_SHEET_TITLE,
   ORDER_DETAIL_TD_BLOCK,
 } from "@/apps/web-seller/features/order/constants/order-detail-page.constant";
 import {
@@ -164,10 +162,10 @@ export const StoreDetailOrderDetailPage: React.FC = () => {
 
   const reasonFieldLabel =
     reasonTarget === OrderStatus.NO_SHOW
-        ? "노쇼 사유 (필수)"
-        : reasonTarget === OrderStatus.CANCEL_REFUND_PENDING
-          ? "취소환불대기 전환 사유 (필수)"
-          : "";
+      ? "노쇼 사유 (필수)"
+      : reasonTarget === OrderStatus.CANCEL_REFUND_PENDING
+        ? "취소환불대기 전환 사유 (필수)"
+        : "";
 
   return (
     <div className="space-y-5 pb-8">

@@ -27,7 +27,10 @@ export class ReviewCreateService {
    * 픽업 완료 주문에 대해 후기를 작성합니다.
    * 주문당 1회만 작성 가능합니다.
    */
-  async createMyReviewFromOrder(userId: string, dto: CreateMyReviewRequestDto): Promise<MyReviewResponseDto> {
+  async createMyReviewFromOrder(
+    userId: string,
+    dto: CreateMyReviewRequestDto,
+  ): Promise<MyReviewResponseDto> {
     const order = await this.prisma.order.findUnique({
       where: { id: dto.orderId },
       select: {

@@ -71,8 +71,7 @@ export function getOrderStatusSellerHintBody(status: OrderStatus): string {
 export const ORDER_STATUS_LIST_GUIDE_ITEMS: readonly OrderStatusGuideItem[] = [
   {
     label: getOrderStatusLabel(OrderStatus.RESERVATION_REQUESTED),
-    description:
-      "고객이 주문 예약 신청을 완료한 상태예요. 판매자의 확인 전 단계입니다.",
+    description: "고객이 주문 예약 신청을 완료한 상태예요. 판매자의 확인 전 단계입니다.",
   },
   {
     label: getOrderStatusLabel(OrderStatus.PAYMENT_PENDING),

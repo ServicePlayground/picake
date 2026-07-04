@@ -219,7 +219,8 @@ const SEED_PRODUCT_IMAGES = {
 const SEED_STORE_FEEDS = {
   FEED1: {
     TITLE: "신제품 출시 안내",
-    CONTENT: "안녕하세요! 새로운 케이크가 출시되었습니다.\n맛있고 예쁜 케이크로 여러분을 찾아뵙겠습니다.",
+    CONTENT:
+      "안녕하세요! 새로운 케이크가 출시되었습니다.\n맛있고 예쁜 케이크로 여러분을 찾아뵙겠습니다.",
     IMAGE_URLS: [
       "https://static-staging.picakes.com/uploads/1779605188940_c6dd594b.jpeg",
       "https://static-staging.picakes.com/uploads/1779605200087_f0d30173.jpeg",

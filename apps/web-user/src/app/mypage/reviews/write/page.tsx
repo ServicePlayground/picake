@@ -252,7 +252,9 @@ export default function ReviewWritePage() {
       </div>
 
       {/* 하단 등록 버튼 (키보드가 올라오면 숨김) */}
-      <div className={`fixed bottom-0 left-0 right-0 p-5 bg-white ${isKeyboardOpen ? "hidden" : ""}`}>
+      <div
+        className={`fixed bottom-0 left-0 right-0 p-5 bg-white ${isKeyboardOpen ? "hidden" : ""}`}
+      >
         <button
           type="button"
           onClick={handleSubmit}

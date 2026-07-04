@@ -26,7 +26,7 @@ export const useAlertStore = create<AlertStore>((set) => ({
     const title =
       alert.title === "오류"
         ? ALERT_ERROR_TITLE
-        : alert.title ?? (alert.severity === "error" ? ALERT_ERROR_TITLE : undefined);
+        : (alert.title ?? (alert.severity === "error" ? ALERT_ERROR_TITLE : undefined));
     const newAlert: AlertItem = {
       ...alert,
       title,

@@ -209,9 +209,7 @@ export const OrderDetailSpreadsheetView: React.FC<OrderDetailSpreadsheetViewProp
               <SheetKvRow label="예약자명">
                 {order.reservationContactName?.trim() || "—"}
               </SheetKvRow>
-              <SheetKvRow label="연락처">
-                {order.reservationPhone?.trim() || "—"}
-              </SheetKvRow>
+              <SheetKvRow label="연락처">{order.reservationPhone?.trim() || "—"}</SheetKvRow>
 
               <SheetSectionRow>기본</SheetSectionRow>
               <SheetKvRow label="상품명">{order.productName || "—"}</SheetKvRow>

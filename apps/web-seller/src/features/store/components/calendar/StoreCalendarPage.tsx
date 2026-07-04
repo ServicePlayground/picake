@@ -530,9 +530,7 @@ export const StoreCalendarPage: React.FC = () => {
                 <div className="grid grid-cols-7 gap-1.5">
                   {cells.map((cell, i) => {
                     if (!cell) {
-                      return (
-                        <div key={`empty-${i}`} className="min-h-[6.5rem] sm:min-h-[7rem]" />
-                      );
+                      return <div key={`empty-${i}`} className="min-h-[6.5rem] sm:min-h-[7rem]" />;
                     }
                     const eff = effectiveForDate(
                       cell.key,
@@ -591,7 +589,8 @@ export const StoreCalendarPage: React.FC = () => {
                                   className="truncate text-[10px] leading-tight text-foreground/85 sm:text-xs"
                                   title={`${formatSeoulPickupHm(order.pickupDate)} ${reservationDisplayName(order)} ${reservationDisplayPhone(order)}`}
                                 >
-                                  {formatSeoulPickupHm(order.pickupDate)} {reservationDisplayName(order)}
+                                  {formatSeoulPickupHm(order.pickupDate)}{" "}
+                                  {reservationDisplayName(order)}
                                 </span>
                               ))}
                               {hiddenOrderCount > 0 ? (
