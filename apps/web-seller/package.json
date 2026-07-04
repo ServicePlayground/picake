@@ -22,6 +22,7 @@
     "axios": "1.12.2",
     "he": "^1.2.0",
     "lucide-react": "^0.555.0",
+    "posthog-js": "^1.396.6",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-error-boundary": "^6.0.0",

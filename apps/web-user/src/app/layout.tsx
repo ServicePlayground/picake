@@ -4,6 +4,7 @@ import localFont from "next/font/local";
 import "@/apps/web-user/common/styles/globals.css";
 import { QueryProvider } from "@/apps/web-user/common/components/providers/QueryProvider";
 import { ErrorBoundaryProvider } from "@/apps/web-user/common/components/providers/ErrorBoundaryProvider";
+import { PostHogProvider } from "@/apps/web-user/common/components/providers/PostHogProvider";
 import { LoadingFallback } from "@/apps/web-user/common/components/fallbacks/LoadingFallback";
 import RootWrapperLayout from "@/apps/web-user/common/components/layouts/RootWrapperLayout";
 
@@ -119,13 +120,15 @@ export default function RootLayout({
     <html lang="ko">
       <body className={pretendard.className}>
         <ErrorBoundaryProvider>
-          <QueryProvider>
-            <Suspense
-              fallback={<LoadingFallback variant="overlay" message="페이지를 불러오는 중" />}
-            >
-              <RootWrapperLayout>{children}</RootWrapperLayout>
-            </Suspense>
-          </QueryProvider>
+          <PostHogProvider>
+            <QueryProvider>
+              <Suspense
+                fallback={<LoadingFallback variant="overlay" message="페이지를 불러오는 중" />}
+              >
+                <RootWrapperLayout>{children}</RootWrapperLayout>
+              </Suspense>
+            </QueryProvider>
+          </PostHogProvider>
         </ErrorBoundaryProvider>
       </body>
     </html>
