@@ -8,6 +8,7 @@ interface ImportMetaEnv {
   readonly VITE_PUBLIC_GITHUB_SHA: string;
   readonly VITE_PUBLIC_POSTHOG_KEY: string;
   readonly VITE_PUBLIC_POSTHOG_HOST: string;
+  readonly VITE_PUBLIC_SENTRY_DSN: string;
 }
 
 interface ImportMeta {

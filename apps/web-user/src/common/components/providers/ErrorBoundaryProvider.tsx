@@ -3,6 +3,7 @@
 import { ErrorBoundary } from "react-error-boundary";
 import { ErrorInfo } from "react";
 import { ErrorFallback } from "@/apps/web-user/common/components/fallbacks/ErrorFallback";
+import { captureSentryException } from "@/apps/web-user/common/utils/sentry.util";
 
 interface ErrorBoundaryProviderProps {
   children: React.ReactNode;
@@ -10,8 +11,10 @@ interface ErrorBoundaryProviderProps {
 
 export function ErrorBoundaryProvider({ children }: ErrorBoundaryProviderProps) {
   const handleError = (error: unknown, errorInfo: ErrorInfo) => {
-    // 에러 로깅 (추후 에러 모니터링 서비스 연동 가능)
     console.error("ErrorBoundary caught an error:", error, errorInfo);
+    captureSentryException(error, {
+      contexts: { react: { componentStack: errorInfo.componentStack } },
+    });
   };
 
   return (
