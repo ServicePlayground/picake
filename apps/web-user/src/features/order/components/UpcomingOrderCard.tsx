@@ -4,7 +4,6 @@ import { useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Swiper, SwiperSlide } from "swiper/react";
 import type { Swiper as SwiperType } from "swiper";
-import "swiper/css";
 import { useMyOrders } from "@/apps/web-user/features/order/hooks/queries/useMyOrders";
 import { OrderStatus } from "@/apps/web-user/features/order/types/order.type";
 import { Icon } from "@/apps/web-user/common/components/icons";

@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 import { withSentryConfig } from "@sentry/nextjs";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    optimizePackageImports: ["swiper", "lucide-react"],
+  },
   env: {
     /** GitHub Actions 빌드 커밋 SHA를 클라이언트에 주입합니다. */
     NEXT_PUBLIC_GITHUB_SHA: process.env.GITHUB_SHA ?? "",

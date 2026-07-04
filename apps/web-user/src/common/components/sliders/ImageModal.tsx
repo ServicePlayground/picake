@@ -13,9 +13,6 @@ import {
 import { Icon } from "@/apps/web-user/common/components/icons";
 import { SliderImage } from "./ImageSlider";
 
-import "swiper/css";
-import "swiper/css/navigation";
-
 interface ImageModalProps {
   /** 모달 열림 상태 */
   isOpen: boolean;

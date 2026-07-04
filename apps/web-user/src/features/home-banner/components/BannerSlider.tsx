@@ -4,8 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination, Autoplay } from "swiper/modules";
-import "swiper/css";
-import "swiper/css/pagination";
 import { useHomeBanners } from "@/apps/web-user/features/home-banner/hooks/queries/useHomeBanners";
 import { Skeleton } from "@/apps/web-user/common/components/skeleton/Skeleton";
 

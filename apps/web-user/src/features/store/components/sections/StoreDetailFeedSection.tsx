@@ -7,8 +7,6 @@ import { Pagination } from "swiper/modules";
 import DOMPurify from "dompurify";
 import { Feed } from "@/apps/web-user/features/feed/types/feed.type";
 import { useStoreFeeds } from "@/apps/web-user/features/feed/hooks/queries/useStoreFeeds";
-import "swiper/css";
-import "swiper/css/pagination";
 
 interface StoreDetailFeedSectionProps {
   storeId: string;

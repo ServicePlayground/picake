@@ -49,6 +49,10 @@ export const FeedList: React.FC<FeedListProps> = ({ feeds }) => {
                 <img
                   src={thumbnailUrl}
                   alt="피드"
+                  width={64}
+                  height={64}
+                  loading="lazy"
+                  decoding="async"
                   className="h-full w-full object-cover transition-transform group-hover:scale-105"
                 />
               ) : (

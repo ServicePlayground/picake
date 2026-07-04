@@ -20,6 +20,16 @@ export default defineConfig({
   },
   build: {
     outDir: "dist",
-    sourcemap: true,
+    sourcemap: process.env.NODE_ENV !== "production",
+    target: "es2020",
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          "vendor-react": ["react", "react-dom", "react-router-dom"],
+          "vendor-query": ["@tanstack/react-query"],
+          "vendor-editor": ["react-quill"],
+        },
+      },
+    },
   },
 });
