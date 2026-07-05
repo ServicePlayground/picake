@@ -4,8 +4,10 @@ import { PassportModule } from "@nestjs/passport";
 import { ConfigService } from "@nestjs/config";
 import { AdminManagementModule } from "@apps/backend/modules/admin-management/admin-management.module";
 import { TermsModule } from "@apps/backend/modules/terms/terms.module";
+import { SolapiModule } from "@apps/backend/modules/solapi/solapi.module";
 import { AuthService } from "@apps/backend/modules/auth/auth.service";
 import { AuthPhoneService } from "@apps/backend/modules/auth/services/auth-phone.service";
+import { AuthSmsService } from "@apps/backend/modules/auth/services/auth-sms.service";
 import { AuthGoogleOauthService } from "@apps/backend/modules/auth/services/auth-google-oauth.service";
 import { AuthKakaoOauthService } from "@apps/backend/modules/auth/services/auth-kakao-oauth.service";
 import { AuthAccountFindService } from "@apps/backend/modules/auth/services/auth-account-find.service";
@@ -25,6 +27,7 @@ import { AuthGuard } from "@apps/backend/modules/auth/guards/auth.guard";
   imports: [
     AdminManagementModule,
     TermsModule,
+    SolapiModule,
     PassportModule,
     JwtModule.registerAsync({
       useFactory: (configService: ConfigService) => ({
@@ -40,6 +43,7 @@ import { AuthGuard } from "@apps/backend/modules/auth/guards/auth.guard";
     AuthMypageProfileService,
     AuthWithdrawService,
     AuthPhoneService,
+    AuthSmsService,
     AuthGoogleOauthService,
     AuthKakaoOauthService,
     AuthAdminService,

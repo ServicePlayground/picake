@@ -1,6 +1,11 @@
 import { OrderStatus } from "@apps/backend/modules/order/constants/order.constants";
-import { ORDER_STATUS_TRANSITION_SOURCE } from "@apps/backend/modules/order/types/order-lifecycle.types";
 import type { OrderStatusTransitionPayload } from "@apps/backend/modules/order/types/order-lifecycle.types";
+import {
+  isPaymentExpiredCancelSource,
+  isReservationRequestedOnCreate,
+  isSellerStatusUpdate,
+  isUserAction,
+} from "@apps/backend/modules/notification/utils/user-order-notification-transition.util";
 
 export type UserOrderNotificationCopy = { title: string; body: string };
 
@@ -20,13 +25,9 @@ export type UserOrderNotificationCopy = { title: string; body: string };
 export function buildUserOrderNotificationCopy(
   payload: Pick<OrderStatusTransitionPayload, "fromStatus" | "toStatus" | "source">,
 ): UserOrderNotificationCopy | null {
-  const { fromStatus, toStatus, source } = payload;
+  const { toStatus } = payload;
 
-  if (
-    toStatus === OrderStatus.RESERVATION_REQUESTED &&
-    fromStatus === null &&
-    source === ORDER_STATUS_TRANSITION_SOURCE.ORDER_CREATE
-  ) {
+  if (isReservationRequestedOnCreate(payload)) {
     return {
       title: "예약 신청이 접수되었어요",
       body: "스토어에 주문이 전달되었어요. 스토어가 확인하면 다음 안내를 알려드릴게요. 진행 상황은 마이페이지 내 예약에서도 볼 수 있어요.",
@@ -66,24 +67,19 @@ export function buildUserOrderNotificationCopy(
   }
 
   if (toStatus === OrderStatus.CANCEL_COMPLETED) {
-    if (
-      fromStatus === OrderStatus.PAYMENT_PENDING &&
-      (source === ORDER_STATUS_TRANSITION_SOURCE.AUTOMATION_BATCH ||
-        source === ORDER_STATUS_TRANSITION_SOURCE.AUTOMATION_SYNC ||
-        source === ORDER_STATUS_TRANSITION_SOURCE.USER_ACTION_PAYMENT_EXPIRED)
-    ) {
+    if (isPaymentExpiredCancelSource(payload)) {
       return {
         title: "입금 시간이 지나 주문이 취소되었어요",
         body: "입금 마감 시간 안에 입금이 확인되지 않아 예약이 취소되었어요. 다시 이용하시려면 상품에서 새로 주문해 주세요.",
       };
     }
-    if (source === ORDER_STATUS_TRANSITION_SOURCE.USER_ACTION) {
+    if (isUserAction(payload)) {
       return {
         title: "주문 취소가 완료되었어요",
         body: "요청하신 대로 취소 처리되었어요.",
       };
     }
-    if (source === ORDER_STATUS_TRANSITION_SOURCE.SELLER_STATUS_UPDATE) {
+    if (isSellerStatusUpdate(payload)) {
       return {
         title: "스토어에서 주문이 취소되었어요",
         body: "스토어 사정으로 예약을 진행할 수 없어 주문이 취소되었어요. 자세한 내용은 주문 상세를 확인하거나 스토어에 문의해 주세요.",
@@ -93,13 +89,13 @@ export function buildUserOrderNotificationCopy(
   }
 
   if (toStatus === OrderStatus.CANCEL_REFUND_PENDING) {
-    if (source === ORDER_STATUS_TRANSITION_SOURCE.USER_ACTION) {
+    if (isUserAction(payload)) {
       return {
         title: "취소·환불 요청을 보냈어요",
         body: "스토어에서 확인한 뒤 처리해요. 결과는 알림과 주문 화면에서 안내드릴게요.",
       };
     }
-    if (source === ORDER_STATUS_TRANSITION_SOURCE.SELLER_STATUS_UPDATE) {
+    if (isSellerStatusUpdate(payload)) {
       return {
         title: "취소·환불을 진행 중이에요",
         body: "스토어에서 환불 절차를 진행하고 있어요. 진행 상황은 주문 상세에서 확인할 수 있어요.",

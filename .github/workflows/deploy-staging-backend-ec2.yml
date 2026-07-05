@@ -304,6 +304,12 @@ jobs:
 
             # Sentry - staging
             SENTRY_DSN=${{ secrets.STAGING_SENTRY_DSN }}
+
+            # SOLAPI (SMS 인증 · 카카오 알림톡) - staging & production (공용)
+            SOLAPI_API_KEY=${{ secrets.SOLAPI_API_KEY }}
+            SOLAPI_API_SECRET=${{ secrets.SOLAPI_API_SECRET }}
+            SOLAPI_SENDER_PHONE=${{ secrets.SOLAPI_SENDER_PHONE }}
+            SOLAPI_PFID=${{ secrets.SOLAPI_PFID }}
             EOF
 
             # 환경 변수 파일 권한 설정

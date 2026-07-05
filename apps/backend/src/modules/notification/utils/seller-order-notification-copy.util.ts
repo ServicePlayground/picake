@@ -1,6 +1,11 @@
 import { OrderStatus } from "@apps/backend/modules/order/constants/order.constants";
-import { ORDER_STATUS_TRANSITION_SOURCE } from "@apps/backend/modules/order/types/order-lifecycle.types";
 import type { OrderStatusTransitionPayload } from "@apps/backend/modules/order/types/order-lifecycle.types";
+import {
+  isPaymentExpiredCancelSource,
+  isReservationRequestedOnCreate,
+  isSellerStatusUpdate,
+  isUserAction,
+} from "@apps/backend/modules/notification/utils/user-order-notification-transition.util";
 
 export type OrderNotificationCopy = { title: string; body: string };
 
@@ -11,13 +16,9 @@ export type OrderNotificationCopy = { title: string; body: string };
 export function buildSellerOrderNotificationCopy(
   payload: Pick<OrderStatusTransitionPayload, "fromStatus" | "toStatus" | "source">,
 ): OrderNotificationCopy | null {
-  const { fromStatus, toStatus, source } = payload;
+  const { toStatus } = payload;
 
-  if (
-    toStatus === OrderStatus.RESERVATION_REQUESTED &&
-    fromStatus === null &&
-    source === ORDER_STATUS_TRANSITION_SOURCE.ORDER_CREATE
-  ) {
+  if (isReservationRequestedOnCreate(payload)) {
     return {
       title: "예약 신청이 들어왔습니다",
       body: "고객이 주문을 신청했습니다. 예약을 확인해 주세요.",
@@ -60,24 +61,19 @@ export function buildSellerOrderNotificationCopy(
   }
 
   if (toStatus === OrderStatus.CANCEL_COMPLETED) {
-    if (
-      fromStatus === OrderStatus.PAYMENT_PENDING &&
-      (source === ORDER_STATUS_TRANSITION_SOURCE.AUTOMATION_BATCH ||
-        source === ORDER_STATUS_TRANSITION_SOURCE.AUTOMATION_SYNC ||
-        source === ORDER_STATUS_TRANSITION_SOURCE.USER_ACTION_PAYMENT_EXPIRED)
-    ) {
+    if (isPaymentExpiredCancelSource(payload)) {
       return {
         title: "입금 기한이 지나 주문이 취소되었습니다",
         body: "입금 대기 시간이 만료되어 취소 처리되었습니다.",
       };
     }
-    if (source === ORDER_STATUS_TRANSITION_SOURCE.USER_ACTION) {
+    if (isUserAction(payload)) {
       return {
         title: "고객이 주문을 취소했습니다",
         body: "고객 취소가 반영되었습니다.",
       };
     }
-    if (source === ORDER_STATUS_TRANSITION_SOURCE.SELLER_STATUS_UPDATE) {
+    if (isSellerStatusUpdate(payload)) {
       return {
         title: "판매자 취소가 반영되었습니다",
         body: "주문이 취소 처리되었습니다.",
@@ -87,13 +83,13 @@ export function buildSellerOrderNotificationCopy(
   }
 
   if (toStatus === OrderStatus.CANCEL_REFUND_PENDING) {
-    if (source === ORDER_STATUS_TRANSITION_SOURCE.USER_ACTION) {
+    if (isUserAction(payload)) {
       return {
         title: "고객이 환불을 요청했습니다",
         body: "취소·환불 대기로 접수되었습니다. 내용을 확인해 주세요.",
       };
     }
-    if (source === ORDER_STATUS_TRANSITION_SOURCE.SELLER_STATUS_UPDATE) {
+    if (isSellerStatusUpdate(payload)) {
       return {
         title: "환불 대기로 변경했습니다",
         body: "취소·환불 대기 상태입니다. 고객 안내와 환불 처리를 진행해 주세요.",

@@ -1,4 +1,5 @@
 import { Injectable, BadRequestException } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import { PrismaService } from "@apps/backend/infra/database/prisma.service";
 import { PhoneUtil } from "@apps/backend/modules/auth/utils/phone.util";
 import {
@@ -11,6 +12,7 @@ import {
   SendVerificationCodeRequestDto,
   VerifyPhoneCodeRequestDto,
 } from "@apps/backend/modules/auth/dto/auth-phone-verification.dto";
+import { AuthSmsService } from "@apps/backend/modules/auth/services/auth-sms.service";
 import { LoggerUtil } from "@apps/backend/common/utils/logger.util";
 
 /** 인증 완료 후 다음 단계(구글 가입·계정 찾기 등)에 사용할 수 있는 유효 시간 */
@@ -21,7 +23,16 @@ const VERIFIED_PURPOSE_VALID_MS = 60 * 60 * 1000;
  */
 @Injectable()
 export class AuthPhoneService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly authSmsService: AuthSmsService,
+    private readonly configService: ConfigService,
+  ) {}
+
+  /** 개발 환경 여부 */
+  private get isDevelopment(): boolean {
+    return this.configService.get<string>("NODE_ENV") === "development";
+  }
 
   /**
    * 휴대폰 인증번호 발송
@@ -68,8 +79,10 @@ export class AuthPhoneService {
       },
     );
 
-    // 3. SMS 발송 - ERD 요구사항: 신뢰할 수 있는 인증 서비스 연동
-    // TODO: 실제 SMS 발송 서비스 연동 (예: 네이버 클라우드 플랫폼, 카카오 알림톡 등)
+    // 3. SMS 발송 (SOLAPI) — 개발 환경에서는 비용 때문에 발송하지 않음
+    if (!this.isDevelopment) {
+      await this.authSmsService.sendVerificationCode(normalizedPhone, verificationCode);
+    }
 
     return { expiresAt };
   }
@@ -85,8 +98,8 @@ export class AuthPhoneService {
     const normalizedPhone = PhoneUtil.normalizePhone(phone);
     const storedPurpose = PhoneUtil.composeStoredPhoneVerificationPurpose(audience, kind);
 
-    // ------- TODO: 삭제 필요 (임시 처리: 인증 통과) -------
-    if (verificationCode === "777777") {
+    // 개발 환경에서는 인증 통과
+    if (this.isDevelopment && verificationCode === "777777") {
       const existingVerification = await this.prisma.phoneVerification.findFirst({
         where: {
           phone: normalizedPhone,
