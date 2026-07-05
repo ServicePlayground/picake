@@ -547,3 +547,84 @@ jobs:
 
           echo "=============================================="
           echo "✅ SSL 및 HTTPS 헬스체크 통과"
+
+      - name: Notify Discord
+        if: always()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL_BACKEND }}
+          TAG: ${{ github.ref_name }}
+          JOB_STATUS: ${{ job.status }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "⚠️ DISCORD_WEBHOOK_URL_BACKEND is not set — skipping notification"
+            exit 0
+          fi
+
+          case "$JOB_STATUS" in
+            success) STATUS_LABEL="✅ 배포 성공"; COLOR=5763719 ;;
+            failure) STATUS_LABEL="❌ 배포 실패"; COLOR=15548997 ;;
+            cancelled) STATUS_LABEL="⚠️ 배포 취소"; COLOR=9807270 ;;
+            *) STATUS_LABEL="ℹ️ 배포 종료 ($JOB_STATUS)"; COLOR=3447003 ;;
+          esac
+
+          API_URL="https://api-staging.picakes.com"
+          HEALTH_URL="${API_URL}/health"
+
+          if [ "$JOB_STATUS" = "failure" ]; then
+            PAYLOAD=$(jq -n \
+              --arg title "$STATUS_LABEL — backend (staging)" \
+              --argjson color "$COLOR" \
+              --arg tag "$TAG" \
+              --arg api "$API_URL" \
+              --arg health "$HEALTH_URL" \
+              --arg run_url "$RUN_URL" \
+              '{
+                embeds: [{
+                  title: $title,
+                  color: $color,
+                  fields: [
+                    { name: "태그", value: ("`" + $tag + "`"), inline: false },
+                    { name: "API", value: ("[" + $api + "](" + $api + ")"), inline: true },
+                    { name: "헬스체크", value: ("[" + $health + "](" + $health + ")"), inline: true },
+                    { name: "GitHub Actions", value: ("[워크플로우 로그](" + $run_url + ")"), inline: false },
+                    { name: "안내", value: "상세 로그는 GitHub Actions를 확인하세요. EC2 SSH 접속 후 `pm2 logs picake-backend-staging --lines 50` 로 서버 로그를 볼 수 있습니다.", inline: false }
+                  ],
+                  timestamp: (now | strftime("%Y-%m-%dT%H:%M:%SZ"))
+                }]
+              }')
+          else
+            PAYLOAD=$(jq -n \
+              --arg title "$STATUS_LABEL — backend (staging)" \
+              --argjson color "$COLOR" \
+              --arg tag "$TAG" \
+              --arg api "$API_URL" \
+              --arg health "$HEALTH_URL" \
+              --arg run_url "$RUN_URL" \
+              '{
+                embeds: [{
+                  title: $title,
+                  color: $color,
+                  fields: [
+                    { name: "태그", value: ("`" + $tag + "`"), inline: false },
+                    { name: "API", value: ("[" + $api + "](" + $api + ")"), inline: true },
+                    { name: "헬스체크", value: ("[" + $health + "](" + $health + ")"), inline: true },
+                    { name: "GitHub Actions", value: ("[워크플로우 로그](" + $run_url + ")"), inline: false }
+                  ],
+                  timestamp: (now | strftime("%Y-%m-%dT%H:%M:%SZ"))
+                }]
+              }')
+          fi
+
+          HTTP_STATUS=$(curl -s -o /tmp/discord_response.txt -w "%{http_code}" \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD" \
+            "$DISCORD_WEBHOOK_URL")
+
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
+            echo "✅ Discord notification sent (HTTP $HTTP_STATUS)"
+          else
+            echo "⚠️ Discord notification failed (HTTP $HTTP_STATUS) — deploy result is unchanged"
+            cat /tmp/discord_response.txt
+          fi
