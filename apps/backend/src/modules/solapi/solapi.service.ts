@@ -83,17 +83,19 @@ export class SolapiService implements OnModuleInit {
    * @throws Error SOLAPI 환경변수 미설정으로 발송할 수 없는 경우
    */
   async sendSms(params: SendSmsParams): Promise<SendSmsResult> {
-    if (!this.client || !this.senderPhone) {
+    const client = this.client;
+    const senderPhone = this.senderPhone;
+    if (!client || !senderPhone) {
       throw new Error("[SolapiService] SOLAPI 환경변수가 설정되지 않아 SMS를 발송할 수 없습니다.");
     }
 
-    const response = await this.client.sendOne({
+    const messageId = await this.sendMessage(client, {
       to: SolapiService.normalizePhone(params.to),
-      from: this.senderPhone,
+      from: senderPhone,
       text: params.text,
     });
 
-    return { messageId: response.messageId };
+    return { messageId };
   }
 
   /**
@@ -104,23 +106,42 @@ export class SolapiService implements OnModuleInit {
    * @throws Error SOLAPI 환경변수 미설정으로 발송할 수 없는 경우
    */
   async sendAlimtalk(params: SendAlimtalkParams): Promise<SendAlimtalkResult> {
-    if (!this.isAlimtalkEnabled || !this.pfId) {
+    const client = this.client;
+    const senderPhone = this.senderPhone;
+    const pfId = this.pfId;
+    if (!client || !senderPhone || !pfId) {
       throw new Error("[SolapiService] SOLAPI_PFID가 설정되지 않아 알림톡을 발송할 수 없습니다.");
     }
 
-    const response = await this.client.sendOne({
+    const messageId = await this.sendMessage(client, {
       to: SolapiService.normalizePhone(params.to),
-      from: this.senderPhone,
+      from: senderPhone,
       ...(params.fallbackText ? { text: params.fallbackText } : {}),
       kakaoOptions: {
-        pfId: this.pfId,
+        pfId,
         templateId: params.templateId,
         variables: params.variables,
         disableSms: params.disableSms ?? true,
       },
     });
 
-    return { messageId: response.messageId };
+    return { messageId };
+  }
+
+  /**
+   * solapi v6 `send` API로 단건 메시지를 발송하고 messageId를 반환합니다.
+   * (v5 이하의 `sendOne`은 v6에서 제거됨)
+   */
+  private async sendMessage(
+    client: SolapiMessageService,
+    message: Parameters<SolapiMessageService["send"]>[0],
+  ): Promise<string> {
+    const response = await client.send(message, { showMessageList: true });
+    const messageId = response.messageList?.[0]?.messageId;
+    if (!messageId) {
+      throw new Error("[SolapiService] SOLAPI 메시지 발송 응답에 messageId가 없습니다.");
+    }
+    return messageId;
   }
 
   /** 하이픈·공백·괄호를 제거해 숫자만 남깁니다. */

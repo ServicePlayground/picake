@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SITE_BASE_URL } from "@/apps/web-user/common/constants/site.constants";
 
 export const metadata: Metadata = {
   title: "케이크 검색",
@@ -9,11 +10,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "케이크 검색 | Picake",
     description: "원하는 케이크와 매장을 검색해보세요.",
-    url: "https://picakes.com/search",
-  },
-  robots: {
-    index: true,
-    follow: true,
+    url: `${SITE_BASE_URL}/search`,
   },
 };
 

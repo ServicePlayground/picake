@@ -1,4 +1,4 @@
-/** 공개 웹 사이트 기본 URL (OG canonical·sitemap). staging은 Vercel env로 override */
+/** 공개 웹 사이트 기본 URL (OG·canonical). staging은 Vercel env로 override */
 export const SITE_BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://picakes.com";
 
 export const SITE_LOGO_URL = `${SITE_BASE_URL}/images/logo/logo_picake.svg`;

@@ -83,19 +83,6 @@ export const metadata: Metadata = {
     images: [SITE_LOGO_URL],
   },
 
-  // 검색엔진 크롤링 정책
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-video-preview": -1,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-    },
-  },
-
   applicationName: SITE_NAME,
   category: "Food & Dining",
   referrer: "origin-when-cross-origin",

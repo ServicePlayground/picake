@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SITE_BASE_URL } from "@/apps/web-user/common/constants/site.constants";
 
 export const metadata: Metadata = {
   title: "케이크 지도",
@@ -9,11 +10,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "케이크 지도 | Picake",
     description: "지도에서 내 주변 케이크 매장을 탐색하세요.",
-    url: "https://picakes.com/map",
-  },
-  robots: {
-    index: true,
-    follow: true,
+    url: `${SITE_BASE_URL}/map`,
   },
 };
 
