@@ -39,6 +39,11 @@ export class SentryUtil {
    * @param statusCode HTTP 상태 코드
    */
   static shouldSendToSentry(statusCode: number): boolean {
+    // 점검 모드(503)는 의도된 응답이므로 Sentry 전송 제외
+    if (statusCode === 503) {
+      return false;
+    }
+
     // 5xx 에러는 항상 전송
     if (statusCode >= 500) {
       return true;

@@ -8,6 +8,7 @@ import { SellerApiModule } from "@apps/backend/apis/seller/seller-api.module";
 import { AdminApiModule } from "@apps/backend/apis/admin/admin-api.module";
 import { SuccessResponseInterceptor } from "@apps/backend/common/interceptors/success-response.interceptor";
 import { ErrorResponseInterceptor } from "@apps/backend/common/interceptors/error-response.interceptor";
+import { MaintenanceGuard } from "@apps/backend/common/guards/maintenance.guard";
 
 /**
  * NestJS 애플리케이션의 루트 모듈
@@ -57,6 +58,11 @@ import { ErrorResponseInterceptor } from "@apps/backend/common/interceptors/erro
     {
       provide: APP_FILTER,
       useClass: ErrorResponseInterceptor,
+    },
+    // 전역 점검 모드 Guard 등록 (ThrottlerGuard 보다 먼저 실행)
+    {
+      provide: APP_GUARD,
+      useClass: MaintenanceGuard,
     },
     // 전역 Rate Limiting Guard 등록
     {

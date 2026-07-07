@@ -300,6 +300,10 @@ jobs:
             SOLAPI_API_SECRET=${{ secrets.SOLAPI_API_SECRET }}
             SOLAPI_SENDER_PHONE=${{ secrets.SOLAPI_SENDER_PHONE }}
             SOLAPI_PFID=${{ secrets.SOLAPI_PFID }}
+
+            # SERVICE MAINTENANCE MODE (GitHub Secret: PRODUCTION_SERVICE_MAINTENANCE_MODE)
+            # true 로 설정하면 모든 API·WebSocket 요청을 차단합니다. 미설정 시 false.
+            SERVICE_MAINTENANCE_MODE=${{ secrets.PRODUCTION_SERVICE_MAINTENANCE_MODE }}
             EOF
 
             # 환경 변수 파일 권한 설정

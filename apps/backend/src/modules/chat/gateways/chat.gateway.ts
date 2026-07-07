@@ -22,6 +22,8 @@ import { CHAT_ERROR_MESSAGES } from "@apps/backend/modules/chat/constants/chat.c
 import { SentryUtil } from "@apps/backend/common/utils/sentry.util";
 import { LoggerUtil } from "@apps/backend/common/utils/logger.util";
 import { createWebSocketCorsOptions } from "@apps/backend/common/utils/cors.util";
+import { isServiceMaintenanceMode } from "@apps/backend/common/utils/maintenance.util";
+import { API_RESPONSE_MESSAGES } from "@apps/backend/common/constants/app.constants";
 
 /**
  * WebSocket 게이트웨이
@@ -98,6 +100,15 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
     LoggerUtil.log(
       `[🔌 연결 시도] handshake auth keys: ${Object.keys((client.handshake.auth as Record<string, unknown>) || {}).join(",")}`,
     );
+
+    if (isServiceMaintenanceMode(this.configService)) {
+      client.emit("error", {
+        message: API_RESPONSE_MESSAGES.SERVICE_UNAVAILABLE,
+        code: "SERVICE_UNAVAILABLE",
+      });
+      client.disconnect(true);
+      return;
+    }
 
     try {
       // JWT 토큰 추출 및 검증
