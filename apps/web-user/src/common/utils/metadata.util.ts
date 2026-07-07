@@ -68,10 +68,6 @@ export function buildShareMetadata({
       description,
       images: [ogImage],
     },
-    robots: {
-      index: true,
-      follow: true,
-    },
   };
 }
 
@@ -79,6 +75,5 @@ export function buildNotFoundMetadata(title: string): Metadata {
   return {
     title,
     description: DEFAULT_DESCRIPTION,
-    robots: { index: false, follow: false },
   };
 }
