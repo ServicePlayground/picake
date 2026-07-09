@@ -129,29 +129,35 @@ export class AuthGoogleOauthService {
         },
       );
 
-      const { access_token, token_type } = tokenResponse.data;
+      const accessToken = tokenResponse.data?.access_token;
+      const tokenType = tokenResponse.data?.token_type ?? "Bearer";
+      if (!accessToken) {
+        throw new BadRequestException(AUTH_ERROR_MESSAGES.GOOGLE_OAUTH_TOKEN_EXCHANGE_FAILED);
+      }
 
-      // Access Token으로 사용자 정보 요청
-      LoggerUtil.log("사용자 정보 요청 시작");
       const userInfoResponse = await this.httpClient.get(
         "https://www.googleapis.com/oauth2/v2/userinfo",
         {
           headers: {
-            Authorization: `${token_type} ${access_token}`,
+            Authorization: `${tokenType} ${accessToken}`,
           },
         },
       );
 
       const userInfo = userInfoResponse.data;
+      const googleId = userInfo?.id?.toString();
+      const googleEmail = userInfo?.email;
+      if (!googleId || !googleEmail) {
+        throw new BadRequestException(AUTH_ERROR_MESSAGES.GOOGLE_OAUTH_TOKEN_EXCHANGE_FAILED);
+      }
 
       return {
         userInfo: {
-          googleId: userInfo.id,
-          googleEmail: userInfo.email,
+          googleId,
+          googleEmail,
         },
       };
     } catch (error: any) {
-      // 민감 정보를 제거한 에러 로깅
       const sanitizedError = {
         code: error.code,
         message: error.message,
@@ -168,7 +174,10 @@ export class AuthGoogleOauthService {
         });
       }
 
-      throw error;
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+      throw new BadRequestException(AUTH_ERROR_MESSAGES.GOOGLE_OAUTH_TOKEN_EXCHANGE_FAILED);
     }
   }
 
@@ -181,6 +190,12 @@ export class AuthGoogleOauthService {
     const {
       userInfo: { googleId, googleEmail },
     } = googleUserInfo;
+
+    if (!googleId) {
+      throw new BadRequestException({
+        message: AUTH_ERROR_MESSAGES.GOOGLE_OAUTH_TOKEN_EXCHANGE_FAILED,
+      });
+    }
 
     let consumer = await this.prisma.consumer.findUnique({
       where: { googleId },
