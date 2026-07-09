@@ -123,7 +123,6 @@ export function buildUserOrderAlimtalkPayload(
         ...base,
         "#{결제금액}": 결제금액,
         "#{입금마감}": formatDateTime(order.paymentPendingDeadlineAt),
-        "#{픽업일시}": 픽업일시,
         "#{은행명}": formatBankLabel(order.storeBankName),
         "#{계좌번호}": order.storeBankAccountNumber ?? "",
         "#{예금주}": order.storeAccountHolderName ?? "",
