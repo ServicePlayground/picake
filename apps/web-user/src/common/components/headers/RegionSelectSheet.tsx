@@ -71,8 +71,14 @@ export function RegionSelectSheet({
         currentResult.label === currentResult.depth1Label ||
         currentResult.label === `${currentResult.depth1Label} 전지역`
       ) {
+        // 전지역 선택 → 현재 활성 구 전체 체크
         initialLabels = new Set(activeItems.map((d) => d.label));
+      } else if (currentResult.selectedLabels && currentResult.selectedLabels.length > 0) {
+        // 실제 선택된 구 목록으로 복원 (다중 선택). 현재 활성 구에 남아있는 것만.
+        const activeSet = new Set(activeItems.map((d) => d.label));
+        initialLabels = new Set(currentResult.selectedLabels.filter((l) => activeSet.has(l)));
       } else {
+        // 폴백: 레거시 저장값(단일 label)
         initialLabels = new Set([currentResult.label]);
       }
     } else {
@@ -220,17 +226,25 @@ export function RegionSelectSheet({
       onClose();
       return;
     }
+    // 실제 선택된 구 목록. 표시용 label과 별개로 보관해 재진입 복원·필터에 사용.
+    const selectedLabels = Array.from(currentCheckedLabels);
     if (isAllChecked) {
       const totalStoreCount = currentActiveItems.reduce((sum, d) => sum + d.storeCount, 0);
       onSelect({
         label: `${selectedDepth1} 전지역`,
         storeCount: totalStoreCount,
         depth1Label: selectedDepth1,
+        selectedLabels,
       });
     } else if (currentCheckedLabels.size === 1) {
-      const label = Array.from(currentCheckedLabels)[0];
+      const label = selectedLabels[0];
       const item = currentActiveItems.find((d) => d.label === label)!;
-      onSelect({ label: item.label, storeCount: item.storeCount, depth1Label: selectedDepth1 });
+      onSelect({
+        label: item.label,
+        storeCount: item.storeCount,
+        depth1Label: selectedDepth1,
+        selectedLabels,
+      });
     } else {
       const selectedItems = currentActiveItems.filter((d) => currentCheckedLabels.has(d.label));
       const totalStoreCount = selectedItems.reduce((sum, d) => sum + d.storeCount, 0);
@@ -238,6 +252,7 @@ export function RegionSelectSheet({
         label: `${selectedItems[0].label} 외 ${selectedItems.length - 1}곳`,
         storeCount: totalStoreCount,
         depth1Label: selectedDepth1,
+        selectedLabels,
       });
     }
     onClose();
