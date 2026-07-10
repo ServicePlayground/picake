@@ -120,35 +120,48 @@ export function StoreDetailIntroSection({ store }: StoreDetailIntroSectionProps)
       </div>
 
       {/* 위치 정보 */}
-      <div className="flex items-center gap-1 mb-[10px]">
-        <button
-          type="button"
-          onClick={isAddressExpanded ? handleAddressCopy : () => setIsAddressExpanded(true)}
-          className="flex items-center gap-1"
-        >
-          <Icon name="location" width={16} height={16} className="text-primary-300" />
-          {distance !== null && (
-            <>
-              <span className="text-sm text-gray-900">{formatDistance(distance)}</span>
-              <span className="text-sm text-gray-900">·</span>
-            </>
-          )}
-          <span className="text-sm text-gray-900">
-            {isAddressExpanded ? store.roadAddress : shortenAddress(store.roadAddress)}
-          </span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setIsAddressExpanded((prev) => !prev)}
-          className="flex items-center justify-center ml-[2px]"
-        >
-          <Icon
-            name="arrow"
-            width={16}
-            height={16}
-            className={`text-gray-400 transition-transform ${isAddressExpanded ? "" : "rotate-180"}`}
-          />
-        </button>
+      <div className="mb-[10px]">
+        {/* 윗줄: 짧은 주소 + 펼치기/접기 토글 */}
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setIsAddressExpanded((prev) => !prev)}
+            className="flex items-center gap-1"
+          >
+            <Icon name="location" width={16} height={16} className="text-primary-300" />
+            {distance !== null && (
+              <>
+                <span className="text-sm text-gray-900">{formatDistance(distance)}</span>
+                <span className="text-sm text-gray-900">·</span>
+              </>
+            )}
+            <span className="text-sm text-gray-900">{shortenAddress(store.roadAddress)}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsAddressExpanded((prev) => !prev)}
+            className="flex items-center justify-center ml-[2px]"
+          >
+            <Icon
+              name="arrow"
+              width={16}
+              height={16}
+              className={`text-gray-400 transition-transform ${isAddressExpanded ? "" : "rotate-180"}`}
+            />
+          </button>
+        </div>
+
+        {/* 아랫줄: 전체 주소 + 복사 아이콘 (펼쳤을 때만 표시, 클릭 시 복사) */}
+        {isAddressExpanded && (
+          <button
+            type="button"
+            onClick={handleAddressCopy}
+            className="flex items-center gap-1 mt-[2px] ml-[20px]"
+          >
+            <span className="text-sm text-gray-500">{store.roadAddress}</span>
+            <Icon name="copy" width={16} height={16} className="text-gray-500" />
+          </button>
+        )}
       </div>
 
       {showCopyToast && (
