@@ -73,8 +73,9 @@ export function StoreDetailIntroSection({ store }: StoreDetailIntroSectionProps)
       {/* 상단 영역: 로고 + 정보 + 좋아요 */}
       <div className="flex items-center gap-[11px] mb-[16px]">
         {/* 로고 이미지 */}
-        {store.logoImageUrl && !imageError ? (
-          <div className="w-12 h-12 relative rounded-full overflow-hidden flex-shrink-0">
+
+        <div className="w-12 h-12 relative rounded-full overflow-hidden flex-shrink-0">
+          {store.logoImageUrl ? (
             <Image
               src={store.logoImageUrl}
               alt={`${store.name} 로고`}
@@ -83,12 +84,12 @@ export function StoreDetailIntroSection({ store }: StoreDetailIntroSectionProps)
               onError={() => setImageError(true)}
               unoptimized
             />
-          </div>
-        ) : (
-          <div className="w-14 h-14 rounded-full flex items-center justify-center bg-gray-100 text-gray-400 text-xs flex-shrink-0">
-            No Image
-          </div>
-        )}
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gray-100">
+              <Icon name="noneStore" width={48} height={48} />
+            </div>
+          )}
+        </div>
 
         {/* 스토어 정보 */}
         <div className="flex-1 min-w-0">

@@ -22,16 +22,14 @@ export default function AlarmPage() {
         {showLoginHint ? (
           <div className="flex-1 flex flex-col gap-[10px] items-center justify-center mb-[52px] px-5">
             <Icon name="alarm" width={60} height={40} className="text-gray-200" />
-            <p className="text-sm text-gray-700 text-center">
-              로그인하면 주문 알림을 받을 수 있어요
-            </p>
+            <p className="text-sm text-gray-700 text-center">아직 알림이 없습니다.</p>
           </div>
         ) : isLoading ? (
           <AlarmSkeleton />
         ) : alarms.length === 0 ? (
           <div className="flex-1 flex flex-col gap-[10px] items-center justify-center mb-[52px]">
             <Icon name="alarm" width={60} height={40} className="text-gray-200" />
-            <p className="text-sm text-gray-700 text-center">아직 알림이 없어요</p>
+            <p className="text-sm text-gray-700 text-center">아직 알림이 없습니다.</p>
           </div>
         ) : (
           <ul className="px-5">
@@ -51,14 +49,18 @@ export default function AlarmPage() {
                     className="flex items-center gap-[10px] py-[14px] border-b border-gray-100 last:border-b-0"
                   >
                     <div className="w-[42px] h-[42px] rounded-full overflow-hidden bg-gray-200 shrink-0">
-                      <Image
-                        src={alarm.imageUrl ?? "/images/contents/none_alarm_user.png"}
-                        alt={alarm.title}
-                        width={42}
-                        height={42}
-                        className="object-cover w-full h-full"
-                        unoptimized
-                      />
+                      {alarm.imageUrl ? (
+                        <Image
+                          src={alarm.imageUrl}
+                          alt={alarm.title}
+                          width={42}
+                          height={42}
+                          className="object-cover w-full h-full"
+                          unoptimized
+                        />
+                      ) : (
+                        <Icon name="noneAlarm" width={42} height={42} />
+                      )}
                     </div>
 
                     <div className="flex-1 flex flex-col gap-[6px] min-w-0">
