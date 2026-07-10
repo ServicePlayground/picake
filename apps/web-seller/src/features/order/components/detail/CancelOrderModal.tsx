@@ -125,8 +125,7 @@ export const CancelOrderModal: React.FC<CancelOrderModalProps> = ({
 
           <div className="space-y-1.5">
             <Label className="text-[13px] font-medium text-slate-700">
-              상세 내용{" "}
-              <span className="font-normal text-slate-400">(선택)</span>
+              상세 내용 <span className="font-normal text-slate-400">(선택)</span>
             </Label>
             <Textarea
               value={detail}

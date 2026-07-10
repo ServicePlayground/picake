@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Review, ReviewSortBy } from "@/apps/web-user/features/review/types/review.type";
 import { ReviewItem } from "./ReviewItem";
-import { ReviewDetailModal } from "@/apps/web-user/features/product/components/modals/ReviewDetailModal";
+import { ReviewDetailModal } from "@/apps/web-user/features/product/components/modals/ReviewDetailModal.dynamic";
 
 interface ReviewListProps {
   reviews: Review[];

@@ -63,7 +63,7 @@ export enum ProductCategoryType {
   FAMILY = "FAMILY", // 가족
   ANNIVERSARY = "ANNIVERSARY", // 기념일
   SAME_DAY_PICKUP = "SAME_DAY_PICKUP", // 당일픽업
-  LETTERING = "LETTERING", // 레터링
+  LETTERING = "LETTERING", // 커스텀
   CHARACTER = "CHARACTER", // 캐릭터
   SIMPLE = "SIMPLE", // 심플
   FLOWER = "FLOWER", // 꽃

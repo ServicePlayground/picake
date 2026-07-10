@@ -7,14 +7,12 @@ const API_BASE_URL = import.meta.env.VITE_PUBLIC_API_DOMAIN;
 
 /**
  * 알림 WebSocket (Socket.IO namespace `/notifications`).
- * `VITE_SELLER_NOTIFICATION_SOCKET=false` 로 끌 수 있습니다.
  */
 export function connectNotificationSocket(params: {
   storeId: string;
   onNotification: (item: SellerNotificationItem) => void;
 }): () => void {
-  const disabled = import.meta.env.VITE_SELLER_NOTIFICATION_SOCKET === "false";
-  if (disabled || !API_BASE_URL) {
+  if (!API_BASE_URL) {
     return () => undefined;
   }
 

@@ -61,30 +61,54 @@ Picake 프로젝트의 web-user, web-seller, web-admin 애플리케이션을 Ver
 #### 2.3 환경변수 설정
 
 1. Vercel 대시보드 → 프로젝트 설정 → Environment Variables
-2. 필요한 환경변수 추가
+2. 필요한 환경변수 추가 (값은 팀 내부에서 관리, 문서에 기록하지 않음)
 
-- https://vercel.com/account/settings/tokens url직접 입력 -> 토큰 생성 및 깃허브 VERCEL_TOKEN secrets 설정
-- Vercel → 팀 선택 → Settings → General → Team ID 복사 및 깃허브 VERCEL_ORG_ID secrets 설정
-- Vercel → 팀 선택 → 각 프로젝트 -> Settings -> General -> Project ID 복사 및 깃허브 VERCEL_PROJECT_ID secrets 설정
+**web-user (예시 키)**
 
-| Secret                                 | 설명                           |
-| -------------------------------------- | ------------------------------ |
-| `VERCEL_TOKEN`                         | Vercel API 토큰                |
-| `VERCEL_ORG_ID`                        | Vercel 팀/개인 Org ID          |
-| `VERCEL_PROJECT_ID_WEB_USER_STAGING`   | web-user-staging 프로젝트 ID   |
-| `VERCEL_PROJECT_ID_WEB_SELLER_STAGING` | web-seller-staging 프로젝트 ID |
-| `VERCEL_PROJECT_ID_WEB_ADMIN_STAGING`  | web-admin-staging 프로젝트 ID  |
-| `DISCORD_WEBHOOK_URL_WEB_FE`           | 배포 결과 Discord 알림 웹훅    |
+- `NEXT_PUBLIC_NODE_ENV`, `NEXT_PUBLIC_API_DOMAIN`
+- `NEXT_PUBLIC_GOOGLE_CLIENT_ID`, `NEXT_PUBLIC_KAKAO_REST_API_KEY`, `NEXT_PUBLIC_KAKAO_JAVASCRIPT_KEY`
+- `NEXT_PUBLIC_SENTRY_DSN` (staging/production)
+- `NEXT_PUBLIC_POSTHOG_KEY`, `NEXT_PUBLIC_POSTHOG_HOST`
+
+**web-seller / web-admin (예시 키)**
+
+- `VITE_PUBLIC_NODE_ENV`, `VITE_PUBLIC_API_DOMAIN`
+- `VITE_PUBLIC_GOOGLE_CLIENT_ID`, `VITE_PUBLIC_KAKAO_RESTAPI_KEY`
+- `VITE_PUBLIC_SENTRY_DSN` (staging/production)
+- `VITE_PUBLIC_POSTHOG_KEY`, `VITE_PUBLIC_POSTHOG_HOST`
+
+**GitHub Actions Secrets (배포용)**
+
+- Vercel 계정 설정에서 API 토큰 생성 후 GitHub `VERCEL_TOKEN` Secret 설정
+- Vercel → 팀 선택 → Settings → General → Team ID 복사 및 GitHub `VERCEL_ORG_ID` Secret 설정
+- Vercel → 각 프로젝트 → Settings → General → Project ID 복사 및 GitHub `VERCEL_PROJECT_ID_*` Secret 설정
+
+| Secret                                    | 설명                              |
+| ----------------------------------------- | --------------------------------- |
+| `VERCEL_TOKEN`                            | Vercel API 토큰                   |
+| `VERCEL_ORG_ID`                           | Vercel 팀/개인 Org ID             |
+| `VERCEL_PROJECT_ID_WEB_USER_STAGING`      | web-user-staging 프로젝트 ID      |
+| `VERCEL_PROJECT_ID_WEB_SELLER_STAGING`    | web-seller-staging 프로젝트 ID    |
+| `VERCEL_PROJECT_ID_WEB_ADMIN_STAGING`     | web-admin-staging 프로젝트 ID     |
+| `VERCEL_PROJECT_ID_WEB_USER_PRODUCTION`   | web-user-production 프로젝트 ID   |
+| `VERCEL_PROJECT_ID_WEB_SELLER_PRODUCTION` | web-seller-production 프로젝트 ID |
+| `VERCEL_PROJECT_ID_WEB_ADMIN_PRODUCTION`  | web-admin-production 프로젝트 ID  |
+| `DISCORD_WEBHOOK_URL_WEB_FE`              | 배포 결과 Discord 알림 웹훅       |
+
+> production 환경으로 배포하려면 해당 프로젝트의 `_PRODUCTION` Secret이 설정돼 있어야 합니다.
+> 미설정 상태로 production 태그를 푸시하면 워크플로가 명확한 에러와 함께 중단됩니다.
 
 ### 3. GitHub 워크플로 (태그 기반 + Discord 알림)
 
-`.github/workflows/deploy-staging-web.yml`에서 태그 푸시 시 Vercel CLI로 빌드·배포하고, 성공/실패 시 Discord로 알립니다.
+`.github/workflows/deploy-web.yml`에서 태그 푸시 시 Vercel CLI로 빌드·배포하고, 성공/실패 시 Discord로 알립니다.
 
 **워크플로 트리거:**
 
-- `web-user/staging-*` 태그 푸시 시 web-user 배포
-- `web-seller/staging-*` 태그 푸시 시 web-seller 배포
-- `web-admin/staging-*` 태그 푸시 시 web-admin 배포
+- `web-user/staging-*` · `web-user/production-*` 태그 푸시 시 web-user 배포
+- `web-seller/staging-*` · `web-seller/production-*` 태그 푸시 시 web-seller 배포
+- `web-admin/staging-*` · `web-admin/production-*` 태그 푸시 시 web-admin 배포
+
+환경(`staging`/`production`)에 따라 대응하는 Vercel 프로젝트 ID Secret을 자동 선택합니다.
 
 **워크플로 동작:**
 
@@ -93,11 +117,11 @@ Picake 프로젝트의 web-user, web-seller, web-admin 애플리케이션을 Ver
 3. `vercel pull` → `vercel build` → `vercel deploy` (배포 완료까지 대기)
 4. Discord에 성공/실패, 배포 URL, GitHub Actions 로그 링크, Vercel 빌드 로그 일부 전송
 
-자세한 워크플로 내용은 `.github/workflows/deploy-staging-web.yml` 파일을 참고하세요.
+자세한 워크플로 내용은 `.github/workflows/deploy-web.yml` 파일을 참고하세요.
 
 ### 4. 도메인 구성 (선택사항)
 
-커스텀 도메인 설정은 [AWS Route53(도메인) - 가이드](<../aws/AWS%20Route53(도메인)%20-%20가이드.md>)를 참고하세요.
+커스텀 도메인 설정은 [EC2 배포 가이드](../aws/EC2_Route53_S3_CloudFront.md)의 Route53 섹션을 참고하세요.
 
 ## 참고 자료
 

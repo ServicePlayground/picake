@@ -1,6 +1,16 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { ArrayMaxSize, IsArray, IsNotEmpty, IsOptional, IsString, MaxLength } from "class-validator";
-import { FEED_MAX_IMAGES, SWAGGER_EXAMPLES } from "@apps/backend/modules/feed/constants/feed.constants";
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from "class-validator";
+import {
+  FEED_MAX_IMAGES,
+  SWAGGER_EXAMPLES,
+} from "@apps/backend/modules/feed/constants/feed.constants";
 import { SWAGGER_EXAMPLES as STORE_SWAGGER_EXAMPLES } from "@apps/backend/modules/store/constants/store.constants";
 
 /**

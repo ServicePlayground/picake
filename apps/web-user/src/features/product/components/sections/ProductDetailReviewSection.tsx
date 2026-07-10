@@ -7,7 +7,7 @@ import { useProductReviews } from "@/apps/web-user/features/review/hooks/queries
 import { ProductDetailSubTitle } from "../common/ProductDetailSubTitle";
 import { SliderImage } from "@/apps/web-user/common/components/sliders";
 import { ReviewList } from "@/apps/web-user/common/components/reviews";
-import { ReviewDetailModal } from "../modals/ReviewDetailModal";
+import { ReviewDetailModal } from "../modals/ReviewDetailModal.dynamic";
 import { PhotoReviewListModal } from "../modals/PhotoReviewListModal";
 
 interface ReviewImage extends SliderImage {

@@ -44,7 +44,10 @@ import {
 } from "@apps/backend/modules/review/dto/review-writable-list.dto";
 import { ReviewDeleteResponseDto } from "@apps/backend/modules/review/dto/review-delete.dto";
 import { CreateMyReviewRequestDto } from "@apps/backend/modules/review/dto/review-create.dto";
-import { ReviewResponseDto } from "@apps/backend/modules/review/dto/review-detail.dto";
+import {
+  ReviewResponseDto,
+  MyReviewResponseDto,
+} from "@apps/backend/modules/review/dto/review-detail.dto";
 import { REVIEW_ERROR_MESSAGES } from "@apps/backend/modules/review/constants/review.constants";
 import {
   GetStoresRequestDto,
@@ -92,6 +95,7 @@ import {
   GetWritableReviewOrdersRequestDto,
   ReviewDeleteResponseDto,
   ReviewResponseDto,
+  MyReviewResponseDto,
   CreateMyReviewRequestDto,
   StoreListResponseDto,
   ProductListResponseDto,
@@ -310,9 +314,9 @@ export class ConsumerMypageController {
   @ApiOperation({
     summary: "(로그인 필요) 내가 작성한 후기 상세 조회",
     description:
-      "본인이 작성한 활성 후기(소프트 삭제 제외) 한 건을 조회합니다. 연결된 주문·상품·스토어 정보는 `ReviewResponseDto`와 동일합니다.",
+      "본인이 작성한 활성 후기(소프트 삭제 제외) 한 건을 조회합니다. 연결된 주문·상품 요약·스토어 정보를 포함합니다.",
   })
-  @SwaggerResponse(200, { dataDto: ReviewResponseDto })
+  @SwaggerResponse(200, { dataDto: MyReviewResponseDto })
   @SwaggerAuthResponses()
   @SwaggerResponse(404, {
     dataExample: createMessageObject(REVIEW_ERROR_MESSAGES.REVIEW_NOT_FOUND),
@@ -320,7 +324,7 @@ export class ConsumerMypageController {
   async getMyReviewById(
     @Param("reviewId") reviewId: string,
     @Request() req: { user: JwtVerifiedPayload },
-  ): Promise<ReviewResponseDto> {
+  ): Promise<MyReviewResponseDto> {
     return await this.reviewService.getMyReviewDetailForUser(req.user.sub, reviewId);
   }
 
@@ -335,7 +339,7 @@ export class ConsumerMypageController {
     description:
       "픽업 완료(PICKUP_COMPLETED) 상태인 본인 주문을 기준으로 상품 후기를 작성합니다. 동일 주문으로는 한 번만 작성 가능하며, 해당 주문의 후기를 삭제한 뒤에는 다시 작성할 수 없습니다.",
   })
-  @SwaggerResponse(201, { dataDto: ReviewResponseDto })
+  @SwaggerResponse(201, { dataDto: MyReviewResponseDto })
   @SwaggerAuthResponses()
   @SwaggerResponse(400, {
     dataExample: createMessageObject(REVIEW_ERROR_MESSAGES.REVIEW_ORDER_NOT_ELIGIBLE),
@@ -355,7 +359,7 @@ export class ConsumerMypageController {
   async createMyReview(
     @Body() body: CreateMyReviewRequestDto,
     @Request() req: { user: JwtVerifiedPayload },
-  ): Promise<ReviewResponseDto> {
+  ): Promise<MyReviewResponseDto> {
     return await this.reviewService.createMyReviewForUser(req.user.sub, body);
   }
 

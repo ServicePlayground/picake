@@ -1,6 +1,3 @@
-/** SMS 인증번호 입력 가능 시간(분) — `PhoneUtil.getExpirationTime`·`AuthPhoneService.sendVerificationCode`와 동일 */
-export const PHONE_VERIFICATION_CODE_EXPIRY_MINUTES = 5;
-
 /**
  * 인증 관련 에러 메시지 상수
  */
@@ -14,6 +11,7 @@ export const AUTH_ERROR_MESSAGES = {
   PHONE_VERIFICATION_CODE_GENERATION_FAILED:
     "인증번호 생성에 실패했습니다. 잠시 후 다시 시도해주세요.",
   PHONE_VERIFICATION_FAILED: "인증번호가 올바르지 않습니다.",
+  PHONE_VERIFICATION_SEND_FAILED: "인증번호 발송에 실패했습니다. 잠시 후 다시 시도해주세요.",
   VERIFICATION_CODE_INVALID_FORMAT: "인증번호는 6자리 숫자여야 합니다.",
   ACCOUNT_NOT_FOUND_BY_PHONE: "해당 휴대폰 번호로 등록된 계정이 없습니다.",
   GOOGLE_REGISTER_FAILED: "구글 로그인 회원가입에 실패했습니다.",
@@ -86,6 +84,15 @@ export const AUDIENCE = {
   ADMIN: "admin",
 } as const;
 export type AudienceConst = (typeof AUDIENCE)[keyof typeof AUDIENCE];
+
+/**
+ * OAuth 공급자별 프론트 콜백 경로.
+ * 환경별 차이는 도메인에서 처리하고, 경로는 코드 상수로 고정합니다.
+ */
+export const OAUTH_REDIRECT_PATHS = {
+  GOOGLE: "/auth/login/google",
+  KAKAO: "/auth/login/kakao",
+} as const;
 
 /** 관리자 `Admin.password_hash` bcrypt cost — `AuthAdminService.register`·`prisma/seed` 동일 */
 export const ADMIN_BCRYPT_SALT_ROUNDS = 12;
@@ -214,3 +221,14 @@ export const SWAGGER_DESCRIPTIONS = {
   ADMIN_USERNAME: "관리자 아이디 (4-20자 영문·숫자·언더스코어)",
   ADMIN_PASSWORD: "관리자 비밀번호 (8자 이상, 영문 대소문자·숫자·특수문자 @$!%*?& 포함)",
 } as const;
+
+/** SMS 인증번호 입력 가능 시간(분) — `PhoneUtil.getExpirationTime`·`AuthPhoneService.sendVerificationCode`와 동일 */
+export const PHONE_VERIFICATION_CODE_EXPIRY_MINUTES = 5;
+
+/**
+ * 휴대폰 인증번호 SMS 본문 템플릿.
+ * SOLAPI로 발송되며, 90byte 초과 시 LMS로 자동 전환됩니다.
+ */
+export function buildPhoneVerificationSmsText(code: string): string {
+  return `[Picake] 인증번호 ${code}를 입력해주세요.`;
+}

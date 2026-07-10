@@ -283,16 +283,16 @@ export default function QAPage() {
             <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider">버전 정보</h2>
           </div>
           <p className="text-xs text-gray-400 mb-4">
-            Vercel 빌드 시 주입됩니다. 로컬에서는 보통 비어 있습니다.
+            GitHub Actions 빌드 시 주입됩니다. 로컬에서는 보통 비어 있습니다.
           </p>
 
           <div className="flex flex-col gap-5">
             <div>
-              <p className="text-xs font-bold text-gray-700 mb-2">Vercel</p>
+              <p className="text-xs font-bold text-gray-700 mb-2">GitHub</p>
               <div className="rounded-xl bg-gray-50 border border-gray-100 px-4 py-3 space-y-1">
-                <p className="text-[10px] font-mono text-gray-400">VERCEL_GIT_COMMIT_SHA</p>
+                <p className="text-[10px] font-mono text-gray-400">GITHUB_SHA</p>
                 <p className="text-xs font-mono text-gray-900 break-all leading-relaxed">
-                  {process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA?.trim() ?? "—"}
+                  {process.env.NEXT_PUBLIC_GITHUB_SHA?.trim() ?? "—"}
                 </p>
               </div>
             </div>

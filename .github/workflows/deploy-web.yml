@@ -1,12 +1,15 @@
-name: Deploy to Vercel (Staging)
+name: Deploy to Vercel
 
-# 트리거: web-user, web-seller, web-admin의 staging 태그가 푸시될 때 실행
+# 트리거: web-user, web-seller, web-admin의 staging / production 태그가 푸시될 때 실행
 on:
   push:
     tags:
       - "web-user/staging-*"
       - "web-seller/staging-*"
       - "web-admin/staging-*"
+      - "web-user/production-*"
+      - "web-seller/production-*"
+      - "web-admin/production-*"
 
 permissions:
   contents: read
@@ -44,7 +47,7 @@ jobs:
             exit 1
           fi
 
-          if [[ "$ENV" != "staging" ]]; then
+          if [[ "$ENV" != "staging" && "$ENV" != "production" ]]; then
             echo "❌ Invalid environment: $ENV"
             exit 1
           fi
@@ -56,22 +59,32 @@ jobs:
         id: vercel-project
         run: |
           PROJECT=${{ steps.extract-project.outputs.project }}
+          ENV=${{ steps.extract-project.outputs.environment }}
 
-          case "$PROJECT" in
-            web-user)
+          case "$PROJECT/$ENV" in
+            web-user/staging)
               PROJECT_ID="${{ secrets.VERCEL_PROJECT_ID_WEB_USER_STAGING }}"
               ;;
-            web-seller)
+            web-user/production)
+              PROJECT_ID="${{ secrets.VERCEL_PROJECT_ID_WEB_USER_PRODUCTION }}"
+              ;;
+            web-seller/staging)
               PROJECT_ID="${{ secrets.VERCEL_PROJECT_ID_WEB_SELLER_STAGING }}"
               ;;
-            web-admin)
+            web-seller/production)
+              PROJECT_ID="${{ secrets.VERCEL_PROJECT_ID_WEB_SELLER_PRODUCTION }}"
+              ;;
+            web-admin/staging)
               PROJECT_ID="${{ secrets.VERCEL_PROJECT_ID_WEB_ADMIN_STAGING }}"
+              ;;
+            web-admin/production)
+              PROJECT_ID="${{ secrets.VERCEL_PROJECT_ID_WEB_ADMIN_PRODUCTION }}"
               ;;
           esac
 
           if [ -z "$PROJECT_ID" ]; then
-            echo "❌ VERCEL_PROJECT_ID is not set for $PROJECT"
-            echo "Add VERCEL_PROJECT_ID_*_STAGING to GitHub repository secrets"
+            echo "❌ VERCEL_PROJECT_ID is not set for $PROJECT ($ENV)"
+            echo "Add VERCEL_PROJECT_ID_<PROJECT>_${ENV^^} to GitHub repository secrets"
             exit 1
           fi
 
@@ -196,7 +209,7 @@ jobs:
           fi
 
           PAYLOAD=$(jq -n \
-            --arg title "$STATUS_LABEL — $PROJECT (staging)" \
+            --arg title "$STATUS_LABEL — $PROJECT ($ENVIRONMENT)" \
             --argjson color "$COLOR" \
             --arg project "$PROJECT" \
             --arg tag "$TAG" \

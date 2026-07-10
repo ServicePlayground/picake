@@ -1,6 +1,7 @@
 "use client";
 
 import { ReactNode } from "react";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import Header from "@/apps/web-user/common/components/headers/Header";
 import { Alert } from "@/apps/web-user/common/components/alerts/Alert";
@@ -9,10 +10,31 @@ import BuildInfoLogger from "@/apps/web-user/common/components/debug/BuildInfoLo
 import { AuthProvider } from "@/apps/web-user/common/components/providers/AuthProvider";
 import { AlarmRealtimeListener } from "@/apps/web-user/features/alarm/components/AlarmRealtimeListener";
 import { LoginBottomSheet } from "@/apps/web-user/features/auth/components/LoginBottomSheet";
-import { PaymentPendingLaunchSheet } from "@/apps/web-user/features/order/components/PaymentPendingLaunchSheet";
+import { useAuthHasHydrated, useAuthStore } from "@/apps/web-user/common/store/auth.store";
+import { isWebViewEnvironment } from "@/apps/web-user/common/utils/webview.bridge";
+
+const PaymentPendingLaunchSheet = dynamic(
+  () =>
+    import("@/apps/web-user/features/order/components/PaymentPendingLaunchSheet").then(
+      (module) => module.PaymentPendingLaunchSheet,
+    ),
+  { ssr: false },
+);
 
 interface RootWrapperLayoutProps {
   children: ReactNode;
+}
+
+/** 로그인 + 웹뷰 환경에서만 결제 대기 시트(및 useMyOrders)를 로드합니다. */
+function PaymentPendingLaunchSheetGate() {
+  const hasHydrated = useAuthHasHydrated();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
+  if (!hasHydrated || !isAuthenticated || !isWebViewEnvironment()) {
+    return null;
+  }
+
+  return <PaymentPendingLaunchSheet />;
 }
 
 export default function RootWrapperLayout({ children }: RootWrapperLayoutProps) {
@@ -67,7 +89,7 @@ export default function RootWrapperLayout({ children }: RootWrapperLayoutProps) 
         <Alert />
         <ConfirmAlert />
         <LoginBottomSheet />
-        <PaymentPendingLaunchSheet />
+        <PaymentPendingLaunchSheetGate />
       </div>
     </AuthProvider>
   );

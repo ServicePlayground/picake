@@ -14,6 +14,9 @@ import { JwtVerifiedPayload } from "@apps/backend/modules/auth/types/auth.types"
 import { AUDIENCE } from "@apps/backend/modules/auth/constants/auth.constants";
 import { LoggerUtil } from "@apps/backend/common/utils/logger.util";
 import { SentryUtil } from "@apps/backend/common/utils/sentry.util";
+import { createWebSocketCorsOptions } from "@apps/backend/common/utils/cors.util";
+import { isServiceMaintenanceMode } from "@apps/backend/common/utils/maintenance.util";
+import { API_RESPONSE_MESSAGES } from "@apps/backend/common/constants/app.constants";
 import type {
   SellerNotificationItemDto,
   UserNotificationItemDto,
@@ -28,7 +31,8 @@ import type {
 @Injectable()
 @WebSocketGateway({
   namespace: "/notifications", // 네임스페이스 설정 (동일 계정의 채팅(`/`)과 분리)
-  cors: { origin: true, credentials: true },
+  // HTTP(main.ts)와 동일하게 CORS_ORIGIN allowlist 정책을 사용합니다.
+  cors: createWebSocketCorsOptions(),
   path: "/socket.io/", // Socket.IO 엔드포인트 경로 명시 (배포 환경에서 WebSocket 연결 문제 해결)
   transports: ["websocket", "polling"], // WebSocket 우선, 실패 시 polling으로 폴백
   allowEIO3: true, // Socket.IO v3 클라이언트와의 호환성
@@ -57,6 +61,15 @@ export class NotificationGateway
   }
 
   async handleConnection(client: Socket) {
+    if (isServiceMaintenanceMode(this.configService)) {
+      client.emit("error", {
+        message: API_RESPONSE_MESSAGES.SERVICE_UNAVAILABLE,
+        code: "SERVICE_UNAVAILABLE",
+      });
+      client.disconnect(true);
+      return;
+    }
+
     try {
       // 1) 토큰 추출 (auth/query/header 순서)
       const token = this.extractTokenFromSocket(client);

@@ -19,10 +19,7 @@ function formatNotificationTime(iso: string): string {
   });
 }
 
-function NotificationDropdownItem(props: {
-  item: SellerNotificationItem;
-  onClick: () => void;
-}) {
+function NotificationDropdownItem(props: { item: SellerNotificationItem; onClick: () => void }) {
   const { item, onClick } = props;
 
   return (
@@ -72,10 +69,7 @@ export function AdminHeaderNotificationDropdown() {
     return m ? m[1] : null;
   }, [location.pathname]);
 
-  const previewItems = useMemo(
-    () => (notif?.items ?? []).slice(0, PREVIEW_LIMIT),
-    [notif?.items],
-  );
+  const previewItems = useMemo(() => (notif?.items ?? []).slice(0, PREVIEW_LIMIT), [notif?.items]);
 
   useEffect(() => {
     if (!isOpen) return;

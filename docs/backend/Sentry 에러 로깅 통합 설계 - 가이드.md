@@ -4,7 +4,7 @@
 
 본 문서는 Picake 백엔드에 구현된 Sentry 에러 로깅 시스템의 구조와 동작 방식을 설명하는 가이드입니다.
 
-**최종 업데이트**: 2025-01-23  
+**최종 업데이트**: 2026-07-05  
 **대상**: `apps/backend` 디렉토리
 
 ---
@@ -137,7 +137,7 @@ SENTRY_DSN=  # 비어있거나 설정하지 않음
 
 ```env
 NODE_ENV=staging
-SENTRY_DSN=https://xxx@sentry.io/xxx
+SENTRY_DSN=<환경 변수로 설정>
 ```
 
 ### 3.3 상용 환경 (production)
@@ -157,7 +157,7 @@ SENTRY_DSN=https://xxx@sentry.io/xxx
 
 ```env
 NODE_ENV=production
-SENTRY_DSN=https://xxx@sentry.io/xxx
+SENTRY_DSN=<환경 변수로 설정>
 ```
 
 ---
@@ -181,11 +181,11 @@ SENTRY_DSN=  # 비어있거나 설정하지 않음
 
 # .env.staging
 NODE_ENV=staging
-SENTRY_DSN=https://xxx@sentry.io/xxx
+SENTRY_DSN=<환경 변수로 설정>
 
 # .env.production
 NODE_ENV=production
-SENTRY_DSN=https://xxx@sentry.io/xxx
+SENTRY_DSN=<환경 변수로 설정>
 ```
 
 ### 4.3 Sentry 초기화
@@ -261,9 +261,24 @@ Sentry에서 태그: `responseId: 1706004000000-error-uuid-hex`
 
 ---
 
-## 7. 에러 분류 및 전송 규칙
+## 7. 프론트엔드 Sentry (web-user / web-seller)
 
-### 7.1 에러 분류
+백엔드와 동일 정책으로 프론트엔드에도 Sentry가 연동되어 있습니다.
+
+| 앱         | SDK              | 활성화 조건                                                 |
+| ---------- | ---------------- | ----------------------------------------------------------- |
+| web-user   | `@sentry/nextjs` | `NEXT_PUBLIC_NODE_ENV`가 staging/production이고 DSN 설정 시 |
+| web-seller | `@sentry/react`  | `VITE_PUBLIC_NODE_ENV`가 staging/production이고 DSN 설정 시 |
+
+- development 환경에서는 Sentry 비활성화
+- API 에러는 5xx·네트워크 오류만 전송 (4xx 제외)
+- 자세한 구현: 각 앱의 `common/config/sentry.config.ts`, `common/utils/sentry.util.ts`
+
+---
+
+## 8. 에러 분류 및 전송 규칙 (백엔드)
+
+### 8.1 에러 분류
 
 1. **5xx 에러 (서버 에러)**
    - 항상 Sentry로 전송
@@ -278,7 +293,7 @@ Sentry에서 태그: `responseId: 1706004000000-error-uuid-hex`
    - 서비스에서 직접 `SentryUtil.captureException()` 호출
    - 예: DB 연결 실패, WebSocket 연결 에러
 
-### 7.2 에러 레벨
+### 8.2 에러 레벨
 
 `SentryUtil.getErrorLevel()`에 의해 자동 결정:
 

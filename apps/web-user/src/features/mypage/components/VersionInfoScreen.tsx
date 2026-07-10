@@ -23,7 +23,7 @@ function formatBuildNumber(commitSha: string | undefined): string {
 }
 
 export function VersionInfoScreen() {
-  const buildNumber = formatBuildNumber(process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA);
+  const buildNumber = formatBuildNumber(process.env.NEXT_PUBLIC_GITHUB_SHA);
 
   return (
     <div className="pt-4 pb-10">

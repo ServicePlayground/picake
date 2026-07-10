@@ -1,5 +1,7 @@
 # AWS Route53(도메인) - 가이드
 
+> ⚠️ **구버전 참고 문서**입니다. 현재 도메인/Route53 구성은 [EC2 배포 가이드](../EC2_Route53_S3_CloudFront.md)를 참고하세요.
+
 # 도메인 구조
 
 - 루트 도메인: picakes.com
@@ -90,4 +92,4 @@
 # 4. 프론트엔드 Vercel 도메인 연동
 
 1. Vercel > 도메인 > Add Domain > 생성 후 > Value 확인
-2. AWS > Route53 > 호스팅 영역 > picakes.com > 레코드 생성 > Type: CNAME, Value: vercel-dns.com
+2. AWS > Route53 > 호스팅 영역 > picakes.com > 레코드 생성 > (Type: CNAME, Value: vercel-dns.com) 또는 (루트도메인 picakes.com인 경우 Type: A, Value: x.x.x.x)

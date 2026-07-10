@@ -86,9 +86,7 @@ export function RegionSelectSheet({
     setCheckedByDepth1(initialMap);
     setInitialState({
       depth1: initialDepth1,
-      checkedByDepth1: new Map(
-        Array.from(initialMap.entries()).map(([k, v]) => [k, new Set(v)]),
-      ),
+      checkedByDepth1: new Map(Array.from(initialMap.entries()).map(([k, v]) => [k, new Set(v)])),
     });
   }, [isOpen]);
 

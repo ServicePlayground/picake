@@ -6,7 +6,7 @@ Picake 플랫폼을 위한 Next.js 기반 사용자 웹 애플리케이션입니
 
 ### ✅ 구현 완료
 
-- **인증 시스템**: 기본 로그인, Google OAuth, Kakao OAuth, 회원가입, 계정 찾기, 비밀번호 재설정
+- **인증 시스템**: Flutter WebView 연동 + Google/Kakao OAuth 콜백
 - **홈 / 탐색**: 상품 목록, 배너 슬라이더, 카테고리 필터, 검색, 지역 기반 필터링
 - **상품**: 상품 목록, 상세 페이지, 줌/핀치 이미지 뷰어 (react-zoom-pan-pinch)
 - **스토어**: 스토어 상세 페이지, 스토어 피드
@@ -14,14 +14,15 @@ Picake 플랫폼을 위한 Next.js 기반 사용자 웹 애플리케이션입니
 - **리뷰**: 리뷰 작성 및 조회
 - **좋아요 / 저장**: 좋아요 추가/제거, 저장 목록 (Saved)
 - **마이페이지**: 사용자 정보 조회/수정, 주문 내역
-- **채팅**: Socket.IO 기반 실시간 채팅
+- **채팅**: Socket.IO 기반 (현재 `/chat` 경로는 홈으로 리다이렉트)
 - **알림**: FCM 푸시 알림 + 실시간 알림 목록
 - **지도**: 위치 기반 스토어 검색 (Map)
 - **검색**: 통합 검색 기능
 - **Q&A**: 상품/스토어 문의
 - **상태 관리**: Zustand를 활용한 전역 상태 관리
 - **API 통신**: TanStack Query + Axios를 활용한 서버 상태 관리
-- **에러 처리**: Error Boundary와 전역 에러 처리
+- **에러 처리**: Error Boundary, global-error, Sentry 연동
+- **분석**: PostHog (환경 변수 설정 시)
 - **반응형 UI**: 모바일 우선 반응형 디자인 (Flutter WebView 환경 최적화)
 - **SEO 최적화**: Next.js 메타데이터 API 활용
 
@@ -37,12 +38,14 @@ Picake 플랫폼을 위한 Next.js 기반 사용자 웹 애플리케이션입니
 - **검색**: `/search` - 통합 검색
 - **지도**: `/map` - 지역 기반 스토어 지도 검색
 
-### 인증 관련
+### 인증 관련 (OAuth 콜백)
 
-- **로그인**: `/auth/login` - 사용자 로그인 (기본 / Google / Kakao)
-- **회원가입**: `/auth/register` - 신규 사용자 등록
-- **계정 찾기**: `/auth/find-account` - 계정 정보 찾기
-- **비밀번호 재설정**: `/auth/reset-password` - 비밀번호 재설정
+- **Google 로그인 콜백**: `/auth/login/google`
+- **Kakao 로그인 콜백**: `/auth/login/kakao`
+- **Google 회원가입 콜백**: `/auth/register/google`
+- **Kakao 회원가입 콜백**: `/auth/register/kakao`
+
+> 기본 로그인·회원가입은 Flutter WebView 앱에서 처리합니다.
 
 ### 상품 / 스토어
 
@@ -51,18 +54,18 @@ Picake 플랫폼을 위한 Next.js 기반 사용자 웹 애플리케이션입니
 
 ### 주문 / 예약
 
-- **주문 목록**: `/order` - 주문 내역
+- **주문 목록**: `/mypage/order` - 주문 내역
 - **주문 상세**: `/order/:orderId` - 주문 상세
-- **예약**: `/reservation` - 예약 관리
+- **예약 완료**: `/reservation/complete` - 예약 완료
 
 ### 마이페이지
 
 - **마이페이지**: `/mypage` - 사용자 정보
-- **저장 목록**: `/saved` - 좋아요/저장 목록
+- **저장 목록**: `/saved`, `/mypage/saved` - 좋아요/저장 목록
 
 ### 커뮤니케이션
 
-- **채팅**: `/chat` - 실시간 채팅 목록 및 채팅방
+- **채팅**: `/chat` - 현재 홈(`/`)으로 리다이렉트
 - **알림**: `/alarm` - 알림 목록
 - **Q&A**: `/qa` - 상품/스토어 문의
 

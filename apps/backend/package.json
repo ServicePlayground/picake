@@ -4,8 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "NODE_ENV=development nest start --watch",
-    "build:staging": "NODE_ENV=staging nest build",
-    "build:production": "NODE_ENV=production nest build",
+    "build": "nest build",
     "postinstall": "prisma generate --schema ./src/infra/database/prisma/schema.prisma",
     "db:reset:dev": "dotenv -e ./.env.development -- prisma migrate reset --force --schema ./src/infra/database/prisma/schema.prisma",
     "db:reset:staging": "dotenv -e ./.env.staging -- prisma migrate reset --force --schema ./src/infra/database/prisma/schema.prisma",
@@ -31,7 +30,7 @@
     "@nestjs/websockets": "^11.1.12",
     "@prisma/client": "6.16.3",
     "@sentry/nestjs": "^10.38.0",
-    "axios": "^1.12.2",
+    "axios": "^1.18.1",
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.2",
@@ -44,6 +43,7 @@
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.1",
     "socket.io": "^4.8.3",
+    "solapi": "^6.0.1",
     "speakeasy": "^2.0.0"
   },
   "devDependencies": {

@@ -8,7 +8,7 @@ import { useEffect } from "react";
 export default function BuildInfoLogger() {
   useEffect(() => {
     console.info("%c[Build Info]", "color:#10b981;font-weight:bold;", {
-      VERCEL_GIT_COMMIT_SHA: process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA ?? "—",
+      GITHUB_SHA: process.env.NEXT_PUBLIC_GITHUB_SHA ?? "—",
     });
   }, []);
 

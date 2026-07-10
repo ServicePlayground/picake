@@ -115,7 +115,7 @@ export function MapUnenteredStoreCard({ store }: MapUnenteredStoreCardProps) {
 
       {showToast && (
         <Toast
-          message="입점 요청이 접수됐어요!"
+          message="소중한 응원을 담아 사장님께 입점을 제안해 볼게요!"
           iconName="checkCircle"
           iconClassName="text-green-400"
           variant="row"

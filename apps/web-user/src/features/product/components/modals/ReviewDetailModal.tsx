@@ -8,9 +8,6 @@ import type { Swiper as SwiperType } from "swiper";
 import { Review } from "@/apps/web-user/features/review/types/review.type";
 import { Icon } from "@/apps/web-user/common/components/icons";
 
-import "swiper/css";
-import "swiper/css/navigation";
-
 interface ImageWithReview {
   url: string;
   review: Review;
