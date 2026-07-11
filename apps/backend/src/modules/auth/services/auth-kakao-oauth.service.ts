@@ -18,9 +18,8 @@ import {
   KakaoLoginRequestDto,
   KakaoRegisterRequestDto,
 } from "@apps/backend/modules/auth/dto/auth-kakao-oauth.dto";
-import { LoggerUtil } from "@apps/backend/common/utils/logger.util";
 import { buildInitialNickname } from "@apps/backend/modules/auth/utils/register-nickname.util";
-import { SentryUtil } from "@apps/backend/common/utils/sentry.util";
+import { ExternalApiErrorUtil } from "@apps/backend/common/utils/external-api-error.util";
 import { TermsService } from "@apps/backend/modules/terms/terms.service";
 
 @Injectable()
@@ -122,6 +121,17 @@ export class AuthKakaoOauthService {
 
       const accessToken = tokenResponse.data?.access_token;
       if (!accessToken) {
+        const failure = {
+          provider: "kakao",
+          module: "auth-kakao-oauth",
+          operation: "token-exchange",
+          ...ExternalApiErrorUtil.fromResponseBody(tokenResponse.data, tokenResponse.status),
+          details: { redirectUri },
+        };
+        ExternalApiErrorUtil.reportFailure(
+          failure,
+          ExternalApiErrorUtil.createFailureError(failure, "no_access_token"),
+        );
         throw new BadRequestException(AUTH_ERROR_MESSAGES.KAKAO_OAUTH_TOKEN_EXCHANGE_FAILED);
       }
 
@@ -132,6 +142,21 @@ export class AuthKakaoOauthService {
       const kakaoId = userInfo?.id?.toString();
       const kakaoEmail = userInfo?.kakao_account?.email;
       if (!kakaoId || !kakaoEmail) {
+        const failure = {
+          provider: "kakao",
+          module: "auth-kakao-oauth",
+          operation: "userinfo",
+          ...ExternalApiErrorUtil.fromResponseBody(userInfo, userInfoResponse.status),
+          details: {
+            redirectUri,
+            hasKakaoId: Boolean(kakaoId),
+            hasKakaoEmail: Boolean(kakaoEmail),
+          },
+        };
+        ExternalApiErrorUtil.reportFailure(
+          failure,
+          ExternalApiErrorUtil.createFailureError(failure, "missing_id_or_email"),
+        );
         throw new BadRequestException(AUTH_ERROR_MESSAGES.KAKAO_OAUTH_TOKEN_EXCHANGE_FAILED);
       }
 
@@ -142,23 +167,18 @@ export class AuthKakaoOauthService {
         },
       };
     } catch (error: any) {
-      const sanitizedError = {
-        code: error.code,
-        message: error.message,
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-      };
-      LoggerUtil.log(`Kakao OAuth 에러 발생: ${JSON.stringify(sanitizedError, null, 2)}`);
-      const status = error.response?.status;
-      if (!status || status >= 500) {
-        SentryUtil.captureException(error, "error", {
-          module: "auth-kakao-oauth",
-          operation: "exchange-code-for-token",
-        });
-      }
       if (error instanceof BadRequestException) {
         throw error;
       }
+
+      const failure = {
+        provider: "kakao",
+        module: "auth-kakao-oauth",
+        operation: "exchange-code-for-token",
+        ...ExternalApiErrorUtil.fromAxiosError(error),
+        details: { redirectUri },
+      };
+      ExternalApiErrorUtil.reportFailure(failure, error);
       throw new BadRequestException(AUTH_ERROR_MESSAGES.KAKAO_OAUTH_TOKEN_EXCHANGE_FAILED);
     }
   }

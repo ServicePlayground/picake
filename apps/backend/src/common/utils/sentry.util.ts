@@ -75,11 +75,13 @@ export class SentryUtil {
    * @param exception 예외 객체
    * @param level 에러 레벨
    * @param tags Sentry 태그 (예: { responseId: "xxx" })
+   * @param extra Sentry Extra 컨텍스트 (구조화된 디버그 정보)
    */
   static captureException(
     exception: unknown,
     level: Sentry.SeverityLevel,
     tags?: Record<string, string>,
+    extra?: Record<string, unknown>,
   ): void {
     if (!this.enabled()) {
       return;
@@ -89,6 +91,7 @@ export class SentryUtil {
       Sentry.captureException(exception, {
         level,
         tags,
+        extra,
       });
     } catch (error) {
       // Sentry 전송 실패 시 로그만 기록
