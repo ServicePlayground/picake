@@ -8,7 +8,7 @@
  *  1. 예약신청(주문 직후)                → RESERVATION_REQUESTED
  *  2. 입금대기(판매자 예약 확인)          → PAYMENT_PENDING
  *  3. 예약확정(판매자 확정)               → CONFIRMED
- *  4. 픽업대기(픽업 시각 자동 전환)        → PICKUP_PENDING
+ *  4. 픽업대기 안내(픽업 24시간 전)     → PICKUP_PENDING
  *  5. 픽업완료(판매자 처리)               → PICKUP_COMPLETED
  *  6. 취소완료(입금 마감 초과 자동)        → CANCEL_COMPLETED_PAYMENT_EXPIRED
  *  7. 취소완료(판매자 취소)               → CANCEL_COMPLETED_BY_SELLER
@@ -22,7 +22,7 @@ export const USER_ORDER_ALIMTALK_TEMPLATE_IDS = {
   PAYMENT_PENDING: "KA01TP260709143633540gmoQcfz7sLJ",
   /** 템플릿3 예약확정 */
   CONFIRMED: "KA01TP260709145508054YJnDBsfzV72",
-  /** 템플릿4 픽업대기: 픽업 안내 */
+  /** 템플릿4 픽업대기: 픽업 24시간 전 안내 */
   PICKUP_PENDING: "KA01TP260705130656649d5Uely9TweL",
   /** 템플릿5 픽업완료: 후기 유도 */
   PICKUP_COMPLETED: "KA01TP260709145612824117yMbaVRy5",

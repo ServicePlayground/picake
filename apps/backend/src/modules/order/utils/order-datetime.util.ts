@@ -5,6 +5,9 @@
 /** 레거시·픽업 미정 시 사용하는 입금대기 최대 유효 기간(픽업이 12시간보다 멀 때) */
 export const PAYMENT_PENDING_MAX_VALIDITY_MS = 12 * 60 * 60 * 1000;
 
+/** 픽업 안내(알림톡·푸시)를 픽업 시각보다 얼마나 앞서 보낼지 */
+export const PICKUP_REMINDER_LEAD_MS = 24 * 60 * 60 * 1000;
+
 const MS_1H = 60 * 60 * 1000;
 const MS_6H = 6 * MS_1H;
 const MS_12H = 12 * MS_1H;
@@ -74,4 +77,22 @@ export function isPaymentPendingExpired(now: Date, input: PaymentPendingExpiryIn
  */
 export function isPickupPendingDue(pickupDate: Date, now: Date): boolean {
   return now.getTime() >= pickupDate.getTime();
+}
+
+/**
+ * 주문 생성~픽업 간격이 안내 리드타임(24시간) 이상인지.
+ * 24시간 안에 들어온 주문은 픽업 전날 안내를 보내지 않습니다.
+ */
+export function isPickupReminderLeadEligible(createdAt: Date, pickupDate: Date): boolean {
+  return pickupDate.getTime() - createdAt.getTime() >= PICKUP_REMINDER_LEAD_MS;
+}
+
+/**
+ * 픽업 24시간 전 안내 발송 시점 도달 여부.
+ * - `pickupDate - 24h <= now < pickupDate` 이면 true (픽업 시각 전에는 미발송분 재시도 가능)
+ */
+export function isPickupReminderDue(pickupDate: Date, now: Date): boolean {
+  const reminderAt = pickupDate.getTime() - PICKUP_REMINDER_LEAD_MS;
+  const t = now.getTime();
+  return t >= reminderAt && t < pickupDate.getTime();
 }

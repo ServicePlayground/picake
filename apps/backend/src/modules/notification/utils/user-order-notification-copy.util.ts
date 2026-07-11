@@ -17,8 +17,9 @@ export type UserOrderNotificationCopy = { title: string; body: string };
  * 2. 스토어가 확인 → `PAYMENT_PENDING`(입금대기): 계좌 안내, 픽업 일정에 따라 정해진 마감까지 입금(`order-automation`)
  * 3. 사용자가 앱에서 입금 완료 처리 → `PAYMENT_COMPLETED`: 본인 액션이라 알림 생략(null)
  * 4. 스토어가 → `CONFIRMED`(예약확정): 입금대기·입금완료 어느 쪽에서든 전환 가능
- * 5. 픽업 일시 도래 → 자동으로 `PICKUP_PENDING`(픽업대기)
- * 6. 스토어가 → `PICKUP_COMPLETED`(픽업완료)
+ * 5. 픽업 24시간 전 → 픽업 안내(알림톡·푸시). 주문~픽업이 24시간 미만이면 생략
+ * 6. 픽업 일시 도래 → 자동으로 `PICKUP_PENDING`(픽업대기). 구매자 알림은 5번에서 이미 발송
+ * 7. 스토어가 → `PICKUP_COMPLETED`(픽업완료)
  *
  * 취소·환불·노쇼는 아래 분기에서 처리합니다.
  */
@@ -48,15 +49,13 @@ export function buildUserOrderNotificationCopy(
   if (toStatus === OrderStatus.CONFIRMED) {
     return {
       title: "예약이 확정되었어요",
-      body: "픽업 날짜와 시간을 한 번 더 확인해 주세요. 픽업 당일에는 픽업 안내 알림이 갈 수 있어요.",
+      body: "픽업 날짜와 시간을 한 번 더 확인해 주세요. 픽업 하루 전에는 픽업 안내 알림이 갈 수 있어요.",
     };
   }
 
+  // 픽업대기 자동 전환 시점의 구매자 알림은 픽업 24시간 전 안내로 대체
   if (toStatus === OrderStatus.PICKUP_PENDING) {
-    return {
-      title: "픽업하실 수 있어요",
-      body: "예약하신 픽업 시간이 되었어요. 매장에 방문해 주문하신 상품을 받아 가 주세요.",
-    };
+    return null;
   }
 
   if (toStatus === OrderStatus.PICKUP_COMPLETED) {
@@ -119,4 +118,12 @@ export function buildUserOrderNotificationCopy(
   }
 
   return null;
+}
+
+/** 픽업 24시간 전 구매자 인앱·푸시 문구 */
+export function buildPickupReminderNotificationCopy(): UserOrderNotificationCopy {
+  return {
+    title: "내일 픽업이에요",
+    body: "예약하신 상품을 내일 픽업하는 날이에요. 시간에 맞춰 방문해 주세요.",
+  };
 }
