@@ -1,5 +1,6 @@
 "use client";
 
+import { LocationPermissionModal } from "@/apps/web-user/common/components/modals/LocationPermissionModal";
 import { useWebViewBridge } from "@/apps/web-user/common/utils/webview.bridge";
 
 /**
@@ -8,5 +9,10 @@ import { useWebViewBridge } from "@/apps/web-user/common/utils/webview.bridge";
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   useWebViewBridge(); // 웹뷰 브릿지 초기화 훅
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <LocationPermissionModal />
+    </>
+  );
 }

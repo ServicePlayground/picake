@@ -34,7 +34,8 @@ export function RegionSelectSheet({
   onSelect,
   onGpsInactive,
 }: RegionSelectSheetProps) {
-  const { address, setLocation, setAddress } = useUserCurrentLocationStore();
+  const { address, setLocation, setAddress, isLocationPermissionModalOpen } =
+    useUserCurrentLocationStore();
   const [isWaitingForLocation, setIsWaitingForLocation] = useState(false);
   // "현재 위치로 설정" 클릭 시점의 address. GPS 응답이 도착해서 address가 실제로 바뀌었는지 비교용.
   // 이걸 안 두면 setIsWaitingForLocation(true)가 즉시 useEffect를 발화시켜 stale address로 매칭 처리해버림.
@@ -112,6 +113,13 @@ export function RegionSelectSheet({
     setIsWaitingForLocation(false);
     processMatchResult(matchAddressToRegion(address, regions));
   }, [address, isWaitingForLocation]);
+
+  // 위치 권한 거부 모달이 뜨면 GPS 대기 해제
+  useEffect(() => {
+    if (isLocationPermissionModalOpen && isWaitingForLocation) {
+      setIsWaitingForLocation(false);
+    }
+  }, [isLocationPermissionModalOpen, isWaitingForLocation]);
 
   // 매칭 결과 처리 — 비활성 모달은 Header가 일원화해서 띄움
   // - 활성 지역: onSelect 후 시트 닫기
@@ -200,10 +208,13 @@ export function RegionSelectSheet({
     setIsWaitingForLocation(true);
     if (isWebViewEnvironment()) {
       // 웹뷰: window.receiveLocation → setAddress가 외부에서 호출됨. address 변경 시 useEffect가 처리.
-      requestLocationFromWebView();
+      // 권한 거부 시 window.receiveLocationError → 전역 모달 (userInitiated)
+      requestLocationFromWebView({ userInitiated: true });
     } else if (navigator.geolocation) {
+      useUserCurrentLocationStore.getState().markLocationRequestUserInitiated();
       navigator.geolocation.getCurrentPosition(
         async (position) => {
+          useUserCurrentLocationStore.getState().clearLocationRequestFlag();
           const { latitude, longitude } = position.coords;
           setLocation(latitude, longitude);
           const addr = await reverseGeocode(latitude, longitude);
@@ -214,7 +225,14 @@ export function RegionSelectSheet({
             processMatchResult(matchAddressToRegion(addr, regions));
           }
         },
-        () => setIsWaitingForLocation(false),
+        (error) => {
+          setIsWaitingForLocation(false);
+          if (error.code === error.PERMISSION_DENIED) {
+            useUserCurrentLocationStore.getState().handleLocationRequestFailure();
+            return;
+          }
+          useUserCurrentLocationStore.getState().clearLocationRequestFlag();
+        },
       );
     } else {
       setIsWaitingForLocation(false);
