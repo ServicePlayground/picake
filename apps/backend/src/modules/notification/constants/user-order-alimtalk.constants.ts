@@ -23,7 +23,7 @@ export const USER_ORDER_ALIMTALK_TEMPLATE_IDS = {
   /** 템플릿3 예약확정 */
   CONFIRMED: "KA01TP260709145508054YJnDBsfzV72",
   /** 템플릿4 픽업대기: 픽업 24시간 전 안내 */
-  PICKUP_PENDING: "KA01TP260705130656649d5Uely9TweL",
+  PICKUP_PENDING: "KA01TP260711094419831qn71D4Ab3vt",
   /** 템플릿5 픽업완료: 후기 유도 */
   PICKUP_COMPLETED: "KA01TP260709145612824117yMbaVRy5",
   /** 템플릿6 취소완료: 입금 마감 초과 자동 취소 */
