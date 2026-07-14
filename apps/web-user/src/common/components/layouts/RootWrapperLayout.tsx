@@ -4,6 +4,7 @@ import { ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import Header from "@/apps/web-user/common/components/headers/Header";
+import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 import { Alert } from "@/apps/web-user/common/components/alerts/Alert";
 import { ConfirmAlert } from "@/apps/web-user/common/components/alerts/ConfirmAlert";
 import BuildInfoLogger from "@/apps/web-user/common/components/debug/BuildInfoLogger";
@@ -44,6 +45,7 @@ export default function RootWrapperLayout({ children }: RootWrapperLayoutProps) 
   const getHeaderConfig = (): {
     variant: "main" | "product" | "minimal" | "search" | "back-title";
     title?: string;
+    backFallbackPath?: string;
   } => {
     if (pathname === "/") return { variant: "main" };
     if (pathname === "/search") return { variant: "search" };
@@ -51,11 +53,12 @@ export default function RootWrapperLayout({ children }: RootWrapperLayoutProps) 
     if (pathname?.startsWith("/chat")) return { variant: "minimal" };
     if (pathname?.startsWith("/reservation")) return { variant: "minimal" };
     if (pathname === "/alarm") return { variant: "back-title", title: "알림" };
-    if (pathname === "/mypage/setting") return { variant: "back-title", title: "설정" };
+    if (pathname === "/mypage/setting")
+      return { variant: "back-title", title: "설정", backFallbackPath: PATHS.MYPAGE };
     if (pathname === "/mypage/setting/account")
-      return { variant: "back-title", title: "내 계정 정보" };
+      return { variant: "back-title", title: "내 계정 정보", backFallbackPath: PATHS.MYPAGE };
     if (pathname === "/mypage/setting/notification")
-      return { variant: "back-title", title: "알림 설정" };
+      return { variant: "back-title", title: "알림 설정", backFallbackPath: PATHS.MYPAGE };
     if (pathname === "/qa") return { variant: "minimal" };
     if (
       pathname === "/auth/register/google" ||
@@ -74,7 +77,7 @@ export default function RootWrapperLayout({ children }: RootWrapperLayoutProps) 
     return { variant: "main" };
   };
 
-  const { variant: headerVariant, title: headerTitle } = getHeaderConfig();
+  const { variant: headerVariant, title: headerTitle, backFallbackPath } = getHeaderConfig();
 
   return (
     <AuthProvider>
@@ -84,7 +87,7 @@ export default function RootWrapperLayout({ children }: RootWrapperLayoutProps) 
         id="root-scroll-container"
         className="w-full sm:w-[640px] h-screen mx-auto sm:border-x border-gray-200 overflow-y-auto overflow-x-hidden scrollbar-hide"
       >
-        <Header variant={headerVariant} title={headerTitle} />
+        <Header variant={headerVariant} title={headerTitle} backFallbackPath={backFallbackPath} />
         <div>{children}</div>
         <Alert />
         <ConfirmAlert />

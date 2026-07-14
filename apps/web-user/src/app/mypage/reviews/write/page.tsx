@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Header from "@/apps/web-user/common/components/headers/Header";
+import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 import { Icon } from "@/apps/web-user/common/components/icons";
 import { useUploadFile } from "@/apps/web-user/features/upload/hooks/mutations/useUploadFile";
 import { useWritableReviews } from "@/apps/web-user/features/review/hooks/queries/useWritableReviews";
@@ -159,7 +160,7 @@ export default function ReviewWritePage() {
 
   return (
     <div className="flex flex-col min-h-dvh">
-      <Header variant="back-title" title="후기 작성" />
+      <Header variant="back-title" title="후기 작성" backFallbackPath={PATHS.MY_ORDERS} />
 
       <div className="flex-1 px-5 pt-8">
         {/* 주문 상품 카드 (가로 스크롤) */}

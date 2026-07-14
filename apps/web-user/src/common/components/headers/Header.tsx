@@ -7,6 +7,7 @@ import Link from "next/link";
 import { Icon } from "@/apps/web-user/common/components/icons";
 import { useUserCurrentLocationStore } from "@/apps/web-user/common/store/user-current-location.store";
 import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
+import { navigateBack } from "@/apps/web-user/common/utils/navigate-back.util";
 import { useHeaderStore } from "@/apps/web-user/common/store/header.store";
 import { useStoreRegions } from "@/apps/web-user/features/store/hooks/queries/useStoreRegions";
 import {
@@ -24,11 +25,18 @@ const REGION_STORAGE_KEY = "picake:selected-region";
 interface HeaderProps {
   variant?: "main" | "product" | "minimal" | "search" | "back-title";
   title?: string;
-  /** `back-title`에서 뒤로 버튼 동작을 덮어쓸 때 사용 (미지정 시 `router.back()`) */
+  /** `back-title`에서 뒤로 버튼 동작을 덮어쓸 때 사용 (미지정 시 `navigateBack`) */
   onBackClick?: () => void;
+  /** 히스토리가 없을 때(딥링크 직진입 등) 이동할 경로. 미지정 시 홈(`/`) */
+  backFallbackPath?: string;
 }
 
-export default function Header({ variant = "main", title, onBackClick }: HeaderProps) {
+export default function Header({
+  variant = "main",
+  title,
+  onBackClick,
+  backFallbackPath = PATHS.HOME,
+}: HeaderProps) {
   const router = useRouter();
   const { address, latitude, longitude, setAddress, setSelectedRegion } =
     useUserCurrentLocationStore();
@@ -216,6 +224,15 @@ export default function Header({ variant = "main", title, onBackClick }: HeaderP
     );
   };
 
+  const handleBack = () => {
+    if (onBackClick) {
+      onBackClick();
+      return;
+    }
+
+    navigateBack(router, { fallbackPath: backFallbackPath });
+  };
+
   const LocationButton = () => (
     <button
       type="button"
@@ -235,7 +252,7 @@ export default function Header({ variant = "main", title, onBackClick }: HeaderP
     return (
       <header className="sticky top-0 z-50 bg-white px-5 relative flex items-center justify-center h-[52px]">
         <button
-          onClick={() => (onBackClick ? onBackClick() : router.back())}
+          onClick={handleBack}
           className="absolute left-5 flex items-center justify-center rounded-lg border-none bg-transparent text-gray-900 cursor-pointer"
           aria-label="뒤로가기"
         >
@@ -251,7 +268,7 @@ export default function Header({ variant = "main", title, onBackClick }: HeaderP
     return (
       <header className="sticky top-0 z-50 bg-white px-5 flex justify-between items-center h-[52px]">
         <button
-          onClick={() => router.back()}
+          onClick={handleBack}
           className="flex items-center justify-center rounded-lg border-none bg-transparent text-gray-900 cursor-pointer"
           aria-label="뒤로가기"
         >
@@ -272,7 +289,7 @@ export default function Header({ variant = "main", title, onBackClick }: HeaderP
     return (
       <header className="sticky top-0 left-0 right-0 z-50 bg-white max-w-[638px] mx-auto px-5 flex justify-between items-center h-[46px]">
         <LocationButton />
-        <button onClick={() => router.back()} className="text-sm font-bold text-gray-500 underline">
+        <button onClick={handleBack} className="text-sm font-bold text-gray-500 underline">
           취소
         </button>
       </header>

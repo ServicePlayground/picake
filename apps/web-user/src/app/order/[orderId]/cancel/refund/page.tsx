@@ -2,6 +2,7 @@
 
 import { useParams } from "next/navigation";
 import Header from "@/apps/web-user/common/components/headers/Header";
+import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 import { useOrderDetail } from "@/apps/web-user/features/order/hooks/queries/useOrderDetail";
 import { RefundRequestView } from "@/apps/web-user/features/order/components/cancel/RefundRequestView";
 
@@ -12,7 +13,11 @@ export default function OrderCancelRefundPage() {
 
   return (
     <div>
-      <Header variant="back-title" title="예약취소 (2/2)" />
+      <Header
+        variant="back-title"
+        title="예약취소 (2/2)"
+        backFallbackPath={PATHS.ORDER.CANCEL(orderId)}
+      />
       {isLoading ? (
         <div className="px-5 py-8 space-y-4 animate-pulse">
           <div className="h-5 w-40 bg-gray-100 rounded" />
