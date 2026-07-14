@@ -35,7 +35,7 @@ export function LocationPermissionModal() {
       description="설정에서 위치 권한을 허용해 주세요."
       confirmText="취소"
       confirmVariant="outline"
-      cancelText="설정으로 이동"
+      cancelText="설정"
       cancelVariant="primary"
       onConfirm={handleClose}
       onCancel={handleOpenSettings}
