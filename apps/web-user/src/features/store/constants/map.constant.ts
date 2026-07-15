@@ -74,7 +74,7 @@ export function sampleMapLayoutViewportHeight(): Promise<number> {
  * 회색/흰색 영역이 잠깐 보인다. 컨테이너를 뷰포트보다 상하좌우 이 값만큼 크게 만들어
  * 화면 밖 타일을 미리 로드한다. (값이 클수록 부드럽지만 타일 다운로드량 증가)
  */
-export const MAP_TILE_PRELOAD_BUFFER_PX = 100;
+export const MAP_TILE_PRELOAD_BUFFER_PX = 250;
 
 /**
  * 지도 bounds 패딩(px) - 검색 결과 전체가 보이도록 할 때.

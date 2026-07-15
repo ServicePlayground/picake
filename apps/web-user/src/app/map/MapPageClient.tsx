@@ -120,8 +120,10 @@ export default function MapPageClient() {
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapInstanceRef = useRef<any | null>(null);
   const placesServiceRef = useRef<any | null>(null);
-  const markersRef = useRef<any[]>([]); // 카카오 키워드 검색(미입점) 마커
-  const overlaysRef = useRef<any[]>([]); // 미입점 마커 이름 오버레이
+  /** 카카오 키워드 검색(미입점) 마커·오버레이 — place id 기준으로 재사용(diff)해 재검색마다 전체 재생성하지 않음 */
+  const kakaoMarkerEntriesRef = useRef<Map<string, { marker: any; overlay: any }>>(new Map());
+  const isUserInteractingRef = useRef(false); // 드래그·줌 제스처 진행 중 여부 (제스처 중 DOM 갱신 보류용)
+  const pendingKeywordDataRef = useRef<any[] | null>(null); // 제스처 중 도착한 키워드 검색 결과 (다음 idle에 반영)
   /** 플랫폼 입점 스토어 마커·오버레이 — storeId 기준으로 재사용(diff)해 idle마다 전체 재생성하지 않음 */
   const platformMarkerEntriesRef = useRef<
     Map<string, { marker: any; overlay: any; dim: boolean; overlayHtml: string; store: StoreInfo }>
@@ -203,10 +205,12 @@ export default function MapPageClient() {
 
   /** 미입점(카카오 키워드 검색) 마커·오버레이만 제거, 플랫폼 마커는 유지 */
   const clearKakaoMarkers = useCallback(() => {
-    markersRef.current.forEach((m) => m.setMap(null));
-    markersRef.current = [];
-    overlaysRef.current.forEach((o) => o.setMap(null));
-    overlaysRef.current = [];
+    kakaoMarkerEntriesRef.current.forEach((entry) => {
+      entry.marker.setMap(null);
+      entry.overlay.setMap(null);
+    });
+    kakaoMarkerEntriesRef.current.clear();
+    pendingKeywordDataRef.current = null;
     resetPlatformMarkerImages();
     selectedMarkerRef.current = null;
   }, [resetPlatformMarkerImages]);
@@ -219,6 +223,8 @@ export default function MapPageClient() {
   const drawPlatformStoreMarkers = useCallback(() => {
     const map = mapInstanceRef.current;
     if (!window.kakao?.maps || !map) return;
+    // 제스처(드래그·줌) 중에는 DOM 갱신을 하지 않음 — 제스처 종료 후 idle에서 다시 그린다 (터치 끊김 방지)
+    if (isUserInteractingRef.current) return;
 
     if (!openedMarkerImageRef.current) {
       openedMarkerImageRef.current = new window.kakao.maps.MarkerImage(
@@ -317,7 +323,7 @@ export default function MapPageClient() {
 
       window.kakao.maps.event.addListener(marker, "click", () => {
         if (markerImageRef.current)
-          markersRef.current.forEach((m) => m.setImage(markerImageRef.current));
+          kakaoMarkerEntriesRef.current.forEach((e) => e.marker.setImage(markerImageRef.current));
         resetPlatformMarkerImages();
         const focusedImg = entry.dim
           ? openedDimFocusedMarkerImageRef.current
@@ -393,6 +399,86 @@ export default function MapPageClient() {
   );
 
   /**
+   * 키워드 검색 결과를 미입점 마커에 반영.
+   * place id 기준 diff — 이미 그려진 마커는 재사용하고 결과에서 빠진 것만 제거해
+   * 재검색마다 전체 마커·오버레이를 제거·재생성하는 무거운 DOM 작업(터치 끊김 원인)을 없앤다.
+   */
+  const applyKeywordSearchResults = useCallback(
+    (data: any[]) => {
+      const map = mapInstanceRef.current;
+      if (!window.kakao?.maps || !map) return;
+      const entries = kakaoMarkerEntriesRef.current;
+
+      const places = data.filter(
+        (place) =>
+          !isPlatformStoreDuplicate(Number(place.y), Number(place.x), place.place_name ?? ""),
+      );
+      const getPlaceKey = (place: any) => String(place.id ?? `${place.y},${place.x}`);
+      const nextIds = new Set(places.map(getPlaceKey));
+
+      // 결과에서 빠진 마커·오버레이만 제거
+      entries.forEach((entry, id) => {
+        if (nextIds.has(id)) return;
+        entry.marker.setMap(null);
+        entry.overlay.setMap(null);
+        if (selectedMarkerRef.current === entry.marker) selectedMarkerRef.current = null;
+        entries.delete(id);
+      });
+
+      places.forEach((place) => {
+        const id = getPlaceKey(place);
+        if (entries.has(id)) return; // 이미 그려진 마커 재사용
+        const lat = Number(place.y);
+        const lng = Number(place.x);
+        const position = new window.kakao.maps.LatLng(lat, lng);
+        const marker = new window.kakao.maps.Marker({
+          map,
+          position,
+          image: markerImageRef.current,
+        });
+        window.kakao.maps.event.addListener(marker, "click", () => {
+          setSelectedStore(null);
+          setSelectedUnenteredStore({
+            kakaoPlaceId: String(place.id ?? ""),
+            name: place.place_name ?? "",
+            address: place.address_name || undefined,
+            roadAddress: place.road_address_name || undefined,
+            phone: place.phone || undefined,
+            categoryName: place.category_name || undefined,
+            placeUrl: place.place_url || undefined,
+            latitude: lat,
+            longitude: lng,
+          });
+          if (listSheetPanelOffsetRef.current > 0) closeListSheet();
+          if (markerImageRef.current)
+            kakaoMarkerEntriesRef.current.forEach((e) => e.marker.setImage(markerImageRef.current));
+          resetPlatformMarkerImages();
+          if (focusedMarkerImageRef.current) {
+            marker.setImage(focusedMarkerImageRef.current);
+            selectedMarkerRef.current = marker;
+          }
+          if (map?.panTo) {
+            isCenteringFromClickRef.current = true;
+            map.panTo(position);
+          }
+        });
+        const safeName = escapeHtmlForOverlay(place.place_name ?? "");
+        const overlay = new window.kakao.maps.CustomOverlay({
+          map,
+          position,
+          yAnchor: 0,
+          content: `<div class="flex flex-col items-center pointer-events-none" style="margin-top:-4px;"><p class="text-center text-[14px] leading-[1.4] font-bold text-gray-900" style="text-shadow:${MAP_MARKER_LABEL_TEXT_SHADOW}">${safeName}</p><p class="text-center text-[11px] leading-[1.4] font-bold text-gray-500" style="text-shadow:${MAP_MARKER_LABEL_TEXT_SHADOW}">미입점</p></div>`,
+        });
+        entries.set(id, { marker, overlay });
+      });
+    },
+    [isPlatformStoreDuplicate, closeListSheet, resetPlatformMarkerImages, listSheetPanelOffsetRef],
+  );
+
+  const applyKeywordSearchResultsRef = useRef(applyKeywordSearchResults);
+  applyKeywordSearchResultsRef.current = applyKeywordSearchResults;
+
+  /**
    * 카카오 키워드 검색으로 주변 미입점(주문제작 케이크) 마커 표시. 지도 검색·픽업 필터 시에는 표시하지 않음.
    * skipIfNearLastSearch: 같은 줌에서 지도가 조금만 움직였으면 재검색을 생략해 드래그마다 네트워크 요청이 발생하지 않게 함.
    */
@@ -451,61 +537,18 @@ export default function MapPageClient() {
             clearKakaoMarkers();
             return;
           }
-          const map = mapInstanceRef.current;
-          if (!map) return;
-          clearKakaoMarkers();
-          data.forEach((place) => {
-            const lat = Number(place.y);
-            const lng = Number(place.x);
-            if (isPlatformStoreDuplicate(lat, lng, place.place_name ?? "")) return;
-            const position = new window.kakao.maps.LatLng(lat, lng);
-            const marker = new window.kakao.maps.Marker({
-              map,
-              position,
-              image: markerImageRef.current,
-            });
-            markersRef.current.push(marker);
-            window.kakao.maps.event.addListener(marker, "click", () => {
-              setSelectedStore(null);
-              setSelectedUnenteredStore({
-                kakaoPlaceId: String(place.id ?? ""),
-                name: place.place_name ?? "",
-                address: place.address_name || undefined,
-                roadAddress: place.road_address_name || undefined,
-                phone: place.phone || undefined,
-                categoryName: place.category_name || undefined,
-                placeUrl: place.place_url || undefined,
-                latitude: lat,
-                longitude: lng,
-              });
-              if (listSheetPanelOffsetRef.current > 0) closeListSheet();
-              if (markerImageRef.current)
-                markersRef.current.forEach((m) => m.setImage(markerImageRef.current));
-              resetPlatformMarkerImages();
-              if (focusedMarkerImageRef.current) {
-                marker.setImage(focusedMarkerImageRef.current);
-                selectedMarkerRef.current = marker;
-              }
-              if (map?.panTo) {
-                isCenteringFromClickRef.current = true;
-                map.panTo(position);
-              }
-            });
-            const safeName = escapeHtmlForOverlay(place.place_name ?? "");
-            overlaysRef.current.push(
-              new window.kakao.maps.CustomOverlay({
-                map,
-                position,
-                yAnchor: 0,
-                content: `<div class="flex flex-col items-center pointer-events-none" style="margin-top:-4px;"><p class="text-center text-[14px] leading-[1.4] font-bold text-gray-900" style="text-shadow:${MAP_MARKER_LABEL_TEXT_SHADOW}">${safeName}</p><p class="text-center text-[11px] leading-[1.4] font-bold text-gray-500" style="text-shadow:${MAP_MARKER_LABEL_TEXT_SHADOW}">미입점</p></div>`,
-              }),
-            );
-          });
+          if (!mapInstanceRef.current) return;
+          // 드래그·줌 도중 응답이 도착하면 DOM 갱신을 보류하고 다음 idle에서 반영 (프레임 드랍·터치 끊김 방지)
+          if (isUserInteractingRef.current) {
+            pendingKeywordDataRef.current = data;
+            return;
+          }
+          applyKeywordSearchResultsRef.current(data);
         },
         { location: centerLatLng, useMapBounds: true },
       );
     },
-    [clearKakaoMarkers, isPlatformStoreDuplicate, closeListSheet, resetPlatformMarkerImages],
+    [clearKakaoMarkers],
   );
 
   /** URL 검색 또는 픽업 필터 시 미입점 마커 제거, 해제 시에만 키워드 검색 재실행 */
@@ -562,6 +605,20 @@ export default function MapPageClient() {
         // load 콜백은 비동기라 클로저의 userLocation이 null일 수 있음 → ref로 최신 위치 사용
         updateUserLocationMarker(userLocationRef.current ?? null);
 
+        // 제스처(드래그·줌) 진행 여부 추적 — 제스처 중에는 마커 DOM 갱신을 전부 보류해 터치 끊김을 방지
+        window.kakao.maps.event.addListener(map, "dragstart", () => {
+          isUserInteractingRef.current = true;
+        });
+        window.kakao.maps.event.addListener(map, "dragend", () => {
+          isUserInteractingRef.current = false;
+        });
+        window.kakao.maps.event.addListener(map, "zoom_start", () => {
+          isUserInteractingRef.current = true;
+        });
+        window.kakao.maps.event.addListener(map, "zoom_changed", () => {
+          isUserInteractingRef.current = false;
+        });
+
         // 지도 이동/줌 종료 시: 마커 갱신, 목록 패널이 열려 있으면 범위 내 스토어로 목록 갱신
         // 연속 드래그 시 idle이 잇달아 발생하므로 디바운스로 마지막 1회만 처리
         window.kakao.maps.event.addListener(map, "idle", () => {
@@ -574,6 +631,14 @@ export default function MapPageClient() {
           }
           idleDebounceTimerRef.current = window.setTimeout(() => {
             idleDebounceTimerRef.current = null;
+            // 타이머 대기 중 새 제스처가 시작됐으면 건너뜀 — 제스처 종료 후 idle에서 다시 처리됨
+            if (isUserInteractingRef.current) return;
+            // 제스처 중 보류해 둔 키워드 검색 결과가 있으면 지금 반영
+            if (pendingKeywordDataRef.current) {
+              const pending = pendingKeywordDataRef.current;
+              pendingKeywordDataRef.current = null;
+              applyKeywordSearchResultsRef.current(pending);
+            }
             drawPlatformStoreMarkersRef.current();
             const allowKakaoUnopened =
               searchStoresRef.current === null &&
