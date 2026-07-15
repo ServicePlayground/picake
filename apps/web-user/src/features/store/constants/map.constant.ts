@@ -81,6 +81,15 @@ export const MAP_MARKER_LABEL_TEXT_SHADOW =
 /** 카카오 키워드 검색 시 사용하는 키워드 (미입점 마커) */
 export const KAKAO_PLACES_KEYWORD = "주문제작 케이크";
 
+/** 지도 idle(이동·줌 종료) 후 마커 갱신까지의 디바운스(ms) — 연속 드래그 시 중복 작업 방지 */
+export const MAP_IDLE_DEBOUNCE_MS = 200;
+
+/**
+ * 카카오 키워드 재검색 최소 이동 비율.
+ * 같은 줌 레벨에서 지도 중심이 화면 span의 이 비율 미만으로 움직였으면 미입점 재검색을 생략합니다.
+ */
+export const MAP_KEYWORD_SEARCH_MIN_MOVE_RATIO = 0.2;
+
 /** 지도 목록 필터: 사이즈 옵션 (백엔드 CakeSizeDisplayName 표시명과 동일) */
 export const MAP_LIST_SIZE_OPTIONS: string[] = ["도시락", "미니", "1호", "2호", "3호"];
 

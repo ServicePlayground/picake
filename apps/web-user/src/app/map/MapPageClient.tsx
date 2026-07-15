@@ -26,12 +26,15 @@ import { MapTopSearchBar } from "@/apps/web-user/features/store/components/map/M
 import { MapPickupDateBottomSheet } from "@/apps/web-user/features/store/components/map/MapPickupDateBottomSheet";
 import { MapListSheetPanel } from "@/apps/web-user/features/store/components/map/MapListSheetPanel";
 import { useMapListSheet } from "@/apps/web-user/features/store/hooks/useMapListSheet";
+import { useMapPlatformStores } from "@/apps/web-user/features/store/hooks/queries/useMapPlatformStores";
 import {
   DEFAULT_MAP_CENTER,
   MAP_BOUNDS_PADDING,
   KAKAO_PLACES_KEYWORD,
   MAP_MARKER_LABEL_TEXT_SHADOW,
   MAP_SELECTED_STORE_CARD_BOTTOM,
+  MAP_IDLE_DEBOUNCE_MS,
+  MAP_KEYWORD_SEARCH_MIN_MOVE_RATIO,
 } from "@/apps/web-user/features/store/constants/map.constant";
 import {
   escapeHtmlForOverlay,
@@ -118,8 +121,10 @@ export default function MapPageClient() {
   const placesServiceRef = useRef<any | null>(null);
   const markersRef = useRef<any[]>([]); // 카카오 키워드 검색(미입점) 마커
   const overlaysRef = useRef<any[]>([]); // 미입점 마커 이름 오버레이
-  const platformMarkersRef = useRef<any[]>([]); // 플랫폼 입점 스토어 마커
-  const platformOverlaysRef = useRef<any[]>([]); // 플랫폼 스토어 이름 오버레이
+  /** 플랫폼 입점 스토어 마커·오버레이 — storeId 기준으로 재사용(diff)해 idle마다 전체 재생성하지 않음 */
+  const platformMarkerEntriesRef = useRef<
+    Map<string, { marker: any; overlay: any; dim: boolean; overlayHtml: string; store: StoreInfo }>
+  >(new Map());
   const platformStoresRef = useRef<StoreInfo[]>([]); // API 전체 스토어 캐시
   const searchStoresRef = useRef<StoreInfo[] | null>(null); // null=검색아님, []=검색결과0개, [...]=검색결과
   const markerImageRef = useRef<any | null>(null);
@@ -128,9 +133,9 @@ export default function MapPageClient() {
   const openedFocusedMarkerImageRef = useRef<any | null>(null);
   const openedDimMarkerImageRef = useRef<any | null>(null);
   const openedDimFocusedMarkerImageRef = useRef<any | null>(null);
-  /** drawPlatformStoreMarkers와 동일 순서 — 마감(희미 핀) 여부 */
-  const platformMarkerDimFlagsRef = useRef<boolean[]>([]);
   const selectedMarkerRef = useRef<any | null>(null);
+  const lastKeywordSearchRef = useRef<{ lat: number; lng: number; level: number } | null>(null); // 마지막 카카오 키워드 검색 시점의 중심·줌
+  const idleDebounceTimerRef = useRef<number | null>(null); // idle 마커 갱신 디바운스 타이머
   const isCenteringFromClickRef = useRef(false); // 마커 클릭으로 panTo 한 직후 idle에서 재처리 방지
   const usedUserLocationForCenterRef = useRef(false); // 이미 현재위치로 중심 잡았는지
   const userLocationMarkerRef = useRef<any | null>(null); // 현재위치(파란 점) 마커
@@ -187,32 +192,32 @@ export default function MapPageClient() {
     });
   }, []);
 
+  /** 플랫폼 마커 이미지를 기본(영업/마감) 상태로 복원 */
+  const resetPlatformMarkerImages = useCallback(() => {
+    platformMarkerEntriesRef.current.forEach((entry) => {
+      const img = entry.dim ? openedDimMarkerImageRef.current : openedMarkerImageRef.current;
+      if (img) entry.marker.setImage(img);
+    });
+  }, []);
+
   /** 미입점(카카오 키워드 검색) 마커·오버레이만 제거, 플랫폼 마커는 유지 */
   const clearKakaoMarkers = useCallback(() => {
     markersRef.current.forEach((m) => m.setMap(null));
     markersRef.current = [];
     overlaysRef.current.forEach((o) => o.setMap(null));
     overlaysRef.current = [];
-    platformMarkersRef.current.forEach((m, i) => {
-      const dim = platformMarkerDimFlagsRef.current[i];
-      if (dim && openedDimMarkerImageRef.current) m.setImage(openedDimMarkerImageRef.current);
-      else if (openedMarkerImageRef.current) m.setImage(openedMarkerImageRef.current);
-    });
+    resetPlatformMarkerImages();
     selectedMarkerRef.current = null;
-  }, []);
+  }, [resetPlatformMarkerImages]);
 
-  /** 검색 모드면 검색 결과 전체, 아니면 현재 지도 bounds 내 플랫폼 스토어만 마커로 그림 */
+  /**
+   * 검색 모드면 검색 결과 전체, 아니면 현재 지도 bounds 내 플랫폼 스토어만 마커로 그림.
+   * storeId 기준 diff — 이미 그려진 마커는 재사용하고, 범위를 벗어난 마커만 제거해
+   * 드래그마다 전체 마커·오버레이를 재생성하지 않는다.
+   */
   const drawPlatformStoreMarkers = useCallback(() => {
     const map = mapInstanceRef.current;
     if (!window.kakao?.maps || !map) return;
-
-    platformMarkersRef.current.forEach((m) => m.setMap(null));
-    platformMarkersRef.current = [];
-    platformOverlaysRef.current.forEach((o) => o.setMap(null));
-    platformOverlaysRef.current = [];
-
-    const stores = getStoresToShow(map);
-    if (stores.length === 0) return;
 
     if (!openedMarkerImageRef.current) {
       openedMarkerImageRef.current = new window.kakao.maps.MarkerImage(
@@ -243,13 +248,54 @@ export default function MapPageClient() {
       );
     }
 
+    const stores = getStoresToShow(map);
     const statusAt = mapPickupFilterToOverlayInstant(pickupFilter);
-    platformMarkerDimFlagsRef.current = [];
+    const entries = platformMarkerEntriesRef.current;
+
+    // 범위를 벗어난 스토어의 마커·오버레이만 제거
+    const nextIds = new Set(stores.map((s) => s.id));
+    entries.forEach((entry, id) => {
+      if (nextIds.has(id)) return;
+      entry.marker.setMap(null);
+      entry.overlay.setMap(null);
+      if (selectedMarkerRef.current === entry.marker) selectedMarkerRef.current = null;
+      entries.delete(id);
+    });
 
     stores.forEach((store) => {
       if (store.latitude == null || store.longitude == null) return;
       const useDim = shouldUseDimPlatformMapMarker(store.businessCalendar, statusAt, pickupFilter);
-      platformMarkerDimFlagsRef.current.push(useDim);
+      const safeName = escapeHtmlForOverlay(store.name ?? "");
+      const statusHtml = buildMapPlatformStoreStatusOverlayHtml(
+        store.businessCalendar,
+        statusAt,
+        pickupFilter,
+      );
+      const overlayHtml = `<div class="flex flex-col items-center pointer-events-none" style="margin-top:-4px;"><p class="text-center text-[14px] leading-[1.4] font-bold text-gray-900" style="text-shadow:${MAP_MARKER_LABEL_TEXT_SHADOW}">${safeName}</p>${statusHtml}</div>`;
+
+      const existing = entries.get(store.id);
+      if (existing) {
+        // 이미 그려진 마커는 재사용 — 바뀐 부분(마감 여부·오버레이 내용)만 갱신
+        existing.store = store;
+        if (existing.dim !== useDim) {
+          existing.dim = useDim;
+          const isSelected = selectedMarkerRef.current === existing.marker;
+          const img = useDim
+            ? isSelected
+              ? openedDimFocusedMarkerImageRef.current
+              : openedDimMarkerImageRef.current
+            : isSelected
+              ? openedFocusedMarkerImageRef.current
+              : openedMarkerImageRef.current;
+          if (img) existing.marker.setImage(img);
+        }
+        if (existing.overlayHtml !== overlayHtml) {
+          existing.overlay.setContent(overlayHtml);
+          existing.overlayHtml = overlayHtml;
+        }
+        return;
+      }
+
       const defaultMarkerImage = useDim
         ? openedDimMarkerImageRef.current
         : openedMarkerImageRef.current;
@@ -259,17 +305,20 @@ export default function MapPageClient() {
         position,
         image: defaultMarkerImage,
       });
-      platformMarkersRef.current.push(marker);
+      const overlay = new window.kakao.maps.CustomOverlay({
+        map,
+        position,
+        yAnchor: 0,
+        content: overlayHtml,
+      });
+      const entry = { marker, overlay, dim: useDim, overlayHtml, store };
+      entries.set(store.id, entry);
 
       window.kakao.maps.event.addListener(marker, "click", () => {
         if (markerImageRef.current)
           markersRef.current.forEach((m) => m.setImage(markerImageRef.current));
-        platformMarkersRef.current.forEach((m, i) => {
-          const dim = platformMarkerDimFlagsRef.current[i];
-          if (dim && openedDimMarkerImageRef.current) m.setImage(openedDimMarkerImageRef.current);
-          else if (openedMarkerImageRef.current) m.setImage(openedMarkerImageRef.current);
-        });
-        const focusedImg = useDim
+        resetPlatformMarkerImages();
+        const focusedImg = entry.dim
           ? openedDimFocusedMarkerImageRef.current
           : openedFocusedMarkerImageRef.current;
         if (focusedImg) {
@@ -282,24 +331,10 @@ export default function MapPageClient() {
         }
         if (listSheetPanelOffsetRef.current > 0) closeListSheet();
         setSelectedUnenteredStore(null);
-        setSelectedStore(store);
+        setSelectedStore(entry.store);
       });
-
-      const safeName = escapeHtmlForOverlay(store.name ?? "");
-      const statusHtml = buildMapPlatformStoreStatusOverlayHtml(
-        store.businessCalendar,
-        statusAt,
-        pickupFilter,
-      );
-      const overlay = new window.kakao.maps.CustomOverlay({
-        map,
-        position,
-        yAnchor: 0,
-        content: `<div class="flex flex-col items-center pointer-events-none" style="margin-top:-4px;"><p class="text-center text-[14px] leading-[1.4] font-bold text-gray-900" style="text-shadow:${MAP_MARKER_LABEL_TEXT_SHADOW}">${safeName}</p>${statusHtml}</div>`,
-      });
-      platformOverlaysRef.current.push(overlay);
     });
-  }, [getStoresToShow, pickupFilter, closeListSheet]);
+  }, [getStoresToShow, pickupFilter, closeListSheet, resetPlatformMarkerImages]);
 
   const drawPlatformStoreMarkersRef = useRef(drawPlatformStoreMarkers);
   drawPlatformStoreMarkersRef.current = drawPlatformStoreMarkers;
@@ -309,7 +344,11 @@ export default function MapPageClient() {
     const id = window.setInterval(() => {
       drawPlatformStoreMarkersRef.current();
     }, 60_000);
-    return () => window.clearInterval(id);
+    return () => {
+      window.clearInterval(id);
+      // 언마운트 시 idle 디바운스 타이머도 정리
+      if (idleDebounceTimerRef.current != null) window.clearTimeout(idleDebounceTimerRef.current);
+    };
   }, []);
 
   /**
@@ -352,14 +391,41 @@ export default function MapPageClient() {
     [],
   );
 
-  /** 카카오 키워드 검색으로 주변 미입점(주문제작 케이크) 마커 표시. 지도 검색·픽업 필터 시에는 표시하지 않음. */
+  /**
+   * 카카오 키워드 검색으로 주변 미입점(주문제작 케이크) 마커 표시. 지도 검색·픽업 필터 시에는 표시하지 않음.
+   * skipIfNearLastSearch: 같은 줌에서 지도가 조금만 움직였으면 재검색을 생략해 드래그마다 네트워크 요청이 발생하지 않게 함.
+   */
   const searchPlaces = useCallback(
-    (centerLatLng: any) => {
+    (centerLatLng: any, opts?: { skipIfNearLastSearch?: boolean }) => {
       if (searchQueryRef.current || pickupFilterRef.current != null) {
         clearKakaoMarkers();
         return;
       }
       if (!window.kakao?.maps?.services) return;
+      const currentMap = mapInstanceRef.current;
+      if (opts?.skipIfNearLastSearch && currentMap && lastKeywordSearchRef.current) {
+        const last = lastKeywordSearchRef.current;
+        const bounds = currentMap.getBounds?.();
+        const sw = bounds?.getSouthWest?.();
+        const ne = bounds?.getNorthEast?.();
+        if (last.level === currentMap.getLevel?.() && sw && ne) {
+          const latSpan = Math.abs(ne.getLat() - sw.getLat());
+          const lngSpan = Math.abs(ne.getLng() - sw.getLng());
+          const movedLat = Math.abs(centerLatLng.getLat() - last.lat);
+          const movedLng = Math.abs(centerLatLng.getLng() - last.lng);
+          if (
+            movedLat < latSpan * MAP_KEYWORD_SEARCH_MIN_MOVE_RATIO &&
+            movedLng < lngSpan * MAP_KEYWORD_SEARCH_MIN_MOVE_RATIO
+          ) {
+            return;
+          }
+        }
+      }
+      lastKeywordSearchRef.current = {
+        lat: centerLatLng.getLat(),
+        lng: centerLatLng.getLng(),
+        level: currentMap?.getLevel?.() ?? 0,
+      };
       if (!placesServiceRef.current)
         placesServiceRef.current = new window.kakao.maps.services.Places();
       if (!markerImageRef.current) {
@@ -414,12 +480,7 @@ export default function MapPageClient() {
               if (listSheetPanelOffsetRef.current > 0) closeListSheet();
               if (markerImageRef.current)
                 markersRef.current.forEach((m) => m.setImage(markerImageRef.current));
-              platformMarkersRef.current.forEach((m, i) => {
-                const dim = platformMarkerDimFlagsRef.current[i];
-                if (dim && openedDimMarkerImageRef.current)
-                  m.setImage(openedDimMarkerImageRef.current);
-                else if (openedMarkerImageRef.current) m.setImage(openedMarkerImageRef.current);
-              });
+              resetPlatformMarkerImages();
               if (focusedMarkerImageRef.current) {
                 marker.setImage(focusedMarkerImageRef.current);
                 selectedMarkerRef.current = marker;
@@ -443,7 +504,7 @@ export default function MapPageClient() {
         { location: centerLatLng, useMapBounds: true },
       );
     },
-    [clearKakaoMarkers, isPlatformStoreDuplicate, closeListSheet],
+    [clearKakaoMarkers, isPlatformStoreDuplicate, closeListSheet, resetPlatformMarkerImages],
   );
 
   /** URL 검색 또는 픽업 필터 시 미입점 마커 제거, 해제 시에만 키워드 검색 재실행 */
@@ -499,28 +560,35 @@ export default function MapPageClient() {
         updateUserLocationMarker(userLocationRef.current ?? null);
 
         // 지도 이동/줌 종료 시: 마커 갱신, 목록 패널이 열려 있으면 범위 내 스토어로 목록 갱신
+        // 연속 드래그 시 idle이 잇달아 발생하므로 디바운스로 마지막 1회만 처리
         window.kakao.maps.event.addListener(map, "idle", () => {
           if (isCenteringFromClickRef.current) {
             isCenteringFromClickRef.current = false;
             return;
           }
-          drawPlatformStoreMarkersRef.current();
-          const allowKakaoUnopened =
-            searchStoresRef.current === null &&
-            !searchQueryRef.current &&
-            pickupFilterRef.current == null;
-          if (allowKakaoUnopened) searchPlaces(map.getCenter());
-          if (listSheetPanelOffsetRef.current > 0) {
-            setListSheetStores(getStoresForListRef.current());
+          if (idleDebounceTimerRef.current != null) {
+            window.clearTimeout(idleDebounceTimerRef.current);
           }
-          // 검색 모드가 아니고, 현재 보이는 범위에 스토어가 없으면 목록 패널 접기
-          if (
-            searchStoresRef.current === null &&
-            getStoresForListRef.current().length === 0 &&
-            listSheetPanelOffsetRef.current > 0
-          ) {
-            closeListSheet();
-          }
+          idleDebounceTimerRef.current = window.setTimeout(() => {
+            idleDebounceTimerRef.current = null;
+            drawPlatformStoreMarkersRef.current();
+            const allowKakaoUnopened =
+              searchStoresRef.current === null &&
+              !searchQueryRef.current &&
+              pickupFilterRef.current == null;
+            if (allowKakaoUnopened) searchPlaces(map.getCenter(), { skipIfNearLastSearch: true });
+            if (listSheetPanelOffsetRef.current > 0) {
+              setListSheetStores(getStoresForListRef.current());
+            }
+            // 검색 모드가 아니고, 현재 보이는 범위에 스토어가 없으면 목록 패널 접기
+            if (
+              searchStoresRef.current === null &&
+              getStoresForListRef.current().length === 0 &&
+              listSheetPanelOffsetRef.current > 0
+            ) {
+              closeListSheet();
+            }
+          }, MAP_IDLE_DEBOUNCE_MS);
         });
 
         window.kakao.maps.event.addListener(map, "click", () => {
@@ -604,55 +672,23 @@ export default function MapPageClient() {
     updateUserLocationMarker(userLocation ?? null);
   }, [userLocation, updateUserLocationMarker, mapReady]);
 
-  // 플랫폼 스토어 전체 조회 후 캐시. 지도 있으면 마커 그리기, 검색 모드가 아니면 미입점 검색
+  // 플랫폼 스토어 전체 조회 (React Query 캐시 — 지도 탭 재진입 시 캐시로 즉시 마커 표시, stale이면 백그라운드 갱신)
+  const { data: platformStores } = useMapPlatformStores({ listFilter, pickupFilter });
+
+  // 조회 결과 반영: 지도 있으면 마커 그리기, 검색 모드가 아니면 미입점 검색
   useEffect(() => {
-    const fetchAll = async () => {
-      const list: StoreInfo[] = [];
-      let page = 1;
-      const limit = 1000;
-      let hasNext = true;
-      const filterParams: StoreListFilter = {};
-      if (listFilter.sizes?.length) filterParams.sizes = listFilter.sizes;
-      if (listFilter.minPrice != null) filterParams.minPrice = listFilter.minPrice;
-      if (listFilter.maxPrice != null) filterParams.maxPrice = listFilter.maxPrice;
-      if (listFilter.productCategoryTypes?.length)
-        filterParams.productCategoryTypes = listFilter.productCategoryTypes;
-      const pickupQ = mapPickupFilterToStoreListQuery(pickupFilter);
-      while (hasNext) {
-        const res = await storeApi.getList({
-          page,
-          limit,
-          ...filterParams,
-          ...(pickupQ ?? {}),
-        });
-        list.push(...res.data);
-        hasNext = res.meta.hasNext;
-        page += 1;
-      }
-      return filterStoresWithCoordinates(list);
-    };
-    fetchAll()
-      .then((stores) => {
-        platformStoresRef.current = stores;
-        const map = mapInstanceRef.current;
-        if (map) {
-          drawPlatformStoreMarkers();
-          if (searchStoresRef.current === null) searchPlaces(map.getCenter());
-        }
-        // 목록 패널이 열려 있을 때 필터 변경 시 목록 즉시 반영
-        if (listSheetPanelOffsetRef.current > 0) {
-          setListSheetStores(getStoresForList());
-        }
-      })
-      .catch(() => {});
-  }, [
-    drawPlatformStoreMarkers,
-    searchPlaces,
-    listFilter,
-    pickupFilter,
-    getStoresForList,
-    setListSheetStores,
-  ]);
+    if (!platformStores) return;
+    platformStoresRef.current = platformStores;
+    const map = mapInstanceRef.current;
+    if (map) {
+      drawPlatformStoreMarkers();
+      if (searchStoresRef.current === null) searchPlaces(map.getCenter());
+    }
+    // 목록 패널이 열려 있을 때 필터 변경 시 목록 즉시 반영
+    if (listSheetPanelOffsetRef.current > 0) {
+      setListSheetStores(getStoresForList());
+    }
+  }, [platformStores, drawPlatformStoreMarkers, searchPlaces, getStoresForList, setListSheetStores]);
 
   // URL ?q= 검색: 스토어 검색 API 호출 후 마커·bounds·목록 패널 처리. 결과 0개여도 패널 열고 중심은 현재위치/강남구
   useEffect(() => {
