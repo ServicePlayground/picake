@@ -68,8 +68,19 @@ export function sampleMapLayoutViewportHeight(): Promise<number> {
   });
 }
 
-/** 지도 bounds 패딩(px) - 검색 결과 전체가 보이도록 할 때 */
-export const MAP_BOUNDS_PADDING = 80;
+/**
+ * 지도 타일 프리로드 버퍼(px).
+ * 카카오 지도 SDK는 컨테이너 크기만큼만 타일을 로드해 드래그 시 가장자리에
+ * 회색/흰색 영역이 잠깐 보인다. 컨테이너를 뷰포트보다 상하좌우 이 값만큼 크게 만들어
+ * 화면 밖 타일을 미리 로드한다. (값이 클수록 부드럽지만 타일 다운로드량 증가)
+ */
+export const MAP_TILE_PRELOAD_BUFFER_PX = 100;
+
+/**
+ * 지도 bounds 패딩(px) - 검색 결과 전체가 보이도록 할 때.
+ * 컨테이너가 뷰포트보다 MAP_TILE_PRELOAD_BUFFER_PX씩 크므로 그만큼 보정한다.
+ */
+export const MAP_BOUNDS_PADDING = 80 + MAP_TILE_PRELOAD_BUFFER_PX;
 
 /** 지도 목록 필터 모달 루트 id (포털·시트 제스처 충돌 방지용) */
 export const MAP_STORE_LIST_FILTER_MODAL_ID = "map-store-list-filter-modal";

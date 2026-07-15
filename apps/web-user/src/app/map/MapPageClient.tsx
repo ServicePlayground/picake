@@ -35,6 +35,7 @@ import {
   MAP_SELECTED_STORE_CARD_BOTTOM,
   MAP_IDLE_DEBOUNCE_MS,
   MAP_KEYWORD_SEARCH_MIN_MOVE_RATIO,
+  MAP_TILE_PRELOAD_BUFFER_PX,
 } from "@/apps/web-user/features/store/constants/map.constant";
 import {
   escapeHtmlForOverlay,
@@ -543,6 +544,8 @@ export default function MapPageClient() {
         const map = new window.kakao.maps.Map(mapContainerRef.current, {
           center: new window.kakao.maps.LatLng(center.lat, center.lng),
           level: 5,
+          // 타일 페이드인 애니메이션 비활성화 — 드래그 시 새 타일이 서서히 나타나며 흰색으로 보이는 구간 제거
+          tileAnimation: false,
         });
         mapInstanceRef.current = map;
         setMapReady(true);
@@ -850,8 +853,14 @@ export default function MapPageClient() {
   return (
     <div className="relative w-full h-screen">
       <Script src={kakaoSdkUrl} strategy="afterInteractive" onLoad={() => setKakaoLoaded(true)} />
-      <div className="h-full">
-        <div ref={mapContainerRef} className="w-full h-full" aria-label="주변 베이커리 지도" />
+      {/* 컨테이너를 뷰포트보다 크게 만들어 화면 밖 타일을 미리 로드 (드래그 시 가장자리 회색 영역 완화) */}
+      <div className="relative h-full overflow-hidden">
+        <div
+          ref={mapContainerRef}
+          className="absolute"
+          style={{ inset: -MAP_TILE_PRELOAD_BUFFER_PX, touchAction: "none" }}
+          aria-label="주변 베이커리 지도"
+        />
       </div>
 
       <MapTopSearchBar
