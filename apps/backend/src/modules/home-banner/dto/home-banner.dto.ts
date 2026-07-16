@@ -4,12 +4,14 @@ import {
   IsArray,
   IsBoolean,
   IsDateString,
+  IsEnum,
   IsNotEmpty,
   IsOptional,
   IsString,
   IsUrl,
   MaxLength,
 } from "class-validator";
+import { HomeBannerImageAlign } from "@apps/backend/modules/home-banner/constants/home-banner.constants";
 import { SWAGGER_EXAMPLES } from "@apps/backend/modules/upload/constants/upload.constants";
 
 export class HomeBannerItemResponseDto {
@@ -18,6 +20,13 @@ export class HomeBannerItemResponseDto {
 
   @ApiProperty({ example: SWAGGER_EXAMPLES.FILE_URL })
   imageUrl: string;
+
+  @ApiProperty({
+    enum: HomeBannerImageAlign,
+    example: HomeBannerImageAlign.CENTER,
+    description: "이미지 가로 정렬 (구매자 화면에서 잘리는 방향 제어)",
+  })
+  imageAlign: HomeBannerImageAlign;
 
   @ApiPropertyOptional({ example: "https://picakes.com/event" })
   linkUrl: string | null;
@@ -58,6 +67,15 @@ export class CreateHomeBannerDto {
   @IsNotEmpty()
   imageUrl: string;
 
+  @ApiPropertyOptional({
+    enum: HomeBannerImageAlign,
+    default: HomeBannerImageAlign.CENTER,
+    description: "이미지 가로 정렬 (미입력 시 CENTER)",
+  })
+  @IsOptional()
+  @IsEnum(HomeBannerImageAlign)
+  imageAlign?: HomeBannerImageAlign;
+
   @ApiPropertyOptional({ example: "https://picakes.com/event" })
   @IsOptional()
   @IsUrl({}, { message: "올바른 URL 형식이 아닙니다." })
@@ -90,6 +108,11 @@ export class UpdateHomeBannerDto {
   @IsString()
   @IsNotEmpty()
   imageUrl?: string;
+
+  @ApiPropertyOptional({ enum: HomeBannerImageAlign })
+  @IsOptional()
+  @IsEnum(HomeBannerImageAlign)
+  imageAlign?: HomeBannerImageAlign;
 
   @ApiPropertyOptional({ example: "https://picakes.com/event", nullable: true })
   @IsOptional()

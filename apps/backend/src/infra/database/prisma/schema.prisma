@@ -84,6 +84,8 @@ model Qna {
 model HomeBanner {
   id        String    @id @default(cuid())
   imageUrl  String    @map("image_url")
+  /// 이미지 가로 정렬 (구매자 화면 폭이 좁을 때 잘리는 방향 제어)
+  imageAlign HomeBannerImageAlign @default(CENTER) @map("image_align")
   linkUrl   String?   @map("link_url")
   /// 노출 시작 시각 (null이면 즉시 노출)
   startsAt  DateTime? @map("starts_at")
@@ -838,6 +840,13 @@ enum AdminApprovalStatus {
   PENDING  // 승인 대기
   APPROVED // 승인 완료
   REJECTED // 거절
+}
+
+/// 홈 배너 이미지 가로 정렬
+enum HomeBannerImageAlign {
+  LEFT   // 왼쪽 정렬 (오른쪽부터 잘림)
+  CENTER // 가운데 정렬 (양쪽 균등하게 잘림)
+  RIGHT  // 오른쪽 정렬 (왼쪽부터 잘림)
 }
 
 enum EnableStatus {
