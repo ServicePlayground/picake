@@ -18,6 +18,7 @@ import { useUserLocation } from "@/apps/web-user/common/hooks/useUserLocation";
 import { calculateDistance, formatDistance } from "@/apps/web-user/common/utils/distance.util";
 import { useAuthStore } from "@/apps/web-user/common/store/auth.store";
 import { useLoginSheetStore } from "@/apps/web-user/common/store/login-sheet.store";
+import { EmptyState } from "@/apps/web-user/common/components/fallbacks/EmptyState";
 
 export function LikedStoreListSection() {
   const router = useRouter();
@@ -51,7 +52,7 @@ export function LikedStoreListSection() {
   if (isLoading) return <></>;
 
   if (stores.length === 0) {
-    return <p className="text-sm text-gray-400 text-center py-10">저장한 스토어가 없습니다.</p>;
+    return <EmptyState message="저장한 스토어가 없습니다." />;
   }
 
   return (

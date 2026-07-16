@@ -8,6 +8,7 @@ import { CakeListItem } from "@/apps/web-user/features/product/components/cards/
 import { useInfiniteScroll } from "@/apps/web-user/common/hooks/useInfiniteScroll";
 import { flattenAndDeduplicateInfiniteData } from "@/apps/web-user/common/utils/pagination.util";
 import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
+import { EmptyState } from "@/apps/web-user/common/components/fallbacks/EmptyState";
 
 export function LikedProductListSection() {
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -22,7 +23,7 @@ export function LikedProductListSection() {
   if (isLoading) return <></>;
 
   if (products.length === 0) {
-    return <p className="text-sm text-gray-400 text-center py-10">저장한 상품이 없습니다.</p>;
+    return <EmptyState message="저장한 상품이 없습니다." />;
   }
 
   return (

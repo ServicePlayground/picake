@@ -18,7 +18,7 @@ import { Icon } from "@/apps/web-user/common/components/icons";
 import { OrderStatusNotice } from "./OrderStatusNotice";
 import { NavigationBottomSheet } from "@/apps/web-user/common/components/bottom-sheets/NavigationBottomSheet";
 import { StoreInquiryBottomSheet } from "@/apps/web-user/common/components/bottom-sheets/StoreInquiryBottomSheet";
-import { OrderEmptyState } from "./OrderEmptyState";
+import { EmptyState } from "@/apps/web-user/common/components/fallbacks/EmptyState";
 
 function formatItemName(order: OrderResponse, item: OrderItemResponse) {
   const parts: string[] = [order.productName];
@@ -222,7 +222,7 @@ export function UpcomingOrderList() {
   }
 
   if (orders.length === 0) {
-    return <OrderEmptyState />;
+    return <EmptyState message="예약 내역이 없어요" className="min-h-[calc(100vh-200px)]" />;
   }
 
   return (

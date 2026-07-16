@@ -20,7 +20,7 @@ import { NavigationBottomSheet } from "@/apps/web-user/common/components/bottom-
 import { StoreInquiryBottomSheet } from "@/apps/web-user/common/components/bottom-sheets/StoreInquiryBottomSheet";
 import { OrderReviewPrompt } from "./OrderReviewPrompt";
 import { PastOrderFilterBar, type PastFilter } from "./PastOrderFilterBar";
-import { OrderEmptyState } from "./OrderEmptyState";
+import { EmptyState } from "@/apps/web-user/common/components/fallbacks/EmptyState";
 
 function formatItemName(order: OrderResponse, item: OrderItemResponse) {
   const parts: string[] = [order.productName];
@@ -250,7 +250,7 @@ export function PastOrderList() {
     <div>
       <PastOrderFilterBar activeFilter={activeFilter} onChange={setActiveFilter} />
       {orders.length === 0 ? (
-        <OrderEmptyState />
+        <EmptyState message="예약 내역이 없어요" className="min-h-[calc(100vh-200px)]" />
       ) : (
         <div className="flex flex-col gap-12 pt-2">
           {orders.map((order, index) => (

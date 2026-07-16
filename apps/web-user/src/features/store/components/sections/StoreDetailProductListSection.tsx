@@ -7,6 +7,7 @@ import { ProductList } from "@/apps/web-user/features/product/components/list/Pr
 import { PillTabs } from "@/apps/web-user/common/components/tabs/PillTabs";
 import { useInfiniteScroll } from "@/apps/web-user/common/hooks/useInfiniteScroll";
 import { flattenAndDeduplicateInfiniteData } from "@/apps/web-user/common/utils/pagination.util";
+import { EmptyState } from "@/apps/web-user/common/components/fallbacks/EmptyState";
 
 type ProductTypeFilter = "ALL" | ProductType.BASIC_CAKE | ProductType.CUSTOM_CAKE;
 
@@ -56,7 +57,7 @@ export function StoreDetailProductListSection({ storeId }: StoreDetailProductLis
 
       {/* 상품 그리드 */}
       {products.length === 0 ? (
-        <div className="text-center text-gray-500 py-8">등록된 상품이 없습니다.</div>
+        <EmptyState message="등록된 상품이 없습니다." />
       ) : (
         <ProductList products={products} />
       )}

@@ -6,6 +6,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination, Thumbs } from "swiper/modules";
 import type { Swiper as SwiperType } from "swiper";
 import { ImageModal } from "@/apps/web-user/common/components/sliders";
+import { EmptyState } from "@/apps/web-user/common/components/fallbacks/EmptyState";
 import "swiper/css";
 import "swiper/css/pagination";
 import "swiper/css/thumbs";
@@ -34,8 +35,8 @@ export function ProductDetailImageGallerySection({
 
   if (!images || images.length === 0) {
     return (
-      <div className="w-full aspect-square bg-gray-100 flex items-center justify-center text-gray-500 text-sm font-medium">
-        이미지가 없습니다.
+      <div className="w-full aspect-square bg-gray-100 flex items-center justify-center">
+        <EmptyState message="이미지가 없습니다." />
       </div>
     );
   }

@@ -18,6 +18,7 @@ import { useUserLocation } from "@/apps/web-user/common/hooks/useUserLocation";
 import { calculateDistance, formatDistance } from "@/apps/web-user/common/utils/distance.util";
 import { useAuthStore } from "@/apps/web-user/common/store/auth.store";
 import { useLoginSheetStore } from "@/apps/web-user/common/store/login-sheet.store";
+import { EmptyState } from "@/apps/web-user/common/components/fallbacks/EmptyState";
 import {
   sortStoresForMapList,
   type MapListSortBy,
@@ -76,7 +77,7 @@ export function SearchStoreListSection({
   if (isLoading) return <></>;
 
   if (stores.length === 0) {
-    return <p className="text-sm text-gray-400 text-center py-10">검색 결과가 없습니다.</p>;
+    return <EmptyState message="검색 결과가 없습니다." />;
   }
 
   return (

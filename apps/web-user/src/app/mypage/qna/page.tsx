@@ -4,6 +4,7 @@ import { useState } from "react";
 import Header from "@/apps/web-user/common/components/headers/Header";
 import { Icon } from "@/apps/web-user/common/components/icons";
 import { useQnas } from "@/apps/web-user/features/qna/hooks/queries/useQnas";
+import { EmptyState } from "@/apps/web-user/common/components/fallbacks/EmptyState";
 
 export default function QnaPage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -22,9 +23,7 @@ export default function QnaPage() {
         </div>
       )}
       {!isLoading && (!sections || sections.length === 0) && (
-        <div className="flex items-center justify-center py-16">
-          <p className="text-sm text-gray-400">등록된 Q&A가 없습니다.</p>
-        </div>
+        <EmptyState message="등록된 Q&A가 없습니다." className="py-16" />
       )}
       {!isLoading && sections && sections.length > 0 && (
         <div className="pt-4">

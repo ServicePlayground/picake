@@ -11,6 +11,7 @@ import {
   type MapListSortBy,
   sortStoresForMapList,
 } from "@/apps/web-user/features/store/utils/map.util";
+import { EmptyState } from "@/apps/web-user/common/components/fallbacks/EmptyState";
 
 const SORT_OPTIONS: { value: MapListSortBy; label: string }[] = [
   { value: "distance", label: "거리순" },
@@ -225,19 +226,7 @@ export function MapStoreListSection({
       >
         {sortedStores.length === 0 ? (
           <li className="flex flex-1 min-h-0 flex-col items-center justify-center">
-            <div className="flex flex-col items-center justify-center" style={{ gap: 20 }}>
-              <Icon name="noData" width={62} height={57} className="shrink-0" />
-              <span
-                style={{
-                  fontWeight: 400,
-                  fontSize: 14,
-                  lineHeight: "140%",
-                  color: "var(--grayscale-gr-700, #6B6B6A)",
-                }}
-              >
-                검색 결과가 없어요
-              </span>
-            </div>
+            <EmptyState message="검색 결과가 없어요" />
           </li>
         ) : (
           sortedStores.map((store) => (

@@ -7,6 +7,7 @@ import { useMarkAlarmRead } from "@/apps/web-user/features/alarm/hooks/mutations
 import { Icon } from "@/apps/web-user/common/components/icons";
 import { AlarmSkeleton } from "@/apps/web-user/common/components/skeleton/AlarmSkeleton";
 import { useAuthStore, useAuthHasHydrated } from "@/apps/web-user/common/store/auth.store";
+import { EmptyState } from "@/apps/web-user/common/components/fallbacks/EmptyState";
 
 export default function AlarmPage() {
   const hasHydrated = useAuthHasHydrated();
@@ -20,17 +21,11 @@ export default function AlarmPage() {
     <div className="flex flex-col min-h-[calc(100vh-52px)]">
       <main className="flex-1 flex flex-col">
         {showLoginHint ? (
-          <div className="flex-1 flex flex-col gap-[10px] items-center justify-center mb-[52px] px-5">
-            <Icon name="alarm" width={60} height={40} className="text-gray-200" />
-            <p className="text-sm text-gray-700 text-center">아직 알림이 없습니다.</p>
-          </div>
+          <EmptyState message="아직 알림이 없습니다." className="flex-1 mb-[52px] px-5" />
         ) : isLoading ? (
           <AlarmSkeleton />
         ) : alarms.length === 0 ? (
-          <div className="flex-1 flex flex-col gap-[10px] items-center justify-center mb-[52px]">
-            <Icon name="alarm" width={60} height={40} className="text-gray-200" />
-            <p className="text-sm text-gray-700 text-center">아직 알림이 없습니다.</p>
-          </div>
+          <EmptyState message="아직 알림이 없습니다." className="flex-1 mb-[52px]" />
         ) : (
           <ul className="px-5">
             {alarms.map((alarm) => {

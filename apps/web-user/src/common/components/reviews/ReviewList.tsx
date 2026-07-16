@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Review, ReviewSortBy } from "@/apps/web-user/features/review/types/review.type";
 import { ReviewItem } from "./ReviewItem";
 import { ReviewDetailModal } from "@/apps/web-user/features/product/components/modals/ReviewDetailModal.dynamic";
+import { EmptyState } from "@/apps/web-user/common/components/fallbacks/EmptyState";
 
 interface ReviewListProps {
   reviews: Review[];
@@ -66,7 +67,7 @@ export function ReviewList({
             <ReviewItem key={review.id} review={review} onImageClick={handleReviewImageClick} />
           ))
         ) : (
-          <p className="text-sm text-gray-500 py-4 text-center">{emptyMessage}</p>
+          <EmptyState message={emptyMessage} />
         )}
       </div>
 

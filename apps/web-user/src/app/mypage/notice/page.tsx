@@ -5,6 +5,7 @@ import Header from "@/apps/web-user/common/components/headers/Header";
 import { Icon } from "@/apps/web-user/common/components/icons";
 import { formatDateDot } from "@/apps/web-user/common/utils/date.util";
 import { useNotices } from "@/apps/web-user/features/notice/hooks/queries/useNotices";
+import { EmptyState } from "@/apps/web-user/common/components/fallbacks/EmptyState";
 
 export default function NoticePage() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -23,9 +24,7 @@ export default function NoticePage() {
         </div>
       )}
       {!isLoading && (!notices || notices.length === 0) && (
-        <div className="flex items-center justify-center py-16">
-          <p className="text-sm text-gray-400">등록된 공지사항이 없습니다.</p>
-        </div>
+        <EmptyState message="등록된 공지사항이 없습니다." className="py-16" />
       )}
       {!isLoading && notices && notices.length > 0 && (
         <ul className="pt-4">
