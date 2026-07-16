@@ -75,7 +75,7 @@ export default function Home() {
       {/* 배너 */}
       <BannerSlider />
       {/* 검색 바 */}
-      <div className="w-full relative -mt-[30px] pt-[20px] pb-[56px] px-[24px] z-10 rounded-t-4xl bg-white bg-[url('/images/contents/category_bg.png')] bg-top bg-no-repeat">
+      <div className="w-full relative -mt-[30px] pt-[20px] pb-[56px] px-[24px] z-10 rounded-t-4xl bg-white bg-[url('/images/contents/category_bg.png')] bg-top bg-no-repeat shadow-[0_-4px_32px_0_rgba(0,0,0,0.15)]">
         <div ref={searchBarRef} className="w-full mb-[20px]">
           <SearchBar
             placeholder="어떤 케이크를 찾으시나요?"
@@ -89,12 +89,14 @@ export default function Home() {
       </div>
 
       {/* 신규케이크 (최신순) */}
-      <CakeListSlider
-        title="신규케이크"
-        products={latestProducts}
-        isLoading={isLatestLoading}
-        onProductClick={handleProductClick}
-      />
+      <div className="relative z-20 bg-white">
+        <CakeListSlider
+          title="신규케이크"
+          products={latestProducts}
+          isLoading={isLatestLoading}
+          onProductClick={handleProductClick}
+        />
+      </div>
 
       {/* 인기케이크 (인기순) */}
       <CakeListSlider
