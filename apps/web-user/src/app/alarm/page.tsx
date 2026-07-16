@@ -30,7 +30,7 @@ export default function AlarmPage() {
           <ul className="px-5">
             {alarms.map((alarm) => {
               const href = alarm.orderId
-                ? `/reservation/complete?orderId=${alarm.orderId}`
+                ? `/reservation/complete?orderId=${alarm.orderId}&from=alarm`
                 : "/alarm";
               return (
                 <li key={alarm.id}>
@@ -60,12 +60,11 @@ export default function AlarmPage() {
 
                     <div className="flex-1 flex flex-col gap-[6px] min-w-0">
                       <p className="text-sm font-bold text-gray-900 truncate">{alarm.title}</p>
-                      <p className="text-sm text-gray-700 truncate">{alarm.content}</p>
+                      <p className="text-sm text-gray-700 line-clamp-2">{alarm.content}</p>
                     </div>
 
                     <div className="flex flex-col gap-0.5 self-start shrink-0 text-xs text-gray-400 items-end text-right">
-                      {alarm.date ? <span>{alarm.date}</span> : null}
-                      <span>{alarm.time}</span>
+                      <span>{alarm.date ? `${alarm.date} ${alarm.time}` : alarm.time}</span>
                       {alarm.read === false && (
                         <span className="text-[10px] font-bold text-primary">NEW</span>
                       )}
