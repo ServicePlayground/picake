@@ -126,8 +126,8 @@ export const TOKEN_TYPES = {
  * JWT 토큰 만료 시간 상수
  */
 export const JWT_EXPIRATION = {
-  ACCESS_TOKEN: "90d",
-  REFRESH_TOKEN: "90d",
+  ACCESS_TOKEN: "30d",
+  REFRESH_TOKEN: "30d",
 } as const;
 
 /**
