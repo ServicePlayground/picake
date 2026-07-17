@@ -17,25 +17,30 @@ import {
   LIST_CARD,
   LIST_CARD_TITLE,
 } from "@/apps/web-admin/common/constants/list-typography.constant";
+import { StatisticsNewStoresTrendChart } from "@/apps/web-admin/features/statistics/components/trends/StatisticsNewStoresTrendChart";
 import { StatisticsOrdersGmvTrendChart } from "@/apps/web-admin/features/statistics/components/trends/StatisticsOrdersGmvTrendChart";
 import { StatisticsSignupTrendChart } from "@/apps/web-admin/features/statistics/components/trends/StatisticsSignupTrendChart";
+import { StatisticsStoreEntryRequestsTrendChart } from "@/apps/web-admin/features/statistics/components/trends/StatisticsStoreEntryRequestsTrendChart";
 import {
   STATISTICS_TREND_PERIOD_DEFAULT,
   STATISTICS_TREND_PERIOD_OPTIONS,
   type StatisticsTrendPeriodValue,
 } from "@/apps/web-admin/features/statistics/constants/statistics.constant";
 import { useStatisticsDailyTrends } from "@/apps/web-admin/features/statistics/hooks/queries/useStatisticsQuery";
+import type { StatisticsTrendChartKind } from "@/apps/web-admin/features/statistics/types/statistics-chart.type";
 import {
   formatYmdShort,
   getRecentDaysRange,
 } from "@/apps/web-admin/features/statistics/utils/statistics-date.util";
+import { resolveDailyTrendMetrics } from "@/apps/web-admin/features/statistics/utils/statistics-trend.util";
 
-/** 표시할 추이 차트 종류 (이후 차트가 늘면 여기에 추가) */
-export type StatisticsTrendChartKind = "signups" | "ordersGmv";
+export type { StatisticsTrendChartKind };
 
 const CHART_LABELS: Record<StatisticsTrendChartKind, string> = {
   signups: "신규 가입",
   ordersGmv: "주문 · GMV",
+  newStores: "신규 스토어",
+  entryRequests: "입점 요청",
 };
 
 interface StatisticsTrendsCardProps {
@@ -52,9 +57,10 @@ export const StatisticsTrendsCard: React.FC<StatisticsTrendsCardProps> = ({
   charts = ["signups", "ordersGmv"],
 }) => {
   const [period, setPeriod] = useState<StatisticsTrendPeriodValue>(STATISTICS_TREND_PERIOD_DEFAULT);
+  const metrics = useMemo(() => resolveDailyTrendMetrics(charts), [charts]);
 
   const { startDate, endDate } = useMemo(() => getRecentDaysRange(Number(period)), [period]);
-  const { data, isLoading } = useStatisticsDailyTrends(startDate, endDate);
+  const { data, isLoading } = useStatisticsDailyTrends(startDate, endDate, metrics);
 
   const chartData = useMemo(
     () =>
@@ -96,10 +102,11 @@ export const StatisticsTrendsCard: React.FC<StatisticsTrendsCardProps> = ({
             {charts.map((kind) => (
               <div key={kind} className="space-y-2">
                 <p className="text-sm font-medium text-foreground">{CHART_LABELS[kind]}</p>
-                {kind === "signups" ? (
-                  <StatisticsSignupTrendChart data={chartData} />
-                ) : (
-                  <StatisticsOrdersGmvTrendChart data={chartData} />
+                {kind === "signups" && <StatisticsSignupTrendChart data={chartData} />}
+                {kind === "ordersGmv" && <StatisticsOrdersGmvTrendChart data={chartData} />}
+                {kind === "newStores" && <StatisticsNewStoresTrendChart data={chartData} />}
+                {kind === "entryRequests" && (
+                  <StatisticsStoreEntryRequestsTrendChart data={chartData} />
                 )}
               </div>
             ))}

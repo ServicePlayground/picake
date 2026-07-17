@@ -1,6 +1,4 @@
-/**
- * 통계(전사 현황) DTO (백엔드 admin-statistics-*.dto와 동일 구조)
- */
+/** 관리자 통계 DTO (백엔드 admin-statistics-*.dto와 동일 구조) */
 
 /** 가입 현황 (구매자·판매자 공통 형태) */
 export interface AdminStatisticsSignupStatDto {
@@ -22,36 +20,81 @@ export interface AdminStatisticsStatusCountDto {
   count: number;
 }
 
-/** 스토어 현황 */
-export interface AdminStatisticsStoreStatDto {
+/** GET /admin/statistics/users 응답 */
+export interface AdminStatisticsUsersResponseDto {
+  consumers: AdminStatisticsSignupStatDto;
+  sellers: AdminStatisticsSignupStatDto;
+}
+
+/** GET /admin/statistics/orders 응답 */
+export interface AdminStatisticsOrdersResponseDto {
   total: number;
-  /** 판매자 검증 상태별 판매자 수 (`SellerVerificationStatus`) */
+  gmv: number;
+  byStatus: AdminStatisticsStatusCountDto[];
+}
+
+/** 기간별 생성 수 공통 형태 */
+export interface AdminStatisticsRecentCountDto {
+  total: number;
+  today: number;
+  last7Days: number;
+  last30Days: number;
+}
+
+/** 스토어 운영 현황 */
+export interface AdminStatisticsStoreOperationStatDto extends AdminStatisticsRecentCountDto {
+  withLocation: number;
+  withProducts: number;
+  withOrders: number;
+  owners: number;
+  multipleStoreOwners: number;
+  sellersWithoutStore: number;
+}
+
+/** 입점 요청 상위 장소 */
+export interface AdminStatisticsTopEntryRequestPlaceDto {
+  kakaoPlaceId: string;
+  placeName: string;
+  address: string | null;
+  requestCount: number;
+}
+
+/** 지역별 요청 수 */
+export interface AdminStatisticsRegionCountDto {
+  region: string;
+  count: number;
+}
+
+/** 카테고리별 요청 수 */
+export interface AdminStatisticsCategoryCountDto {
+  category: string;
+  count: number;
+}
+
+/** 입점 요청 상세 현황 */
+export interface AdminStatisticsStoreEntryRequestStatDto {
+  total: number;
+  today: number;
+  last7Days: number;
+  last30Days: number;
+  uniquePlaces: number;
+  pendingCount: number;
+  completedCount: number;
+  completionRate: number;
+  byStatus: AdminStatisticsStatusCountDto[];
+  topPlaces: AdminStatisticsTopEntryRequestPlaceDto[];
+  topRegions: AdminStatisticsRegionCountDto[];
+  topCategories: AdminStatisticsCategoryCountDto[];
+}
+
+/** GET /admin/statistics/stores 응답 */
+export interface AdminStatisticsStoresResponseDto {
+  stores: AdminStatisticsStoreOperationStatDto;
   sellersByVerificationStatus: AdminStatisticsStatusCountDto[];
 }
 
-/** 주문·GMV 현황 */
-export interface AdminStatisticsOrderStatDto {
-  /** 총 주문 수 (모든 상태) */
-  total: number;
-  /** GMV(원). 픽업 완료 주문의 총 금액 합 */
-  gmv: number;
-  /** 주문 상태별 건수 (`OrderStatus`) */
-  byStatus: AdminStatisticsStatusCountDto[];
-}
-
-/** 입점 요청 현황 */
-export interface AdminStatisticsStoreEntryRequestStatDto {
-  total: number;
-  /** 처리 상태별 건수 (`StoreEntryRequestStatus`) */
-  byStatus: AdminStatisticsStatusCountDto[];
-}
-
-/** GET /admin/statistics/overview 응답 */
-export interface AdminStatisticsOverviewResponseDto {
-  consumers: AdminStatisticsSignupStatDto;
-  sellers: AdminStatisticsSignupStatDto;
-  stores: AdminStatisticsStoreStatDto;
-  orders: AdminStatisticsOrderStatDto;
+/** GET /admin/statistics/store-entry-requests 응답 */
+export interface AdminStatisticsStoreEntryRequestsResponseDto {
   storeEntryRequests: AdminStatisticsStoreEntryRequestStatDto;
 }
 
@@ -65,6 +108,8 @@ export interface AdminStatisticsDailyTrendDto {
   orderCount: number;
   /** GMV(원). 픽업 완료 주문의 접수일 기준 합 */
   gmv: number;
+  newStores: number;
+  storeEntryRequests: number;
 }
 
 /** GET /admin/statistics/daily-trends 응답 */
@@ -78,4 +123,6 @@ export interface AdminStatisticsDailyTrendsRequestDto {
   startDate: string;
   /** YYYY-MM-DD (Asia/Seoul, 해당일 포함) */
   endDate: string;
+  /** signups, orders, stores, entryRequests (쉼표 구분) */
+  metrics?: string;
 }

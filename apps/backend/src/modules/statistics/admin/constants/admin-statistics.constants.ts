@@ -15,7 +15,25 @@ export const ADMIN_STATISTICS_DAILY_TRENDS_MAX_DAYS = 92;
 export const ADMIN_STATISTICS_RECENT_DAYS_SHORT = 7;
 export const ADMIN_STATISTICS_RECENT_DAYS_LONG = 30;
 
+/** 일별 추이에서 선택 가능한 지표 */
+export const ADMIN_STATISTICS_DAILY_TREND_METRICS = [
+  "signups",
+  "orders",
+  "stores",
+  "entryRequests",
+] as const;
+
+export type AdminStatisticsDailyTrendMetric = (typeof ADMIN_STATISTICS_DAILY_TREND_METRICS)[number];
+
+export const ADMIN_STATISTICS_DAILY_TREND_METRICS_ALL: AdminStatisticsDailyTrendMetric[] = [
+  "signups",
+  "orders",
+  "stores",
+  "entryRequests",
+];
+
 export const ADMIN_STATISTICS_ERROR_MESSAGES = {
   INVALID_DATE_RANGE: "startDate는 endDate보다 이전이어야 합니다.",
   DATE_RANGE_TOO_LONG: `조회 구간은 최대 ${ADMIN_STATISTICS_DAILY_TRENDS_MAX_DAYS}일까지 가능합니다.`,
+  INVALID_DAILY_TREND_METRICS: `metrics는 ${ADMIN_STATISTICS_DAILY_TREND_METRICS.join(", ")} 중 하나 이상이어야 합니다.`,
 } as const;

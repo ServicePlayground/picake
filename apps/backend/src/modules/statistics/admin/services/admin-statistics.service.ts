@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
+import { Prisma } from "@apps/backend/infra/database/prisma/generated/client";
 import { PrismaService } from "@apps/backend/infra/database/prisma.service";
 import {
   ADMIN_STATISTICS_DAILY_TRENDS_MAX_DAYS,
@@ -12,16 +13,30 @@ import {
   AdminStatisticsDailyTrendsResponseDto,
 } from "@apps/backend/modules/statistics/admin/dto/admin-statistics-daily-trends.dto";
 import {
-  AdminStatisticsOverviewResponseDto,
   AdminStatisticsSignupStatDto,
-} from "@apps/backend/modules/statistics/admin/dto/admin-statistics-overview.dto";
+  AdminStatisticsOrdersResponseDto,
+  AdminStatisticsStoreEntryRequestsResponseDto,
+  AdminStatisticsStoresResponseDto,
+  AdminStatisticsUsersResponseDto,
+} from "@apps/backend/modules/statistics/admin/dto/admin-statistics-summary.dto";
 import { loadAdminStatisticsDailyBuckets } from "@apps/backend/modules/statistics/admin/utils/admin-statistics-daily-buckets.util";
+import { parseAdminStatisticsDailyTrendMetrics } from "@apps/backend/modules/statistics/admin/utils/admin-statistics-daily-trends.util";
 import {
   getSeoulYmd,
   getSeoulYmdDaysAgo,
   kstYmdRangeToUtcBounds,
 } from "@apps/backend/modules/statistics/common/utils/statistics-datetime.util";
 import { koreaCalendarDayStartUtc } from "@apps/backend/modules/order/utils/order-list-query.util";
+
+type CountRow = { count: bigint };
+type TopEntryRequestPlaceRow = {
+  kakao_place_id: string;
+  place_name: string;
+  address: string | null;
+  request_count: bigint;
+};
+type EntryRequestRegionRow = { region: string; count: bigint };
+type EntryRequestCategoryRow = { category: string; count: bigint };
 
 /**
  * 관리자(전사) 통계.
@@ -32,38 +47,24 @@ import { koreaCalendarDayStartUtc } from "@apps/backend/modules/order/utils/orde
 export class AdminStatisticsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  /**
-   * 전사 현황 요약 (GET /admin/statistics/overview).
-   * "오늘"·"최근 N일" 경계는 Asia/Seoul 달력일 기준입니다.
-   */
-  async getOverview(): Promise<AdminStatisticsOverviewResponseDto> {
-    const now = new Date();
-    const todayStart = koreaCalendarDayStartUtc(getSeoulYmd(now));
-    const last7DaysStart = koreaCalendarDayStartUtc(
-      getSeoulYmdDaysAgo(now, ADMIN_STATISTICS_RECENT_DAYS_SHORT - 1),
-    );
-    const last30DaysStart = koreaCalendarDayStartUtc(
-      getSeoulYmdDaysAgo(now, ADMIN_STATISTICS_RECENT_DAYS_LONG - 1),
-    );
+  /** 회원 통계 (GET /admin/statistics/users). */
+  async getUsers(): Promise<AdminStatisticsUsersResponseDto> {
+    const { todayStart, last7DaysStart, last30DaysStart } = this.getRecentDateBounds();
 
-    const [
-      consumers,
-      sellers,
-      storeTotal,
-      sellersByVerificationStatus,
-      orderTotal,
-      ordersByStatus,
-      gmvAggregate,
-      entryRequestTotal,
-      entryRequestsByStatus,
-    ] = await Promise.all([
+    const [consumers, sellers] = await Promise.all([
       this.loadSignupStat("consumer", todayStart, last7DaysStart, last30DaysStart),
       this.loadSignupStat("seller", todayStart, last7DaysStart, last30DaysStart),
-      this.prisma.store.count(),
-      this.prisma.seller.groupBy({
-        by: ["sellerVerificationStatus"],
-        _count: { _all: true },
-      }),
+    ]);
+
+    return {
+      consumers,
+      sellers,
+    };
+  }
+
+  /** 주문·GMV 통계 (GET /admin/statistics/orders). */
+  async getOrders(): Promise<AdminStatisticsOrdersResponseDto> {
+    const [total, ordersByStatus, gmvAggregate] = await Promise.all([
       this.prisma.order.count(),
       this.prisma.order.groupBy({
         by: ["orderStatus"],
@@ -73,36 +74,176 @@ export class AdminStatisticsService {
         where: { orderStatus: { in: ADMIN_STATISTICS_GMV_ORDER_STATUSES } },
         _sum: { totalPrice: true },
       }),
-      this.prisma.storeEntryRequest.count(),
-      this.prisma.storeEntryRequest.groupBy({
-        by: ["status"],
+    ]);
+
+    return {
+      total,
+      gmv: gmvAggregate._sum.totalPrice ?? 0,
+      byStatus: ordersByStatus.map((group) => ({
+        status: group.orderStatus,
+        count: group._count._all,
+      })),
+    };
+  }
+
+  /**
+   * 스토어 통계 (GET /admin/statistics/stores).
+   * "오늘"·"최근 N일" 경계는 Asia/Seoul 달력일 기준입니다.
+   */
+  async getStores(): Promise<AdminStatisticsStoresResponseDto> {
+    const { todayStart, last7DaysStart, last30DaysStart } = this.getRecentDateBounds();
+
+    const [
+      storeTotal,
+      storesToday,
+      storesLast7Days,
+      storesLast30Days,
+      storesWithLocation,
+      storesWithProducts,
+      storesWithOrders,
+      sellerTotal,
+      storesBySeller,
+      sellersByVerificationStatus,
+    ] = await Promise.all([
+      this.prisma.store.count(),
+      this.prisma.store.count({ where: { createdAt: { gte: todayStart } } }),
+      this.prisma.store.count({ where: { createdAt: { gte: last7DaysStart } } }),
+      this.prisma.store.count({ where: { createdAt: { gte: last30DaysStart } } }),
+      this.prisma.store.count({
+        where: { latitude: { not: null }, longitude: { not: null } },
+      }),
+      this.prisma.store.count({ where: { products: { some: {} } } }),
+      this.prisma.store.count({ where: { orders: { some: {} } } }),
+      this.prisma.seller.count(),
+      this.prisma.store.groupBy({
+        by: ["sellerId"],
+        _count: { _all: true },
+      }),
+      this.prisma.seller.groupBy({
+        by: ["sellerVerificationStatus"],
         _count: { _all: true },
       }),
     ]);
 
     return {
-      consumers,
-      sellers,
       stores: {
         total: storeTotal,
-        sellersByVerificationStatus: sellersByVerificationStatus.map((g) => ({
-          status: g.sellerVerificationStatus,
-          count: g._count._all,
-        })),
+        today: storesToday,
+        last7Days: storesLast7Days,
+        last30Days: storesLast30Days,
+        withLocation: storesWithLocation,
+        withProducts: storesWithProducts,
+        withOrders: storesWithOrders,
+        owners: storesBySeller.length,
+        multipleStoreOwners: storesBySeller.filter((group) => group._count._all >= 2).length,
+        sellersWithoutStore: Math.max(sellerTotal - storesBySeller.length, 0),
       },
-      orders: {
-        total: orderTotal,
-        gmv: gmvAggregate._sum.totalPrice ?? 0,
-        byStatus: ordersByStatus.map((g) => ({
-          status: g.orderStatus,
-          count: g._count._all,
-        })),
-      },
+      sellersByVerificationStatus: sellersByVerificationStatus.map((group) => ({
+        status: group.sellerVerificationStatus,
+        count: group._count._all,
+      })),
+    };
+  }
+
+  /**
+   * 입점 통계 (GET /admin/statistics/store-entry-requests).
+   * "오늘"·"최근 N일" 경계는 Asia/Seoul 달력일 기준입니다.
+   */
+  async getStoreEntryRequests(): Promise<AdminStatisticsStoreEntryRequestsResponseDto> {
+    const { todayStart, last7DaysStart, last30DaysStart } = this.getRecentDateBounds();
+
+    const [
+      entryRequestTotal,
+      entryRequestsToday,
+      entryRequestsLast7Days,
+      entryRequestsLast30Days,
+      entryRequestsByStatus,
+      uniqueEntryPlaceRows,
+      topPlaces,
+      topRegions,
+      topCategories,
+    ] = await Promise.all([
+      this.prisma.storeEntryRequest.count(),
+      this.prisma.storeEntryRequest.count({ where: { createdAt: { gte: todayStart } } }),
+      this.prisma.storeEntryRequest.count({ where: { createdAt: { gte: last7DaysStart } } }),
+      this.prisma.storeEntryRequest.count({ where: { createdAt: { gte: last30DaysStart } } }),
+      this.prisma.storeEntryRequest.groupBy({
+        by: ["status"],
+        _count: { _all: true },
+      }),
+      this.prisma.$queryRaw<CountRow[]>(Prisma.sql`
+        SELECT COUNT(DISTINCT kakao_place_id)::bigint AS count
+        FROM store_entry_requests
+      `),
+      this.prisma.$queryRaw<TopEntryRequestPlaceRow[]>(Prisma.sql`
+        SELECT
+          kakao_place_id,
+          MAX(place_name) AS place_name,
+          COALESCE(MAX(road_address), MAX(address)) AS address,
+          COUNT(*)::bigint AS request_count
+        FROM store_entry_requests
+        GROUP BY kakao_place_id
+        ORDER BY request_count DESC, place_name ASC
+        LIMIT 5
+      `),
+      this.prisma.$queryRaw<EntryRequestRegionRow[]>(Prisma.sql`
+        SELECT
+          split_part(trim(COALESCE(road_address, address)), ' ', 1) AS region,
+          COUNT(*)::bigint AS count
+        FROM store_entry_requests
+        WHERE COALESCE(road_address, address) IS NOT NULL
+          AND trim(COALESCE(road_address, address)) <> ''
+        GROUP BY region
+        ORDER BY count DESC, region ASC
+        LIMIT 8
+      `),
+      this.prisma.$queryRaw<EntryRequestCategoryRow[]>(Prisma.sql`
+        SELECT
+          COALESCE(NULLIF(trim(category_name), ''), '미분류') AS category,
+          COUNT(*)::bigint AS count
+        FROM store_entry_requests
+        GROUP BY category
+        ORDER BY count DESC, category ASC
+        LIMIT 8
+      `),
+    ]);
+
+    const entryRequestStatusMap = new Map(
+      entryRequestsByStatus.map((group) => [group.status, group._count._all]),
+    );
+    const pendingCount =
+      (entryRequestStatusMap.get("REQUESTED") ?? 0) + (entryRequestStatusMap.get("REVIEWING") ?? 0);
+    const completedCount = entryRequestStatusMap.get("COMPLETED") ?? 0;
+    const completionRate =
+      entryRequestTotal > 0 ? Math.round((completedCount / entryRequestTotal) * 1000) / 10 : 0;
+
+    return {
       storeEntryRequests: {
         total: entryRequestTotal,
-        byStatus: entryRequestsByStatus.map((g) => ({
-          status: g.status,
-          count: g._count._all,
+        today: entryRequestsToday,
+        last7Days: entryRequestsLast7Days,
+        last30Days: entryRequestsLast30Days,
+        uniquePlaces: Number(uniqueEntryPlaceRows[0]?.count ?? 0),
+        pendingCount,
+        completedCount,
+        completionRate,
+        byStatus: entryRequestsByStatus.map((group) => ({
+          status: group.status,
+          count: group._count._all,
+        })),
+        topPlaces: topPlaces.map((place) => ({
+          kakaoPlaceId: place.kakao_place_id,
+          placeName: place.place_name,
+          address: place.address,
+          requestCount: Number(place.request_count),
+        })),
+        topRegions: topRegions.map((row) => ({
+          region: row.region,
+          count: Number(row.count),
+        })),
+        topCategories: topCategories.map((row) => ({
+          category: row.category,
+          count: Number(row.count),
         })),
       },
     };
@@ -110,7 +251,7 @@ export class AdminStatisticsService {
 
   /**
    * 일별 추이 (GET /admin/statistics/daily-trends).
-   * 신규 가입(구매자·판매자)·주문 수·GMV를 Asia/Seoul 달력일로 집계합니다.
+   * 신규 가입·주문·GMV·스토어·입점 요청을 Asia/Seoul 달력일로 집계합니다.
    */
   async getDailyTrends(
     query: AdminStatisticsDailyTrendsRequestDto,
@@ -127,12 +268,15 @@ export class AdminStatisticsService {
       throw new BadRequestException(ADMIN_STATISTICS_ERROR_MESSAGES.DATE_RANGE_TOO_LONG);
     }
 
+    const metrics = parseAdminStatisticsDailyTrendMetrics(query.metrics);
+
     const days = await loadAdminStatisticsDailyBuckets(this.prisma, {
       startYmd: startDate,
       endYmd: endDate,
       start,
       end,
       gmvOrderStatuses: ADMIN_STATISTICS_GMV_ORDER_STATUSES,
+      metrics,
     });
 
     return { days };
@@ -166,5 +310,19 @@ export class AdminStatisticsService {
           ]);
 
     return { total, today, last7Days, last30Days, withdrawn };
+  }
+
+  /** Asia/Seoul 달력일 기준 최근 구간 시작 시각 */
+  private getRecentDateBounds() {
+    const now = new Date();
+    return {
+      todayStart: koreaCalendarDayStartUtc(getSeoulYmd(now)),
+      last7DaysStart: koreaCalendarDayStartUtc(
+        getSeoulYmdDaysAgo(now, ADMIN_STATISTICS_RECENT_DAYS_SHORT - 1),
+      ),
+      last30DaysStart: koreaCalendarDayStartUtc(
+        getSeoulYmdDaysAgo(now, ADMIN_STATISTICS_RECENT_DAYS_LONG - 1),
+      ),
+    };
   }
 }

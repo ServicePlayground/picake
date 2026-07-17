@@ -3,10 +3,12 @@ import { RegisterPage } from "@/apps/web-admin/pages/auth/Register";
 import { TotpSetupPage } from "@/apps/web-admin/pages/auth/TotpSetup";
 import { TotpVerifyPage } from "@/apps/web-admin/pages/auth/TotpVerify";
 import { RootPage } from "@/apps/web-admin/pages/Root";
-import { StatisticsOverviewPage } from "@/apps/web-admin/pages/statistics/overview/Index";
 import { StatisticsUsersPage } from "@/apps/web-admin/pages/statistics/users/Index";
 import { StatisticsOrdersPage } from "@/apps/web-admin/pages/statistics/orders/Index";
 import { StatisticsStoresPage } from "@/apps/web-admin/pages/statistics/stores/Index";
+import { StatisticsStoreEntryRequestsPage } from "@/apps/web-admin/pages/statistics/store-entry-requests/Index";
+import { ConsumerMembersListPage } from "@/apps/web-admin/pages/consumer/members/List";
+import { SellerMembersListPage } from "@/apps/web-admin/pages/seller/members/List";
 import { AdminRequestsListPage } from "@/apps/web-admin/pages/admin-management/requests/List";
 import { AdminAccountsListPage } from "@/apps/web-admin/pages/admin-management/accounts/List";
 import { AdminSettingsPage } from "@/apps/web-admin/pages/admin-management/settings/Index";
@@ -20,10 +22,10 @@ export const ROUTES = {
   ROOT: "/",
   // 통계
   STATISTICS: {
-    OVERVIEW: "/statistics/overview",
     USERS: "/statistics/users",
     ORDERS: "/statistics/orders",
     STORES: "/statistics/stores",
+    STORE_ENTRY_REQUESTS: "/statistics/store-entry-requests",
   },
   // 인증 관련 경로
   AUTH: {
@@ -43,9 +45,11 @@ export const ROUTES = {
     TERMS: "/consumer/terms",
     NOTICES: "/consumer/notices",
     QNAS: "/consumer/qnas",
+    MEMBERS: "/consumer/members",
   },
   SELLER: {
     TERMS: "/seller/terms",
+    MEMBERS: "/seller/members",
   },
 } as const;
 
@@ -61,10 +65,10 @@ export const AUTH_ROUTE_CONFIG = [
 export const ADMIN_ROUTE_CONFIG = [
   { path: ROUTES.ROOT, element: RootPage },
   // 통계
-  { path: ROUTES.STATISTICS.OVERVIEW, element: StatisticsOverviewPage },
   { path: ROUTES.STATISTICS.USERS, element: StatisticsUsersPage },
   { path: ROUTES.STATISTICS.ORDERS, element: StatisticsOrdersPage },
   { path: ROUTES.STATISTICS.STORES, element: StatisticsStoresPage },
+  { path: ROUTES.STATISTICS.STORE_ENTRY_REQUESTS, element: StatisticsStoreEntryRequestsPage },
   // 관리자 계정 관리
   { path: ROUTES.ADMIN_MANAGEMENT.REQUESTS, element: AdminRequestsListPage },
   { path: ROUTES.ADMIN_MANAGEMENT.ACCOUNTS, element: AdminAccountsListPage },
@@ -74,6 +78,8 @@ export const ADMIN_ROUTE_CONFIG = [
   { path: ROUTES.CONSUMER.TERMS, element: ConsumerTermsListPage },
   { path: ROUTES.CONSUMER.NOTICES, element: NoticesListPage },
   { path: ROUTES.CONSUMER.QNAS, element: QnasListPage },
+  { path: ROUTES.CONSUMER.MEMBERS, element: ConsumerMembersListPage },
   // 판매자 앱
   { path: ROUTES.SELLER.TERMS, element: SellerTermsListPage },
+  { path: ROUTES.SELLER.MEMBERS, element: SellerMembersListPage },
 ] as const;

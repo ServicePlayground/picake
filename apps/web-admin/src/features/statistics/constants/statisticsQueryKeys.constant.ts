@@ -3,7 +3,10 @@
  */
 export const statisticsQueryKeys = {
   all: ["statistics"] as const,
-  overview: () => [...statisticsQueryKeys.all, "overview"] as const,
-  dailyTrends: (startDate: string, endDate: string) =>
-    [...statisticsQueryKeys.all, "daily-trends", startDate, endDate] as const,
+  users: () => [...statisticsQueryKeys.all, "users"] as const,
+  orders: () => [...statisticsQueryKeys.all, "orders"] as const,
+  stores: () => [...statisticsQueryKeys.all, "stores"] as const,
+  storeEntryRequests: () => [...statisticsQueryKeys.all, "store-entry-requests"] as const,
+  dailyTrends: (startDate: string, endDate: string, metrics: string) =>
+    [...statisticsQueryKeys.all, "daily-trends", startDate, endDate, metrics] as const,
 } as const;

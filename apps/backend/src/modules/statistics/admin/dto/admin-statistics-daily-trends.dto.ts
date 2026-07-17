@@ -1,5 +1,5 @@
-import { ApiProperty } from "@nestjs/swagger";
-import { IsNotEmpty } from "class-validator";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { IsNotEmpty, IsOptional, IsString } from "class-validator";
 import { IsYmdDateString } from "@apps/backend/common/decorators/date-query.decorator";
 
 /**
@@ -22,6 +22,14 @@ export class AdminStatisticsDailyTrendsRequestDto {
   @IsNotEmpty()
   @IsYmdDateString()
   endDate: string;
+
+  @ApiPropertyOptional({
+    description: "집계할 지표 (쉼표 구분). signups, orders, stores, entryRequests. 미입력 시 전체",
+    example: "signups,orders",
+  })
+  @IsOptional()
+  @IsString()
+  metrics?: string;
 }
 
 /** 일별 추이 행 (구간 내 모든 날짜를 0으로 채워 반환) */
@@ -42,6 +50,12 @@ export class AdminStatisticsDailyTrendDto {
     description: "GMV(원). 픽업 완료(PICKUP_COMPLETED) 주문의 총 금액 합 (접수 시각 기준)",
   })
   gmv: number;
+
+  @ApiProperty({ description: "신규 스토어 수" })
+  newStores: number;
+
+  @ApiProperty({ description: "신규 입점 요청 수" })
+  storeEntryRequests: number;
 }
 
 /**

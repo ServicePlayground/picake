@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { UploadModule } from "@apps/backend/modules/upload/upload.module";
 import { AuthModule } from "@apps/backend/modules/auth/auth.module";
 import { AdminManagementModule } from "@apps/backend/modules/admin-management/admin-management.module";
+import { MemberManagementModule } from "@apps/backend/modules/member-management/member-management.module";
 import { HomeBannerModule } from "@apps/backend/modules/home-banner/home-banner.module";
 import { TermsModule } from "@apps/backend/modules/terms/terms.module";
 import { NoticeModule } from "@apps/backend/modules/notice/notice.module";
@@ -16,6 +17,7 @@ import { AdminTermsController } from "@apps/backend/apis/admin/controllers/terms
 import { AdminNoticeController } from "@apps/backend/apis/admin/controllers/notice.controller";
 import { AdminQnaController } from "@apps/backend/apis/admin/controllers/qna.controller";
 import { AdminStatisticsController } from "@apps/backend/apis/admin/controllers/statistics.controller";
+import { AdminMemberManagementController } from "@apps/backend/apis/admin/controllers/member-management.controller";
 
 /**
  * Admin API 모듈
@@ -32,6 +34,7 @@ import { AdminStatisticsController } from "@apps/backend/apis/admin/controllers/
     NoticeModule,
     QnaModule,
     StatisticsModule,
+    MemberManagementModule,
   ],
   controllers: [
     AdminUploadController,
@@ -43,6 +46,7 @@ import { AdminStatisticsController } from "@apps/backend/apis/admin/controllers/
     AdminNoticeController,
     AdminQnaController,
     AdminStatisticsController,
+    AdminMemberManagementController,
   ],
 })
 export class AdminApiModule {}

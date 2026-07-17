@@ -1,6 +1,7 @@
 import { Prisma, type OrderStatus } from "@apps/backend/infra/database/prisma/generated/client";
 import type { PrismaService } from "@apps/backend/infra/database/prisma.service";
 import type { AdminStatisticsDailyTrendDto } from "@apps/backend/modules/statistics/admin/dto/admin-statistics-daily-trends.dto";
+import type { AdminStatisticsDailyTrendMetric } from "@apps/backend/modules/statistics/admin/constants/admin-statistics.constants";
 
 const SEOUL_TZ = "Asia/Seoul";
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -32,6 +33,7 @@ function buildYmdRange(startYmd: string, endYmd: string): string[] {
  *
  * - 구매자·판매자: `created_at` 기준 신규 가입 수
  * - 주문: `created_at` 기준 전체 건수 + GMV(지정 상태만) 합
+ * - 스토어·입점 요청: `created_at` 기준 신규 건수
  * - 구간 내 데이터가 없는 날짜는 0으로 채워 반환합니다.
  */
 export async function loadAdminStatisticsDailyBuckets(
@@ -42,47 +44,79 @@ export async function loadAdminStatisticsDailyBuckets(
     start: Date;
     end: Date;
     gmvOrderStatuses: readonly OrderStatus[];
+    metrics: readonly AdminStatisticsDailyTrendMetric[];
   },
 ): Promise<AdminStatisticsDailyTrendDto[]> {
-  const { startYmd, endYmd, start, end, gmvOrderStatuses } = params;
+  const { startYmd, endYmd, start, end, gmvOrderStatuses, metrics } = params;
+  const metricSet = new Set(metrics);
   const gmvStatusIn = Prisma.join(
     gmvOrderStatuses.map((s) => Prisma.sql`CAST(${s} AS "OrderStatus")`),
     ", ",
   );
 
-  const [consumerRows, sellerRows, orderRows] = await Promise.all([
-    prisma.$queryRaw<DailyCountRow[]>(Prisma.sql`
-      SELECT
-        to_char(c.created_at AT TIME ZONE ${SEOUL_TZ}, 'YYYY-MM-DD') AS ymd,
-        COUNT(*)::bigint AS count
-      FROM consumers c
-      WHERE c.created_at >= ${start} AND c.created_at <= ${end}
-      GROUP BY 1
-    `),
-    prisma.$queryRaw<DailyCountRow[]>(Prisma.sql`
-      SELECT
-        to_char(s.created_at AT TIME ZONE ${SEOUL_TZ}, 'YYYY-MM-DD') AS ymd,
-        COUNT(*)::bigint AS count
-      FROM sellers s
-      WHERE s.created_at >= ${start} AND s.created_at <= ${end}
-      GROUP BY 1
-    `),
-    prisma.$queryRaw<DailyOrderRow[]>(Prisma.sql`
-      SELECT
-        to_char(o.created_at AT TIME ZONE ${SEOUL_TZ}, 'YYYY-MM-DD') AS ymd,
-        COUNT(*)::bigint AS order_count,
-        COALESCE(SUM(o.total_price) FILTER (WHERE o.order_status IN (${gmvStatusIn})), 0)::bigint AS gmv_sum
-      FROM orders o
-      WHERE o.created_at >= ${start} AND o.created_at <= ${end}
-      GROUP BY 1
-    `),
-  ]);
+  const [consumerRows, sellerRows, orderRows, storeRows, storeEntryRequestRows] = await Promise.all(
+    [
+      metricSet.has("signups")
+        ? prisma.$queryRaw<DailyCountRow[]>(Prisma.sql`
+          SELECT
+            to_char(c.created_at AT TIME ZONE ${SEOUL_TZ}, 'YYYY-MM-DD') AS ymd,
+            COUNT(*)::bigint AS count
+          FROM consumers c
+          WHERE c.created_at >= ${start} AND c.created_at <= ${end}
+          GROUP BY 1
+        `)
+        : Promise.resolve([]),
+      metricSet.has("signups")
+        ? prisma.$queryRaw<DailyCountRow[]>(Prisma.sql`
+          SELECT
+            to_char(s.created_at AT TIME ZONE ${SEOUL_TZ}, 'YYYY-MM-DD') AS ymd,
+            COUNT(*)::bigint AS count
+          FROM sellers s
+          WHERE s.created_at >= ${start} AND s.created_at <= ${end}
+          GROUP BY 1
+        `)
+        : Promise.resolve([]),
+      metricSet.has("orders")
+        ? prisma.$queryRaw<DailyOrderRow[]>(Prisma.sql`
+          SELECT
+            to_char(o.created_at AT TIME ZONE ${SEOUL_TZ}, 'YYYY-MM-DD') AS ymd,
+            COUNT(*)::bigint AS order_count,
+            COALESCE(SUM(o.total_price) FILTER (WHERE o.order_status IN (${gmvStatusIn})), 0)::bigint AS gmv_sum
+          FROM orders o
+          WHERE o.created_at >= ${start} AND o.created_at <= ${end}
+          GROUP BY 1
+        `)
+        : Promise.resolve([]),
+      metricSet.has("stores")
+        ? prisma.$queryRaw<DailyCountRow[]>(Prisma.sql`
+          SELECT
+            to_char(s.created_at AT TIME ZONE ${SEOUL_TZ}, 'YYYY-MM-DD') AS ymd,
+            COUNT(*)::bigint AS count
+          FROM stores s
+          WHERE s.created_at >= ${start} AND s.created_at <= ${end}
+          GROUP BY 1
+        `)
+        : Promise.resolve([]),
+      metricSet.has("entryRequests")
+        ? prisma.$queryRaw<DailyCountRow[]>(Prisma.sql`
+          SELECT
+            to_char(r.created_at AT TIME ZONE ${SEOUL_TZ}, 'YYYY-MM-DD') AS ymd,
+            COUNT(*)::bigint AS count
+          FROM store_entry_requests r
+          WHERE r.created_at >= ${start} AND r.created_at <= ${end}
+          GROUP BY 1
+        `)
+        : Promise.resolve([]),
+    ],
+  );
 
   const consumerByYmd = new Map(consumerRows.map((r) => [r.ymd, toInt(r.count)]));
   const sellerByYmd = new Map(sellerRows.map((r) => [r.ymd, toInt(r.count)]));
   const orderByYmd = new Map(
     orderRows.map((r) => [r.ymd, { orderCount: toInt(r.order_count), gmv: toInt(r.gmv_sum) }]),
   );
+  const storeByYmd = new Map(storeRows.map((r) => [r.ymd, toInt(r.count)]));
+  const storeEntryRequestByYmd = new Map(storeEntryRequestRows.map((r) => [r.ymd, toInt(r.count)]));
 
   return buildYmdRange(startYmd, endYmd).map((date) => ({
     date,
@@ -90,5 +124,7 @@ export async function loadAdminStatisticsDailyBuckets(
     newSellers: sellerByYmd.get(date) ?? 0,
     orderCount: orderByYmd.get(date)?.orderCount ?? 0,
     gmv: orderByYmd.get(date)?.gmv ?? 0,
+    newStores: storeByYmd.get(date) ?? 0,
+    storeEntryRequests: storeEntryRequestByYmd.get(date) ?? 0,
   }));
 }

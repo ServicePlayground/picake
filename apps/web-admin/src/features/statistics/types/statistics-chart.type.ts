@@ -5,3 +5,6 @@ export interface StatisticsTrendChartDatum extends AdminStatisticsDailyTrendDto 
   /** X축 라벨 (M/D) */
   dateLabel: string;
 }
+
+/** 표시할 추이 차트 종류 */
+export type StatisticsTrendChartKind = "signups" | "ordersGmv" | "newStores" | "entryRequests";
