@@ -28,6 +28,29 @@ export function kstYmdRangeToUtcBounds(
   };
 }
 
+/**
+ * Asia/Seoul 기준 달력 날짜(YYYY-MM-DD).
+ * `en-CA` 로케일이 YYYY-MM-DD 형식을 보장합니다. (관리자 통계의 "오늘"·"최근 N일" 경계 계산용)
+ */
+export function getSeoulYmd(date: Date): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: STORE_BUSINESS_CALENDAR_TIMEZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * 기준 시각에서 `days`일 전 시각의 Asia/Seoul 달력 날짜(YYYY-MM-DD).
+ * 서울은 DST가 없어 단순 밀리초 연산으로 안전합니다.
+ */
+export function getSeoulYmdDaysAgo(date: Date, days: number): string {
+  return getSeoulYmd(new Date(date.getTime() - days * DAY_MS));
+}
+
 /** `en-US` + `weekday: short` → Sun, Mon, … (로케일 고정으로 파싱 안정화) */
 const WEEKDAY_SHORT_TO_INDEX: Record<string, number> = {
   Sun: 0,

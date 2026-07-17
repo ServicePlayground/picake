@@ -1,13 +1,13 @@
 import { Prisma, type OrderStatus } from "@apps/backend/infra/database/prisma/generated/client";
 import type { PrismaService } from "@apps/backend/infra/database/prisma.service";
 import {
-  ORDER_STATISTICS_WEEKDAY_INDEX_ORDER,
-  ORDER_STATISTICS_WEEKDAY_LABELS,
-} from "@apps/backend/modules/statistics/constants/order-statistics.constants";
+  SELLER_ORDER_STATISTICS_WEEKDAY_INDEX_ORDER,
+  SELLER_ORDER_STATISTICS_WEEKDAY_LABELS,
+} from "@apps/backend/modules/statistics/seller/constants/seller-order-statistics.constants";
 import type {
-  OrderStatisticsHourlyDto,
-  OrderStatisticsWeekdayDto,
-} from "@apps/backend/modules/statistics/dto/order-statistics-overview.dto";
+  SellerOrderStatisticsHourlyDto,
+  SellerOrderStatisticsWeekdayDto,
+} from "@apps/backend/modules/statistics/seller/dto/seller-order-statistics-overview.dto";
 
 const SEOUL_TZ = "Asia/Seoul";
 
@@ -21,7 +21,7 @@ function toInt(n: bigint | number): number {
 function assembleWeekdayDtos(
   rows: DowRow[],
   field: "sales_sum" | "order_count",
-): OrderStatisticsWeekdayDto[] {
+): SellerOrderStatisticsWeekdayDto[] {
   const totals = Array.from({ length: 7 }, () => 0);
   for (const r of rows) {
     const d = Math.trunc(Number(r.dow));
@@ -29,16 +29,16 @@ function assembleWeekdayDtos(
       totals[d] += toInt(r[field]);
     }
   }
-  return ORDER_STATISTICS_WEEKDAY_INDEX_ORDER.map((d) => ({
+  return SELLER_ORDER_STATISTICS_WEEKDAY_INDEX_ORDER.map((d) => ({
     weekday: d,
-    label: `${ORDER_STATISTICS_WEEKDAY_LABELS[d]}요일`,
+    label: `${SELLER_ORDER_STATISTICS_WEEKDAY_LABELS[d]}요일`,
     total: totals[d],
   }));
 }
 
 function assembleWeekdaySalesAndOrders(rows: DowRow[]): {
-  weekdaySales: OrderStatisticsWeekdayDto[];
-  weekdayOrders: OrderStatisticsWeekdayDto[];
+  weekdaySales: SellerOrderStatisticsWeekdayDto[];
+  weekdayOrders: SellerOrderStatisticsWeekdayDto[];
 } {
   return {
     weekdaySales: assembleWeekdayDtos(rows, "sales_sum"),
@@ -46,7 +46,7 @@ function assembleWeekdaySalesAndOrders(rows: DowRow[]): {
   };
 }
 
-function assembleHourlyDtos(rows: HourRow[]): OrderStatisticsHourlyDto[] {
+function assembleHourlyDtos(rows: HourRow[]): SellerOrderStatisticsHourlyDto[] {
   const counts = Array.from({ length: 24 }, () => 0);
   for (const r of rows) {
     const h = Math.trunc(Number(r.hour));
@@ -61,7 +61,7 @@ function assembleHourlyDtos(rows: HourRow[]): OrderStatisticsHourlyDto[] {
  * PostgreSQL에서 Asia/Seoul 벽시계 기준 요일·시간대 버킷을 집계합니다.
  * `findMany` 전량 로드 없이 인덱스 친화적 GROUP BY만 수행합니다.
  */
-export async function loadOrderStatisticsTimeBuckets(
+export async function loadSellerOrderStatisticsTimeBuckets(
   prisma: PrismaService,
   params: {
     storeId: string;
@@ -70,12 +70,12 @@ export async function loadOrderStatisticsTimeBuckets(
     orderStatuses: readonly OrderStatus[];
   },
 ): Promise<{
-  weekdaySales: OrderStatisticsWeekdayDto[];
-  weekdayOrders: OrderStatisticsWeekdayDto[];
-  hourlyOrders: OrderStatisticsHourlyDto[];
-  weekdayPickupSales: OrderStatisticsWeekdayDto[];
-  weekdayPickupOrders: OrderStatisticsWeekdayDto[];
-  hourlyPickupOrders: OrderStatisticsHourlyDto[];
+  weekdaySales: SellerOrderStatisticsWeekdayDto[];
+  weekdayOrders: SellerOrderStatisticsWeekdayDto[];
+  hourlyOrders: SellerOrderStatisticsHourlyDto[];
+  weekdayPickupSales: SellerOrderStatisticsWeekdayDto[];
+  weekdayPickupOrders: SellerOrderStatisticsWeekdayDto[];
+  hourlyPickupOrders: SellerOrderStatisticsHourlyDto[];
 }> {
   const { storeId, start, end, orderStatuses } = params;
   const statusIn = Prisma.join(

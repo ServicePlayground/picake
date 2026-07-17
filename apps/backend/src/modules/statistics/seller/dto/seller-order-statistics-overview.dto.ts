@@ -6,7 +6,7 @@ import { SWAGGER_EXAMPLES as STORE_SWAGGER_EXAMPLES } from "@apps/backend/module
 /**
  * GET /statistics/orders/overview 쿼리 (order-list.dto의 OrderListRequestDto와 같이 인바운드 요청 형태)
  */
-export class OrderStatisticsOverviewRequestDto {
+export class SellerOrderStatisticsOverviewRequestDto {
   @ApiProperty({
     description: "스토어 ID (본인 소유 스토어만)",
     example: STORE_SWAGGER_EXAMPLES.ID,
@@ -33,7 +33,7 @@ export class OrderStatisticsOverviewRequestDto {
 }
 
 /** 개요 응답 내 상품 랭킹 행 */
-export class OrderStatisticsProductStatDto {
+export class SellerOrderStatisticsProductStatDto {
   @ApiProperty()
   productId: string;
 
@@ -48,7 +48,7 @@ export class OrderStatisticsProductStatDto {
 }
 
 /** 요일 버킷 */
-export class OrderStatisticsWeekdayDto {
+export class SellerOrderStatisticsWeekdayDto {
   @ApiProperty({ description: "0=일 … 6=토 (Asia/Seoul)" })
   weekday: number;
 
@@ -60,7 +60,7 @@ export class OrderStatisticsWeekdayDto {
 }
 
 /** 시간대(시) 버킷 */
-export class OrderStatisticsHourlyDto {
+export class SellerOrderStatisticsHourlyDto {
   @ApiProperty({ description: "0–23 (Asia/Seoul)" })
   hour: number;
 
@@ -71,7 +71,7 @@ export class OrderStatisticsHourlyDto {
 /**
  * GET /statistics/orders/overview 응답 본문
  */
-export class OrderStatisticsOverviewResponseDto {
+export class SellerOrderStatisticsOverviewResponseDto {
   @ApiProperty({
     description: "집계에 포함된 주문 상태 (픽업 완료만)",
     isArray: true,
@@ -85,47 +85,47 @@ export class OrderStatisticsOverviewResponseDto {
   @ApiProperty({ description: "총 주문 건수(헤더 기준)" })
   totalOrders: number;
 
-  @ApiProperty({ type: [OrderStatisticsProductStatDto] })
-  topProductsByRevenue: OrderStatisticsProductStatDto[];
+  @ApiProperty({ type: [SellerOrderStatisticsProductStatDto] })
+  topProductsByRevenue: SellerOrderStatisticsProductStatDto[];
 
-  @ApiProperty({ type: [OrderStatisticsProductStatDto] })
-  topProductsByOrders: OrderStatisticsProductStatDto[];
+  @ApiProperty({ type: [SellerOrderStatisticsProductStatDto] })
+  topProductsByOrders: SellerOrderStatisticsProductStatDto[];
 
   @ApiProperty({
     description: "요일별 매출 합(원). 주문 접수 시각(`created_at`) Asia/Seoul 기준.",
-    type: [OrderStatisticsWeekdayDto],
+    type: [SellerOrderStatisticsWeekdayDto],
   })
-  weekdaySales: OrderStatisticsWeekdayDto[];
+  weekdaySales: SellerOrderStatisticsWeekdayDto[];
 
   @ApiProperty({
     description: "요일별 주문 건수. 주문 접수 시각 Asia/Seoul 기준.",
-    type: [OrderStatisticsWeekdayDto],
+    type: [SellerOrderStatisticsWeekdayDto],
   })
-  weekdayOrders: OrderStatisticsWeekdayDto[];
+  weekdayOrders: SellerOrderStatisticsWeekdayDto[];
 
   @ApiProperty({
     description: "시간대별 주문 건수(0–23). 주문 접수 시각 Asia/Seoul 기준.",
-    type: [OrderStatisticsHourlyDto],
+    type: [SellerOrderStatisticsHourlyDto],
   })
-  hourlyOrders: OrderStatisticsHourlyDto[];
+  hourlyOrders: SellerOrderStatisticsHourlyDto[];
 
   @ApiProperty({
     description:
       "요일별 매출 합(원). 픽업 예정일시(`pickup_date`)를 Asia/Seoul 벽시계로 본 요일 기준. 픽업일이 없는 주문은 제외.",
-    type: [OrderStatisticsWeekdayDto],
+    type: [SellerOrderStatisticsWeekdayDto],
   })
-  weekdayPickupSales: OrderStatisticsWeekdayDto[];
+  weekdayPickupSales: SellerOrderStatisticsWeekdayDto[];
 
   @ApiProperty({
     description: "요일별 주문 건수. 픽업 예정일시 기준(Asia/Seoul). 픽업일이 없는 주문은 제외.",
-    type: [OrderStatisticsWeekdayDto],
+    type: [SellerOrderStatisticsWeekdayDto],
   })
-  weekdayPickupOrders: OrderStatisticsWeekdayDto[];
+  weekdayPickupOrders: SellerOrderStatisticsWeekdayDto[];
 
   @ApiProperty({
     description:
       "시간대(0–23)별 주문 건수. 픽업 예정일시의 시(Asia/Seoul). 픽업일이 없는 주문은 제외.",
-    type: [OrderStatisticsHourlyDto],
+    type: [SellerOrderStatisticsHourlyDto],
   })
-  hourlyPickupOrders: OrderStatisticsHourlyDto[];
+  hourlyPickupOrders: SellerOrderStatisticsHourlyDto[];
 }

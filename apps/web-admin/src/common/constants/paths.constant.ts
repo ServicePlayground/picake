@@ -3,6 +3,10 @@ import { RegisterPage } from "@/apps/web-admin/pages/auth/Register";
 import { TotpSetupPage } from "@/apps/web-admin/pages/auth/TotpSetup";
 import { TotpVerifyPage } from "@/apps/web-admin/pages/auth/TotpVerify";
 import { RootPage } from "@/apps/web-admin/pages/Root";
+import { StatisticsOverviewPage } from "@/apps/web-admin/pages/statistics/overview/Index";
+import { StatisticsUsersPage } from "@/apps/web-admin/pages/statistics/users/Index";
+import { StatisticsOrdersPage } from "@/apps/web-admin/pages/statistics/orders/Index";
+import { StatisticsStoresPage } from "@/apps/web-admin/pages/statistics/stores/Index";
 import { AdminRequestsListPage } from "@/apps/web-admin/pages/admin-management/requests/List";
 import { AdminAccountsListPage } from "@/apps/web-admin/pages/admin-management/accounts/List";
 import { AdminSettingsPage } from "@/apps/web-admin/pages/admin-management/settings/Index";
@@ -14,6 +18,13 @@ import { QnasListPage } from "@/apps/web-admin/pages/consumer/qnas/List";
 
 export const ROUTES = {
   ROOT: "/",
+  // 통계
+  STATISTICS: {
+    OVERVIEW: "/statistics/overview",
+    USERS: "/statistics/users",
+    ORDERS: "/statistics/orders",
+    STORES: "/statistics/stores",
+  },
   // 인증 관련 경로
   AUTH: {
     LOGIN: "/auth/login",
@@ -49,6 +60,11 @@ export const AUTH_ROUTE_CONFIG = [
 // 관리자 관련 경로 (AdminLayout 안)
 export const ADMIN_ROUTE_CONFIG = [
   { path: ROUTES.ROOT, element: RootPage },
+  // 통계
+  { path: ROUTES.STATISTICS.OVERVIEW, element: StatisticsOverviewPage },
+  { path: ROUTES.STATISTICS.USERS, element: StatisticsUsersPage },
+  { path: ROUTES.STATISTICS.ORDERS, element: StatisticsOrdersPage },
+  { path: ROUTES.STATISTICS.STORES, element: StatisticsStoresPage },
   // 관리자 계정 관리
   { path: ROUTES.ADMIN_MANAGEMENT.REQUESTS, element: AdminRequestsListPage },
   { path: ROUTES.ADMIN_MANAGEMENT.ACCOUNTS, element: AdminAccountsListPage },

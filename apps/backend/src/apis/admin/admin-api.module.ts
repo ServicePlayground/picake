@@ -6,6 +6,7 @@ import { HomeBannerModule } from "@apps/backend/modules/home-banner/home-banner.
 import { TermsModule } from "@apps/backend/modules/terms/terms.module";
 import { NoticeModule } from "@apps/backend/modules/notice/notice.module";
 import { QnaModule } from "@apps/backend/modules/qna/qna.module";
+import { StatisticsModule } from "@apps/backend/modules/statistics/statistics.module";
 import { AdminUploadController } from "@apps/backend/apis/admin/controllers/upload.controller";
 import { AdminAuthController } from "@apps/backend/apis/admin/controllers/auth.controller";
 import { AdminMypageController } from "@apps/backend/apis/admin/controllers/mypage.controller";
@@ -14,6 +15,7 @@ import { AdminHomeBannerController } from "@apps/backend/apis/admin/controllers/
 import { AdminTermsController } from "@apps/backend/apis/admin/controllers/terms.controller";
 import { AdminNoticeController } from "@apps/backend/apis/admin/controllers/notice.controller";
 import { AdminQnaController } from "@apps/backend/apis/admin/controllers/qna.controller";
+import { AdminStatisticsController } from "@apps/backend/apis/admin/controllers/statistics.controller";
 
 /**
  * Admin API 모듈
@@ -29,6 +31,7 @@ import { AdminQnaController } from "@apps/backend/apis/admin/controllers/qna.con
     TermsModule,
     NoticeModule,
     QnaModule,
+    StatisticsModule,
   ],
   controllers: [
     AdminUploadController,
@@ -39,6 +42,7 @@ import { AdminQnaController } from "@apps/backend/apis/admin/controllers/qna.con
     AdminTermsController,
     AdminNoticeController,
     AdminQnaController,
+    AdminStatisticsController,
   ],
 })
 export class AdminApiModule {}
