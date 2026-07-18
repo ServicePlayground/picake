@@ -2,10 +2,14 @@ import { Module } from "@nestjs/common";
 import { UploadModule } from "@apps/backend/modules/upload/upload.module";
 import { AuthModule } from "@apps/backend/modules/auth/auth.module";
 import { AdminManagementModule } from "@apps/backend/modules/admin-management/admin-management.module";
+import { MemberManagementModule } from "@apps/backend/modules/member-management/member-management.module";
+import { StoreManagementModule } from "@apps/backend/modules/store-management/store-management.module";
+import { StoreEntryRequestModule } from "@apps/backend/modules/store-entry-request/store-entry-request.module";
 import { HomeBannerModule } from "@apps/backend/modules/home-banner/home-banner.module";
 import { TermsModule } from "@apps/backend/modules/terms/terms.module";
 import { NoticeModule } from "@apps/backend/modules/notice/notice.module";
 import { QnaModule } from "@apps/backend/modules/qna/qna.module";
+import { StatisticsModule } from "@apps/backend/modules/statistics/statistics.module";
 import { AdminUploadController } from "@apps/backend/apis/admin/controllers/upload.controller";
 import { AdminAuthController } from "@apps/backend/apis/admin/controllers/auth.controller";
 import { AdminMypageController } from "@apps/backend/apis/admin/controllers/mypage.controller";
@@ -14,6 +18,10 @@ import { AdminHomeBannerController } from "@apps/backend/apis/admin/controllers/
 import { AdminTermsController } from "@apps/backend/apis/admin/controllers/terms.controller";
 import { AdminNoticeController } from "@apps/backend/apis/admin/controllers/notice.controller";
 import { AdminQnaController } from "@apps/backend/apis/admin/controllers/qna.controller";
+import { AdminStatisticsController } from "@apps/backend/apis/admin/controllers/statistics.controller";
+import { AdminMemberManagementController } from "@apps/backend/apis/admin/controllers/member-management.controller";
+import { AdminStoreManagementController } from "@apps/backend/apis/admin/controllers/store-management.controller";
+import { AdminStoreEntryRequestManagementController } from "@apps/backend/apis/admin/controllers/store-entry-request-management.controller";
 
 /**
  * Admin API 모듈
@@ -29,6 +37,10 @@ import { AdminQnaController } from "@apps/backend/apis/admin/controllers/qna.con
     TermsModule,
     NoticeModule,
     QnaModule,
+    StatisticsModule,
+    MemberManagementModule,
+    StoreManagementModule,
+    StoreEntryRequestModule,
   ],
   controllers: [
     AdminUploadController,
@@ -39,6 +51,10 @@ import { AdminQnaController } from "@apps/backend/apis/admin/controllers/qna.con
     AdminTermsController,
     AdminNoticeController,
     AdminQnaController,
+    AdminStatisticsController,
+    AdminMemberManagementController,
+    AdminStoreManagementController,
+    AdminStoreEntryRequestManagementController,
   ],
 })
 export class AdminApiModule {}

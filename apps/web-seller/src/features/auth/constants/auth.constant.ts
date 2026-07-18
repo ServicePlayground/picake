@@ -8,6 +8,8 @@ const AUTH_ERROR_MESSAGES = {
   VERIFICATION_CODE_INVALID_FORMAT: "올바른 인증번호 형식을 입력해주세요. (예: 123456)",
   NAME_REQUIRED: "이름을 입력해주세요.",
   NAME_MAX_LENGTH: "이름은 50자 이하로 입력해주세요.",
+  /** 백엔드 `AUTH_ERROR_MESSAGES.ACCOUNT_INACTIVE`와 동일 */
+  ACCOUNT_INACTIVE: "비활성화된 계정입니다. 관리자에게 문의해주세요.",
 } as const;
 
 export { AUTH_ERROR_MESSAGES };

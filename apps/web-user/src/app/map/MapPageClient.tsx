@@ -756,7 +756,13 @@ export default function MapPageClient() {
     if (listSheetPanelOffsetRef.current > 0) {
       setListSheetStores(getStoresForList());
     }
-  }, [platformStores, drawPlatformStoreMarkers, searchPlaces, getStoresForList, setListSheetStores]);
+  }, [
+    platformStores,
+    drawPlatformStoreMarkers,
+    searchPlaces,
+    getStoresForList,
+    setListSheetStores,
+  ]);
 
   // URL ?q= 검색: 스토어 검색 API 호출 후 마커·bounds·목록 패널 처리. 결과 0개여도 패널 열고 중심은 현재위치/강남구
   useEffect(() => {

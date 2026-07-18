@@ -1,4 +1,9 @@
-import { Injectable, ConflictException, BadRequestException } from "@nestjs/common";
+import {
+  Injectable,
+  ConflictException,
+  BadRequestException,
+  ForbiddenException,
+} from "@nestjs/common";
 import { PrismaService } from "@apps/backend/infra/database/prisma.service";
 import { JwtUtil } from "@apps/backend/modules/auth/utils/jwt.util";
 import { ConfigService } from "@nestjs/config";
@@ -11,7 +16,6 @@ import {
 } from "@apps/backend/modules/auth/constants/auth.constants";
 import { KakaoUserInfo } from "@apps/backend/modules/auth/types/auth.types";
 import { AuthPhoneService } from "@apps/backend/modules/auth/services/auth-phone.service";
-import { AuthWithdrawService } from "@apps/backend/modules/auth/services/auth-withdraw.service";
 import { PhoneUtil } from "@apps/backend/modules/auth/utils/phone.util";
 import { maskDisplayNameForPrivacy } from "@apps/backend/modules/auth/utils/display-name.util";
 import {
@@ -39,7 +43,6 @@ export class AuthKakaoOauthService {
     private readonly jwtUtil: JwtUtil,
     private readonly configService: ConfigService,
     private readonly authPhoneService: AuthPhoneService,
-    private readonly withdrawService: AuthWithdrawService,
     private readonly termsService: TermsService,
   ) {
     this.kakaoClientId = configService.get<string>("KAKAO_CLIENT_ID")!;
@@ -188,14 +191,9 @@ export class AuthKakaoOauthService {
       userInfo: { kakaoId, kakaoEmail },
     } = kakaoUserInfo;
 
-    let consumer = await this.prisma.consumer.findUnique({
+    const consumer = await this.prisma.consumer.findUnique({
       where: { kakaoId },
     });
-
-    if (consumer && !consumer.isActive) {
-      await this.withdrawService.purgeIfInactiveConsumer(consumer);
-      consumer = null;
-    }
 
     if (!consumer) {
       throw new BadRequestException({
@@ -204,6 +202,12 @@ export class AuthKakaoOauthService {
         kakaoEmail,
       });
     }
+
+    // 관리자 비활성 계정은 로그인·재가입 모두 불가 (계정·데이터 유지)
+    if (!consumer.isActive) {
+      throw new ForbiddenException(AUTH_ERROR_MESSAGES.ACCOUNT_INACTIVE);
+    }
+
     if (!consumer.phone || !consumer.isPhoneVerified) {
       throw new BadRequestException({
         message: AUTH_ERROR_MESSAGES.PHONE_VERIFICATION_REQUIRED,
@@ -235,14 +239,9 @@ export class AuthKakaoOauthService {
       });
     }
 
-    let seller = await this.prisma.seller.findUnique({
+    const seller = await this.prisma.seller.findUnique({
       where: { kakaoId },
     });
-
-    if (seller && !seller.isActive) {
-      await this.withdrawService.purgeIfInactiveSeller(seller);
-      seller = null;
-    }
 
     if (!seller) {
       throw new BadRequestException({
@@ -251,6 +250,12 @@ export class AuthKakaoOauthService {
         kakaoEmail,
       });
     }
+
+    // 관리자 비활성 계정은 로그인·재가입 모두 불가 (계정·데이터 유지)
+    if (!seller.isActive) {
+      throw new ForbiddenException(AUTH_ERROR_MESSAGES.ACCOUNT_INACTIVE);
+    }
+
     if (!seller.phone || !seller.isPhoneVerified) {
       throw new BadRequestException({
         message: AUTH_ERROR_MESSAGES.PHONE_VERIFICATION_REQUIRED,
@@ -283,7 +288,10 @@ export class AuthKakaoOauthService {
     }
 
     const existing = await this.prisma.consumer.findUnique({ where: { kakaoId } });
-    if (existing && !(await this.withdrawService.purgeIfInactiveConsumer(existing))) {
+    if (existing) {
+      if (!existing.isActive) {
+        throw new ForbiddenException(AUTH_ERROR_MESSAGES.ACCOUNT_INACTIVE);
+      }
       throw new ConflictException(AUTH_ERROR_MESSAGES.KAKAO_ID_ALREADY_EXISTS);
     }
 
@@ -296,12 +304,11 @@ export class AuthKakaoOauthService {
       throw new BadRequestException(AUTH_ERROR_MESSAGES.PHONE_VERIFICATION_REQUIRED);
     }
 
-    let existingPhone = await this.prisma.consumer.findFirst({
+    const existingPhone = await this.prisma.consumer.findFirst({
       where: { phone: normalizedPhone },
     });
     if (existingPhone && !existingPhone.isActive) {
-      await this.withdrawService.purgeIfInactiveConsumer(existingPhone);
-      existingPhone = null;
+      throw new ForbiddenException(AUTH_ERROR_MESSAGES.ACCOUNT_INACTIVE);
     }
 
     if (existingPhone?.kakaoId) {
@@ -359,7 +366,10 @@ export class AuthKakaoOauthService {
     }
 
     const existing = await this.prisma.seller.findUnique({ where: { kakaoId } });
-    if (existing && !(await this.withdrawService.purgeIfInactiveSeller(existing))) {
+    if (existing) {
+      if (!existing.isActive) {
+        throw new ForbiddenException(AUTH_ERROR_MESSAGES.ACCOUNT_INACTIVE);
+      }
       throw new ConflictException(AUTH_ERROR_MESSAGES.KAKAO_ID_ALREADY_EXISTS);
     }
 
@@ -372,12 +382,11 @@ export class AuthKakaoOauthService {
       throw new BadRequestException(AUTH_ERROR_MESSAGES.PHONE_VERIFICATION_REQUIRED);
     }
 
-    let existingPhone = await this.prisma.seller.findFirst({
+    const existingPhone = await this.prisma.seller.findFirst({
       where: { phone: normalizedPhone },
     });
     if (existingPhone && !existingPhone.isActive) {
-      await this.withdrawService.purgeIfInactiveSeller(existingPhone);
-      existingPhone = null;
+      throw new ForbiddenException(AUTH_ERROR_MESSAGES.ACCOUNT_INACTIVE);
     }
 
     if (existingPhone?.kakaoId) {

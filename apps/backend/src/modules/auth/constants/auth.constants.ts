@@ -54,6 +54,8 @@ export const AUTH_ERROR_MESSAGES = {
     "[ACCESS_TOKEN_INVALID] 액세스 토큰에 필수 정보가 누락되었습니다. 다시 로그인해주세요.",
   ACCESS_TOKEN_ACCOUNT_NOT_FOUND: "[ACCESS_TOKEN_INVALID] 계정을 찾을 수 없습니다.",
   ACCESS_TOKEN_ACCOUNT_INACTIVE: "[ACCESS_TOKEN_INVALID] 비활성화된 계정입니다.",
+  /** 로그인·회원가입 시 관리자 비활성 계정 차단 (401 ACCESS_TOKEN_* 와 구분) */
+  ACCOUNT_INACTIVE: "비활성화된 계정입니다. 관리자에게 문의해주세요.",
   /* ------------------------------------------------------------------------------------------------------ */
   AUDIENCE_NOT_AUTHORIZED: "이 API에 사용할 수 있는 인증 토큰이 아닙니다.",
   JWT_TYPE_NOT_ALLOWED_FOR_ROUTE: "이 요청에 사용할 수 없는 토큰입니다.",
@@ -126,8 +128,8 @@ export const TOKEN_TYPES = {
  * JWT 토큰 만료 시간 상수
  */
 export const JWT_EXPIRATION = {
-  ACCESS_TOKEN: "90d",
-  REFRESH_TOKEN: "90d",
+  ACCESS_TOKEN: "30d",
+  REFRESH_TOKEN: "30d",
 } as const;
 
 /**

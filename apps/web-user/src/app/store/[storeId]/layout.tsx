@@ -28,10 +28,7 @@ export async function generateMetadata({ params }: StoreDetailLayoutProps): Prom
     `${location}${priceHint} · Picake에서 케이크 예약`,
   );
 
-  const imageUrl =
-    store.logoImageUrl ??
-    store.productRepresentativeImages[0]?.imageUrl ??
-    null;
+  const imageUrl = store.logoImageUrl ?? store.productRepresentativeImages[0]?.imageUrl ?? null;
 
   return buildShareMetadata({
     title: store.name,
