@@ -3,6 +3,7 @@ import { UploadModule } from "@apps/backend/modules/upload/upload.module";
 import { AuthModule } from "@apps/backend/modules/auth/auth.module";
 import { AdminManagementModule } from "@apps/backend/modules/admin-management/admin-management.module";
 import { MemberManagementModule } from "@apps/backend/modules/member-management/member-management.module";
+import { StoreManagementModule } from "@apps/backend/modules/store-management/store-management.module";
 import { HomeBannerModule } from "@apps/backend/modules/home-banner/home-banner.module";
 import { TermsModule } from "@apps/backend/modules/terms/terms.module";
 import { NoticeModule } from "@apps/backend/modules/notice/notice.module";
@@ -18,6 +19,7 @@ import { AdminNoticeController } from "@apps/backend/apis/admin/controllers/noti
 import { AdminQnaController } from "@apps/backend/apis/admin/controllers/qna.controller";
 import { AdminStatisticsController } from "@apps/backend/apis/admin/controllers/statistics.controller";
 import { AdminMemberManagementController } from "@apps/backend/apis/admin/controllers/member-management.controller";
+import { AdminStoreManagementController } from "@apps/backend/apis/admin/controllers/store-management.controller";
 
 /**
  * Admin API 모듈
@@ -35,6 +37,7 @@ import { AdminMemberManagementController } from "@apps/backend/apis/admin/contro
     QnaModule,
     StatisticsModule,
     MemberManagementModule,
+    StoreManagementModule,
   ],
   controllers: [
     AdminUploadController,
@@ -47,6 +50,7 @@ import { AdminMemberManagementController } from "@apps/backend/apis/admin/contro
     AdminQnaController,
     AdminStatisticsController,
     AdminMemberManagementController,
+    AdminStoreManagementController,
   ],
 })
 export class AdminApiModule {}
