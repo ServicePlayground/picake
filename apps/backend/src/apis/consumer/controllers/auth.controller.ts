@@ -51,6 +51,9 @@ export class ConsumerAuthController {
   @SwaggerResponse(400, {
     dataExample: createMessageObject(AUTH_ERROR_MESSAGES.GOOGLE_OAUTH_TOKEN_EXCHANGE_FAILED),
   })
+  @SwaggerResponse(403, {
+    dataExample: createMessageObject(AUTH_ERROR_MESSAGES.ACCOUNT_INACTIVE),
+  })
   async googleAuth(@Body() authDto: GoogleLoginRequestDto) {
     return await this.authService.consumerGoogleLoginWithCode(authDto);
   }
@@ -98,6 +101,9 @@ export class ConsumerAuthController {
   })
   @SwaggerResponse(400, {
     dataExample: createMessageObject(AUTH_ERROR_MESSAGES.KAKAO_OAUTH_TOKEN_EXCHANGE_FAILED),
+  })
+  @SwaggerResponse(403, {
+    dataExample: createMessageObject(AUTH_ERROR_MESSAGES.ACCOUNT_INACTIVE),
   })
   async kakaoAuth(@Body() authDto: KakaoLoginRequestDto) {
     return await this.authService.consumerKakaoLoginWithCode(authDto);

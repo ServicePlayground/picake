@@ -1,4 +1,9 @@
-import { Injectable, ConflictException, BadRequestException } from "@nestjs/common";
+import {
+  Injectable,
+  ConflictException,
+  BadRequestException,
+  ForbiddenException,
+} from "@nestjs/common";
 import { PrismaService } from "@apps/backend/infra/database/prisma.service";
 import { JwtUtil } from "@apps/backend/modules/auth/utils/jwt.util";
 import { ConfigService } from "@nestjs/config";
@@ -11,7 +16,6 @@ import {
 } from "@apps/backend/modules/auth/constants/auth.constants";
 import { GoogleUserInfo } from "@apps/backend/modules/auth/types/auth.types";
 import { AuthPhoneService } from "@apps/backend/modules/auth/services/auth-phone.service";
-import { AuthWithdrawService } from "@apps/backend/modules/auth/services/auth-withdraw.service";
 import { PhoneUtil } from "@apps/backend/modules/auth/utils/phone.util";
 import { maskDisplayNameForPrivacy } from "@apps/backend/modules/auth/utils/display-name.util";
 import {
@@ -45,7 +49,6 @@ export class AuthGoogleOauthService {
     private readonly jwtUtil: JwtUtil,
     private readonly configService: ConfigService,
     private readonly authPhoneService: AuthPhoneService,
-    private readonly withdrawService: AuthWithdrawService,
     private readonly termsService: TermsService,
   ) {
     this.consumerGoogleClientId = configService.get<string>("GOOGLE_CLIENT_ID")!;
@@ -215,16 +218,11 @@ export class AuthGoogleOauthService {
       });
     }
 
-    let consumer = await this.prisma.consumer.findUnique({
+    const consumer = await this.prisma.consumer.findUnique({
       where: { googleId },
     });
 
-    // 1. gooleId로 기존 사용자 조회
-    if (consumer && !consumer.isActive) {
-      await this.withdrawService.purgeIfInactiveConsumer(consumer);
-      consumer = null;
-    }
-
+    // 1. googleId로 기존 사용자 조회
     if (!consumer) {
       // 새 사용자인 경우 -> 휴대폰 인증 필요
       throw new BadRequestException({
@@ -232,6 +230,11 @@ export class AuthGoogleOauthService {
         googleId,
         googleEmail,
       });
+    }
+
+    // 관리자 비활성 계정은 로그인·재가입 모두 불가 (계정·데이터 유지)
+    if (!consumer.isActive) {
+      throw new ForbiddenException(AUTH_ERROR_MESSAGES.ACCOUNT_INACTIVE);
     }
 
     // 2. 휴대폰 인증 상태 확인
@@ -273,16 +276,11 @@ export class AuthGoogleOauthService {
       });
     }
 
-    let seller = await this.prisma.seller.findUnique({
+    const seller = await this.prisma.seller.findUnique({
       where: { googleId },
     });
 
-    // 1. gooleId로 기존 사용자 조회
-    if (seller && !seller.isActive) {
-      await this.withdrawService.purgeIfInactiveSeller(seller);
-      seller = null;
-    }
-
+    // 1. googleId로 기존 사용자 조회
     if (!seller) {
       // 새 사용자인 경우 -> 휴대폰 인증 필요
       throw new BadRequestException({
@@ -290,6 +288,11 @@ export class AuthGoogleOauthService {
         googleId,
         googleEmail,
       });
+    }
+
+    // 관리자 비활성 계정은 로그인·재가입 모두 불가 (계정·데이터 유지)
+    if (!seller.isActive) {
+      throw new ForbiddenException(AUTH_ERROR_MESSAGES.ACCOUNT_INACTIVE);
     }
 
     // 2. 휴대폰 인증 상태 확인
@@ -336,9 +339,12 @@ export class AuthGoogleOauthService {
       throw new BadRequestException(AUTH_ERROR_MESSAGES.REQUIRED_TERMS_NOT_AGREED);
     }
 
-    // 3. 구글 ID 중복 검증 (필수)
+    // 3. 구글 ID 중복 검증 (필수) — 비활성 계정도 유지되므로 재가입 불가
     const existing = await this.prisma.consumer.findUnique({ where: { googleId } });
-    if (existing && !(await this.withdrawService.purgeIfInactiveConsumer(existing))) {
+    if (existing) {
+      if (!existing.isActive) {
+        throw new ForbiddenException(AUTH_ERROR_MESSAGES.ACCOUNT_INACTIVE);
+      }
       throw new ConflictException(AUTH_ERROR_MESSAGES.GOOGLE_ID_ALREADY_EXISTS);
     }
 
@@ -352,12 +358,11 @@ export class AuthGoogleOauthService {
       throw new BadRequestException(AUTH_ERROR_MESSAGES.PHONE_VERIFICATION_REQUIRED);
     }
 
-    let existingPhone = await this.prisma.consumer.findFirst({
+    const existingPhone = await this.prisma.consumer.findFirst({
       where: { phone: normalizedPhone },
     });
     if (existingPhone && !existingPhone.isActive) {
-      await this.withdrawService.purgeIfInactiveConsumer(existingPhone);
-      existingPhone = null;
+      throw new ForbiddenException(AUTH_ERROR_MESSAGES.ACCOUNT_INACTIVE);
     }
 
     // 5. 동일 번호 구글 계정 중복 검증
@@ -422,13 +427,16 @@ export class AuthGoogleOauthService {
       throw new BadRequestException(AUTH_ERROR_MESSAGES.REQUIRED_TERMS_NOT_AGREED);
     }
 
-    // 2. 구글 ID 중복 검증 (필수)
+    // 2. 구글 ID 중복 검증 (필수) — 비활성 계정도 유지되므로 재가입 불가
     const existing = await this.prisma.seller.findUnique({ where: { googleId } });
-    if (existing && !(await this.withdrawService.purgeIfInactiveSeller(existing))) {
+    if (existing) {
+      if (!existing.isActive) {
+        throw new ForbiddenException(AUTH_ERROR_MESSAGES.ACCOUNT_INACTIVE);
+      }
       throw new ConflictException(AUTH_ERROR_MESSAGES.GOOGLE_ID_ALREADY_EXISTS);
     }
 
-    // 2. 휴대폰 인증 상태 확인
+    // 3. 휴대폰 인증 상태 확인
     const isPhoneVerified = await this.authPhoneService.checkPhoneVerificationStatus(
       normalizedPhone,
       AUDIENCE.SELLER,
@@ -438,15 +446,14 @@ export class AuthGoogleOauthService {
       throw new BadRequestException(AUTH_ERROR_MESSAGES.PHONE_VERIFICATION_REQUIRED);
     }
 
-    let existingPhone = await this.prisma.seller.findFirst({
+    const existingPhone = await this.prisma.seller.findFirst({
       where: { phone: normalizedPhone },
     });
     if (existingPhone && !existingPhone.isActive) {
-      await this.withdrawService.purgeIfInactiveSeller(existingPhone);
-      existingPhone = null;
+      throw new ForbiddenException(AUTH_ERROR_MESSAGES.ACCOUNT_INACTIVE);
     }
 
-    // 3. 동일 번호 구글 계정 중복 검증
+    // 4. 동일 번호 구글 계정 중복 검증
     if (existingPhone?.googleId) {
       throw new ConflictException({
         message: AUTH_ERROR_MESSAGES.PHONE_GOOGLE_ACCOUNT_EXISTS,
@@ -455,7 +462,7 @@ export class AuthGoogleOauthService {
       });
     }
 
-    // 4. 동일 번호 카카오 계정 중복 검증
+    // 5. 동일 번호 카카오 계정 중복 검증
     if (existingPhone?.kakaoId) {
       throw new ConflictException({
         message: AUTH_ERROR_MESSAGES.PHONE_KAKAO_ACCOUNT_EXISTS,
