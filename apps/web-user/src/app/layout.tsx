@@ -7,7 +7,11 @@ import { ErrorBoundaryProvider } from "@/apps/web-user/common/components/provide
 import { PostHogProvider } from "@/apps/web-user/common/components/providers/PostHogProvider";
 import { LoadingFallback } from "@/apps/web-user/common/components/fallbacks/LoadingFallback";
 import RootWrapperLayout from "@/apps/web-user/common/components/layouts/RootWrapperLayout";
-import { SITE_BASE_URL, SITE_LOGO_URL, SITE_NAME } from "@/apps/web-user/common/constants/site.constants";
+import {
+  SITE_BASE_URL,
+  SITE_LOGO_URL,
+  SITE_NAME,
+} from "@/apps/web-user/common/constants/site.constants";
 
 const pretendard = localFont({
   src: "../../public/fonts/PretendardVariable.woff2",

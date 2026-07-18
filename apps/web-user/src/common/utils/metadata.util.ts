@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
-import { SITE_BASE_URL, SITE_LOGO_URL, SITE_NAME } from "@/apps/web-user/common/constants/site.constants";
+import {
+  SITE_BASE_URL,
+  SITE_LOGO_URL,
+  SITE_NAME,
+} from "@/apps/web-user/common/constants/site.constants";
 
 const DEFAULT_DESCRIPTION =
   "Picake에서 내 주변 케이크 전문 매장을 찾고 예약하세요. 생일케이크, 레터링케이크, 커스텀케이크 등 다양한 케이크를 간편하게 주문할 수 있어요.";
@@ -9,7 +13,11 @@ export function toAbsoluteUrl(path: string): string {
   return `${SITE_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
-export function toMetaDescription(text: string | undefined, fallback: string, maxLength = 160): string {
+export function toMetaDescription(
+  text: string | undefined,
+  fallback: string,
+  maxLength = 160,
+): string {
   if (!text) return fallback;
 
   const plain = text

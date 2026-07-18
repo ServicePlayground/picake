@@ -2,10 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { QUERY_STALE_TIME } from "@/apps/web-user/common/constants/query-cache.constants";
 import { storeApi } from "@/apps/web-user/features/store/apis/store.api";
 import { storeQueryKeys } from "@/apps/web-user/features/store/constants/storeQueryKeys.constant";
-import type {
-  StoreInfo,
-  StoreListFilter,
-} from "@/apps/web-user/features/store/types/store.type";
+import type { StoreInfo, StoreListFilter } from "@/apps/web-user/features/store/types/store.type";
 import {
   filterStoresWithCoordinates,
   mapPickupFilterToStoreListQuery,
