@@ -4,6 +4,7 @@ import { AuthModule } from "@apps/backend/modules/auth/auth.module";
 import { AdminManagementModule } from "@apps/backend/modules/admin-management/admin-management.module";
 import { MemberManagementModule } from "@apps/backend/modules/member-management/member-management.module";
 import { StoreManagementModule } from "@apps/backend/modules/store-management/store-management.module";
+import { StoreEntryRequestModule } from "@apps/backend/modules/store-entry-request/store-entry-request.module";
 import { HomeBannerModule } from "@apps/backend/modules/home-banner/home-banner.module";
 import { TermsModule } from "@apps/backend/modules/terms/terms.module";
 import { NoticeModule } from "@apps/backend/modules/notice/notice.module";
@@ -20,6 +21,7 @@ import { AdminQnaController } from "@apps/backend/apis/admin/controllers/qna.con
 import { AdminStatisticsController } from "@apps/backend/apis/admin/controllers/statistics.controller";
 import { AdminMemberManagementController } from "@apps/backend/apis/admin/controllers/member-management.controller";
 import { AdminStoreManagementController } from "@apps/backend/apis/admin/controllers/store-management.controller";
+import { AdminStoreEntryRequestManagementController } from "@apps/backend/apis/admin/controllers/store-entry-request-management.controller";
 
 /**
  * Admin API 모듈
@@ -38,6 +40,7 @@ import { AdminStoreManagementController } from "@apps/backend/apis/admin/control
     StatisticsModule,
     MemberManagementModule,
     StoreManagementModule,
+    StoreEntryRequestModule,
   ],
   controllers: [
     AdminUploadController,
@@ -51,6 +54,7 @@ import { AdminStoreManagementController } from "@apps/backend/apis/admin/control
     AdminStatisticsController,
     AdminMemberManagementController,
     AdminStoreManagementController,
+    AdminStoreEntryRequestManagementController,
   ],
 })
 export class AdminApiModule {}

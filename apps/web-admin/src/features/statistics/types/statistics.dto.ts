@@ -41,42 +41,6 @@ export interface AdminStatisticsRecentCountDto {
   last30Days: number;
 }
 
-/** 입점 요청 상위 장소 */
-export interface AdminStatisticsTopEntryRequestPlaceDto {
-  kakaoPlaceId: string;
-  placeName: string;
-  address: string | null;
-  requestCount: number;
-}
-
-/** 지역별 요청 수 */
-export interface AdminStatisticsRegionCountDto {
-  region: string;
-  count: number;
-}
-
-/** 카테고리별 요청 수 */
-export interface AdminStatisticsCategoryCountDto {
-  category: string;
-  count: number;
-}
-
-/** 입점 요청 상세 현황 */
-export interface AdminStatisticsStoreEntryRequestStatDto {
-  total: number;
-  today: number;
-  last7Days: number;
-  last30Days: number;
-  uniquePlaces: number;
-  pendingCount: number;
-  completedCount: number;
-  completionRate: number;
-  byStatus: AdminStatisticsStatusCountDto[];
-  topPlaces: AdminStatisticsTopEntryRequestPlaceDto[];
-  topRegions: AdminStatisticsRegionCountDto[];
-  topCategories: AdminStatisticsCategoryCountDto[];
-}
-
 /** GET /admin/statistics/stores 응답 */
 export interface AdminStatisticsStoresResponseDto {
   stores: AdminStatisticsRecentCountDto;
@@ -86,7 +50,7 @@ export interface AdminStatisticsStoresResponseDto {
 
 /** GET /admin/statistics/store-entry-requests 응답 */
 export interface AdminStatisticsStoreEntryRequestsResponseDto {
-  storeEntryRequests: AdminStatisticsStoreEntryRequestStatDto;
+  storeEntryRequests: AdminStatisticsRecentCountDto;
 }
 
 /** 일별 추이 행 */

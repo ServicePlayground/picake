@@ -2,6 +2,11 @@ import { Injectable } from "@nestjs/common";
 import { StoreEntryRequestReadService } from "@apps/backend/modules/store-entry-request/services/store-entry-request-read.service";
 import { StoreEntryRequestWriteService } from "@apps/backend/modules/store-entry-request/services/store-entry-request-write.service";
 import {
+  AdminStoreEntryRequestItemResponseDto,
+  AdminStoreEntryRequestListQueryDto,
+  AdminStoreEntryRequestListResponseDto,
+} from "@apps/backend/modules/store-entry-request/dto/store-entry-request-admin.dto";
+import {
   CreateStoreEntryRequestDto,
   StoreEntryRequestExistsResponseDto,
 } from "@apps/backend/modules/store-entry-request/dto/store-entry-request.dto";
@@ -32,5 +37,21 @@ export class StoreEntryRequestService {
     kakaoPlaceId: string,
   ): Promise<StoreEntryRequestExistsResponseDto> {
     return this.readService.existsForUser(consumerId, kakaoPlaceId);
+  }
+
+  /**
+   * 관리자용 입점 요청 목록
+   */
+  listForAdmin(
+    query: AdminStoreEntryRequestListQueryDto,
+  ): Promise<AdminStoreEntryRequestListResponseDto> {
+    return this.readService.listForAdmin(query);
+  }
+
+  /**
+   * 관리자용 입점 요청 상세
+   */
+  getByIdForAdmin(requestId: string): Promise<AdminStoreEntryRequestItemResponseDto> {
+    return this.readService.getByIdForAdmin(requestId);
   }
 }

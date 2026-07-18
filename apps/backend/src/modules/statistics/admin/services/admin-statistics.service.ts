@@ -1,8 +1,5 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
-import {
-  Prisma,
-  SellerVerificationStatus,
-} from "@apps/backend/infra/database/prisma/generated/client";
+import { SellerVerificationStatus } from "@apps/backend/infra/database/prisma/generated/client";
 import { PrismaService } from "@apps/backend/infra/database/prisma.service";
 import {
   ADMIN_STATISTICS_DAILY_TRENDS_MAX_DAYS,
@@ -30,16 +27,6 @@ import {
   kstYmdRangeToUtcBounds,
 } from "@apps/backend/modules/statistics/common/utils/statistics-datetime.util";
 import { koreaCalendarDayStartUtc } from "@apps/backend/modules/order/utils/order-list-query.util";
-
-type CountRow = { count: bigint };
-type TopEntryRequestPlaceRow = {
-  kakao_place_id: string;
-  place_name: string;
-  address: string | null;
-  request_count: bigint;
-};
-type EntryRequestRegionRow = { region: string; count: bigint };
-type EntryRequestCategoryRow = { category: string; count: bigint };
 
 /**
  * 관리자(전사) 통계.
@@ -148,99 +135,19 @@ export class AdminStatisticsService {
   async getStoreEntryRequests(): Promise<AdminStatisticsStoreEntryRequestsResponseDto> {
     const { todayStart, last7DaysStart, last30DaysStart } = this.getRecentDateBounds();
 
-    const [
-      entryRequestTotal,
-      entryRequestsToday,
-      entryRequestsLast7Days,
-      entryRequestsLast30Days,
-      entryRequestsByStatus,
-      uniqueEntryPlaceRows,
-      topPlaces,
-      topRegions,
-      topCategories,
-    ] = await Promise.all([
+    const [total, today, last7Days, last30Days] = await Promise.all([
       this.prisma.storeEntryRequest.count(),
       this.prisma.storeEntryRequest.count({ where: { createdAt: { gte: todayStart } } }),
       this.prisma.storeEntryRequest.count({ where: { createdAt: { gte: last7DaysStart } } }),
       this.prisma.storeEntryRequest.count({ where: { createdAt: { gte: last30DaysStart } } }),
-      this.prisma.storeEntryRequest.groupBy({
-        by: ["status"],
-        _count: { _all: true },
-      }),
-      this.prisma.$queryRaw<CountRow[]>(Prisma.sql`
-        SELECT COUNT(DISTINCT kakao_place_id)::bigint AS count
-        FROM store_entry_requests
-      `),
-      this.prisma.$queryRaw<TopEntryRequestPlaceRow[]>(Prisma.sql`
-        SELECT
-          kakao_place_id,
-          MAX(place_name) AS place_name,
-          COALESCE(MAX(road_address), MAX(address)) AS address,
-          COUNT(*)::bigint AS request_count
-        FROM store_entry_requests
-        GROUP BY kakao_place_id
-        ORDER BY request_count DESC, place_name ASC
-        LIMIT 5
-      `),
-      this.prisma.$queryRaw<EntryRequestRegionRow[]>(Prisma.sql`
-        SELECT
-          split_part(trim(COALESCE(road_address, address)), ' ', 1) AS region,
-          COUNT(*)::bigint AS count
-        FROM store_entry_requests
-        WHERE COALESCE(road_address, address) IS NOT NULL
-          AND trim(COALESCE(road_address, address)) <> ''
-        GROUP BY region
-        ORDER BY count DESC, region ASC
-        LIMIT 8
-      `),
-      this.prisma.$queryRaw<EntryRequestCategoryRow[]>(Prisma.sql`
-        SELECT
-          COALESCE(NULLIF(trim(category_name), ''), '미분류') AS category,
-          COUNT(*)::bigint AS count
-        FROM store_entry_requests
-        GROUP BY category
-        ORDER BY count DESC, category ASC
-        LIMIT 8
-      `),
     ]);
-
-    const entryRequestStatusMap = new Map(
-      entryRequestsByStatus.map((group) => [group.status, group._count._all]),
-    );
-    const pendingCount =
-      (entryRequestStatusMap.get("REQUESTED") ?? 0) + (entryRequestStatusMap.get("REVIEWING") ?? 0);
-    const completedCount = entryRequestStatusMap.get("COMPLETED") ?? 0;
-    const completionRate =
-      entryRequestTotal > 0 ? Math.round((completedCount / entryRequestTotal) * 1000) / 10 : 0;
 
     return {
       storeEntryRequests: {
-        total: entryRequestTotal,
-        today: entryRequestsToday,
-        last7Days: entryRequestsLast7Days,
-        last30Days: entryRequestsLast30Days,
-        uniquePlaces: Number(uniqueEntryPlaceRows[0]?.count ?? 0),
-        pendingCount,
-        completedCount,
-        completionRate,
-        byStatus: entryRequestsByStatus.map((group) => ({
-          status: group.status,
-          count: group._count._all,
-        })),
-        topPlaces: topPlaces.map((place) => ({
-          kakaoPlaceId: place.kakao_place_id,
-          placeName: place.place_name,
-          address: place.address,
-          requestCount: Number(place.request_count),
-        })),
-        topRegions: topRegions.map((row) => ({
-          region: row.region,
-          count: Number(row.count),
-        })),
-        topCategories: topCategories.map((row) => ({
-          category: row.category,
-          count: Number(row.count),
-        })),
+        total,
+        today,
+        last7Days,
+        last30Days,
       },
     };
   }

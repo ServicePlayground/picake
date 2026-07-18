@@ -79,7 +79,7 @@ export class AdminStatisticsController {
   @ApiOperation({
     summary: "(로그인 필요) 입점 통계",
     description:
-      "입점 요청의 기간별·상태별·지역별·카테고리별 통계와 요청 상위 장소를 반환합니다. 날짜 경계는 Asia/Seoul 달력일 기준입니다.",
+      "입점 요청 등록 현황(총계·오늘·최근 7일·30일)을 반환합니다. 날짜 경계는 Asia/Seoul 달력일 기준입니다.",
   })
   @SwaggerResponse(200, { dataDto: AdminStatisticsStoreEntryRequestsResponseDto })
   @SwaggerAuthResponses()

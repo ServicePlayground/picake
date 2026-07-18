@@ -66,72 +66,6 @@ export class AdminStatisticsOrdersResponseDto {
   byStatus: AdminStatisticsStatusCountDto[];
 }
 
-/** 입점 요청 상위 장소 */
-export class AdminStatisticsTopEntryRequestPlaceDto {
-  @ApiProperty({ description: "카카오 장소 ID" })
-  kakaoPlaceId: string;
-
-  @ApiProperty({ description: "장소명" })
-  placeName: string;
-
-  @ApiProperty({ description: "주소", nullable: true })
-  address: string | null;
-
-  @ApiProperty({ description: "해당 장소의 요청 수" })
-  requestCount: number;
-}
-
-/** 지역별 카운트 */
-export class AdminStatisticsRegionCountDto {
-  @ApiProperty({ description: "주소 첫 구간 기준 시·도명" })
-  region: string;
-
-  @ApiProperty({ description: "건수" })
-  count: number;
-}
-
-/** 카테고리별 카운트 */
-export class AdminStatisticsCategoryCountDto {
-  @ApiProperty({ description: "카테고리명 (없으면 '미분류')" })
-  category: string;
-
-  @ApiProperty({ description: "건수" })
-  count: number;
-}
-
-/** 입점 요청 현황 */
-export class AdminStatisticsStoreEntryRequestStatDto extends AdminStatisticsRecentCountDto {
-  @ApiProperty({ description: "요청된 고유 장소 수 (`kakaoPlaceId` 기준)" })
-  uniquePlaces: number;
-
-  @ApiProperty({ description: "처리 대기 건수 (`REQUESTED` + `REVIEWING`)" })
-  pendingCount: number;
-
-  @ApiProperty({ description: "입점 완료 건수 (`COMPLETED`)" })
-  completedCount: number;
-
-  @ApiProperty({ description: "입점 완료율(%, 소수 첫째 자리)" })
-  completionRate: number;
-
-  @ApiProperty({
-    description: "처리 상태별 건수 (`StoreEntryRequestStatus`)",
-    type: [AdminStatisticsStatusCountDto],
-  })
-  byStatus: AdminStatisticsStatusCountDto[];
-
-  @ApiProperty({ description: "요청 수 상위 장소", type: [AdminStatisticsTopEntryRequestPlaceDto] })
-  topPlaces: AdminStatisticsTopEntryRequestPlaceDto[];
-
-  @ApiProperty({ description: "지역별 요청 수 상위 목록", type: [AdminStatisticsRegionCountDto] })
-  topRegions: AdminStatisticsRegionCountDto[];
-
-  @ApiProperty({
-    description: "카테고리별 요청 수 상위 목록",
-    type: [AdminStatisticsCategoryCountDto],
-  })
-  topCategories: AdminStatisticsCategoryCountDto[];
-}
-
 /** 스토어 통계 */
 export class AdminStatisticsStoresResponseDto {
   @ApiProperty({
@@ -151,8 +85,8 @@ export class AdminStatisticsStoresResponseDto {
 /** 입점 통계 */
 export class AdminStatisticsStoreEntryRequestsResponseDto {
   @ApiProperty({
-    description: "입점 요청 현황",
-    type: AdminStatisticsStoreEntryRequestStatDto,
+    description: "입점 요청 등록 현황 (총계·오늘·최근 7일·30일)",
+    type: AdminStatisticsRecentCountDto,
   })
-  storeEntryRequests: AdminStatisticsStoreEntryRequestStatDto;
+  storeEntryRequests: AdminStatisticsRecentCountDto;
 }
