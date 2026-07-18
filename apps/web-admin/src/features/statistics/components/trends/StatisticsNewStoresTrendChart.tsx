@@ -16,7 +16,7 @@ interface StatisticsNewStoresTrendChartProps {
   height?: number;
 }
 
-/** 일별 신규 스토어 라인 차트 */
+/** 일별 신규 스토어 · 사업자 검증 완료 스토어 라인 차트 */
 export const StatisticsNewStoresTrendChart: React.FC<StatisticsNewStoresTrendChartProps> = ({
   data,
   height = 260,
@@ -34,6 +34,14 @@ export const StatisticsNewStoresTrendChart: React.FC<StatisticsNewStoresTrendCha
           dataKey="newStores"
           name="신규 스토어"
           stroke="#8b5cf6"
+          strokeWidth={2}
+          dot={false}
+        />
+        <Line
+          type="monotone"
+          dataKey="newBusinessVerifiedStores"
+          name="사업자 검증 완료"
+          stroke="#0d9488"
           strokeWidth={2}
           dot={false}
         />

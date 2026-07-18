@@ -41,16 +41,6 @@ export interface AdminStatisticsRecentCountDto {
   last30Days: number;
 }
 
-/** 스토어 운영 현황 */
-export interface AdminStatisticsStoreOperationStatDto extends AdminStatisticsRecentCountDto {
-  withLocation: number;
-  withProducts: number;
-  withOrders: number;
-  owners: number;
-  multipleStoreOwners: number;
-  sellersWithoutStore: number;
-}
-
 /** 입점 요청 상위 장소 */
 export interface AdminStatisticsTopEntryRequestPlaceDto {
   kakaoPlaceId: string;
@@ -89,8 +79,9 @@ export interface AdminStatisticsStoreEntryRequestStatDto {
 
 /** GET /admin/statistics/stores 응답 */
 export interface AdminStatisticsStoresResponseDto {
-  stores: AdminStatisticsStoreOperationStatDto;
-  sellersByVerificationStatus: AdminStatisticsStatusCountDto[];
+  stores: AdminStatisticsRecentCountDto;
+  /** 사업자 검증 완료 스토어 현황 (총계·오늘·최근 7일·30일) */
+  businessVerifiedStores: AdminStatisticsRecentCountDto;
 }
 
 /** GET /admin/statistics/store-entry-requests 응답 */
@@ -109,6 +100,8 @@ export interface AdminStatisticsDailyTrendDto {
   /** GMV(원). 픽업 완료 주문의 접수일 기준 합 */
   gmv: number;
   newStores: number;
+  /** 사업자 검증 완료 스토어 신규 수 */
+  newBusinessVerifiedStores: number;
   storeEntryRequests: number;
 }
 

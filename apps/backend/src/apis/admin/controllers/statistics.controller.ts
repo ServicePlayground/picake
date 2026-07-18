@@ -66,7 +66,7 @@ export class AdminStatisticsController {
   @ApiOperation({
     summary: "(로그인 필요) 스토어 통계",
     description:
-      "스토어 생성·운영 현황과 판매자 검증 상태 분포를 반환합니다. 날짜 경계는 Asia/Seoul 달력일 기준입니다.",
+      "스토어 등록 현황과 사업자 검증 완료 스토어 현황(총계·오늘·최근 7일·30일)을 반환합니다. 날짜 경계는 Asia/Seoul 달력일 기준입니다.",
   })
   @SwaggerResponse(200, { dataDto: AdminStatisticsStoresResponseDto })
   @SwaggerAuthResponses()

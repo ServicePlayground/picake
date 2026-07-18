@@ -1,5 +1,8 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
-import { Prisma } from "@apps/backend/infra/database/prisma/generated/client";
+import {
+  Prisma,
+  SellerVerificationStatus,
+} from "@apps/backend/infra/database/prisma/generated/client";
 import { PrismaService } from "@apps/backend/infra/database/prisma.service";
 import {
   ADMIN_STATISTICS_DAILY_TRENDS_MAX_DAYS,
@@ -92,36 +95,33 @@ export class AdminStatisticsService {
    */
   async getStores(): Promise<AdminStatisticsStoresResponseDto> {
     const { todayStart, last7DaysStart, last30DaysStart } = this.getRecentDateBounds();
+    const businessVerifiedSeller = {
+      seller: { sellerVerificationStatus: SellerVerificationStatus.BUSINESS_VERIFIED },
+    };
 
     const [
       storeTotal,
       storesToday,
       storesLast7Days,
       storesLast30Days,
-      storesWithLocation,
-      storesWithProducts,
-      storesWithOrders,
-      sellerTotal,
-      storesBySeller,
-      sellersByVerificationStatus,
+      businessVerifiedTotal,
+      businessVerifiedToday,
+      businessVerifiedLast7Days,
+      businessVerifiedLast30Days,
     ] = await Promise.all([
       this.prisma.store.count(),
       this.prisma.store.count({ where: { createdAt: { gte: todayStart } } }),
       this.prisma.store.count({ where: { createdAt: { gte: last7DaysStart } } }),
       this.prisma.store.count({ where: { createdAt: { gte: last30DaysStart } } }),
+      this.prisma.store.count({ where: businessVerifiedSeller }),
       this.prisma.store.count({
-        where: { latitude: { not: null }, longitude: { not: null } },
+        where: { ...businessVerifiedSeller, createdAt: { gte: todayStart } },
       }),
-      this.prisma.store.count({ where: { products: { some: {} } } }),
-      this.prisma.store.count({ where: { orders: { some: {} } } }),
-      this.prisma.seller.count(),
-      this.prisma.store.groupBy({
-        by: ["sellerId"],
-        _count: { _all: true },
+      this.prisma.store.count({
+        where: { ...businessVerifiedSeller, createdAt: { gte: last7DaysStart } },
       }),
-      this.prisma.seller.groupBy({
-        by: ["sellerVerificationStatus"],
-        _count: { _all: true },
+      this.prisma.store.count({
+        where: { ...businessVerifiedSeller, createdAt: { gte: last30DaysStart } },
       }),
     ]);
 
@@ -131,17 +131,13 @@ export class AdminStatisticsService {
         today: storesToday,
         last7Days: storesLast7Days,
         last30Days: storesLast30Days,
-        withLocation: storesWithLocation,
-        withProducts: storesWithProducts,
-        withOrders: storesWithOrders,
-        owners: storesBySeller.length,
-        multipleStoreOwners: storesBySeller.filter((group) => group._count._all >= 2).length,
-        sellersWithoutStore: Math.max(sellerTotal - storesBySeller.length, 0),
       },
-      sellersByVerificationStatus: sellersByVerificationStatus.map((group) => ({
-        status: group.sellerVerificationStatus,
-        count: group._count._all,
-      })),
+      businessVerifiedStores: {
+        total: businessVerifiedTotal,
+        today: businessVerifiedToday,
+        last7Days: businessVerifiedLast7Days,
+        last30Days: businessVerifiedLast30Days,
+      },
     };
   }
 

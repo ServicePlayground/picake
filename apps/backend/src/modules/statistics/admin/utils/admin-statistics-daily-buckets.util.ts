@@ -34,6 +34,7 @@ function buildYmdRange(startYmd: string, endYmd: string): string[] {
  * - 구매자·판매자: `created_at` 기준 신규 가입 수
  * - 주문: `created_at` 기준 전체 건수 + GMV(지정 상태만) 합
  * - 스토어·입점 요청: `created_at` 기준 신규 건수
+ * - 사업자 검증 완료 스토어: 소유 판매자가 BUSINESS_VERIFIED인 스토어의 `created_at` 기준 신규 건수
  * - 구간 내 데이터가 없는 날짜는 0으로 채워 반환합니다.
  */
 export async function loadAdminStatisticsDailyBuckets(
@@ -54,10 +55,16 @@ export async function loadAdminStatisticsDailyBuckets(
     ", ",
   );
 
-  const [consumerRows, sellerRows, orderRows, storeRows, storeEntryRequestRows] = await Promise.all(
-    [
-      metricSet.has("signups")
-        ? prisma.$queryRaw<DailyCountRow[]>(Prisma.sql`
+  const [
+    consumerRows,
+    sellerRows,
+    orderRows,
+    storeRows,
+    businessVerifiedStoreRows,
+    storeEntryRequestRows,
+  ] = await Promise.all([
+    metricSet.has("signups")
+      ? prisma.$queryRaw<DailyCountRow[]>(Prisma.sql`
           SELECT
             to_char(c.created_at AT TIME ZONE ${SEOUL_TZ}, 'YYYY-MM-DD') AS ymd,
             COUNT(*)::bigint AS count
@@ -65,9 +72,9 @@ export async function loadAdminStatisticsDailyBuckets(
           WHERE c.created_at >= ${start} AND c.created_at <= ${end}
           GROUP BY 1
         `)
-        : Promise.resolve([]),
-      metricSet.has("signups")
-        ? prisma.$queryRaw<DailyCountRow[]>(Prisma.sql`
+      : Promise.resolve([]),
+    metricSet.has("signups")
+      ? prisma.$queryRaw<DailyCountRow[]>(Prisma.sql`
           SELECT
             to_char(s.created_at AT TIME ZONE ${SEOUL_TZ}, 'YYYY-MM-DD') AS ymd,
             COUNT(*)::bigint AS count
@@ -75,9 +82,9 @@ export async function loadAdminStatisticsDailyBuckets(
           WHERE s.created_at >= ${start} AND s.created_at <= ${end}
           GROUP BY 1
         `)
-        : Promise.resolve([]),
-      metricSet.has("orders")
-        ? prisma.$queryRaw<DailyOrderRow[]>(Prisma.sql`
+      : Promise.resolve([]),
+    metricSet.has("orders")
+      ? prisma.$queryRaw<DailyOrderRow[]>(Prisma.sql`
           SELECT
             to_char(o.created_at AT TIME ZONE ${SEOUL_TZ}, 'YYYY-MM-DD') AS ymd,
             COUNT(*)::bigint AS order_count,
@@ -86,9 +93,9 @@ export async function loadAdminStatisticsDailyBuckets(
           WHERE o.created_at >= ${start} AND o.created_at <= ${end}
           GROUP BY 1
         `)
-        : Promise.resolve([]),
-      metricSet.has("stores")
-        ? prisma.$queryRaw<DailyCountRow[]>(Prisma.sql`
+      : Promise.resolve([]),
+    metricSet.has("stores")
+      ? prisma.$queryRaw<DailyCountRow[]>(Prisma.sql`
           SELECT
             to_char(s.created_at AT TIME ZONE ${SEOUL_TZ}, 'YYYY-MM-DD') AS ymd,
             COUNT(*)::bigint AS count
@@ -96,9 +103,22 @@ export async function loadAdminStatisticsDailyBuckets(
           WHERE s.created_at >= ${start} AND s.created_at <= ${end}
           GROUP BY 1
         `)
-        : Promise.resolve([]),
-      metricSet.has("entryRequests")
-        ? prisma.$queryRaw<DailyCountRow[]>(Prisma.sql`
+      : Promise.resolve([]),
+    metricSet.has("stores")
+      ? prisma.$queryRaw<DailyCountRow[]>(Prisma.sql`
+          SELECT
+            to_char(s.created_at AT TIME ZONE ${SEOUL_TZ}, 'YYYY-MM-DD') AS ymd,
+            COUNT(*)::bigint AS count
+          FROM stores s
+          INNER JOIN sellers se ON se.id = s.seller_id
+          WHERE s.created_at >= ${start}
+            AND s.created_at <= ${end}
+            AND se.seller_verification_status = CAST(${"BUSINESS_VERIFIED"} AS "SellerVerificationStatus")
+          GROUP BY 1
+        `)
+      : Promise.resolve([]),
+    metricSet.has("entryRequests")
+      ? prisma.$queryRaw<DailyCountRow[]>(Prisma.sql`
           SELECT
             to_char(r.created_at AT TIME ZONE ${SEOUL_TZ}, 'YYYY-MM-DD') AS ymd,
             COUNT(*)::bigint AS count
@@ -106,9 +126,8 @@ export async function loadAdminStatisticsDailyBuckets(
           WHERE r.created_at >= ${start} AND r.created_at <= ${end}
           GROUP BY 1
         `)
-        : Promise.resolve([]),
-    ],
-  );
+      : Promise.resolve([]),
+  ]);
 
   const consumerByYmd = new Map(consumerRows.map((r) => [r.ymd, toInt(r.count)]));
   const sellerByYmd = new Map(sellerRows.map((r) => [r.ymd, toInt(r.count)]));
@@ -116,6 +135,9 @@ export async function loadAdminStatisticsDailyBuckets(
     orderRows.map((r) => [r.ymd, { orderCount: toInt(r.order_count), gmv: toInt(r.gmv_sum) }]),
   );
   const storeByYmd = new Map(storeRows.map((r) => [r.ymd, toInt(r.count)]));
+  const businessVerifiedStoreByYmd = new Map(
+    businessVerifiedStoreRows.map((r) => [r.ymd, toInt(r.count)]),
+  );
   const storeEntryRequestByYmd = new Map(storeEntryRequestRows.map((r) => [r.ymd, toInt(r.count)]));
 
   return buildYmdRange(startYmd, endYmd).map((date) => ({
@@ -125,6 +147,7 @@ export async function loadAdminStatisticsDailyBuckets(
     orderCount: orderByYmd.get(date)?.orderCount ?? 0,
     gmv: orderByYmd.get(date)?.gmv ?? 0,
     newStores: storeByYmd.get(date) ?? 0,
+    newBusinessVerifiedStores: businessVerifiedStoreByYmd.get(date) ?? 0,
     storeEntryRequests: storeEntryRequestByYmd.get(date) ?? 0,
   }));
 }

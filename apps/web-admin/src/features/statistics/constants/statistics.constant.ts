@@ -25,12 +25,6 @@ export const STATISTICS_STORE_ENTRY_REQUEST_STATUS_LABELS: Record<string, string
   COMPLETED: "입점 완료",
 };
 
-/** `SellerVerificationStatus` → 한글 라벨 */
-export const STATISTICS_SELLER_VERIFICATION_STATUS_LABELS: Record<string, string> = {
-  REGISTERED: "가입 완료",
-  BUSINESS_VERIFIED: "사업자 검증 완료",
-};
-
 /** 일별 추이 조회 기간 옵션 (오늘 포함 최근 N일) */
 export const STATISTICS_TREND_PERIOD_OPTIONS = [
   { value: "7", label: "최근 7일" },

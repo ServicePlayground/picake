@@ -66,27 +66,6 @@ export class AdminStatisticsOrdersResponseDto {
   byStatus: AdminStatisticsStatusCountDto[];
 }
 
-/** 스토어 운영 현황 */
-export class AdminStatisticsStoreOperationStatDto extends AdminStatisticsRecentCountDto {
-  @ApiProperty({ description: "위치 좌표가 등록된 스토어 수" })
-  withLocation: number;
-
-  @ApiProperty({ description: "상품을 한 개 이상 등록한 스토어 수" })
-  withProducts: number;
-
-  @ApiProperty({ description: "주문을 한 건 이상 받은 스토어 수" })
-  withOrders: number;
-
-  @ApiProperty({ description: "스토어를 보유한 판매자 수" })
-  owners: number;
-
-  @ApiProperty({ description: "스토어를 두 개 이상 보유한 판매자 수" })
-  multipleStoreOwners: number;
-
-  @ApiProperty({ description: "스토어를 아직 등록하지 않은 판매자 수" })
-  sellersWithoutStore: number;
-}
-
 /** 입점 요청 상위 장소 */
 export class AdminStatisticsTopEntryRequestPlaceDto {
   @ApiProperty({ description: "카카오 장소 ID" })
@@ -155,14 +134,18 @@ export class AdminStatisticsStoreEntryRequestStatDto extends AdminStatisticsRece
 
 /** 스토어 통계 */
 export class AdminStatisticsStoresResponseDto {
-  @ApiProperty({ description: "스토어 운영 현황", type: AdminStatisticsStoreOperationStatDto })
-  stores: AdminStatisticsStoreOperationStatDto;
+  @ApiProperty({
+    description: "스토어 등록 현황 (총계·오늘·최근 7일·30일)",
+    type: AdminStatisticsRecentCountDto,
+  })
+  stores: AdminStatisticsRecentCountDto;
 
   @ApiProperty({
-    description: "판매자 검증 상태별 판매자 수 (`SellerVerificationStatus`)",
-    type: [AdminStatisticsStatusCountDto],
+    description:
+      "사업자 검증 완료 스토어 현황 (총계·오늘·최근 7일·30일). 소유 판매자가 BUSINESS_VERIFIED인 스토어 기준.",
+    type: AdminStatisticsRecentCountDto,
   })
-  sellersByVerificationStatus: AdminStatisticsStatusCountDto[];
+  businessVerifiedStores: AdminStatisticsRecentCountDto;
 }
 
 /** 입점 통계 */

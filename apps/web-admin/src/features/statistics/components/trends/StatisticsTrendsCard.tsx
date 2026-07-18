@@ -39,7 +39,7 @@ export type { StatisticsTrendChartKind };
 const CHART_LABELS: Record<StatisticsTrendChartKind, string> = {
   signups: "신규 가입",
   ordersGmv: "주문 · GMV",
-  newStores: "신규 스토어",
+  newStores: "신규 스토어 · 사업자 검증",
   entryRequests: "입점 요청",
 };
 

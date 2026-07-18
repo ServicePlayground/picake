@@ -54,6 +54,11 @@ export class AdminStatisticsDailyTrendDto {
   @ApiProperty({ description: "신규 스토어 수" })
   newStores: number;
 
+  @ApiProperty({
+    description: "사업자 검증 완료 스토어 신규 수 (소유 판매자가 BUSINESS_VERIFIED인 스토어)",
+  })
+  newBusinessVerifiedStores: number;
+
   @ApiProperty({ description: "신규 입점 요청 수" })
   storeEntryRequests: number;
 }
