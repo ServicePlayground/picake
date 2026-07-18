@@ -10,6 +10,7 @@ import { Icon } from "@/apps/web-user/common/components/icons";
 import { useOrderDetail } from "@/apps/web-user/features/order/hooks/queries/useOrderDetail";
 import { useProductDetail } from "@/apps/web-user/features/product/hooks/queries/useProductDetail";
 import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
+import { navigateBack } from "@/apps/web-user/common/utils/navigate-back.util";
 import { Toast } from "@/apps/web-user/common/components/toast/Toast";
 
 const formatDateTime = (dateString: string | null) => {
@@ -33,6 +34,19 @@ export default function ReservationCompletePage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const orderId = searchParams.get("orderId");
+  // 진입 출처. 알림에서 들어온 경우 닫기 시 홈이 아니라 알림 목록으로 복귀한다.
+  const from = searchParams.get("from");
+
+  // 닫기(X) 동작. 알림에서 진입했으면 히스토리를 되짚어 알림으로 복귀하고
+  // (새 히스토리를 쌓지 않아 스택이 꼬이지 않음), 딥링크 직진입 등 히스토리가
+  // 없을 때만 알림 목록으로 대체 이동한다. 그 외 진입은 기존대로 홈으로 이동.
+  const handleClose = () => {
+    if (from === "alarm") {
+      navigateBack(router, { fallbackPath: PATHS.ALARM });
+      return;
+    }
+    router.push("/");
+  };
   const [openIndexes, setOpenIndexes] = useState<Set<number>>(new Set());
   const [showCopyToast, setShowCopyToast] = useState(false);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -46,9 +60,10 @@ export default function ReservationCompletePage() {
   );
 
   useEffect(() => {
-    // 주문 ID가 없으면 홈으로 리다이렉트
+    // 주문 ID가 없으면 홈으로 리다이렉트.
+    // 깨진 URL을 히스토리에 남기지 않도록 push가 아닌 replace 사용.
     if (!orderId) {
-      router.push("/");
+      router.replace("/");
     }
   }, [orderId, router]);
 
@@ -254,7 +269,7 @@ export default function ReservationCompletePage() {
           </div>
         </div>
       </div>
-      <button className="absolute top-[14px] right-[20px]" onClick={() => router.push("/")}>
+      <button className="absolute top-[14px] right-[20px]" onClick={handleClose}>
         <Icon name="close" width={24} height={24} className="text-white" />
       </button>
 

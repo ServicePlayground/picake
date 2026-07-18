@@ -3,9 +3,20 @@ import { Button } from "@/apps/web-admin/common/components/buttons/Button";
 import { Checkbox } from "@/apps/web-admin/common/components/inputs/Checkbox";
 import { Input } from "@/apps/web-admin/common/components/inputs/Input";
 import { Label } from "@/apps/web-admin/common/components/labels/Label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/apps/web-admin/common/components/selects/Select";
 import { LIST_CARD_TITLE } from "@/apps/web-admin/common/constants/list-typography.constant";
+import { HOME_BANNER_ALIGN_OPTIONS } from "@/apps/web-admin/features/home-banner/constants/homeBanner.constant";
 import { useUpdateHomeBanner } from "@/apps/web-admin/features/home-banner/hooks/mutations/useHomeBannerMutation";
-import type { HomeBannerItemResponseDto } from "@/apps/web-admin/features/home-banner/types/home-banner.dto";
+import type {
+  HomeBannerImageAlign,
+  HomeBannerItemResponseDto,
+} from "@/apps/web-admin/features/home-banner/types/home-banner.dto";
 import {
   fromDatetimeLocalValue,
   toDatetimeLocalValue,
@@ -19,6 +30,7 @@ interface HomeBannerEditDialogProps {
 export function HomeBannerEditDialog({ item, onClose }: HomeBannerEditDialogProps) {
   const updateMutation = useUpdateHomeBanner();
   const [linkUrl, setLinkUrl] = useState("");
+  const [imageAlign, setImageAlign] = useState<HomeBannerImageAlign>("CENTER");
   const [startsAtLocal, setStartsAtLocal] = useState("");
   const [endsAtLocal, setEndsAtLocal] = useState("");
   const [isActive, setIsActive] = useState(true);
@@ -27,6 +39,7 @@ export function HomeBannerEditDialog({ item, onClose }: HomeBannerEditDialogProp
   useEffect(() => {
     if (!item) return;
     setLinkUrl(item.linkUrl ?? "");
+    setImageAlign(item.imageAlign);
     setStartsAtLocal(toDatetimeLocalValue(item.startsAt));
     setEndsAtLocal(toDatetimeLocalValue(item.endsAt));
     setIsActive(item.isActive);
@@ -45,7 +58,7 @@ export function HomeBannerEditDialog({ item, onClose }: HomeBannerEditDialogProp
 
     await updateMutation.mutateAsync({
       id: item.id,
-      dto: { linkUrl: linkUrl.trim() || null, startsAt, endsAt, isActive },
+      dto: { linkUrl: linkUrl.trim() || null, imageAlign, startsAt, endsAt, isActive },
     });
     onClose();
   };
@@ -76,6 +89,25 @@ export function HomeBannerEditDialog({ item, onClose }: HomeBannerEditDialogProp
               placeholder="비우면 링크 없음"
               disabled={updateMutation.isPending}
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="edit-align">이미지 정렬</Label>
+            <Select
+              value={imageAlign}
+              onValueChange={(value) => setImageAlign(value as HomeBannerImageAlign)}
+              disabled={updateMutation.isPending}
+            >
+              <SelectTrigger id="edit-align">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {HOME_BANNER_ALIGN_OPTIONS.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">

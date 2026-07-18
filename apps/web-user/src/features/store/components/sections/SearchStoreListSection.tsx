@@ -3,6 +3,8 @@
 import { useRef, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { ImageSlider } from "@/apps/web-user/common/components/sliders/ImageSlider";
 import { useStoreList } from "@/apps/web-user/features/store/hooks/queries/useStoreList";
 import { StoreInfo, StoreListFilter } from "@/apps/web-user/features/store/types/store.type";
 import { useInfiniteScroll } from "@/apps/web-user/common/hooks/useInfiniteScroll";
@@ -16,6 +18,7 @@ import { useUserLocation } from "@/apps/web-user/common/hooks/useUserLocation";
 import { calculateDistance, formatDistance } from "@/apps/web-user/common/utils/distance.util";
 import { useAuthStore } from "@/apps/web-user/common/store/auth.store";
 import { useLoginSheetStore } from "@/apps/web-user/common/store/login-sheet.store";
+import { EmptyState } from "@/apps/web-user/common/components/fallbacks/EmptyState";
 import {
   sortStoresForMapList,
   type MapListSortBy,
@@ -32,6 +35,7 @@ export function SearchStoreListSection({
   filter,
   sortBy = "distance",
 }: SearchStoreListSectionProps) {
+  const router = useRouter();
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const { mutate: addLike } = useAddStoreLike();
   const { mutate: removeLike } = useRemoveStoreLike();
@@ -73,7 +77,7 @@ export function SearchStoreListSection({
   if (isLoading) return <></>;
 
   if (stores.length === 0) {
-    return <p className="text-sm text-gray-400 text-center py-10">검색 결과가 없습니다.</p>;
+    return <EmptyState message="검색 결과가 없습니다." />;
   }
 
   return (
@@ -153,6 +157,18 @@ export function SearchStoreListSection({
                   {shortenAddress(store.roadAddress)}
                 </span>
               </div>
+              {store.productRepresentativeImages.length > 0 && (
+                <ImageSlider
+                  images={store.productRepresentativeImages.map((item) => ({
+                    id: item.productId,
+                    url: item.imageUrl,
+                  }))}
+                  imageWidth={160}
+                  imageHeight={120}
+                  edgeToEdge={20}
+                  onImageClick={(image) => router.push(PATHS.PRODUCT.DETAIL(image.id))}
+                />
+              )}
             </Link>
           </li>
         ))}

@@ -73,8 +73,9 @@ export function StoreDetailIntroSection({ store }: StoreDetailIntroSectionProps)
       {/* 상단 영역: 로고 + 정보 + 좋아요 */}
       <div className="flex items-center gap-[11px] mb-[16px]">
         {/* 로고 이미지 */}
-        {store.logoImageUrl && !imageError ? (
-          <div className="w-12 h-12 relative rounded-full overflow-hidden flex-shrink-0">
+
+        <div className="w-12 h-12 relative rounded-full overflow-hidden flex-shrink-0">
+          {store.logoImageUrl ? (
             <Image
               src={store.logoImageUrl}
               alt={`${store.name} 로고`}
@@ -83,12 +84,12 @@ export function StoreDetailIntroSection({ store }: StoreDetailIntroSectionProps)
               onError={() => setImageError(true)}
               unoptimized
             />
-          </div>
-        ) : (
-          <div className="w-14 h-14 rounded-full flex items-center justify-center bg-gray-100 text-gray-400 text-xs flex-shrink-0">
-            No Image
-          </div>
-        )}
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-gray-100">
+              <Icon name="noneStore" width={48} height={48} />
+            </div>
+          )}
+        </div>
 
         {/* 스토어 정보 */}
         <div className="flex-1 min-w-0">
@@ -120,35 +121,48 @@ export function StoreDetailIntroSection({ store }: StoreDetailIntroSectionProps)
       </div>
 
       {/* 위치 정보 */}
-      <div className="flex items-center gap-1 mb-[10px]">
-        <button
-          type="button"
-          onClick={isAddressExpanded ? handleAddressCopy : () => setIsAddressExpanded(true)}
-          className="flex items-center gap-1"
-        >
-          <Icon name="location" width={16} height={16} className="text-primary-300" />
-          {distance !== null && (
-            <>
-              <span className="text-sm text-gray-900">{formatDistance(distance)}</span>
-              <span className="text-sm text-gray-900">·</span>
-            </>
-          )}
-          <span className="text-sm text-gray-900">
-            {isAddressExpanded ? store.roadAddress : shortenAddress(store.roadAddress)}
-          </span>
-        </button>
-        <button
-          type="button"
-          onClick={() => setIsAddressExpanded((prev) => !prev)}
-          className="flex items-center justify-center ml-[2px]"
-        >
-          <Icon
-            name="arrow"
-            width={16}
-            height={16}
-            className={`text-gray-400 transition-transform ${isAddressExpanded ? "" : "rotate-180"}`}
-          />
-        </button>
+      <div className="mb-[10px]">
+        {/* 윗줄: 짧은 주소 + 펼치기/접기 토글 */}
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setIsAddressExpanded((prev) => !prev)}
+            className="flex items-center gap-1"
+          >
+            <Icon name="location" width={16} height={16} className="text-primary-300" />
+            {distance !== null && (
+              <>
+                <span className="text-sm text-gray-900">{formatDistance(distance)}</span>
+                <span className="text-sm text-gray-900">·</span>
+              </>
+            )}
+            <span className="text-sm text-gray-900">{shortenAddress(store.roadAddress)}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsAddressExpanded((prev) => !prev)}
+            className="flex items-center justify-center ml-[2px]"
+          >
+            <Icon
+              name="arrow"
+              width={16}
+              height={16}
+              className={`text-gray-400 transition-transform ${isAddressExpanded ? "" : "rotate-180"}`}
+            />
+          </button>
+        </div>
+
+        {/* 아랫줄: 전체 주소 + 복사 아이콘 (펼쳤을 때만 표시, 클릭 시 복사) */}
+        {isAddressExpanded && (
+          <button
+            type="button"
+            onClick={handleAddressCopy}
+            className="flex items-center gap-1 mt-[2px] ml-[20px]"
+          >
+            <span className="text-sm text-gray-500">{store.roadAddress}</span>
+            <Icon name="copy" width={16} height={16} className="text-gray-500" />
+          </button>
+        )}
       </div>
 
       {showCopyToast && (

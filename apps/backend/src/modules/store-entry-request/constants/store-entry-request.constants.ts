@@ -3,6 +3,7 @@
  */
 export const STORE_ENTRY_REQUEST_ERROR_MESSAGES = {
   ALREADY_EXISTS: "이미 입점 요청한 가게입니다.",
+  NOT_FOUND: "해당 입점 요청을 찾을 수 없습니다.",
 } as const;
 
 /**
@@ -29,4 +30,17 @@ export const STORE_ENTRY_REQUEST_SELECT = {
   status: true,
   createdAt: true,
   updatedAt: true,
+} as const;
+
+/** 관리자 목록·상세용 (요청자 요약 포함) */
+export const STORE_ENTRY_REQUEST_ADMIN_SELECT = {
+  ...STORE_ENTRY_REQUEST_SELECT,
+  consumer: {
+    select: {
+      id: true,
+      phone: true,
+      name: true,
+      nickname: true,
+    },
+  },
 } as const;

@@ -3,7 +3,6 @@
 import { Button } from "@/apps/web-user/common/components/buttons/Button";
 import { Icon } from "@/apps/web-user/common/components/icons";
 import { OrderItem } from "./types";
-import Image from "next/image";
 import { InfoNotice } from "@/apps/web-user/common/components/notice/InfoNotice";
 import { LabeledInput } from "@/apps/web-user/common/components/inputs/LabeledInput";
 import { Checkbox } from "@/apps/web-user/common/components/inputs/Checkbox";
@@ -11,6 +10,7 @@ import {
   formatRefundRulePeriodLabel,
   type RefundCancellationPolicy,
 } from "@/apps/web-user/features/store/types/store.type";
+import { EmptyState } from "@/apps/web-user/common/components/fallbacks/EmptyState";
 
 interface ReservationConfirmViewProps {
   orderItems: OrderItem[];
@@ -70,10 +70,7 @@ export function ReservationConfirmView({
       <div className="px-5 pt-5 pb-10 flex flex-col border-b-[14px] border-gray-50">
         <h2 className="mb-1 py-2.5 text-lg font-bold text-gray-900">예약상품</h2>
         {orderItems.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-[20px] py-[22px] text-center text-sm text-gray-700">
-            <Image src="/images/contents/none_items.png" alt="empty-cart" width={62} height={57} />
-            담은 상품이 없어요
-          </div>
+          <EmptyState message="담은 상품이 없어요" className="py-[22px]" />
         ) : (
           <div className="mb-[24px] rounded-lg border border-gray-100 overflow-hidden">
             <div className="flex items-center gap-[12px] py-[12px] px-[10px] text-sm bg-blue-50 border-b border-gray-100">

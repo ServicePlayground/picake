@@ -2,14 +2,24 @@ import React, { useState } from "react";
 import { BaseButton as Button } from "@/apps/web-admin/common/components/buttons/BaseButton";
 import { Input } from "@/apps/web-admin/common/components/inputs/Input";
 import { Label } from "@/apps/web-admin/common/components/labels/Label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/apps/web-admin/common/components/selects/Select";
 import { BannerImageUpload } from "@/apps/web-admin/features/upload/components/BannerImageUpload";
 import {
+  HOME_BANNER_ALIGN_OPTIONS,
+  HOME_BANNER_DEFAULT_ALIGN,
   HOME_BANNER_MAX_COUNT,
   HOME_BANNER_UPLOAD_ACCEPT,
   HOME_BANNER_UPLOAD_MAX_SIZE_BYTES,
   HOME_BANNER_UPLOAD_PREVIEW,
 } from "@/apps/web-admin/features/home-banner/constants/homeBanner.constant";
 import { useCreateHomeBanner } from "@/apps/web-admin/features/home-banner/hooks/mutations/useHomeBannerMutation";
+import type { HomeBannerImageAlign } from "@/apps/web-admin/features/home-banner/types/home-banner.dto";
 import { fromDatetimeLocalValue } from "@/apps/web-admin/features/home-banner/utils/home-banner-period.ui.util";
 
 interface HomeBannerAddSectionProps {
@@ -18,6 +28,7 @@ interface HomeBannerAddSectionProps {
 
 export function HomeBannerAddSection({ currentCount }: HomeBannerAddSectionProps) {
   const [imageUrl, setImageUrl] = useState<string | undefined>();
+  const [imageAlign, setImageAlign] = useState<HomeBannerImageAlign>(HOME_BANNER_DEFAULT_ALIGN);
   const [linkUrl, setLinkUrl] = useState("");
   const [startsAtLocal, setStartsAtLocal] = useState("");
   const [endsAtLocal, setEndsAtLocal] = useState("");
@@ -30,6 +41,7 @@ export function HomeBannerAddSection({ currentCount }: HomeBannerAddSectionProps
 
   const resetForm = () => {
     setImageUrl(undefined);
+    setImageAlign(HOME_BANNER_DEFAULT_ALIGN);
     setLinkUrl("");
     setStartsAtLocal("");
     setEndsAtLocal("");
@@ -51,6 +63,7 @@ export function HomeBannerAddSection({ currentCount }: HomeBannerAddSectionProps
 
     await createMutation.mutateAsync({
       imageUrl,
+      imageAlign,
       linkUrl: linkUrl.trim() || undefined,
       startsAt: startsAt ?? undefined,
       endsAt: endsAt ?? undefined,
@@ -107,6 +120,29 @@ export function HomeBannerAddSection({ currentCount }: HomeBannerAddSectionProps
                 placeholder="https://"
                 disabled={isBusy}
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="banner-align">이미지 정렬</Label>
+              <Select
+                value={imageAlign}
+                onValueChange={(value) => setImageAlign(value as HomeBannerImageAlign)}
+                disabled={isBusy}
+              >
+                <SelectTrigger id="banner-align">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {HOME_BANNER_ALIGN_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                구매자 화면이 이미지보다 좁을 때 잘리는 방향을 정합니다.
+              </p>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">

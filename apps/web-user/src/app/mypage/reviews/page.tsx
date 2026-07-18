@@ -15,7 +15,7 @@ import Link from "next/link";
 import { Icon } from "@/apps/web-user/common/components/icons";
 import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 import { useWritableReviews } from "@/apps/web-user/features/review/hooks/queries/useWritableReviews";
-import { OrderEmptyState } from "@/apps/web-user/features/mypage/order/components/OrderEmptyState";
+import { EmptyState } from "@/apps/web-user/common/components/fallbacks/EmptyState";
 
 export default function MyReviewsPage() {
   const [sortBy] = useState<ReviewSortBy>(ReviewSortBy.LATEST);
@@ -94,7 +94,7 @@ export default function MyReviewsPage() {
             />
           ))
         ) : (
-          <OrderEmptyState message="후기가 없어요." className="min-h-[calc(100vh-52px)]" />
+          <EmptyState message="후기가 없어요." className="min-h-[calc(100vh-52px)]" />
         )}
       </div>
 

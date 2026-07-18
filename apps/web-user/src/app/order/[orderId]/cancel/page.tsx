@@ -2,6 +2,7 @@
 
 import { useParams } from "next/navigation";
 import Header from "@/apps/web-user/common/components/headers/Header";
+import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 import { useOrderDetail } from "@/apps/web-user/features/order/hooks/queries/useOrderDetail";
 import { OrderStatus } from "@/apps/web-user/features/order/types/order.type";
 import { OrderCancelView } from "@/apps/web-user/features/order/components/cancel/OrderCancelView";
@@ -18,7 +19,11 @@ export default function OrderCancelPage() {
 
   return (
     <div>
-      <Header variant="back-title" title={headerTitle} />
+      <Header
+        variant="back-title"
+        title={headerTitle}
+        backFallbackPath={PATHS.ORDER.DETAIL(orderId)}
+      />
       {isLoading ? (
         <div className="px-5 py-8 space-y-4 animate-pulse">
           <div className="h-5 w-40 bg-gray-100 rounded" />

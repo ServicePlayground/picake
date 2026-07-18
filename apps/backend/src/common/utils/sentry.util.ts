@@ -39,6 +39,11 @@ export class SentryUtil {
    * @param statusCode HTTP 상태 코드
    */
   static shouldSendToSentry(statusCode: number): boolean {
+    // 점검 모드(503)는 의도된 응답이므로 Sentry 전송 제외
+    if (statusCode === 503) {
+      return false;
+    }
+
     // 5xx 에러는 항상 전송
     if (statusCode >= 500) {
       return true;
@@ -70,11 +75,13 @@ export class SentryUtil {
    * @param exception 예외 객체
    * @param level 에러 레벨
    * @param tags Sentry 태그 (예: { responseId: "xxx" })
+   * @param extra Sentry Extra 컨텍스트 (구조화된 디버그 정보)
    */
   static captureException(
     exception: unknown,
     level: Sentry.SeverityLevel,
     tags?: Record<string, string>,
+    extra?: Record<string, unknown>,
   ): void {
     if (!this.enabled()) {
       return;
@@ -84,6 +91,7 @@ export class SentryUtil {
       Sentry.captureException(exception, {
         level,
         tags,
+        extra,
       });
     } catch (error) {
       // Sentry 전송 실패 시 로그만 기록

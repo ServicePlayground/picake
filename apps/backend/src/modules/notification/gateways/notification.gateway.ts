@@ -15,6 +15,8 @@ import { AUDIENCE } from "@apps/backend/modules/auth/constants/auth.constants";
 import { LoggerUtil } from "@apps/backend/common/utils/logger.util";
 import { SentryUtil } from "@apps/backend/common/utils/sentry.util";
 import { createWebSocketCorsOptions } from "@apps/backend/common/utils/cors.util";
+import { isServiceMaintenanceMode } from "@apps/backend/common/utils/maintenance.util";
+import { API_RESPONSE_MESSAGES } from "@apps/backend/common/constants/app.constants";
 import type {
   SellerNotificationItemDto,
   UserNotificationItemDto,
@@ -59,6 +61,15 @@ export class NotificationGateway
   }
 
   async handleConnection(client: Socket) {
+    if (isServiceMaintenanceMode(this.configService)) {
+      client.emit("error", {
+        message: API_RESPONSE_MESSAGES.SERVICE_UNAVAILABLE,
+        code: "SERVICE_UNAVAILABLE",
+      });
+      client.disconnect(true);
+      return;
+    }
+
     try {
       // 1) 토큰 추출 (auth/query/header 순서)
       const token = this.extractTokenFromSocket(client);

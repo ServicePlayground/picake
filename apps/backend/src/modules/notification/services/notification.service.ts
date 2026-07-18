@@ -6,6 +6,9 @@ import {
   Prisma,
 } from "@apps/backend/infra/database/prisma/generated/client";
 
+/** 사용자 웹 알림 노출 보존 기간(개월). 이 기간을 초과해 생성된 알림은 목록/미읽음 수에서 제외한다. */
+const USER_NOTIFICATION_RETENTION_MONTHS = 3;
+
 /** 판매자 웹 알림 목록·소켓 응답에 쓰는 DTO */
 export interface SellerNotificationItemDto {
   id: string;
@@ -50,6 +53,15 @@ export interface UserNotificationPreferenceDto {
 @Injectable()
 export class NotificationService {
   constructor(private readonly prisma: PrismaService) {}
+
+  /**
+   * 사용자 웹 알림 노출 하한 시각. 이 시각 이전(보존 기간 초과)에 생성된 알림은 노출하지 않는다.
+   */
+  private getUserNotificationVisibilityCutoff(): Date {
+    const cutoff = new Date();
+    cutoff.setMonth(cutoff.getMonth() - USER_NOTIFICATION_RETENTION_MONTHS);
+    return cutoff;
+  }
 
   /**
    * DB 행을 판매자 알림 응답 DTO로 변환합니다.
@@ -332,6 +344,7 @@ export class NotificationService {
       appSurface: NotificationAppSurface.USER_WEB,
       category: NotificationCategory.ORDER,
       orderId: { not: null },
+      createdAt: { gte: this.getUserNotificationVisibilityCutoff() },
       ...(params.unreadOnly ? { readAt: null } : {}),
     };
     const [rows, total] = await Promise.all([
@@ -405,6 +418,7 @@ export class NotificationService {
         appSurface: NotificationAppSurface.USER_WEB,
         category: NotificationCategory.ORDER,
         orderId: { not: null },
+        createdAt: { gte: this.getUserNotificationVisibilityCutoff() },
         readAt: null,
       },
     });

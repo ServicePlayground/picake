@@ -18,9 +18,8 @@ import {
   GoogleLoginRequestDto,
   GoogleRegisterRequestDto,
 } from "@apps/backend/modules/auth/dto/auth-google-oauth.dto";
-import { LoggerUtil } from "@apps/backend/common/utils/logger.util";
 import { buildInitialNickname } from "@apps/backend/modules/auth/utils/register-nickname.util";
-import { SentryUtil } from "@apps/backend/common/utils/sentry.util";
+import { ExternalApiErrorUtil } from "@apps/backend/common/utils/external-api-error.util";
 import { TermsService } from "@apps/backend/modules/terms/terms.service";
 
 /**
@@ -129,46 +128,74 @@ export class AuthGoogleOauthService {
         },
       );
 
-      const { access_token, token_type } = tokenResponse.data;
+      const accessToken = tokenResponse.data?.access_token;
+      const tokenType = tokenResponse.data?.token_type ?? "Bearer";
+      if (!accessToken) {
+        const failure = {
+          provider: "google",
+          module: "auth-google-oauth",
+          operation: "token-exchange",
+          ...ExternalApiErrorUtil.fromResponseBody(tokenResponse.data, tokenResponse.status),
+          details: { redirectUri },
+        };
+        ExternalApiErrorUtil.reportFailure(
+          failure,
+          ExternalApiErrorUtil.createFailureError(failure, "no_access_token"),
+        );
+        throw new BadRequestException(AUTH_ERROR_MESSAGES.GOOGLE_OAUTH_TOKEN_EXCHANGE_FAILED);
+      }
 
-      // Access Token으로 사용자 정보 요청
-      LoggerUtil.log("사용자 정보 요청 시작");
       const userInfoResponse = await this.httpClient.get(
         "https://www.googleapis.com/oauth2/v2/userinfo",
         {
           headers: {
-            Authorization: `${token_type} ${access_token}`,
+            Authorization: `${tokenType} ${accessToken}`,
           },
         },
       );
 
       const userInfo = userInfoResponse.data;
+      const googleId = userInfo?.id?.toString();
+      const googleEmail = userInfo?.email;
+      if (!googleId || !googleEmail) {
+        const failure = {
+          provider: "google",
+          module: "auth-google-oauth",
+          operation: "userinfo",
+          ...ExternalApiErrorUtil.fromResponseBody(userInfo, userInfoResponse.status),
+          details: {
+            redirectUri,
+            hasGoogleId: Boolean(googleId),
+            hasGoogleEmail: Boolean(googleEmail),
+          },
+        };
+        ExternalApiErrorUtil.reportFailure(
+          failure,
+          ExternalApiErrorUtil.createFailureError(failure, "missing_id_or_email"),
+        );
+        throw new BadRequestException(AUTH_ERROR_MESSAGES.GOOGLE_OAUTH_TOKEN_EXCHANGE_FAILED);
+      }
 
       return {
         userInfo: {
-          googleId: userInfo.id,
-          googleEmail: userInfo.email,
+          googleId,
+          googleEmail,
         },
       };
     } catch (error: any) {
-      // 민감 정보를 제거한 에러 로깅
-      const sanitizedError = {
-        code: error.code,
-        message: error.message,
-        status: error.response?.status,
-        statusText: error.response?.statusText,
-      };
-
-      LoggerUtil.log(`Google OAuth 에러 발생: ${JSON.stringify(sanitizedError, null, 2)}`);
-      const status = error.response?.status;
-      if (!status || status >= 500) {
-        SentryUtil.captureException(error, "error", {
-          module: "auth-google-oauth",
-          operation: "exchange-code-for-token",
-        });
+      if (error instanceof BadRequestException) {
+        throw error;
       }
 
-      throw error;
+      const failure = {
+        provider: "google",
+        module: "auth-google-oauth",
+        operation: "exchange-code-for-token",
+        ...ExternalApiErrorUtil.fromAxiosError(error),
+        details: { redirectUri },
+      };
+      ExternalApiErrorUtil.reportFailure(failure, error);
+      throw new BadRequestException(AUTH_ERROR_MESSAGES.GOOGLE_OAUTH_TOKEN_EXCHANGE_FAILED);
     }
   }
 
@@ -181,6 +208,12 @@ export class AuthGoogleOauthService {
     const {
       userInfo: { googleId, googleEmail },
     } = googleUserInfo;
+
+    if (!googleId) {
+      throw new BadRequestException({
+        message: AUTH_ERROR_MESSAGES.GOOGLE_OAUTH_TOKEN_EXCHANGE_FAILED,
+      });
+    }
 
     let consumer = await this.prisma.consumer.findUnique({
       where: { googleId },

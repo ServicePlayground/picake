@@ -34,7 +34,8 @@ export function RegionSelectSheet({
   onSelect,
   onGpsInactive,
 }: RegionSelectSheetProps) {
-  const { address, setLocation, setAddress } = useUserCurrentLocationStore();
+  const { address, setLocation, setAddress, isLocationPermissionModalOpen } =
+    useUserCurrentLocationStore();
   const [isWaitingForLocation, setIsWaitingForLocation] = useState(false);
   // "현재 위치로 설정" 클릭 시점의 address. GPS 응답이 도착해서 address가 실제로 바뀌었는지 비교용.
   // 이걸 안 두면 setIsWaitingForLocation(true)가 즉시 useEffect를 발화시켜 stale address로 매칭 처리해버림.
@@ -71,8 +72,14 @@ export function RegionSelectSheet({
         currentResult.label === currentResult.depth1Label ||
         currentResult.label === `${currentResult.depth1Label} 전지역`
       ) {
+        // 전지역 선택 → 현재 활성 구 전체 체크
         initialLabels = new Set(activeItems.map((d) => d.label));
+      } else if (currentResult.selectedLabels && currentResult.selectedLabels.length > 0) {
+        // 실제 선택된 구 목록으로 복원 (다중 선택). 현재 활성 구에 남아있는 것만.
+        const activeSet = new Set(activeItems.map((d) => d.label));
+        initialLabels = new Set(currentResult.selectedLabels.filter((l) => activeSet.has(l)));
       } else {
+        // 폴백: 레거시 저장값(단일 label)
         initialLabels = new Set([currentResult.label]);
       }
     } else {
@@ -106,6 +113,13 @@ export function RegionSelectSheet({
     setIsWaitingForLocation(false);
     processMatchResult(matchAddressToRegion(address, regions));
   }, [address, isWaitingForLocation]);
+
+  // 위치 권한 거부 모달이 뜨면 GPS 대기 해제
+  useEffect(() => {
+    if (isLocationPermissionModalOpen && isWaitingForLocation) {
+      setIsWaitingForLocation(false);
+    }
+  }, [isLocationPermissionModalOpen, isWaitingForLocation]);
 
   // 매칭 결과 처리 — 비활성 모달은 Header가 일원화해서 띄움
   // - 활성 지역: onSelect 후 시트 닫기
@@ -194,10 +208,13 @@ export function RegionSelectSheet({
     setIsWaitingForLocation(true);
     if (isWebViewEnvironment()) {
       // 웹뷰: window.receiveLocation → setAddress가 외부에서 호출됨. address 변경 시 useEffect가 처리.
-      requestLocationFromWebView();
+      // 권한 거부 시 window.receiveLocationError → 전역 모달 (userInitiated)
+      requestLocationFromWebView({ userInitiated: true });
     } else if (navigator.geolocation) {
+      useUserCurrentLocationStore.getState().markLocationRequestUserInitiated();
       navigator.geolocation.getCurrentPosition(
         async (position) => {
+          useUserCurrentLocationStore.getState().clearLocationRequestFlag();
           const { latitude, longitude } = position.coords;
           setLocation(latitude, longitude);
           const addr = await reverseGeocode(latitude, longitude);
@@ -208,7 +225,14 @@ export function RegionSelectSheet({
             processMatchResult(matchAddressToRegion(addr, regions));
           }
         },
-        () => setIsWaitingForLocation(false),
+        (error) => {
+          setIsWaitingForLocation(false);
+          if (error.code === error.PERMISSION_DENIED) {
+            useUserCurrentLocationStore.getState().handleLocationRequestFailure();
+            return;
+          }
+          useUserCurrentLocationStore.getState().clearLocationRequestFlag();
+        },
       );
     } else {
       setIsWaitingForLocation(false);
@@ -220,17 +244,25 @@ export function RegionSelectSheet({
       onClose();
       return;
     }
+    // 실제 선택된 구 목록. 표시용 label과 별개로 보관해 재진입 복원·필터에 사용.
+    const selectedLabels = Array.from(currentCheckedLabels);
     if (isAllChecked) {
       const totalStoreCount = currentActiveItems.reduce((sum, d) => sum + d.storeCount, 0);
       onSelect({
         label: `${selectedDepth1} 전지역`,
         storeCount: totalStoreCount,
         depth1Label: selectedDepth1,
+        selectedLabels,
       });
     } else if (currentCheckedLabels.size === 1) {
-      const label = Array.from(currentCheckedLabels)[0];
+      const label = selectedLabels[0];
       const item = currentActiveItems.find((d) => d.label === label)!;
-      onSelect({ label: item.label, storeCount: item.storeCount, depth1Label: selectedDepth1 });
+      onSelect({
+        label: item.label,
+        storeCount: item.storeCount,
+        depth1Label: selectedDepth1,
+        selectedLabels,
+      });
     } else {
       const selectedItems = currentActiveItems.filter((d) => currentCheckedLabels.has(d.label));
       const totalStoreCount = selectedItems.reduce((sum, d) => sum + d.storeCount, 0);
@@ -238,6 +270,7 @@ export function RegionSelectSheet({
         label: `${selectedItems[0].label} 외 ${selectedItems.length - 1}곳`,
         storeCount: totalStoreCount,
         depth1Label: selectedDepth1,
+        selectedLabels,
       });
     }
     onClose();

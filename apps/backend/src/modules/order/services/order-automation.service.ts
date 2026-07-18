@@ -3,15 +3,19 @@ import { PrismaService } from "@apps/backend/infra/database/prisma.service";
 import { OrderStatus } from "@apps/backend/modules/order/constants/order.constants";
 import {
   isPickupPendingDue,
+  isPickupReminderDue,
+  isPickupReminderLeadEligible,
   isPaymentPendingExpired,
+  PICKUP_REMINDER_LEAD_MS,
 } from "@apps/backend/modules/order/utils/order-datetime.util";
 import { LoggerUtil } from "@apps/backend/common/utils/logger.util";
 import { SentryUtil } from "@apps/backend/common/utils/sentry.util";
 import { OrderLifecycleHookService } from "@apps/backend/modules/order/services/order-lifecycle-hook.service";
+import { NotificationOrderDispatchService } from "@apps/backend/modules/notification/services/notification-order-dispatch.service";
 import { ORDER_STATUS_TRANSITION_SOURCE } from "@apps/backend/modules/order/types/order-lifecycle.types";
 
 /**
- * 입금대기 만료, 픽업 시각 도달 자동 전환 등 주문 상태 자동화
+ * 입금대기 만료, 픽업 시각 도달 자동 전환, 픽업 24시간 전 안내 등 주문 자동화
  */
 @Injectable()
 export class OrderAutomationService implements OnModuleInit, OnModuleDestroy {
@@ -21,6 +25,7 @@ export class OrderAutomationService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly prisma: PrismaService,
     private readonly orderLifecycleHookService: OrderLifecycleHookService,
+    private readonly notificationOrderDispatchService: NotificationOrderDispatchService,
   ) {}
 
   onModuleInit(): void {
@@ -35,8 +40,9 @@ export class OrderAutomationService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
-   * 단일 주문에 대해 만료·픽업 전환 규칙을 즉시 적용 (최신 상태 보장)
+   * 단일 주문에 대해 만료·픽업 전환·픽업 안내 규칙을 즉시 적용 (최신 상태 보장)
    * 만료 규칙: 입금대기 상태에서 `paymentPendingDeadlineAt`(없으면 픽업·진입 시각 기준 복원)이 지난 주문을 취소완료로 전환합니다. 예약신청 단계는 자동 만료하지 않습니다.
+   * 픽업 안내: 예약확정 상태에서 픽업 24시간 전이면 구매자 안내를 1회 발송합니다. (주문~픽업이 24시간 미만이면 생략)
    * 픽업 규칙: 예약확정 상태에서 픽업 시각이 도달했거나 지난 주문을 픽업대기로 전환합니다.
    */
   async syncOrderLifecycleById(orderId: string): Promise<void> {
@@ -71,6 +77,14 @@ export class OrderAutomationService implements OnModuleInit, OnModuleDestroy {
     }
 
     if (order.orderStatus === OrderStatus.CONFIRMED && order.pickupDate) {
+      await this.trySendPickupReminder({
+        orderId,
+        createdAt: order.createdAt,
+        pickupDate: order.pickupDate,
+        pickupReminderSentAt: order.pickupReminderSentAt,
+        now,
+      });
+
       if (isPickupPendingDue(order.pickupDate, now)) {
         const { count } = await this.prisma.order.updateMany({
           where: {
@@ -131,6 +145,36 @@ export class OrderAutomationService implements OnModuleInit, OnModuleDestroy {
         }
       }
 
+      // 픽업 24시간 전 안내 (예약확정 · 미발송 · 픽업이 아직 남음)
+      const reminderWindowEnd = new Date(now.getTime() + PICKUP_REMINDER_LEAD_MS);
+      const reminderCandidates = await this.prisma.order.findMany({
+        where: {
+          orderStatus: OrderStatus.CONFIRMED,
+          pickupReminderSentAt: null,
+          pickupDate: {
+            gt: now,
+            lte: reminderWindowEnd,
+          },
+        },
+        select: {
+          id: true,
+          createdAt: true,
+          pickupDate: true,
+          pickupReminderSentAt: true,
+        },
+      });
+
+      for (const row of reminderCandidates) {
+        if (!row.pickupDate) continue;
+        await this.trySendPickupReminder({
+          orderId: row.id,
+          createdAt: row.createdAt,
+          pickupDate: row.pickupDate,
+          pickupReminderSentAt: row.pickupReminderSentAt,
+          now,
+        });
+      }
+
       // sync의 `CONFIRMED && pickupDate && isPickupPendingDue`와 동일
       const confirmedWithPickup = await this.prisma.order.findMany({
         where: {
@@ -180,5 +224,35 @@ export class OrderAutomationService implements OnModuleInit, OnModuleDestroy {
       return;
     }
     await Promise.all(orderIds.map((id) => this.syncOrderLifecycleById(id)));
+  }
+
+  /**
+   * 픽업 24시간 전 안내를 1회만 발송합니다.
+   * - 주문 생성~픽업이 24시간 미만이면 발송하지 않습니다.
+   * - `pickupReminderSentAt`을 먼저 확정해 배치·sync 경합 시 중복 발송을 막습니다.
+   */
+  private async trySendPickupReminder(params: {
+    orderId: string;
+    createdAt: Date;
+    pickupDate: Date;
+    pickupReminderSentAt: Date | null;
+    now: Date;
+  }): Promise<void> {
+    const { orderId, createdAt, pickupDate, pickupReminderSentAt, now } = params;
+    if (pickupReminderSentAt) return;
+    if (!isPickupReminderLeadEligible(createdAt, pickupDate)) return;
+    if (!isPickupReminderDue(pickupDate, now)) return;
+
+    const { count } = await this.prisma.order.updateMany({
+      where: {
+        id: orderId,
+        orderStatus: OrderStatus.CONFIRMED,
+        pickupReminderSentAt: null,
+      },
+      data: { pickupReminderSentAt: now },
+    });
+    if (count !== 1) return;
+
+    await this.notificationOrderDispatchService.handlePickupReminder(orderId);
   }
 }

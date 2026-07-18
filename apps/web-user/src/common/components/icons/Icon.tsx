@@ -60,6 +60,8 @@ import CardMore from "./icons/card_more.svg";
 import LogoPicake from "./icons/logo_picake.svg";
 import NoticeTop from "./icons/notice_top.svg";
 import MypageNav from "./icons/mypage_nav.svg";
+import NoneStore from "./icons/none-store.svg";
+import NoneAlarm from "./icons/none-alarm.svg";
 
 interface IconProps {
   name: keyof typeof iconTypes;
@@ -129,6 +131,8 @@ export const iconTypes = {
   logoPicake: LogoPicake,
   noticeTop: NoticeTop,
   mypageNav: MypageNav,
+  noneStore: NoneStore,
+  noneAlarm: NoneAlarm,
 };
 
 export type IconName = keyof typeof iconTypes;

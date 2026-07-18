@@ -3,9 +3,16 @@ import { REGION_COORDINATES } from "@/apps/web-user/common/constants/region-coor
 import { calculateDistance } from "@/apps/web-user/common/utils/distance.util";
 
 export interface RegionMatchResult {
+  /** 표시용 문자열. 예) "광진구", "광진구 외 1곳", "서울 전지역" */
   label: string;
   storeCount: number;
   depth1Label: string;
+  /**
+   * 실제 선택된 depth2(구/군) label 목록.
+   * 다중 선택 시 label은 "광진구 외 N곳"으로 뭉개지므로, 재진입 복원·필터 조합에는 이 배열을 사용한다.
+   * 없으면(레거시 저장값·전지역) label 기반 로직으로 폴백.
+   */
+  selectedLabels?: string[];
 }
 
 /**
@@ -31,7 +38,12 @@ export function matchAddressToRegion(
       const depth2Matched = depth2.searchKeywords.some((keyword) => address.includes(keyword));
 
       if (depth2Matched) {
-        return { label: depth2.label, storeCount: depth2.storeCount, depth1Label: depth1.label };
+        return {
+          label: depth2.label,
+          storeCount: depth2.storeCount,
+          depth1Label: depth1.label,
+          selectedLabels: [depth2.label],
+        };
       }
     }
 
@@ -134,14 +146,23 @@ export function buildRegionsParam(result: RegionMatchResult, regions: RegionData
 
   const depth1Keyword = depth1Data.depth1.searchKeywords[0];
 
-  // depth1만 매칭된 경우 (label === depth1Label) → 해당 지역 전체
-  if (result.label === result.depth1Label) {
+  // depth1 전체(전지역) 선택 → 해당 지역 전체
+  if (result.label === result.depth1Label || result.label === `${result.depth1Label} 전지역`) {
     return `${depth1Keyword}:전지역`;
   }
 
-  // depth2 매칭된 경우 → depth2의 각 searchKeyword마다 쌍 생성
-  const depth2Data = depth1Data.depth2.find((d) => d.label === result.label);
-  if (!depth2Data) return `${depth1Keyword}:전지역`;
+  // 실제 선택된 구 목록이 있으면 그걸로, 없으면(레거시) label 하나로 조합
+  const targetLabels =
+    result.selectedLabels && result.selectedLabels.length > 0
+      ? result.selectedLabels
+      : [result.label];
 
-  return depth2Data.searchKeywords.map((kw) => `${depth1Keyword}:${kw}`).join(",");
+  // 각 선택 구의 searchKeyword마다 "시도:구" 쌍 생성 → "서울:광진구,서울:강남구"
+  const pairs = targetLabels.flatMap((label) => {
+    const depth2Data = depth1Data.depth2.find((d) => d.label === label);
+    return depth2Data ? depth2Data.searchKeywords.map((kw) => `${depth1Keyword}:${kw}`) : [];
+  });
+
+  if (pairs.length === 0) return `${depth1Keyword}:전지역`;
+  return pairs.join(",");
 }

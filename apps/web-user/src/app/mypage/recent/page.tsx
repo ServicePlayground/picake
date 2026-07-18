@@ -12,6 +12,7 @@ import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 import { Icon } from "@/apps/web-user/common/components/icons";
 import { formatAddress } from "@/apps/web-user/common/utils/address.util";
 import { RecentProductsSkeleton } from "@/apps/web-user/common/components/skeleton/RecentProductsSkeleton";
+import { EmptyState } from "@/apps/web-user/common/components/fallbacks/EmptyState";
 
 function formatDateLabel(dateStr: string): string {
   const date = new Date(dateStr);
@@ -50,7 +51,7 @@ export default function RecentPage() {
         {isLoading ? (
           <RecentProductsSkeleton />
         ) : products.length === 0 ? (
-          <p className="text-sm text-gray-400 text-center py-10">최근 본 상품이 없습니다.</p>
+          <EmptyState message="최근 본 상품이 없습니다." />
         ) : (
           groupedProducts.map((group) => (
             <section key={group.date} className="mb-8">

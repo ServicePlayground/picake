@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
+import clsx from "clsx";
 import { Button } from "@/apps/web-user/common/components/buttons/Button";
 
 type ButtonVariant = "primary" | "secondary" | "outline" | "red";
@@ -32,6 +33,8 @@ interface ModalProps {
   cancelFlex?: number;
   /** 취소 버튼 숨김 (기본값: false) */
   hideCancel?: boolean;
+  /** 오버레이·모달 스택 순서 (기본 z-[100]) */
+  zIndexClassName?: string;
 }
 
 /**
@@ -63,6 +66,7 @@ export const Modal: React.FC<ModalProps> = ({
   confirmFlex = 1,
   cancelFlex = 1,
   hideCancel = false,
+  zIndexClassName,
 }) => {
   // ESC 키로 닫기
   useEffect(() => {
@@ -95,7 +99,12 @@ export const Modal: React.FC<ModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center">
+    <div
+      className={clsx(
+        "fixed inset-0 flex items-center justify-center",
+        zIndexClassName ?? "z-[100]",
+      )}
+    >
       {/* 배경 오버레이 */}
       <div className="absolute inset-0 bg-black/50" onClick={onClose} aria-hidden="true" />
 

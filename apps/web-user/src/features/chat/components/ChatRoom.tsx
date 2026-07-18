@@ -12,6 +12,7 @@ import { Send } from "lucide-react";
 import { formatTime } from "@/apps/web-user/common/utils/date.util";
 import { useInfiniteScroll } from "@/apps/web-user/common/hooks/useInfiniteScroll";
 import { flattenAndDeduplicateInfiniteData } from "@/apps/web-user/common/utils/pagination.util";
+import { EmptyState } from "@/apps/web-user/common/components/fallbacks/EmptyState";
 
 export const ChatRoom: React.FC = () => {
   const params = useParams();
@@ -134,9 +135,7 @@ export const ChatRoom: React.FC = () => {
             <div className="text-muted-foreground">메시지를 불러오는 중...</div>
           </div>
         ) : allMessages.length === 0 ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="text-muted-foreground">메시지가 없습니다.</div>
-          </div>
+          <EmptyState message="메시지가 없습니다." />
         ) : (
           <>
             {/* 이전 메시지 로드 트리거 */}

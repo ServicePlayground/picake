@@ -5,6 +5,11 @@ import Image from "next/image";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination, Thumbs } from "swiper/modules";
 import type { Swiper as SwiperType } from "swiper";
+import { ImageModal } from "@/apps/web-user/common/components/sliders";
+import { EmptyState } from "@/apps/web-user/common/components/fallbacks/EmptyState";
+import "swiper/css";
+import "swiper/css/pagination";
+import "swiper/css/thumbs";
 
 interface ProductDetailImageGallerySectionProps {
   images: string[];
@@ -16,11 +21,22 @@ export function ProductDetailImageGallerySection({
   productName,
 }: ProductDetailImageGallerySectionProps) {
   const [thumbsSwiper, setThumbsSwiper] = useState<SwiperType | null>(null);
+  // 이미지 미리보기(확대) 모달 상태
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalIndex, setModalIndex] = useState(0);
+
+  const handleImageClick = (index: number) => {
+    setModalIndex(index);
+    setIsModalOpen(true);
+  };
+
+  // ImageModal이 요구하는 SliderImage 형태로 변환
+  const modalImages = (images ?? []).map((url, index) => ({ id: `${index}`, url }));
 
   if (!images || images.length === 0) {
     return (
-      <div className="w-full aspect-square bg-gray-100 flex items-center justify-center text-gray-500 text-sm font-medium">
-        이미지가 없습니다.
+      <div className="w-full aspect-square bg-gray-100 flex items-center justify-center">
+        <EmptyState message="이미지가 없습니다." />
       </div>
     );
   }
@@ -37,7 +53,12 @@ export function ProductDetailImageGallerySection({
       >
         {images.map((image, index) => (
           <SwiperSlide key={index}>
-            <div className="w-full h-full relative">
+            <button
+              type="button"
+              onClick={() => handleImageClick(index)}
+              className="w-full h-full relative block cursor-pointer"
+              aria-label={`${productName} 이미지 ${index + 1} 확대 보기`}
+            >
               <Image
                 src={image}
                 alt={`${productName} - 이미지 ${index + 1}`}
@@ -46,7 +67,7 @@ export function ProductDetailImageGallerySection({
                 priority={index === 0}
                 unoptimized
               />
-            </div>
+            </button>
           </SwiperSlide>
         ))}
       </Swiper>
@@ -76,6 +97,14 @@ export function ProductDetailImageGallerySection({
           ))}
         </Swiper>
       )}
+
+      {/* 이미지 확대 미리보기 모달 */}
+      <ImageModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        images={modalImages}
+        initialIndex={modalIndex}
+      />
     </div>
   );
 }

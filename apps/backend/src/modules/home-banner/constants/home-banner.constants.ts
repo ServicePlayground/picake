@@ -1,6 +1,10 @@
+/** 홈 배너 이미지 가로 정렬 (Prisma 생성 enum 재사용 — nominal 타입 일치 보장) */
+export { HomeBannerImageAlign } from "@apps/backend/infra/database/prisma/generated/client";
+
 export const HOME_BANNER_SELECT = {
   id: true,
   imageUrl: true,
+  imageAlign: true,
   linkUrl: true,
   startsAt: true,
   endsAt: true,

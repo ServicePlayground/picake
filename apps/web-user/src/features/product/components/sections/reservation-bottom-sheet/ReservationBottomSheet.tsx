@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { BottomSheet } from "@/apps/web-user/common/components/bottom-sheets/BottomSheet";
+import { Spinner } from "@/apps/web-user/common/components/spinners/Spinner";
 import { Modal } from "@/apps/web-user/common/components/modals/Modal";
 import { Button } from "@/apps/web-user/common/components/buttons/Button";
 import { ReservationBottomSheetProps } from "./types";
@@ -36,8 +38,12 @@ export function ReservationBottomSheet({
   refundCancellationPolicy,
   onClose,
 }: ReservationBottomSheetProps) {
-  const { mutate: createOrder, isPending: isCreatingOrder } = useCreateOrder();
+  const { mutate: createOrder } = useCreateOrder();
   const { mutateAsync: uploadFile } = useUploadFile();
+
+  // 클릭 즉시 잠그기 위한 제출 락 (이미지 업로드 → 주문 생성 전 구간 포함)
+  // useCreateOrder의 isPending은 업로드가 끝난 뒤에야 true가 되므로 단독으로는 더블클릭을 막지 못함
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const {
     view,
     setView,
@@ -112,6 +118,92 @@ export function ReservationBottomSheet({
   // 모바일 키보드가 올라오면 옵션 선택 뷰의 하단 버튼(취소/선택완료) 숨김
   const isKeyboardOpen = useKeyboardOpen();
 
+  const handleCreateOrder = async () => {
+    // 이미 제출 중이면 중복 호출 차단 (더블클릭 방지)
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+
+    try {
+      // 각 OrderItem의 이미지를 업로드하고 URL 받기
+      const itemsWithImageUrls = await Promise.all(
+        orderItems.map(async (item) => {
+          // 각 항목의 이미지 File을 업로드하고 URL 받기
+          let uploadedImageUrls: string[] = [];
+          if (item.imageFiles && item.imageFiles.length > 0) {
+            // 모든 이미지 File을 병렬로 업로드
+            uploadedImageUrls = await Promise.all(
+              item.imageFiles.map(async (file) => {
+                const response = await uploadFile(file);
+                return response.fileUrl;
+              }),
+            );
+          }
+
+          // 사이즈 옵션 정보 찾기
+          const sizeOption = cakeSizeOptions?.find((opt) => opt.displayName === item.size);
+          // 맛 옵션 정보 찾기
+          const flavorOption = cakeFlavorOptions?.find((opt) => opt.displayName === item.flavor);
+
+          return {
+            // 사이즈 옵션 정보 (있는 경우만)
+            ...(sizeOption && {
+              sizeId: sizeOption.id,
+              sizeDisplayName: sizeOption.displayName,
+              sizeLengthCm: sizeOption.lengthCm,
+              sizeDescription: sizeOption.description,
+              sizePrice: sizeOption.price,
+            }),
+            // 맛 옵션 정보 (있는 경우만)
+            ...(flavorOption && {
+              flavorId: flavorOption.id,
+              flavorDisplayName: flavorOption.displayName,
+              flavorPrice: flavorOption.price,
+            }),
+            // 기타 옵션
+            ...(item.letteringMessage && {
+              letteringMessage: item.letteringMessage,
+            }),
+            ...(item.requestMessage && {
+              requestMessage: item.requestMessage,
+            }),
+            quantity: item.quantity,
+            imageUrls: uploadedImageUrls,
+          };
+        }),
+      );
+
+      // API 요청 데이터 구성 (주문 시점의 정보 전달)
+      const orderRequest: CreateOrderRequest = {
+        pickupDate: selectedDate ? selectedDate.toISOString() : "",
+        productId,
+        productName: cakeTitle,
+        productImages: cakeImages.length > 0 ? cakeImages : cakeImageUrl ? [cakeImageUrl] : [],
+        totalQuantity,
+        totalPrice,
+        storeName,
+        // 예약자 연락처 (입력된 경우만 전달)
+        ...(reserverName.trim() && { reservationContactName: reserverName.trim() }),
+        ...(reserverPhone.trim() && { reservationPhone: reserverPhone.trim() }),
+        // 픽업 정보
+        pickupAddress,
+        pickupRoadAddress,
+        pickupDetailAddress,
+        pickupZonecode,
+        pickupLatitude,
+        pickupLongitude,
+        items: itemsWithImageUrls,
+      };
+
+      // API 호출 (성공 시 완료 페이지로 이동하며 언마운트, 실패 시 락 해제)
+      createOrder(orderRequest, {
+        onError: () => setIsSubmitting(false),
+      });
+    } catch {
+      // 이미지 업로드 실패 등 주문 생성 이전 단계에서 실패한 경우 락 해제
+      setIsSubmitting(false);
+    }
+  };
+
   const getTitle = () => {
     if (view === "options") return "상품 옵션 선택";
     if (view === "calendar") return "날짜 선택";
@@ -172,96 +264,24 @@ export function ReservationBottomSheet({
         </div>
         <div className="py-[12px]">
           <Button
-            onClick={async () => {
-              // 각 OrderItem의 이미지를 업로드하고 URL 받기
-              const itemsWithImageUrls = await Promise.all(
-                orderItems.map(async (item) => {
-                  // 각 항목의 이미지 File을 업로드하고 URL 받기
-                  let uploadedImageUrls: string[] = [];
-                  if (item.imageFiles && item.imageFiles.length > 0) {
-                    // 모든 이미지 File을 병렬로 업로드
-                    uploadedImageUrls = await Promise.all(
-                      item.imageFiles.map(async (file) => {
-                        const response = await uploadFile(file);
-                        return response.fileUrl;
-                      }),
-                    );
-                  }
-
-                  // 사이즈 옵션 정보 찾기
-                  const sizeOption = cakeSizeOptions?.find((opt) => opt.displayName === item.size);
-                  // 맛 옵션 정보 찾기
-                  const flavorOption = cakeFlavorOptions?.find(
-                    (opt) => opt.displayName === item.flavor,
-                  );
-
-                  return {
-                    // 사이즈 옵션 정보 (있는 경우만)
-                    ...(sizeOption && {
-                      sizeId: sizeOption.id,
-                      sizeDisplayName: sizeOption.displayName,
-                      sizeLengthCm: sizeOption.lengthCm,
-                      sizeDescription: sizeOption.description,
-                      sizePrice: sizeOption.price,
-                    }),
-                    // 맛 옵션 정보 (있는 경우만)
-                    ...(flavorOption && {
-                      flavorId: flavorOption.id,
-                      flavorDisplayName: flavorOption.displayName,
-                      flavorPrice: flavorOption.price,
-                    }),
-                    // 기타 옵션
-                    ...(item.letteringMessage && {
-                      letteringMessage: item.letteringMessage,
-                    }),
-                    ...(item.requestMessage && {
-                      requestMessage: item.requestMessage,
-                    }),
-                    quantity: item.quantity,
-                    imageUrls: uploadedImageUrls,
-                  };
-                }),
-              );
-
-              // API 요청 데이터 구성 (주문 시점의 정보 전달)
-              const orderRequest: CreateOrderRequest = {
-                pickupDate: selectedDate ? selectedDate.toISOString() : "",
-                productId,
-                productName: cakeTitle,
-                productImages:
-                  cakeImages.length > 0 ? cakeImages : cakeImageUrl ? [cakeImageUrl] : [],
-                totalQuantity,
-                totalPrice,
-                storeName,
-                // 예약자 연락처 (입력된 경우만 전달)
-                ...(reserverName.trim() && { reservationContactName: reserverName.trim() }),
-                ...(reserverPhone.trim() && { reservationPhone: reserverPhone.trim() }),
-                // 픽업 정보
-                pickupAddress,
-                pickupRoadAddress,
-                pickupDetailAddress,
-                pickupZonecode,
-                pickupLatitude,
-                pickupLongitude,
-                items: itemsWithImageUrls,
-              };
-
-              // API 호출
-              createOrder(orderRequest);
-            }}
+            onClick={handleCreateOrder}
             disabled={
               orderItems.length === 0 ||
               !reserverName.trim() ||
               !reserverPhone.trim() ||
               !allAgreed ||
-              isCreatingOrder
+              isSubmitting
             }
           >
-            {isCreatingOrder
-              ? "처리 중..."
-              : productType === "BASIC_CAKE"
-                ? "예약하기"
-                : "예약신청"}
+            {isSubmitting ? (
+              <span className="inline-flex items-center justify-center">
+                <Spinner size={20} className="text-white" />
+              </span>
+            ) : productType === "BASIC_CAKE" ? (
+              "예약하기"
+            ) : (
+              "예약신청"
+            )}
           </Button>
         </div>
       </div>

@@ -10,19 +10,32 @@ interface UserCurrentLocationState {
   address: string | null;
   selectedRegion: RegionMatchResult | null;
 
+  /** 사용자가 「내 위치」「현재 위치로 설정」등으로 명시적으로 요청했는지 */
+  isLocationRequestUserInitiated: boolean;
+  /** 위치 권한 거부 안내 모달 */
+  isLocationPermissionModalOpen: boolean;
+
   // 액션
   setLocation: (latitude: number, longitude: number) => void;
   setAddress: (address: string) => void;
   setSelectedRegion: (region: RegionMatchResult | null) => void;
   clearLocation: () => void;
+  markLocationRequestUserInitiated: () => void;
+  clearLocationRequestFlag: () => void;
+  openLocationPermissionModal: () => void;
+  closeLocationPermissionModal: () => void;
+  /** 권한 거부/실패 처리 — user-initiated일 때만 모달 표시 */
+  handleLocationRequestFailure: () => void;
 }
 
-export const useUserCurrentLocationStore = create<UserCurrentLocationState>()((set) => ({
+export const useUserCurrentLocationStore = create<UserCurrentLocationState>()((set, get) => ({
   // 초기 상태
   latitude: null,
   longitude: null,
   address: null,
   selectedRegion: null,
+  isLocationRequestUserInitiated: false,
+  isLocationPermissionModalOpen: false,
 
   // 위치 설정
   setLocation: (latitude: number, longitude: number) => {
@@ -47,5 +60,29 @@ export const useUserCurrentLocationStore = create<UserCurrentLocationState>()((s
       address: null,
       selectedRegion: null,
     });
+  },
+
+  markLocationRequestUserInitiated: () => {
+    set({ isLocationRequestUserInitiated: true });
+  },
+
+  clearLocationRequestFlag: () => {
+    set({ isLocationRequestUserInitiated: false });
+  },
+
+  openLocationPermissionModal: () => {
+    set({ isLocationPermissionModalOpen: true });
+  },
+
+  closeLocationPermissionModal: () => {
+    set({ isLocationPermissionModalOpen: false });
+  },
+
+  handleLocationRequestFailure: () => {
+    const { isLocationRequestUserInitiated } = get();
+    set({ isLocationRequestUserInitiated: false });
+    if (isLocationRequestUserInitiated) {
+      set({ isLocationPermissionModalOpen: true });
+    }
   },
 }));

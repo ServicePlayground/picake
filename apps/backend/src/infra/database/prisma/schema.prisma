@@ -84,6 +84,8 @@ model Qna {
 model HomeBanner {
   id        String    @id @default(cuid())
   imageUrl  String    @map("image_url")
+  /// 이미지 가로 정렬 (구매자 화면 폭이 좁을 때 잘리는 방향 제어)
+  imageAlign HomeBannerImageAlign @default(CENTER) @map("image_align")
   linkUrl   String?   @map("link_url")
   /// 노출 시작 시각 (null이면 즉시 노출)
   startsAt  DateTime? @map("starts_at")
@@ -609,6 +611,8 @@ model Order {
   refundBankName StoreBankName? @map("refund_bank_name")
   refundBankAccountNumber String? @map("refund_bank_account_number")
   refundAccountHolderName String? @map("refund_account_holder_name")
+  /** 픽업 24시간 전 안내(알림톡·푸시) 발송 시각. 미발송이면 null */
+  pickupReminderSentAt DateTime? @map("pickup_reminder_sent_at")
 
   // 시스템 필드
   createdAt DateTime @default(now()) @map("created_at")
@@ -627,6 +631,7 @@ model Order {
   @@index([productId]) // 상품별 주문 조회
   @@index([orderStatus]) // 주문 상태별 조회
   @@index([orderStatus, paymentPendingDeadlineAt]) // 입금대기 만료 배치
+  @@index([orderStatus, pickupDate, pickupReminderSentAt]) // 픽업 24시간 전 안내 배치
   @@index([orderNumber]) // 주문 번호로 조회
   @@index([pickupDate]) // 픽업 예정/지난 예약 필터
   @@index([pickupLatitude, pickupLongitude]) // 위치 기반 검색을 위한 인덱스
@@ -835,6 +840,13 @@ enum AdminApprovalStatus {
   PENDING  // 승인 대기
   APPROVED // 승인 완료
   REJECTED // 거절
+}
+
+/// 홈 배너 이미지 가로 정렬
+enum HomeBannerImageAlign {
+  LEFT   // 왼쪽 정렬 (오른쪽부터 잘림)
+  CENTER // 가운데 정렬 (양쪽 균등하게 잘림)
+  RIGHT  // 오른쪽 정렬 (왼쪽부터 잘림)
 }
 
 enum EnableStatus {

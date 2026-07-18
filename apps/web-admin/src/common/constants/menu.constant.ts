@@ -1,5 +1,5 @@
 import React from "react";
-import { Home, ShoppingBag, Store, ShieldCheck } from "lucide-react";
+import { BarChart3, Home, ShoppingBag, Store, ShieldCheck } from "lucide-react";
 import { ROUTES } from "./paths.constant";
 
 export interface MenuChildItem {
@@ -22,9 +22,20 @@ export function getMenuItems(): MenuItem[] {
       path: ROUTES.ROOT,
     },
     {
+      text: "통계",
+      icon: React.createElement(BarChart3, { className: "w-5 h-5" }),
+      children: [
+        { text: "회원 통계", path: ROUTES.STATISTICS.USERS },
+        { text: "주문·매출 통계", path: ROUTES.STATISTICS.ORDERS },
+        { text: "스토어 통계", path: ROUTES.STATISTICS.STORES },
+        { text: "입점 통계", path: ROUTES.STATISTICS.STORE_ENTRY_REQUESTS },
+      ],
+    },
+    {
       text: "구매자",
       icon: React.createElement(ShoppingBag, { className: "w-5 h-5" }),
       children: [
+        { text: "회원 관리", path: ROUTES.CONSUMER.MEMBERS },
         { text: "홈 배너 관리", path: ROUTES.CONSUMER.HOME_BANNERS },
         { text: "공지사항 관리", path: ROUTES.CONSUMER.NOTICES },
         { text: "Q&A 관리", path: ROUTES.CONSUMER.QNAS },
@@ -34,7 +45,11 @@ export function getMenuItems(): MenuItem[] {
     {
       text: "판매자",
       icon: React.createElement(Store, { className: "w-5 h-5" }),
-      children: [{ text: "약관 관리", path: ROUTES.SELLER.TERMS }],
+      children: [
+        { text: "회원 관리", path: ROUTES.SELLER.MEMBERS },
+        { text: "스토어 관리", path: ROUTES.SELLER.STORES },
+        { text: "약관 관리", path: ROUTES.SELLER.TERMS },
+      ],
     },
     {
       text: "관리자",

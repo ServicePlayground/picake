@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { ChatRoom } from "@/apps/web-user/features/chat/types/chat.type";
 import { formatRelativeTime } from "@/apps/web-user/common/utils/date.util";
+import { EmptyState } from "@/apps/web-user/common/components/fallbacks/EmptyState";
 
 interface ChatRoomListProps {
   chatRooms: ChatRoom[];
@@ -11,11 +12,7 @@ interface ChatRoomListProps {
 
 export const ChatRoomList: React.FC<ChatRoomListProps> = ({ chatRooms }) => {
   if (chatRooms.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-        <p>채팅방이 없습니다.</p>
-      </div>
-    );
+    return <EmptyState message="채팅방이 없습니다." />;
   }
 
   return (

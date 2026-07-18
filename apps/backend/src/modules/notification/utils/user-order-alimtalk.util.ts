@@ -23,6 +23,8 @@ export interface UserOrderAlimtalkOrderInfo {
   orderNumber: string;
   storeName: string | null;
   consumerName: string | null;
+  /** 주문 시 입력한 예약자명 (`reservationContactName`) */
+  reservationContactName: string | null;
   productName: string | null;
   totalPrice: number;
   pickupDate: Date | null;
@@ -67,38 +69,67 @@ function buildPickupAddress(order: UserOrderAlimtalkOrderInfo): string {
   return order.pickupDetailAddress ? `${base} ${order.pickupDetailAddress}`.trim() : base;
 }
 
+function buildCommonVariables(order: UserOrderAlimtalkOrderInfo): Record<string, string> | null {
+  const linkVariables = buildUserOrderAlimtalkLinkVariables(order.publicUserDomain, order.orderId);
+  if (!linkVariables) return null;
+
+  return {
+    ...linkVariables,
+    "#{고객명}": order.consumerName ?? "고객",
+    "#{스토어명}": order.storeName ?? "",
+    "#{주문번호}": order.orderNumber,
+    "#{상품명}": order.productName ?? "",
+  };
+}
+
+/**
+ * 템플릿4 픽업 24시간 전 안내 알림톡 페이로드.
+ * - 상태 전환과 무관하게 배치/동기화에서 호출합니다.
+ * - 길찾기 버튼은 `#{위도}`, `#{경도}`, `#{스토어명}`을 사용합니다.
+ */
+export function buildPickupReminderAlimtalkPayload(
+  order: UserOrderAlimtalkOrderInfo,
+): UserOrderAlimtalkPayload | null {
+  const base = buildCommonVariables(order);
+  if (!base) return null;
+
+  const templateId = USER_ORDER_ALIMTALK_TEMPLATE_IDS.PICKUP_PENDING;
+  if (!templateId) return null;
+
+  const 예약자명 = order.reservationContactName ?? order.consumerName ?? "고객";
+
+  return {
+    templateId,
+    variables: {
+      ...base,
+      "#{예약자명}": 예약자명,
+      "#{픽업일시}": formatDateTime(order.pickupDate),
+      "#{픽업주소}": buildPickupAddress(order),
+      "#{위도}": order.pickupLatitude != null ? String(order.pickupLatitude) : "",
+      "#{경도}": order.pickupLongitude != null ? String(order.pickupLongitude) : "",
+    },
+  };
+}
+
 /**
  * 주문 상태 전환 → 구매자 알림톡 페이로드(템플릿 ID + 변수).
  *
  * - 템플릿 ID가 비어 있거나(미등록) 매핑이 없는 상태·케이스는 `null`을 반환해 발송을 건너뜁니다.
  * - WL 버튼 URL 형식·등록 가이드는 `USER_ORDER_ALIMTALK_BUTTON_URLS` 참고.
- * - 픽업대기 템플릿 길찾기는 `#{위도}`, `#{경도}`를 추가로 공급합니다.
+ * - 픽업 24시간 전 안내는 상태 전환이 아니라 `buildPickupReminderAlimtalkPayload`로 발송합니다.
  */
 export function buildUserOrderAlimtalkPayload(
   payload: Pick<OrderStatusTransitionPayload, "fromStatus" | "toStatus" | "source">,
   order: UserOrderAlimtalkOrderInfo,
 ): UserOrderAlimtalkPayload | null {
-  const linkVariables = buildUserOrderAlimtalkLinkVariables(order.publicUserDomain, order.orderId);
-  if (!linkVariables) return null;
+  const base = buildCommonVariables(order);
+  if (!base) return null;
 
   const T = USER_ORDER_ALIMTALK_TEMPLATE_IDS;
 
-  const 고객명 = order.consumerName ?? "고객";
-  const 스토어명 = order.storeName ?? "";
-  const 주문번호 = order.orderNumber;
-  const 상품명 = order.productName ?? "";
   const 결제금액 = formatPrice(order.totalPrice);
   const 픽업일시 = formatDateTime(order.pickupDate);
   const 픽업주소 = buildPickupAddress(order);
-
-  /** 모든 템플릿 공통 (본문 + WL 버튼 링크 변수) */
-  const base: Record<string, string> = {
-    ...linkVariables,
-    "#{고객명}": 고객명,
-    "#{스토어명}": 스토어명,
-    "#{주문번호}": 주문번호,
-    "#{상품명}": 상품명,
-  };
 
   const emit = (
     templateId: string,
@@ -123,7 +154,6 @@ export function buildUserOrderAlimtalkPayload(
         ...base,
         "#{결제금액}": 결제금액,
         "#{입금마감}": formatDateTime(order.paymentPendingDeadlineAt),
-        "#{픽업일시}": 픽업일시,
         "#{은행명}": formatBankLabel(order.storeBankName),
         "#{계좌번호}": order.storeBankAccountNumber ?? "",
         "#{예금주}": order.storeAccountHolderName ?? "",
@@ -140,16 +170,9 @@ export function buildUserOrderAlimtalkPayload(
       });
     }
 
-    // 템플릿4 픽업대기 (픽업 시각 자동 전환)
-    case OrderStatus.PICKUP_PENDING: {
-      return emit(T.PICKUP_PENDING, {
-        ...base,
-        "#{픽업일시}": 픽업일시,
-        "#{픽업주소}": 픽업주소,
-        "#{위도}": order.pickupLatitude != null ? String(order.pickupLatitude) : "",
-        "#{경도}": order.pickupLongitude != null ? String(order.pickupLongitude) : "",
-      });
-    }
+    // 템플릿4 픽업 안내는 픽업 24시간 전 배치에서 발송 (상태 전환 시 미발송)
+    case OrderStatus.PICKUP_PENDING:
+      return null;
 
     // 템플릿5 픽업완료 (판매자 처리)
     case OrderStatus.PICKUP_COMPLETED: {

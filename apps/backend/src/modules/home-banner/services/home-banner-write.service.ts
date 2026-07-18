@@ -36,6 +36,7 @@ export class HomeBannerWriteService {
     return this.prisma.homeBanner.create({
       data: {
         imageUrl: dto.imageUrl,
+        imageAlign: dto.imageAlign ?? undefined,
         linkUrl: dto.linkUrl ?? null,
         startsAt,
         endsAt,
@@ -63,6 +64,7 @@ export class HomeBannerWriteService {
 
     const data: Prisma.HomeBannerUpdateInput = {};
     if (dto.imageUrl !== undefined) data.imageUrl = dto.imageUrl;
+    if (dto.imageAlign !== undefined) data.imageAlign = dto.imageAlign;
     if (dto.linkUrl !== undefined) data.linkUrl = dto.linkUrl;
     if (dto.startsAt !== undefined) data.startsAt = startsAt;
     if (dto.endsAt !== undefined) data.endsAt = endsAt;

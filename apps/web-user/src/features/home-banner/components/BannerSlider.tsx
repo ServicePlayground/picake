@@ -5,7 +5,15 @@ import Link from "next/link";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Pagination, Autoplay } from "swiper/modules";
 import { useHomeBanners } from "@/apps/web-user/features/home-banner/hooks/queries/useHomeBanners";
+import type { HomeBannerImageAlign } from "@/apps/web-user/features/home-banner/types/home-banner.type";
 import { Skeleton } from "@/apps/web-user/common/components/skeleton/Skeleton";
+
+/** 정렬값 → object-position (이미지가 화면보다 넓을 때 잘리는 방향 제어) */
+const ALIGN_OBJECT_POSITION: Record<HomeBannerImageAlign, string> = {
+  LEFT: "left center",
+  CENTER: "center center",
+  RIGHT: "right center",
+};
 
 function updateBullets(bullets: HTMLElement[], activeIndex: number) {
   bullets.forEach((bullet, i) => {
@@ -33,14 +41,24 @@ function updateBullets(bullets: HTMLElement[], activeIndex: number) {
 function BannerSlideImage({
   src,
   alt,
+  align,
   priority,
 }: {
   src: string;
   alt: string;
+  align: HomeBannerImageAlign;
   priority?: boolean;
 }) {
   return (
-    <Image src={src} alt={alt} fill className="object-cover" priority={priority} sizes="100vw" />
+    <Image
+      src={src}
+      alt={alt}
+      fill
+      className="object-cover"
+      style={{ objectPosition: ALIGN_OBJECT_POSITION[align] }}
+      priority={priority}
+      sizes="100vw"
+    />
   );
 }
 
@@ -85,7 +103,12 @@ export default function BannerSlider() {
       >
         {banners.map((banner, idx) => {
           const slideContent = (
-            <BannerSlideImage src={banner.imageUrl} alt={`배너 ${idx + 1}`} priority={idx === 0} />
+            <BannerSlideImage
+              src={banner.imageUrl}
+              alt={`배너 ${idx + 1}`}
+              align={banner.imageAlign ?? "CENTER"}
+              priority={idx === 0}
+            />
           );
 
           return (

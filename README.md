@@ -73,7 +73,7 @@ yarn web-seller:storybook       # 판매자 스토리북 실행
 
 | 프로젝트     | 태그 형식                                          | 배포 플랫폼 | 예시                         |
 | ------------ | -------------------------------------------------- | ----------- | ---------------------------- |
-| `backend`    | `backend/staging-*`                                | AWS EC2     | `backend/staging-v1.0.0`     |
+| `backend`    | `backend/staging-*` · `backend/production-*`       | AWS EC2     | `backend/production-v1.0.0`  |
 | `web-user`   | `web-user/staging-*` · `web-user/production-*`     | Vercel      | `web-user/production-v1.0.0` |
 | `web-seller` | `web-seller/staging-*` · `web-seller/production-*` | Vercel      | `web-seller/staging-v1.0.0`  |
 | `web-admin`  | `web-admin/staging-*` · `web-admin/production-*`   | Vercel      | `web-admin/staging-v1.0.0`   |

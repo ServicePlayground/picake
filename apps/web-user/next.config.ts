@@ -4,6 +4,16 @@ import { withSentryConfig } from "@sentry/nextjs";
 const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ["swiper", "lucide-react"],
+    /**
+     * 클라이언트 라우터 캐시 유지 시간(초).
+     * Next 15 기본값은 dynamic 0이라 탭 이동·뒤로가기마다 서버 왕복이 발생해
+     * 웹뷰에서 페이지 전환이 느리게 느껴짐 — 최근 방문 페이지는 캐시로 즉시 복원.
+     * (페이지 데이터 신선도는 TanStack Query staleTime이 별도로 관리)
+     */
+    staleTimes: {
+      dynamic: 30,
+      static: 180,
+    },
   },
   env: {
     /** GitHub Actions 빌드 커밋 SHA를 클라이언트에 주입합니다. */

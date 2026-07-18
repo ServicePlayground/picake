@@ -7,6 +7,7 @@ import { useMarkAlarmRead } from "@/apps/web-user/features/alarm/hooks/mutations
 import { Icon } from "@/apps/web-user/common/components/icons";
 import { AlarmSkeleton } from "@/apps/web-user/common/components/skeleton/AlarmSkeleton";
 import { useAuthStore, useAuthHasHydrated } from "@/apps/web-user/common/store/auth.store";
+import { EmptyState } from "@/apps/web-user/common/components/fallbacks/EmptyState";
 
 export default function AlarmPage() {
   const hasHydrated = useAuthHasHydrated();
@@ -20,24 +21,16 @@ export default function AlarmPage() {
     <div className="flex flex-col min-h-[calc(100vh-52px)]">
       <main className="flex-1 flex flex-col">
         {showLoginHint ? (
-          <div className="flex-1 flex flex-col gap-[10px] items-center justify-center mb-[52px] px-5">
-            <Icon name="alarm" width={60} height={40} className="text-gray-200" />
-            <p className="text-sm text-gray-700 text-center">
-              로그인하면 주문 알림을 받을 수 있어요
-            </p>
-          </div>
+          <EmptyState message="아직 알림이 없습니다." className="flex-1 mb-[52px] px-5" />
         ) : isLoading ? (
           <AlarmSkeleton />
         ) : alarms.length === 0 ? (
-          <div className="flex-1 flex flex-col gap-[10px] items-center justify-center mb-[52px]">
-            <Icon name="alarm" width={60} height={40} className="text-gray-200" />
-            <p className="text-sm text-gray-700 text-center">아직 알림이 없어요</p>
-          </div>
+          <EmptyState message="아직 알림이 없습니다." className="flex-1 mb-[52px]" />
         ) : (
           <ul className="px-5">
             {alarms.map((alarm) => {
               const href = alarm.orderId
-                ? `/reservation/complete?orderId=${alarm.orderId}`
+                ? `/reservation/complete?orderId=${alarm.orderId}&from=alarm`
                 : "/alarm";
               return (
                 <li key={alarm.id}>
@@ -51,24 +44,27 @@ export default function AlarmPage() {
                     className="flex items-center gap-[10px] py-[14px] border-b border-gray-100 last:border-b-0"
                   >
                     <div className="w-[42px] h-[42px] rounded-full overflow-hidden bg-gray-200 shrink-0">
-                      <Image
-                        src={alarm.imageUrl ?? "/images/contents/none_alarm_user.png"}
-                        alt={alarm.title}
-                        width={42}
-                        height={42}
-                        className="object-cover w-full h-full"
-                        unoptimized
-                      />
+                      {alarm.imageUrl ? (
+                        <Image
+                          src={alarm.imageUrl}
+                          alt={alarm.title}
+                          width={42}
+                          height={42}
+                          className="object-cover w-full h-full"
+                          unoptimized
+                        />
+                      ) : (
+                        <Icon name="noneAlarm" width={42} height={42} />
+                      )}
                     </div>
 
                     <div className="flex-1 flex flex-col gap-[6px] min-w-0">
                       <p className="text-sm font-bold text-gray-900 truncate">{alarm.title}</p>
-                      <p className="text-sm text-gray-700 truncate">{alarm.content}</p>
+                      <p className="text-sm text-gray-700 line-clamp-2">{alarm.content}</p>
                     </div>
 
                     <div className="flex flex-col gap-0.5 self-start shrink-0 text-xs text-gray-400 items-end text-right">
-                      {alarm.date ? <span>{alarm.date}</span> : null}
-                      <span>{alarm.time}</span>
+                      <span>{alarm.date ? `${alarm.date} ${alarm.time}` : alarm.time}</span>
                       {alarm.read === false && (
                         <span className="text-[10px] font-bold text-primary">NEW</span>
                       )}

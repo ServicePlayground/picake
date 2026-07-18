@@ -20,6 +20,9 @@ declare global {
     mylocation: {
       postMessage: (message: string) => void;
     };
+    openAppSettings: {
+      postMessage: (message: string) => void;
+    };
     requestFcmTokenUpsert: {
       postMessage: (message: string) => void;
     };
@@ -29,12 +32,19 @@ declare global {
 
     // Flutter -> 웹뷰
     receiveLocation: (latitude: string | number, longitude: string | number) => void;
+    /** 위치 권한 거부 또는 위치 취득 실패 시 Flutter가 호출 */
+    receiveLocationError: (reason?: string) => void;
     FcmToken: {
       upsert: (fcmToken: FcmToken) => void;
       remove: (fcmToken: Omit<FcmToken, "token">) => void;
     };
   }
 }
+
+export type RequestLocationOptions = {
+  /** 사용자가 「내 위치」「현재 위치로 설정」등으로 명시적으로 요청한 경우 */
+  userInitiated?: boolean;
+};
 
 // ============================================================================
 // 웹뷰 -> Flutter
@@ -43,13 +53,32 @@ declare global {
 /**
  * 앱에서 위치 정보를 요청하는 웹뷰 통신 함수
  * Flutter 앱에 위치 정보 요청 메시지를 전송합니다.
- * 앱에서 위치 정보를 받으면 window.receiveLocation 함수가 호출됩니다.
+ * 성공 시 window.receiveLocation, 실패/권한거부 시 window.receiveLocationError가 호출됩니다.
  */
-export function requestLocationFromWebView(): void {
+export function requestLocationFromWebView(options?: RequestLocationOptions): void {
+  if (options?.userInitiated) {
+    useUserCurrentLocationStore.getState().markLocationRequestUserInitiated();
+  }
+
   try {
     window.mylocation.postMessage("true");
   } catch (error) {
     console.error("위치 정보 요청 중 오류가 발생했습니다:", error);
+    if (options?.userInitiated) {
+      useUserCurrentLocationStore.getState().handleLocationRequestFailure();
+    }
+  }
+}
+
+/**
+ * OS 앱 설정 화면을 열도록 Flutter에 요청합니다.
+ * (위치 권한 등 앱 권한 변경용)
+ */
+export function requestOpenAppSettings(): void {
+  try {
+    window.openAppSettings.postMessage("true");
+  } catch (error) {
+    console.error("앱 설정 화면 열기 요청 중 오류가 발생했습니다:", error);
   }
 }
 
@@ -87,12 +116,14 @@ export function isWebViewEnvironment(): boolean {
 
 /**
  * 웹뷰 브릿지 초기화 훅
- * Flutter 앱에서 window.Auth.login, window.Auth.logout, window.receiveLocation을 호출할 수 있도록 등록합니다.
+ * Flutter 앱에서 window.receiveLocation, window.receiveLocationError, window.FcmToken을
+ * 호출할 수 있도록 등록합니다.
  * 이 훅은 앱 초기화 시 한 번 호출되어야 합니다.
  */
 export function useWebViewBridge() {
   const { login, handleLogoutByEnvironment, isAuthenticated, accessToken } = useAuthStore();
-  const { setLocation, setAddress } = useUserCurrentLocationStore();
+  const { setLocation, setAddress, clearLocationRequestFlag, handleLocationRequestFailure } =
+    useUserCurrentLocationStore();
   const { mutate: upsertConsumerFcmToken } = useUpsertConsumerFcmToken();
   const { mutate: removeConsumerFcmToken } = useRemoveConsumerFcmToken();
 
@@ -107,6 +138,14 @@ export function useWebViewBridge() {
       const latNumber = typeof latitude === "string" ? parseFloat(latitude) : latitude;
       const lngNumber = typeof longitude === "string" ? parseFloat(longitude) : longitude;
 
+      if (Number.isNaN(latNumber) || Number.isNaN(lngNumber)) {
+        // userInitiated 플래그가 남아 있어야 모달 표시 가능
+        handleLocationRequestFailure();
+        return;
+      }
+
+      clearLocationRequestFlag();
+
       // 전역 상태(Zustand store)에 위치 정보 저장
       setLocation(latNumber, lngNumber);
 
@@ -114,6 +153,11 @@ export function useWebViewBridge() {
       reverseGeocode(latNumber, lngNumber).then((result) => {
         if (result) setAddress(result);
       });
+    };
+
+    // 위치 권한 거부 / 취득 실패
+    window.receiveLocationError = () => {
+      handleLocationRequestFailure();
     };
 
     // Flutter 앱에서 호출할 수 있도록 window.FcmToken 객체 초기화
@@ -154,7 +198,7 @@ export function useWebViewBridge() {
       },
     };
 
-    // 환경에 따라 자동으로 위치 요청
+    // 환경에 따라 자동으로 위치 요청 (자동 요청은 userInitiated=false → 거부 시 모달 안 띄움)
     const hasStoredRegion = !!localStorage.getItem("picake:selected-region");
 
     if (isWebViewEnvironment()) {
@@ -171,7 +215,7 @@ export function useWebViewBridge() {
         },
         (error) => {
           console.error("브라우저 위치 정보 요청 실패:", error.message);
-          // 위치 권한 거부 시 기본값: 강남구
+          // 위치 권한 거부 시 기본값: 강남구 (자동 요청이므로 모달 없음)
           setAddress("서울특별시 강남구");
         },
       );
@@ -181,6 +225,8 @@ export function useWebViewBridge() {
     handleLogoutByEnvironment,
     setLocation,
     setAddress,
+    clearLocationRequestFlag,
+    handleLocationRequestFailure,
     upsertConsumerFcmToken,
     removeConsumerFcmToken,
     isAuthenticated,

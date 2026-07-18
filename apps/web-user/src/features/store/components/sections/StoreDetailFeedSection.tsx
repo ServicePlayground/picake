@@ -7,6 +7,7 @@ import { Pagination } from "swiper/modules";
 import DOMPurify from "isomorphic-dompurify";
 import { Feed } from "@/apps/web-user/features/feed/types/feed.type";
 import { useStoreFeeds } from "@/apps/web-user/features/feed/hooks/queries/useStoreFeeds";
+import { EmptyState } from "@/apps/web-user/common/components/fallbacks/EmptyState";
 
 interface StoreDetailFeedSectionProps {
   storeId: string;
@@ -168,7 +169,7 @@ export function StoreDetailFeedSection({ storeId }: StoreDetailFeedSectionProps)
   }
 
   if (!feedData?.data || feedData.data.length === 0) {
-    return <div className="text-center text-gray-500 py-8">등록된 피드가 없습니다.</div>;
+    return <EmptyState message="등록된 피드가 없습니다." />;
   }
 
   return (

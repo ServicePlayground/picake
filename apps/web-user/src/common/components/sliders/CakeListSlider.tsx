@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { Product } from "@/apps/web-user/features/product/types/product.type";
 import { CakeListItem } from "@/apps/web-user/features/product/components/cards/CakeListItem";
 import { Skeleton, SkeletonText } from "@/apps/web-user/common/components/skeleton";
+import { EmptyState } from "@/apps/web-user/common/components/fallbacks/EmptyState";
 
 interface CakeListSliderProps {
   title: string;
@@ -66,7 +67,7 @@ export default function CakeListSlider({
           ))}
         </div>
       ) : products.length === 0 ? (
-        <div className="text-center p-10 text-gray-500 text-sm">등록된 상품이 없습니다.</div>
+        <EmptyState message="등록된 상품이 없습니다." />
       ) : (
         <div
           ref={scrollRef}
