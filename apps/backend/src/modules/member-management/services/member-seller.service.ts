@@ -36,6 +36,9 @@ export class MemberSellerService {
       ...buildMemberStatusWhere(query.status),
       ...buildMemberSearchWhere(query.search),
       ...(query.verificationStatus ? { sellerVerificationStatus: query.verificationStatus } : {}),
+      ...(query.segmentKey
+        ? { segmentMemberships: { some: { segment: { key: query.segmentKey } } } }
+        : {}),
     };
 
     const [rows, totalItems] = await Promise.all([
@@ -50,7 +53,7 @@ export class MemberSellerService {
     ]);
 
     return {
-      data: rows,
+      data: rows.map(mapSellerRow),
       meta: calculatePaginationMeta(page, limit, totalItems),
     };
   }
@@ -74,10 +77,20 @@ export class MemberSellerService {
       throw new BadRequestException(MEMBER_MANAGEMENT_ERROR_MESSAGES.MEMBER_WITHDRAWN);
     }
 
-    return this.prisma.seller.update({
+    const updated = await this.prisma.seller.update({
       where: { id: sellerId },
       data: { isActive: dto.isActive },
       select: MEMBER_SELLER_SELECT,
     });
+
+    return mapSellerRow(updated);
   }
+}
+
+/** MEMBER_SELLER_SELECT 원본 형태(segmentMemberships)를 응답 DTO 형태(segments)로 변환 */
+function mapSellerRow<
+  T extends { segmentMemberships: { segment: { key: string; label: string } }[] },
+>(row: T): Omit<T, "segmentMemberships"> & { segments: { key: string; label: string }[] } {
+  const { segmentMemberships, ...rest } = row;
+  return { ...rest, segments: segmentMemberships.map((m) => m.segment) };
 }

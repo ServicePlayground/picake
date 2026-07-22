@@ -50,4 +50,5 @@ export const MEMBER_SELLER_SELECT = {
   createdAt: true,
   lastLoginAt: true,
   stores: { select: { id: true, name: true } },
+  segmentMemberships: { select: { segment: { select: { key: true, label: true } } } },
 } as const;

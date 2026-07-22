@@ -34,6 +34,7 @@ export function MemberSellerTable({ items, onToggleActive, isBusy }: MemberSelle
             <th className={cn("px-4 py-3 text-left", LIST_TABLE_HEAD)}>소셜 연동</th>
             <th className={cn("px-4 py-3 text-left", LIST_TABLE_HEAD)}>검증 상태</th>
             <th className={cn("px-4 py-3 text-left", LIST_TABLE_HEAD)}>스토어</th>
+            <th className={cn("px-4 py-3 text-left", LIST_TABLE_HEAD)}>세그먼트</th>
             <th className={cn("px-4 py-3 text-left", LIST_TABLE_HEAD)}>상태</th>
             <th className={cn("px-4 py-3 text-left", LIST_TABLE_HEAD)}>가입일시</th>
             <th className={cn("px-4 py-3 text-left", LIST_TABLE_HEAD)}>관리</th>
@@ -62,6 +63,19 @@ export function MemberSellerTable({ items, onToggleActive, isBusy }: MemberSelle
                 </td>
                 <td className={cn("px-4 py-3", LIST_TABLE_CELL_MUTED)}>
                   {item.stores.length > 0 ? item.stores.map((store) => store.name).join(", ") : "-"}
+                </td>
+                <td className={cn("px-4 py-3", LIST_TABLE_CELL)}>
+                  {item.segments.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {item.segments.map((segment) => (
+                        <StatusBadge key={segment.key} variant="info">
+                          {segment.label}
+                        </StatusBadge>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className={LIST_TABLE_CELL_MUTED}>-</span>
+                  )}
                 </td>
                 <td className={cn("px-4 py-3", LIST_TABLE_CELL)}>
                   <StatusBadge variant={getMemberStatusBadgeVariant(status)}>

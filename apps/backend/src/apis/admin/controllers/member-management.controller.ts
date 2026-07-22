@@ -74,7 +74,8 @@ export class AdminMemberManagementController {
   @ApiOperation({
     summary: "(로그인 필요) 판매자 목록 조회",
     description:
-      "검색어(이름·닉네임·휴대폰 부분 일치), 상태(ACTIVE/INACTIVE/WITHDRAWN), 검증 상태(SellerVerificationStatus) 필터로 판매자를 조회합니다. 최신 가입순, 보유 스토어 포함.",
+      "검색어(이름·닉네임·휴대폰 부분 일치), 상태(ACTIVE/INACTIVE/WITHDRAWN), 검증 상태(SellerVerificationStatus), " +
+      "세그먼트 키(segmentKey) 필터로 판매자를 조회합니다. 최신 가입순, 보유 스토어·소속 세그먼트 포함.",
   })
   @SwaggerResponse(200, { dataDto: MemberSellerListResponseDto })
   @SwaggerAuthResponses()
