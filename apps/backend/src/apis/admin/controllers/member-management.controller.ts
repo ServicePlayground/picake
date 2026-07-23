@@ -54,7 +54,8 @@ export class AdminMemberManagementController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: "(로그인 필요) 구매자 계정 활성/비활성 변경",
-    description: "isActive: false면 계정 이용이 제한됩니다. 탈퇴한 회원은 변경할 수 없습니다.",
+    description:
+      "isActive: false면 로그인·인증 API 이용이 차단됩니다. 계정·연관 데이터는 유지되며, 다시 활성하면 기존과 동일하게 이용할 수 있습니다. 탈퇴한 회원은 변경할 수 없습니다.",
   })
   @SwaggerResponse(200, { dataDto: MemberConsumerItemResponseDto })
   @SwaggerAuthResponses()
@@ -73,7 +74,8 @@ export class AdminMemberManagementController {
   @ApiOperation({
     summary: "(로그인 필요) 판매자 목록 조회",
     description:
-      "검색어(이름·닉네임·휴대폰 부분 일치), 상태(ACTIVE/INACTIVE/WITHDRAWN), 검증 상태(SellerVerificationStatus) 필터로 판매자를 조회합니다. 최신 가입순, 보유 스토어 포함.",
+      "검색어(이름·닉네임·휴대폰 부분 일치), 상태(ACTIVE/INACTIVE/WITHDRAWN), 검증 상태(SellerVerificationStatus), " +
+      "세그먼트 키(segmentKey) 필터로 판매자를 조회합니다. 최신 가입순, 보유 스토어·소속 세그먼트 포함.",
   })
   @SwaggerResponse(200, { dataDto: MemberSellerListResponseDto })
   @SwaggerAuthResponses()
@@ -85,7 +87,8 @@ export class AdminMemberManagementController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: "(로그인 필요) 판매자 계정 활성/비활성 변경",
-    description: "isActive: false면 계정 이용이 제한됩니다. 탈퇴한 회원은 변경할 수 없습니다.",
+    description:
+      "isActive: false면 로그인·인증 API 이용이 차단됩니다. 계정·연관 데이터는 유지되며, 다시 활성하면 기존과 동일하게 이용할 수 있습니다. 탈퇴한 회원은 변경할 수 없습니다.",
   })
   @SwaggerResponse(200, { dataDto: MemberSellerItemResponseDto })
   @SwaggerAuthResponses()

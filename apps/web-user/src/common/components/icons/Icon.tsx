@@ -28,6 +28,7 @@ import Bullet from "./icons/bullet.svg";
 import Alarm from "./icons/alarm.svg";
 import Home from "./icons/home.svg";
 import Map from "./icons/map.svg";
+import MapFilled from "./icons/map-filled.svg";
 import Mypage from "./icons/mypage.svg";
 import CloseCircle from "./icons/close_circle.svg";
 import CheckCircle from "./icons/check_circle.svg";
@@ -60,6 +61,7 @@ import CardMore from "./icons/card_more.svg";
 import LogoPicake from "./icons/logo_picake.svg";
 import NoticeTop from "./icons/notice_top.svg";
 import MypageNav from "./icons/mypage_nav.svg";
+import MypageNavFilled from "./icons/mypage_nav-filled.svg";
 import NoneStore from "./icons/none-store.svg";
 import NoneAlarm from "./icons/none-alarm.svg";
 
@@ -99,6 +101,7 @@ export const iconTypes = {
   alarm: Alarm,
   home: Home,
   map: Map,
+  mapFilled: MapFilled,
   mypage: Mypage,
   closeCircle: CloseCircle,
   checkCircle: CheckCircle,
@@ -131,6 +134,7 @@ export const iconTypes = {
   logoPicake: LogoPicake,
   noticeTop: NoticeTop,
   mypageNav: MypageNav,
+  mypageNavFilled: MypageNavFilled,
   noneStore: NoneStore,
   noneAlarm: NoneAlarm,
 };

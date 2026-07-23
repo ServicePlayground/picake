@@ -32,6 +32,8 @@ export type MemberConsumerListQueryDto = MemberListQueryDto;
 /** 판매자 목록 조회 쿼리 */
 export interface MemberSellerListQueryDto extends MemberListQueryDto {
   verificationStatus?: SellerVerificationStatus;
+  /** 소속 세그먼트 키 필터 (예: EARLY_BIRD_2026) */
+  segmentKey?: string;
 }
 
 /** 구매자 목록 항목 */
@@ -61,6 +63,12 @@ export interface MemberSellerStoreDto {
   name: string;
 }
 
+/** 판매자가 소속된 세그먼트 요약 (얼리버드 등 향후 혜택 대상 구분) */
+export interface MemberSellerSegmentDto {
+  key: string;
+  label: string;
+}
+
 /** 판매자 목록 항목 */
 export interface MemberSellerItemResponseDto {
   id: string;
@@ -75,6 +83,7 @@ export interface MemberSellerItemResponseDto {
   kakaoEmail: string | null;
   sellerVerificationStatus: SellerVerificationStatus;
   stores: MemberSellerStoreDto[];
+  segments: MemberSellerSegmentDto[];
   lastLoginAt: string | null;
   createdAt: string;
 }

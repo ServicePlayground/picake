@@ -94,7 +94,7 @@ export default function MyReviewsPage() {
             />
           ))
         ) : (
-          <EmptyState message="후기가 없어요." className="min-h-[calc(100vh-52px)]" />
+          <EmptyState message="후기가 없어요." fill />
         )}
       </div>
 

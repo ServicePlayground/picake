@@ -57,7 +57,7 @@ export function StoreDetailProductListSection({ storeId }: StoreDetailProductLis
 
       {/* 상품 그리드 */}
       {products.length === 0 ? (
-        <EmptyState message="등록된 상품이 없습니다." />
+        <EmptyState message="등록된 상품이 없습니다." fill />
       ) : (
         <ProductList products={products} />
       )}

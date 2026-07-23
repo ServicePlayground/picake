@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export interface Tab {
   id: string;
@@ -15,16 +15,85 @@ export interface TabsProps {
   scrollOnSelect?: boolean;
   /** 스크롤 시 제외할 상단 고정 헤더 높이 (px, 기본 52 = 탭 바 sticky 기준) */
   scrollOffset?: number;
+  /** 콘텐츠 영역을 좌우로 스와이프해 이전/다음 탭으로 이동 (기본 false) */
+  swipeable?: boolean;
 }
 
-export function Tabs({ tabs, defaultTab, scrollOnSelect = false, scrollOffset = 52 }: TabsProps) {
+/** 스와이프로 인정할 최소 가로 이동 거리(px) */
+const SWIPE_THRESHOLD = 60;
+/** 세로 스크롤과 구분하기 위한 가로/세로 이동 비율 */
+const SWIPE_RATIO = 1.5;
+
+/**
+ * 터치 시작 지점이 가로 스크롤 요소(Swiper, 가로 리스트 등) 안이면 true.
+ * 해당 요소의 자체 가로 제스처를 탭 전환이 가로채지 않도록 한다.
+ */
+function isInsideHorizontalScroller(target: EventTarget | null, boundary: HTMLElement | null) {
+  let el = target instanceof HTMLElement ? target : null;
+  while (el && el !== boundary) {
+    if (el.classList.contains("swiper") || el.scrollWidth > el.clientWidth + 1) return true;
+    el = el.parentElement;
+  }
+  return false;
+}
+
+export function Tabs({
+  tabs,
+  defaultTab,
+  scrollOnSelect = false,
+  scrollOffset = 52,
+  swipeable = false,
+}: TabsProps) {
   const [activeTab, setActiveTab] = useState<string>(defaultTab || tabs[0]?.id || "");
   // sticky 탭 바는 붙어있을 때 위치가 52px로 고정돼 위치 계산이 불가하므로,
   // 바로 앞에 둔 비-sticky 앵커로 스크롤한다(scrollIntoView가 스크롤 컨테이너를 자동 탐색).
   const anchorRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  // 탭 전환 애니메이션 방향 (1: 다음 탭, -1: 이전 탭)
+  const [direction, setDirection] = useState<1 | -1>(1);
+  // 콘텐츠 영역이 화면 하단까지만 정확히 채우도록 실측한 최소 높이 (px)
+  const [contentMinHeight, setContentMinHeight] = useState<number>();
+
+  // 콘텐츠 상단 위치는 위쪽 영역(스토어 소개 등) 높이에 따라 달라지므로 CSS 고정값으로는
+  // 표현할 수 없다. 실제 위치를 재서 "화면 높이 - 콘텐츠 상단"을 최소 높이로 준다.
+  // 값이 크면 페이지가 넘쳐 불필요한 스크롤이 생기므로 실측이 필요하다.
+  useEffect(() => {
+    if (!swipeable) return;
+    const el = contentRef.current;
+    if (!el) return;
+
+    const measure = () => {
+      const top = el.getBoundingClientRect().top + window.scrollY;
+      setContentMinHeight(Math.max(0, window.innerHeight - top));
+    };
+
+    measure();
+
+    // 위쪽 콘텐츠(이미지 로드 등)로 레이아웃이 바뀌면 다시 측정
+    const observer = new ResizeObserver(measure);
+    observer.observe(document.body);
+    window.addEventListener("resize", measure);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [swipeable]);
+
+  /** 방향을 계산해 탭을 전환. 같은 탭이거나 없는 탭이면 무시 */
+  const selectTab = (tabId: string) => {
+    const from = tabs.findIndex((tab) => tab.id === activeTab);
+    const to = tabs.findIndex((tab) => tab.id === tabId);
+    if (to === -1 || to === from) return false;
+
+    setDirection(to > from ? 1 : -1);
+    setActiveTab(tabId);
+    return true;
+  };
 
   const handleTabClick = (tabId: string) => {
-    setActiveTab(tabId);
+    selectTab(tabId);
 
     if (!scrollOnSelect) return;
 
@@ -33,6 +102,38 @@ export function Tabs({ tabs, defaultTab, scrollOnSelect = false, scrollOffset = 
       // scroll-margin-top(scrollOffset) 덕분에 헤더 높이만큼 띄워서 멈춘다
       anchorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!swipeable) return;
+    if (isInsideHorizontalScroller(e.target, contentRef.current)) {
+      touchStartRef.current = null;
+      return;
+    }
+    const touch = e.touches[0];
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+    const start = touchStartRef.current;
+    touchStartRef.current = null;
+    if (!swipeable || !start) return;
+
+    const touch = e.changedTouches[0];
+    const dx = touch.clientX - start.x;
+    const dy = touch.clientY - start.y;
+
+    // 세로 스크롤 중이거나 이동량이 작으면 무시
+    if (Math.abs(dx) < SWIPE_THRESHOLD || Math.abs(dx) < Math.abs(dy) * SWIPE_RATIO) return;
+
+    const currentIndex = tabs.findIndex((tab) => tab.id === activeTab);
+    if (currentIndex === -1) return;
+
+    // 왼쪽으로 스와이프 → 다음 탭, 오른쪽 → 이전 탭. 양 끝에서는 그대로 유지
+    const nextIndex = dx < 0 ? currentIndex + 1 : currentIndex - 1;
+    if (nextIndex < 0 || nextIndex >= tabs.length) return;
+
+    selectTab(tabs[nextIndex].id);
   };
 
   return (
@@ -57,8 +158,28 @@ export function Tabs({ tabs, defaultTab, scrollOnSelect = false, scrollOffset = 
         ))}
       </div>
 
-      {/* 탭 컨텐츠 */}
-      <div className="py-[24px] px-[20px]">{tabs.find((tab) => tab.id === activeTab)?.content}</div>
+      {/* 탭 컨텐츠 (스와이프 시: 콘텐츠가 짧아도 화면 아래까지 터치 영역을 확보) */}
+      <div
+        ref={contentRef}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        className={`py-[24px] px-[20px] ${swipeable ? "flex flex-col" : ""}`}
+        style={swipeable ? { minHeight: contentMinHeight } : undefined}
+      >
+        {/* key로 탭이 바뀔 때마다 진입 애니메이션을 다시 재생시킨다 */}
+        <div
+          key={swipeable ? activeTab : undefined}
+          className={
+            swipeable
+              ? `flex flex-1 flex-col motion-reduce:animate-none ${
+                  direction === 1 ? "animate-tab-in-forward" : "animate-tab-in-backward"
+                }`
+              : undefined
+          }
+        >
+          {tabs.find((tab) => tab.id === activeTab)?.content}
+        </div>
+      </div>
     </div>
   );
 }

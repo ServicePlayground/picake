@@ -11,7 +11,8 @@ const ORDER_STATUS_LABEL: Record<string, string> = {
   [OrderStatus.SELLER_CANCELLED]: "판매자취소",
   [OrderStatus.BUYER_CANCELLED]: "구매자취소",
   [OrderStatus.CANCEL_REFUND_PENDING]: "환불대기",
-  [OrderStatus.CANCEL_REFUND_COMPLETED]: "환불완료",
+  // 환불 완료도 사용자에겐 취소된 예약이므로 "예약취소"로 통일해 노출
+  [OrderStatus.CANCEL_REFUND_COMPLETED]: "예약취소",
   [OrderStatus.NO_SHOW]: "노쇼",
 };
 
@@ -26,7 +27,7 @@ const STATUS_COLOR: Record<string, string> = {
   [OrderStatus.SELLER_CANCELLED]: "text-gray-500 bg-gray-50",
   [OrderStatus.BUYER_CANCELLED]: "text-gray-500 bg-gray-50",
   [OrderStatus.CANCEL_REFUND_PENDING]: "text-red-400 bg-red-50",
-  [OrderStatus.CANCEL_REFUND_COMPLETED]: "text-red-400 bg-red-50",
+  [OrderStatus.CANCEL_REFUND_COMPLETED]: "text-gray-500 bg-gray-50",
   [OrderStatus.NO_SHOW]: "text-red-400 bg-red-50",
 };
 

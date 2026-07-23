@@ -8,6 +8,10 @@ import {
 } from "@apps/backend/modules/auth/constants/auth.constants";
 import { ORDER_STATUSES_BLOCKING_ACCOUNT_WITHDRAWAL } from "@apps/backend/modules/order/constants/order.constants";
 
+/**
+ * 회원 탈퇴 — 계정을 DB에서 완전 삭제합니다 (Prisma onDelete Cascade).
+ * 관리자 비활성(`isActive: false`)과 달리, 탈퇴 후에는 동일 OAuth·휴대폰으로 신규 가입이 가능합니다.
+ */
 @Injectable()
 export class AuthWithdrawService {
   constructor(private readonly prisma: PrismaService) {}
@@ -63,19 +67,6 @@ export class AuthWithdrawService {
     }
 
     throw new NotFoundException(AUTH_ERROR_MESSAGES.USER_NOT_FOUND);
-  }
-
-  /** 이전 소프트 탈퇴(`isActive: false`) 계정이 남아 있으면 삭제해 재가입을 허용합니다. */
-  async purgeIfInactiveConsumer(existing: { id: string; isActive: boolean }): Promise<boolean> {
-    if (existing.isActive) return false;
-    await this.prisma.consumer.delete({ where: { id: existing.id } });
-    return true;
-  }
-
-  async purgeIfInactiveSeller(existing: { id: string; isActive: boolean }): Promise<boolean> {
-    if (existing.isActive) return false;
-    await this.prisma.seller.delete({ where: { id: existing.id } });
-    return true;
   }
 
   private async assertNoActiveOrdersForConsumer(consumerId: string): Promise<void> {

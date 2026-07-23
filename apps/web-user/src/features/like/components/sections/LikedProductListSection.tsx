@@ -23,7 +23,7 @@ export function LikedProductListSection() {
   if (isLoading) return <></>;
 
   if (products.length === 0) {
-    return <EmptyState message="저장한 상품이 없습니다." />;
+    return <EmptyState message="저장한 상품이 없습니다." fill fillOffset={60} />;
   }
 
   return (

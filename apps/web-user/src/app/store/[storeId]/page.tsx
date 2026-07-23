@@ -3,6 +3,7 @@
 import { use } from "react";
 import { useStoreDetail } from "@/apps/web-user/features/store/hooks/queries/useStoreDetail";
 import { useProductList } from "@/apps/web-user/features/product/hooks/queries/useProductList";
+import { useStoreFeeds } from "@/apps/web-user/features/feed/hooks/queries/useStoreFeeds";
 import { StoreDetailIntroSection } from "@/apps/web-user/features/store/components/sections/StoreDetailIntroSection";
 import { StoreDetailProductListSection } from "@/apps/web-user/features/store/components/sections/StoreDetailProductListSection";
 import { StoreDetailReviewSection } from "@/apps/web-user/features/store/components/sections/StoreDetailReviewSection";
@@ -18,9 +19,12 @@ export default function StoreDetailPage({ params }: StoreDetailPageProps) {
   const { storeId } = use(params);
   const { data, isLoading } = useStoreDetail(storeId);
   const { data: productData } = useProductList({ storeId });
+  // StoreDetailFeedSection과 동일한 파라미터 → 쿼리 캐시 공유 (추가 요청 없음)
+  const { data: feedData } = useStoreFeeds({ storeId });
 
   // 상품 개수 (첫 페이지 meta에서 가져옴)
   const productCount = productData?.pages[0]?.meta.totalItems ?? 0;
+  const feedCount = feedData?.meta.totalItems ?? 0;
 
   if (isLoading) {
     return <StoreDetailSkeleton />;
@@ -37,6 +41,7 @@ export default function StoreDetailPage({ params }: StoreDetailPageProps) {
       </div>
       <Tabs
         defaultTab="product"
+        swipeable
         tabs={[
           {
             id: "product",
@@ -50,7 +55,7 @@ export default function StoreDetailPage({ params }: StoreDetailPageProps) {
           },
           {
             id: "feed",
-            label: "피드",
+            label: `피드 ${feedCount}`,
             content: <StoreDetailFeedSection storeId={storeId} />,
           },
         ]}

@@ -82,7 +82,7 @@ function PastOrderItem({ order, isLast }: { order: OrderResponse; isLast: boolea
         {/* 주문 아이템 목록 */}
         <div className="space-y-2 py-2.5">
           {visibleItems.map((item) => {
-            const thumbnailUrl = item.imageUrls?.[0] || order.productImages?.[0];
+            const thumbnailUrl = order.productImages?.[0] || item.imageUrls?.[0];
             return (
               <div
                 key={item.id}
@@ -250,7 +250,7 @@ export function PastOrderList() {
     <div>
       <PastOrderFilterBar activeFilter={activeFilter} onChange={setActiveFilter} />
       {orders.length === 0 ? (
-        <EmptyState message="예약 내역이 없어요" className="min-h-[calc(100vh-200px)]" />
+        <EmptyState message="예약 내역이 없어요" fill />
       ) : (
         <div className="flex flex-col gap-12 pt-2">
           {orders.map((order, index) => (

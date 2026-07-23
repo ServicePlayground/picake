@@ -162,7 +162,8 @@ export default function ReviewWritePage() {
     <div className="flex flex-col min-h-dvh">
       <Header variant="back-title" title="후기 작성" backFallbackPath={PATHS.MY_ORDERS} />
 
-      <div className="flex-1 px-5 pt-8">
+      {/* 하단 등록 버튼이 fixed라 문서 흐름에서 빠지므로, 그 높이만큼 여백을 둬 가려지지 않게 한다 */}
+      <div className="flex-1 px-5 pt-8 pb-[calc(6rem+env(safe-area-inset-bottom,0px))]">
         {/* 주문 상품 카드 (가로 스크롤) */}
         {order && (
           <div className="flex gap-2 overflow-x-auto scrollbar-hide">
@@ -254,7 +255,7 @@ export default function ReviewWritePage() {
 
       {/* 하단 등록 버튼 (키보드가 올라오면 숨김) */}
       <div
-        className={`fixed bottom-0 left-0 right-0 p-5 bg-white ${isKeyboardOpen ? "hidden" : ""}`}
+        className={`fixed bottom-0 left-0 right-0 px-5 pt-5 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))] bg-white ${isKeyboardOpen ? "hidden" : ""}`}
       >
         <button
           type="button"

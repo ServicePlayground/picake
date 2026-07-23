@@ -202,11 +202,54 @@ model Seller {
   sellerNotifications     UserNotification[]
   notificationPreferences UserNotificationPreference[]
   termsAgreements         SellerTermsAgreement[]
+  segmentMemberships      SellerSegmentMembership[]
 
   @@index([phone])
   @@index([googleId])
   @@index([kakaoId])
   @@map("sellers")
+}
+
+/// 판매자 세그먼트(그룹) 정의 — "얼리버드(초기 가입)" 등 향후 혜택 캠페인의 대상 그룹을 표현
+/// 혜택의 종류·인원·기간은 이 모델과 무관하게 결정 시점에 별도로 설계한다.
+/// (의도적 설계) 세그먼트 소속 여부만 관리하고, 어떤 혜택을 줄지는 이 모델이 알지 못하게 분리한다.
+/// 새 캠페인이 생기면 코드 변경 없이 row 추가만으로 대응한다.
+model SellerSegment {
+  id String @id @default(cuid())
+
+  /// 세그먼트 식별 키 (예: "EARLY_BIRD_2026") — 코드/API에서 참조하는 고정 키, 중복 불가
+  key String @unique
+
+  /// 어드민 화면에 노출할 이름 (예: "오픈 초기 가입 판매자 (~2026-08-31)")
+  label String
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  memberships SellerSegmentMembership[]
+
+  @@map("seller_segments")
+}
+
+/// 판매자 ↔ 세그먼트 소속 관계 (다대다)
+/// 자동 산정(가입일 기준 등)으로 채워지든, 어드민이 수동으로 추가/제외하든 동일하게 다룬다.
+model SellerSegmentMembership {
+  id String @id @default(cuid())
+
+  sellerId  String @map("seller_id")
+  segmentId String @map("segment_id")
+
+  /// 편입 경로·사유 메모 (예: "가입일 기준 자동 산정 (~2026-08-31)", "관리자 수동 추가")
+  note String? @db.Text
+
+  addedAt DateTime @default(now()) @map("added_at")
+
+  seller  Seller        @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  segment SellerSegment @relation(fields: [segmentId], references: [id], onDelete: Cascade)
+
+  @@unique([sellerId, segmentId])
+  @@index([sellerId])
+  @@index([segmentId])
+  @@map("seller_segment_memberships")
 }
 
 // Phone verification for registration and password recovery

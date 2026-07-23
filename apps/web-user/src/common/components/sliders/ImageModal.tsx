@@ -35,7 +35,22 @@ export const ImageModal: React.FC<ImageModalProps> = ({
 }) => {
   const [swiper, setSwiper] = useState<SwiperType | null>(null);
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  /** 확대 상태 여부 (확대 중에만 이미지 패닝을 허용한다) */
+  const [isZoomed, setIsZoomed] = useState(false);
+  /** 슬라이드 조작 중 여부 (좌우 화살표 노출 제어) */
+  const [isSliding, setIsSliding] = useState(false);
   const transformRefs = useRef<(ReactZoomPanPinchContentRef | null)[]>([]);
+
+  // 확대 중에는 슬라이드 스와이프를 막아 패닝과 충돌하지 않도록 함
+  useEffect(() => {
+    if (swiper) swiper.allowTouchMove = !isZoomed;
+  }, [swiper, isZoomed]);
+
+  useEffect(() => {
+    if (!isSliding) return;
+    const timer = setTimeout(() => setIsSliding(false), 1500);
+    return () => clearTimeout(timer);
+  }, [isSliding]);
 
   useEffect(() => {
     if (isOpen && swiper) {
@@ -89,13 +104,13 @@ export const ImageModal: React.FC<ImageModalProps> = ({
         <Swiper
           modules={[Navigation]}
           onSwiper={setSwiper}
+          onTouchStart={() => setIsSliding(true)}
           onSlideChange={(s) => {
             // 이전 슬라이드 줌 리셋
             transformRefs.current.forEach((ref) => {
               ref?.resetTransform();
             });
-            // 스와이프 다시 활성화
-            s.allowTouchMove = true;
+            setIsZoomed(false);
             setCurrentIndex(s.activeIndex);
           }}
           slidesPerView={1}
@@ -113,20 +128,10 @@ export const ImageModal: React.FC<ImageModalProps> = ({
                 maxScale={4}
                 centerOnInit
                 doubleClick={{ mode: "reset" }}
-                panning={{ disabled: false }}
-                onPanningStart={(ref) => {
-                  // 줌 상태가 아닐 때는 스와이프 허용
-                  if (ref.state.scale === 1) {
-                    swiper && (swiper.allowTouchMove = true);
-                  }
-                }}
-                onZoom={(ref) => {
-                  // 줌 중일 때는 스와이프 비활성화
-                  if (ref.state.scale > 1) {
-                    swiper && (swiper.allowTouchMove = false);
-                  } else {
-                    swiper && (swiper.allowTouchMove = true);
-                  }
+                // 확대 전에는 패닝을 꺼야 터치 이벤트가 Swiper로 전달되어 스와이프가 동작한다
+                panning={{ disabled: !isZoomed }}
+                onTransformed={(ref) => {
+                  setIsZoomed(ref.state.scale > 1);
                 }}
               >
                 <TransformComponent
@@ -160,22 +165,26 @@ export const ImageModal: React.FC<ImageModalProps> = ({
           <button
             type="button"
             onClick={() => swiper?.slidePrev()}
-            className={`absolute left-4 z-10 p-2 text-white ${
-              currentIndex === 0 ? "opacity-30" : ""
-            }`}
+            className={`absolute left-0 top-1/2 -translate-y-1/2 z-10 w-[40px] h-[56px] rounded-r-[8px] bg-black/30 flex items-center justify-center text-white transition-opacity duration-300 ${
+              !isSliding ? "opacity-0" : currentIndex === 0 ? "opacity-30" : "opacity-100"
+            } ${currentIndex === 0 ? "md:opacity-30" : "md:opacity-100"}`}
             disabled={currentIndex === 0}
           >
-            <Icon name="chevronLeft" width={32} height={32} />
+            <Icon name="arrow" width={24} height={24} className="-rotate-90" />
           </button>
           <button
             type="button"
             onClick={() => swiper?.slideNext()}
-            className={`absolute right-4 z-10 p-2 text-white ${
-              currentIndex === images.length - 1 ? "opacity-30" : ""
-            }`}
+            className={`absolute right-0 top-1/2 -translate-y-1/2 z-10 w-[40px] h-[56px] rounded-l-[8px] bg-black/30 flex items-center justify-center text-white transition-opacity duration-300 ${
+              !isSliding
+                ? "opacity-0"
+                : currentIndex === images.length - 1
+                  ? "opacity-30"
+                  : "opacity-100"
+            } ${currentIndex === images.length - 1 ? "md:opacity-30" : "md:opacity-100"}`}
             disabled={currentIndex === images.length - 1}
           >
-            <Icon name="chevronLeft" width={32} height={32} className="rotate-180" />
+            <Icon name="arrow" width={24} height={24} className="rotate-90" />
           </button>
         </>
       )}

@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsEnum, IsOptional } from "class-validator";
+import { IsEnum, IsOptional, IsString } from "class-validator";
 import { SellerVerificationStatus } from "@apps/backend/infra/database/prisma/generated/client";
 import { PaginationMetaResponseDto } from "@apps/backend/common/dto/pagination-response.dto";
 import { MemberListQueryDto } from "@apps/backend/modules/member-management/dto/member-management-common.dto";
@@ -15,6 +15,13 @@ export class MemberSellerListQueryDto extends MemberListQueryDto {
   @IsOptional()
   @IsEnum(SellerVerificationStatus)
   verificationStatus?: SellerVerificationStatus;
+
+  @ApiPropertyOptional({
+    description: "소속 세그먼트 키 필터 (예: EARLY_BIRD_2026). 어드민 > 판매자 세그먼트 관리에서 확인 가능",
+  })
+  @IsOptional()
+  @IsString()
+  segmentKey?: string;
 }
 
 /** 판매자 보유 스토어 요약 */
@@ -24,6 +31,15 @@ export class MemberSellerStoreDto {
 
   @ApiProperty({ description: "스토어명" })
   name: string;
+}
+
+/** 판매자가 소속된 세그먼트 요약 (얼리버드 등 향후 혜택 대상 구분) */
+export class MemberSellerSegmentDto {
+  @ApiProperty({ example: "EARLY_BIRD_2026" })
+  key: string;
+
+  @ApiProperty({ example: "오픈 초기 가입 판매자" })
+  label: string;
 }
 
 /**
@@ -65,6 +81,12 @@ export class MemberSellerItemResponseDto {
 
   @ApiProperty({ description: "보유 스토어", type: [MemberSellerStoreDto] })
   stores: MemberSellerStoreDto[];
+
+  @ApiProperty({
+    description: "소속 세그먼트 목록 (얼리버드 등 향후 혜택 지급 대상 구분용)",
+    type: [MemberSellerSegmentDto],
+  })
+  segments: MemberSellerSegmentDto[];
 
   @ApiProperty({ nullable: true })
   lastLoginAt: Date | null;

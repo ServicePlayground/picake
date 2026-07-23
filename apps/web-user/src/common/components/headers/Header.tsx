@@ -196,16 +196,6 @@ export default function Header({
     setTimeout(() => setShowOpenAlarmToast(true), 500);
   };
 
-  // 장바구니 버튼 컴포넌트 (공통)
-  const CartButton = () => (
-    <div
-      className="relative flex items-center justify-center rounded-lg text-gray-900"
-      aria-label="장바구니"
-    >
-      <Icon name="cart" width={24} height={24} />
-    </div>
-  );
-
   // 알람 버튼 컴포넌트 (공통)
   const AlarmButton = () => {
     const badge =
@@ -274,7 +264,16 @@ export default function Header({
         >
           <Icon name="chevronLeft" width={24} height={24} className="text-gray-900" />
         </button>
-        <CartButton />
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => router.push(PATHS.SEARCH)}
+            className="h-6 w-6 flex items-center justify-center"
+            aria-label="검색"
+          >
+            <Icon name="search" width={24} height={24} />
+          </button>
+          <AlarmButton />
+        </div>
       </header>
     );
   }

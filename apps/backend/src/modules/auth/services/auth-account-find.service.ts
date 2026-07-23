@@ -1,4 +1,9 @@
-import { Injectable, BadRequestException, NotFoundException } from "@nestjs/common";
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  ForbiddenException,
+} from "@nestjs/common";
 import { PrismaService } from "@apps/backend/infra/database/prisma.service";
 import { PhoneUtil } from "@apps/backend/modules/auth/utils/phone.util";
 import { FindAccountRequestDto } from "@apps/backend/modules/auth/dto/auth-find-account.dto";
@@ -42,10 +47,19 @@ export class AuthAccountFindService {
     if (audience === AUDIENCE.CONSUMER) {
       const row = await this.prisma.consumer.findUnique({
         where: { phone: normalizedPhone },
-        select: { googleId: true, googleEmail: true, kakaoId: true, kakaoEmail: true },
+        select: {
+          isActive: true,
+          googleId: true,
+          googleEmail: true,
+          kakaoId: true,
+          kakaoEmail: true,
+        },
       });
       if (!row) {
         throw new NotFoundException(AUTH_ERROR_MESSAGES.ACCOUNT_NOT_FOUND_BY_PHONE);
+      }
+      if (!row.isActive) {
+        throw new ForbiddenException(AUTH_ERROR_MESSAGES.ACCOUNT_INACTIVE);
       }
       if (row.kakaoId) {
         return {
@@ -66,10 +80,19 @@ export class AuthAccountFindService {
 
     const row = await this.prisma.seller.findUnique({
       where: { phone: normalizedPhone },
-      select: { googleId: true, googleEmail: true, kakaoId: true, kakaoEmail: true },
+      select: {
+        isActive: true,
+        googleId: true,
+        googleEmail: true,
+        kakaoId: true,
+        kakaoEmail: true,
+      },
     });
     if (!row) {
       throw new NotFoundException(AUTH_ERROR_MESSAGES.ACCOUNT_NOT_FOUND_BY_PHONE);
+    }
+    if (!row.isActive) {
+      throw new ForbiddenException(AUTH_ERROR_MESSAGES.ACCOUNT_INACTIVE);
     }
     if (row.kakaoId) {
       return {

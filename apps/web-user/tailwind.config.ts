@@ -39,7 +39,7 @@ const config: Config = {
         },
         gray: {
           50: "#F5F5F5",
-          100: "#ECEDED",
+          100: "#EBEBEA",
           200: "#D4D4D3",
           300: "#BDBFC0",
           400: "#9B9B97",
@@ -106,11 +106,34 @@ const config: Config = {
             transform: "translateY(0)",
           },
         },
+        // 탭 전환: 진행 방향 쪽에서 살짝 밀려 들어오며 나타남
+        "tab-in-forward": {
+          from: {
+            opacity: "0",
+            transform: "translateX(16px)",
+          },
+          to: {
+            opacity: "1",
+            transform: "translateX(0)",
+          },
+        },
+        "tab-in-backward": {
+          from: {
+            opacity: "0",
+            transform: "translateX(-16px)",
+          },
+          to: {
+            opacity: "1",
+            transform: "translateX(0)",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "slide-up": "slide-up 0.3s ease-out",
+        "tab-in-forward": "tab-in-forward 0.22s ease-out",
+        "tab-in-backward": "tab-in-backward 0.22s ease-out",
       },
     },
   },

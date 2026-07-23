@@ -42,10 +42,10 @@ export const ANDROID_ASSET_LINKS_BY_ENV: Record<
       relation: ["delegate_permission/common.handle_all_urls"],
       target: {
         namespace: "android_app",
-        // 상용 applicationId — 앱 저장소와 다르면 수정하세요.
         package_name: "com.pickage.package",
-        // TODO: 상용 앱 서명 SHA-256 지문을 넣으세요. (Play Console > App signing)
-        sha256_cert_fingerprints: [],
+        sha256_cert_fingerprints: [
+          "B8:35:F0:0F:3F:4D:19:89:15:31:5D:E9:A0:02:30:D4:BD:F8:8D:EF:6B:40:7C:4C:16:AC:FB:1B:F4:9F:2F:8F",
+        ],
       },
     },
   ],

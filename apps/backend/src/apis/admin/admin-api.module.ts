@@ -5,6 +5,7 @@ import { AdminManagementModule } from "@apps/backend/modules/admin-management/ad
 import { MemberManagementModule } from "@apps/backend/modules/member-management/member-management.module";
 import { StoreManagementModule } from "@apps/backend/modules/store-management/store-management.module";
 import { StoreEntryRequestModule } from "@apps/backend/modules/store-entry-request/store-entry-request.module";
+import { SellerSegmentModule } from "@apps/backend/modules/seller-segment/seller-segment.module";
 import { HomeBannerModule } from "@apps/backend/modules/home-banner/home-banner.module";
 import { TermsModule } from "@apps/backend/modules/terms/terms.module";
 import { NoticeModule } from "@apps/backend/modules/notice/notice.module";
@@ -22,6 +23,7 @@ import { AdminStatisticsController } from "@apps/backend/apis/admin/controllers/
 import { AdminMemberManagementController } from "@apps/backend/apis/admin/controllers/member-management.controller";
 import { AdminStoreManagementController } from "@apps/backend/apis/admin/controllers/store-management.controller";
 import { AdminStoreEntryRequestManagementController } from "@apps/backend/apis/admin/controllers/store-entry-request-management.controller";
+import { AdminSellerSegmentManagementController } from "@apps/backend/apis/admin/controllers/seller-segment-management.controller";
 
 /**
  * Admin API 모듈
@@ -41,6 +43,7 @@ import { AdminStoreEntryRequestManagementController } from "@apps/backend/apis/a
     MemberManagementModule,
     StoreManagementModule,
     StoreEntryRequestModule,
+    SellerSegmentModule,
   ],
   controllers: [
     AdminUploadController,
@@ -55,6 +58,7 @@ import { AdminStoreEntryRequestManagementController } from "@apps/backend/apis/a
     AdminMemberManagementController,
     AdminStoreManagementController,
     AdminStoreEntryRequestManagementController,
+    AdminSellerSegmentManagementController,
   ],
 })
 export class AdminApiModule {}

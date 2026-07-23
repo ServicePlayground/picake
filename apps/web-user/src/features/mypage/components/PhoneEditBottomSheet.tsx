@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { BottomSheet } from "@/apps/web-user/common/components/bottom-sheets/BottomSheet";
 import { Button } from "@/apps/web-user/common/components/buttons/Button";
 import { Input } from "@/apps/web-user/common/components/inputs/Input";
+import { cn } from "@/apps/web-user/common/lib/utils";
+import { disabledStyle } from "@/apps/web-user/common/styles/disabled.style";
 import {
   isValidPhone,
   isValidVerificationCode,
@@ -129,7 +131,10 @@ export function PhoneEditBottomSheet({ isOpen, onClose, onSuccess }: PhoneEditBo
               type="button"
               onClick={handleSendCode}
               disabled={!phoneValid || sendMutation.isPending}
-              className="shrink-0 px-3 h-[42px] text-sm font-bold text-gray-900 border border-gray-100 rounded-md disabled:text-gray-300 disabled:border-gray-50"
+              className={cn(
+                "shrink-0 px-3 h-[42px] text-sm font-bold text-gray-900 border border-gray-100 rounded-md",
+                disabledStyle.default,
+              )}
             >
               {codeSent ? "재전송" : "인증번호 전송"}
             </button>

@@ -10,6 +10,7 @@ import { StatisticsStoreEntryRequestsPage } from "@/apps/web-admin/pages/statist
 import { ConsumerMembersListPage } from "@/apps/web-admin/pages/consumer/members/List";
 import { SellerMembersListPage } from "@/apps/web-admin/pages/seller/members/List";
 import { SellerStoresListPage } from "@/apps/web-admin/pages/seller/stores/List";
+import { SellerSegmentsListPage } from "@/apps/web-admin/pages/seller/segments/List";
 import { AdminRequestsListPage } from "@/apps/web-admin/pages/admin-management/requests/List";
 import { AdminAccountsListPage } from "@/apps/web-admin/pages/admin-management/accounts/List";
 import { AdminSettingsPage } from "@/apps/web-admin/pages/admin-management/settings/Index";
@@ -52,6 +53,7 @@ export const ROUTES = {
     TERMS: "/seller/terms",
     MEMBERS: "/seller/members",
     STORES: "/seller/stores",
+    SEGMENTS: "/seller/segments",
   },
 } as const;
 
@@ -85,4 +87,5 @@ export const ADMIN_ROUTE_CONFIG = [
   { path: ROUTES.SELLER.TERMS, element: SellerTermsListPage },
   { path: ROUTES.SELLER.MEMBERS, element: SellerMembersListPage },
   { path: ROUTES.SELLER.STORES, element: SellerStoresListPage },
+  { path: ROUTES.SELLER.SEGMENTS, element: SellerSegmentsListPage },
 ] as const;
