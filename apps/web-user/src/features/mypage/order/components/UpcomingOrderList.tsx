@@ -74,7 +74,7 @@ function UpcomingOrderItem({ order, isLast }: { order: OrderResponse; isLast: bo
         {/* 주문 아이템 목록 */}
         <div className="space-y-2 py-2.5 mb-2.5">
           {visibleItems.map((item) => {
-            const thumbnailUrl = item.imageUrls?.[0] || order.productImages?.[0];
+            const thumbnailUrl = order.productImages?.[0] || item.imageUrls?.[0];
             return (
               <div key={item.id} className="flex items-center gap-2.5">
                 <div className="w-[44px] h-[44px] rounded overflow-hidden bg-gray-100 shrink-0">
@@ -222,7 +222,7 @@ export function UpcomingOrderList() {
   }
 
   if (orders.length === 0) {
-    return <EmptyState message="예약 내역이 없어요" className="min-h-[calc(100vh-200px)]" />;
+    return <EmptyState message="예약 내역이 없어요" fill />;
   }
 
   return (

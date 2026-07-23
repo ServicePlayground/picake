@@ -67,7 +67,7 @@ export function ReviewList({
             <ReviewItem key={review.id} review={review} onImageClick={handleReviewImageClick} />
           ))
         ) : (
-          <EmptyState message={emptyMessage} />
+          <EmptyState message={emptyMessage} fill />
         )}
       </div>
 

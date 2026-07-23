@@ -28,7 +28,7 @@ export function ReservationItemCard({
 }: ReservationItemCardProps) {
   const router = useRouter();
   const [expanded, setExpanded] = useState(false);
-  const thumbnailUrl = item.imageUrls?.[0] || order.productImages?.[0];
+  const thumbnailUrl = order.productImages?.[0] || item.imageUrls?.[0];
   // 취소/환불 대기 상태에서 흐리게 처리 — 취소 상세 페이지 안에서는 강조해야 하므로 제외
   const isCancelled =
     !hideCancelDetailButton &&
@@ -95,6 +95,7 @@ export function ReservationItemCard({
 
           if (
             (status === OrderStatus.CANCEL_REFUND_PENDING ||
+              status === OrderStatus.CANCEL_REFUND_COMPLETED ||
               status === OrderStatus.CANCEL_COMPLETED) &&
             !hideCancelDetailButton
           ) {

@@ -77,7 +77,7 @@ export function SearchStoreListSection({
   if (isLoading) return <></>;
 
   if (stores.length === 0) {
-    return <EmptyState message="검색 결과가 없습니다." />;
+    return <EmptyState message="검색 결과가 없습니다." fill />;
   }
 
   return (

@@ -52,7 +52,7 @@ export function LikedStoreListSection() {
   if (isLoading) return <></>;
 
   if (stores.length === 0) {
-    return <EmptyState message="저장한 스토어가 없습니다." />;
+    return <EmptyState message="저장한 스토어가 없습니다." fill fillOffset={60} />;
   }
 
   return (

@@ -13,7 +13,7 @@ interface ChatRoomListProps {
 export const ChatRoomList: React.FC<ChatRoomListProps> = ({ chatRooms }) => {
   if (chatRooms.length === 0) {
     return (
-      <EmptyState message="채팅방이 없습니다." />
+      <EmptyState message="채팅방이 없습니다." fill />
     );
   }
 

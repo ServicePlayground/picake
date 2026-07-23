@@ -52,7 +52,7 @@ export function SearchProductListSection({
   if (isLoading) return <></>;
 
   if (products.length === 0) {
-    return <EmptyState message="검색 결과가 없습니다." />;
+    return <EmptyState message="검색 결과가 없습니다." fill />;
   }
 
   return (

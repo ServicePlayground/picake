@@ -18,7 +18,10 @@ import { NoticeSection } from "./NoticeSection";
 import { PaymentPendingCountdownHeader } from "./PaymentPendingCountdownHeader";
 import { PickupDateChangeBottomSheet } from "./PickupDateChangeBottomSheet";
 import { OptionChangeBottomSheet } from "./OptionChangeBottomSheet";
-import { InfoNotice } from "@/apps/web-user/common/components/notice/InfoNotice";
+import {
+  InfoNotice,
+  SellerMessageNotice,
+} from "@/apps/web-user/common/components/notice/InfoNotice";
 import { Button } from "@/apps/web-user/common/components/buttons/Button";
 import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 import { useStoreDetail } from "@/apps/web-user/features/store/hooks/queries/useStoreDetail";
@@ -89,11 +92,16 @@ export function OrderDetailView({ order }: OrderDetailViewProps) {
         if (!notice) return null;
         return (
           <div className="px-5 py-4">
-            <InfoNotice
-              tone={notice.isRed ? "red" : "gray"}
-              message={notice.message}
-              description={notice.description}
-            />
+            {notice.description ? (
+              // 판매자 메세지가 있으면 말풍선 꼬리로 안내문과 이어 보이게 한다
+              <SellerMessageNotice
+                tone={notice.isRed ? "red" : "gray"}
+                message={notice.message}
+                description={notice.description}
+              />
+            ) : (
+              <InfoNotice tone={notice.isRed ? "red" : "gray"} message={notice.message} />
+            )}
           </div>
         );
       })()}

@@ -100,6 +100,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
       <Tabs
         defaultTab="detail"
         scrollOnSelect
+        swipeable
         tabs={[
           {
             id: "detail",

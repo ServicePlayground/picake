@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { SearchBar } from "@/apps/web-user/common/components/search/SearchBar";
 import BannerSlider from "@/apps/web-user/features/home-banner/components/BannerSlider";
@@ -17,7 +17,6 @@ import { buildRegionsParam } from "@/apps/web-user/common/utils/region-match.uti
 
 export default function Home() {
   const router = useRouter();
-  const [searchTerm, setSearchTerm] = useState("");
   const searchBarRef = useRef<HTMLDivElement>(null);
   const { setIsHomeSearchVisible } = useHeaderStore();
   const { selectedRegion } = useUserCurrentLocationStore();
@@ -57,12 +56,6 @@ export default function Home() {
     return () => setIsHomeSearchVisible(true);
   }, [setIsHomeSearchVisible]);
 
-  const handleSearch = (searchValue: string) => {
-    if (searchValue.trim()) {
-      router.push(`${PATHS.SEARCH}?q=${encodeURIComponent(searchValue.trim())}`);
-    }
-  };
-
   const latestProducts: Product[] = latestData?.pages?.[0]?.data?.slice(0, 10) || [];
   const popularProducts: Product[] = popularData?.pages?.[0]?.data?.slice(0, 10) || [];
 
@@ -77,12 +70,8 @@ export default function Home() {
       {/* 검색 바 */}
       <div className="w-full relative -mt-[30px] pt-[20px] pb-[56px] px-[24px] z-10 rounded-t-4xl bg-white bg-[url('/images/contents/category_bg.png')] bg-top bg-no-repeat shadow-[0_-4px_32px_0_rgba(0,0,0,0.15)]">
         <div ref={searchBarRef} className="w-full mb-[20px]">
-          <SearchBar
-            placeholder="어떤 케이크를 찾으시나요?"
-            initialValue={searchTerm}
-            onSearch={handleSearch}
-            onChange={setSearchTerm}
-          />
+          {/* 홈에서는 입력받지 않고 누르면 바로 검색 페이지로 이동 */}
+          <SearchBar placeholder="어떤 케이크를 찾으시나요?" asButton />
         </div>
         {/* 카테고리 */}
         <CategoryList />

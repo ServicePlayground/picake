@@ -48,18 +48,38 @@ export function ReservationCalendarView({
     return getEffectiveSeoulDayOpenMinuteRange(businessCalendar, tempSelectedDate);
   }, [businessCalendar, tempSelectedDate]);
 
-  // 선택 시각이 새 영업 범위 밖이면 자동으로 비움
+  // 오늘을 고른 경우엔 이미 지난 시각은 고를 수 없도록 현재 분을 하한으로 사용
+  const minTimeMinutes = useMemo(() => {
+    const openMin = timeRange?.openMin;
+    if (!tempSelectedDate) return openMin;
+
+    const now = new Date();
+    const isToday =
+      tempSelectedDate.getFullYear() === now.getFullYear() &&
+      tempSelectedDate.getMonth() === now.getMonth() &&
+      tempSelectedDate.getDate() === now.getDate();
+    if (!isToday) return openMin;
+
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    return openMin != null ? Math.max(openMin, nowMin) : nowMin;
+  }, [timeRange, tempSelectedDate]);
+
+  // 선택 시각이 새 영업 범위 / 현재 시각 하한 밖이면 자동으로 비움
   useEffect(() => {
-    if (!businessCalendar || !tempSelectedTime) return;
-    if (!timeRange) {
+    if (!tempSelectedTime) return;
+    if (businessCalendar && !timeRange) {
       setTempSelectedTime(null);
       return;
     }
     const m = tempSelectedTime.getHours() * 60 + tempSelectedTime.getMinutes();
-    if (m < timeRange.openMin || m >= timeRange.closeMin) {
+    if (minTimeMinutes != null && m < minTimeMinutes) {
+      setTempSelectedTime(null);
+      return;
+    }
+    if (timeRange && m >= timeRange.closeMin) {
       setTempSelectedTime(null);
     }
-  }, [businessCalendar, timeRange, tempSelectedTime, setTempSelectedTime]);
+  }, [businessCalendar, timeRange, minTimeMinutes, tempSelectedTime, setTempSelectedTime]);
 
   return (
     <div className="px-[20px] py-[16px] flex flex-col gap-[48px]">
@@ -114,7 +134,7 @@ export function ReservationCalendarView({
             onTimeSelect={setTempSelectedTime}
             interval={30}
             timeFormat="12h"
-            minTimeMinutes={timeRange?.openMin}
+            minTimeMinutes={minTimeMinutes}
             maxTimeMinutes={timeRange?.closeMin}
           />
         </div>

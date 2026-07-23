@@ -11,6 +11,7 @@ interface OrderStatusNoticeProps {
  * - PAYMENT_PENDING: 계좌 정보 및 입금 안내
  * - PAYMENT_COMPLETED: 판매자 입금 확인 대기 중
  * - CANCEL_REFUND_PENDING: 환불 처리 중
+ * - CANCEL_REFUND_COMPLETED: 환불 완료된 취소 건
  * - CANCEL_COMPLETED: sellerCancelReason 있으면 판매자 취소, userCancelReason 있으면 구매자 취소, 둘 다 없으면 일반 취소
  * - NO_SHOW: 노쇼 처리
  * - 그 외 상태는 안내 없음 (null 반환)
@@ -30,6 +31,10 @@ export function OrderStatusNotice({ order }: OrderStatusNoticeProps) {
     /* 환불대기: 환불 처리 중 안내 */
     case OrderStatus.CANCEL_REFUND_PENDING:
       return <InfoNotice className="mt-1 mb-4" message="환불 완료까지 1-2일 소요될 수 있습니다." />;
+
+    /* 환불완료: 취소 건 안내 */
+    case OrderStatus.CANCEL_REFUND_COMPLETED:
+      return <InfoNotice className="mt-1 mb-4" message="환불 완료된 취소 건입니다." />;
 
     /* 예약취소: sellerCancelReason 있을 때만 판매자 취소 안내 표시 (구매자 취소는 아무것도 표시하지 않음) */
     case OrderStatus.CANCEL_COMPLETED:

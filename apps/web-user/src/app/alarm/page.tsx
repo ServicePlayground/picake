@@ -21,11 +21,11 @@ export default function AlarmPage() {
     <div className="flex flex-col min-h-[calc(100vh-52px)]">
       <main className="flex-1 flex flex-col">
         {showLoginHint ? (
-          <EmptyState message="아직 알림이 없습니다." className="flex-1 mb-[52px] px-5" />
+          <EmptyState message="아직 알림이 없습니다." fill fillOffset={52} className="px-5" />
         ) : isLoading ? (
           <AlarmSkeleton />
         ) : alarms.length === 0 ? (
-          <EmptyState message="아직 알림이 없습니다." className="flex-1 mb-[52px]" />
+          <EmptyState message="아직 알림이 없습니다." fill fillOffset={52} />
         ) : (
           <ul className="px-5">
             {alarms.map((alarm) => {
