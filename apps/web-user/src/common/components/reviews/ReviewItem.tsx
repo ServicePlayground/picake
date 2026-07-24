@@ -43,11 +43,11 @@ export function ReviewItem({ review, onImageClick }: ReviewItemProps) {
     <div className="mx-[-20px] mb-[20px] px-[20px] pt-[20px] pb-[48px] border-b border-gray-100 last:border-b-0">
       <div className="flex items-center justify-between mb-[12px]">
         <span className="text-sm font-medium text-gray-900">{renderRating(review.rating)}</span>
-        <div className="flex items-center gap-[24px]">
-          <span className="relative text-sm text-gray-500 before:content-[''] before:absolute before:right-[-12px] before:top-1/2 before:-translate-y-1/2 before:w-[1px] before:h-[8px] before:bg-gray-300">
+        <div className="flex items-center gap-[24px] text-gray-500">
+          <span className="relative text-sm before:content-[''] before:absolute before:right-[-12px] before:top-1/2 before:-translate-y-1/2 before:w-[1px] before:h-[8px] before:bg-gray-300">
             {formatDate(review.createdAt)}
           </span>
-          <span className="text-sm text-gray-900">{review.userNickname || "익명"}</span>
+          <span className="text-sm">{review.userNickname || "익명"}</span>
         </div>
       </div>
 

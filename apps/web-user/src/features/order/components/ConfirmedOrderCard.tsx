@@ -2,20 +2,24 @@
 
 import { useState } from "react";
 import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
 import { Icon } from "@/apps/web-user/common/components/icons";
+import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 import { OrderResponse } from "@/apps/web-user/features/order/types/order.type";
 import { OrderCardContent } from "./OrderCardContent";
 import { NavigationBottomSheet } from "@/apps/web-user/common/components/bottom-sheets/NavigationBottomSheet";
 import { StoreInquiryBottomSheet } from "@/apps/web-user/common/components/bottom-sheets/StoreInquiryBottomSheet";
 
 export function ConfirmedOrderCard({ order }: { order: OrderResponse }) {
+  const router = useRouter();
   const [isMapSheetOpen, setIsMapSheetOpen] = useState(false);
   const [isInquirySheetOpen, setIsInquirySheetOpen] = useState(false);
 
   return (
     <>
       <div
-        className="rounded-xl overflow-hidden border border-primary-100"
+        onClick={() => router.push(PATHS.ORDER.DETAIL(order.id))}
+        className="rounded-xl overflow-hidden border border-primary-100 cursor-pointer"
         style={{ background: "linear-gradient(180deg, #FFEFEB 0%, #FFFFFF 30%)" }}
       >
         <div className="py-4 px-[18px]">
@@ -25,7 +29,10 @@ export function ConfirmedOrderCard({ order }: { order: OrderResponse }) {
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => setIsInquirySheetOpen(true)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsInquirySheetOpen(true);
+                }}
                 className="flex-1 h-[32px] flex items-center justify-center gap-0.5 rounded-lg border border-gray-100 text-xs font-bold text-gray-900 bg-white"
               >
                 <Icon name="reviewQna" width={16} height={16} className="text-gray-700" />
@@ -33,7 +40,10 @@ export function ConfirmedOrderCard({ order }: { order: OrderResponse }) {
               </button>
               <button
                 type="button"
-                onClick={() => setIsMapSheetOpen(true)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsMapSheetOpen(true);
+                }}
                 className="flex-1 h-[32px] flex items-center justify-center gap-0.5 rounded-lg border border-gray-100 text-xs font-bold text-gray-900 bg-white"
               >
                 <Icon name="map" width={16} height={16} className="text-gray-700" />

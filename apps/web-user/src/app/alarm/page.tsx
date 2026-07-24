@@ -41,7 +41,7 @@ export default function AlarmPage() {
                         markReadMutation.mutate(alarm.id);
                       }
                     }}
-                    className="flex items-center gap-[10px] py-[14px] border-b border-gray-100 last:border-b-0"
+                    className="relative flex items-center gap-[10px] py-[14px] border-b border-gray-100 last:border-b-0"
                   >
                     <div className="w-[42px] h-[42px] rounded-full overflow-hidden bg-gray-200 shrink-0">
                       {alarm.imageUrl ? (
@@ -63,11 +63,12 @@ export default function AlarmPage() {
                       <p className="text-sm text-gray-700 line-clamp-2">{alarm.content}</p>
                     </div>
 
-                    <div className="flex flex-col gap-0.5 self-start shrink-0 text-xs text-gray-400 items-end text-right">
+                    <div className="absolute right-0 top-[14px] flex flex-col gap-0.5 self-start shrink-0 text-xs text-gray-400 items-end text-right">
                       <span>{alarm.date ? `${alarm.date} ${alarm.time}` : alarm.time}</span>
-                      {alarm.read === false && (
+                      {/* TODO: 알림 읽음 추루 원복 가능성 있음 */}
+                      {/* {alarm.read === false && (
                         <span className="text-[10px] font-bold text-primary">NEW</span>
-                      )}
+                      )} */}
                     </div>
                   </Link>
                 </li>

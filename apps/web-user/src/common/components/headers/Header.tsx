@@ -291,7 +291,7 @@ export default function Header({
       <header className="sticky top-0 left-0 right-0 z-50 bg-white max-w-[638px] mx-auto px-5 flex justify-between items-center h-[46px]">
         <LocationButton />
         <button onClick={handleBack} className="text-sm font-bold text-gray-500 underline">
-          취소
+          닫기
         </button>
       </header>
     );

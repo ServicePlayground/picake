@@ -11,6 +11,7 @@ import {
 } from "@/apps/web-user/features/search/components/SearchFilterSheet";
 import type { StoreListFilter } from "@/apps/web-user/features/store/types/store.type";
 import { hasActiveFilter } from "@/apps/web-user/features/store/components/map/MapStoreListFilter";
+import { releaseSoftKeyboard } from "@/apps/web-user/common/utils/soft-keyboard.util";
 
 const RECENT_SEARCHES_KEY = "recentSearches";
 const MAX_RECENT = 10;
@@ -46,6 +47,15 @@ export default function SearchPage() {
     const q = searchParams.get("q");
     setSearchTerm(q || "");
   }, [searchParams]);
+
+  // 검색어 없이 진입한 경우(홈의 검색 버튼 등)에는 바로 입력할 수 있도록 키보드를 올린다.
+  // 홈에서 미리 띄워둔 임시 입력은 실제 입력에 포커스를 넘긴 뒤 정리한다.
+  useEffect(() => {
+    if (!searchParams.get("q")) {
+      inputRef.current?.focus({ preventScroll: true });
+    }
+    releaseSoftKeyboard();
+  }, []);
 
   const handleSearch = (term: string) => {
     if (!term.trim()) return;
