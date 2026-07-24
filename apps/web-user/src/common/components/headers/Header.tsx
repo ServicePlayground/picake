@@ -19,8 +19,10 @@ import { Modal } from "@/apps/web-user/common/components/modals/Modal";
 import { Toast } from "@/apps/web-user/common/components/toast/Toast";
 import { RegionSelectSheet } from "@/apps/web-user/common/components/headers/RegionSelectSheet";
 import { useAlarmUnreadCount } from "@/apps/web-user/features/alarm/hooks/queries/useAlarmUnreadCount";
+import { isProduction } from "@/apps/web-user/common/utils/environment.util";
 
 const REGION_STORAGE_KEY = "picake:selected-region";
+const showQaButton = !isProduction(process.env.NEXT_PUBLIC_NODE_ENV);
 
 interface HeaderProps {
   variant?: "main" | "product" | "minimal" | "search" | "back-title";
@@ -289,7 +291,7 @@ export default function Header({
       <header className="sticky top-0 left-0 right-0 z-50 bg-white max-w-[638px] mx-auto px-5 flex justify-between items-center h-[46px]">
         <LocationButton />
         <button onClick={handleBack} className="text-sm font-bold text-gray-500 underline">
-          취소
+          닫기
         </button>
       </header>
     );
@@ -304,12 +306,14 @@ export default function Header({
 
         {/* 우측 메뉴 */}
         <div className="flex items-center gap-4">
-          <Link
-            href={PATHS.QA}
-            className="px-3 py-1.5 text-xs font-bold text-yellow-400 bg-yellow-400/10 border border-yellow-400/30 rounded-lg"
-          >
-            QA
-          </Link>
+          {showQaButton && (
+            <Link
+              href={PATHS.QA}
+              className="px-3 py-1.5 text-xs font-bold text-yellow-400 bg-yellow-400/10 border border-yellow-400/30 rounded-lg"
+            >
+              QA
+            </Link>
+          )}
           {!isHomeSearchVisible && (
             <button
               onClick={() => router.push(PATHS.SEARCH)}

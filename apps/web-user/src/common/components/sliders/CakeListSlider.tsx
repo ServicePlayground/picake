@@ -52,7 +52,7 @@ export default function CakeListSlider({
 
   return (
     <div className="pb-9">
-      <h2 className="px-[20px] py-[10px] text-xl font-bold text-gray-900 mb-6">{title}</h2>
+      <h2 className="px-5 py-2.5 text-xl font-bold text-gray-900 mb-2.5">{title}</h2>
       {isLoading ? (
         <div className="flex gap-[8px] overflow-hidden pl-[20px]">
           {Array.from({ length: 4 }).map((_, i) => (
