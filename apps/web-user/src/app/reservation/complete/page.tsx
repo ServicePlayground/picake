@@ -161,7 +161,7 @@ export default function ReservationCompletePage() {
             </div>
             <div className="flex items-center justify-between mb-[6px] px-[16px] text-sm">
               <span className="text-gray-500">결제방식</span>
-              <span className="text-gray-900">현장결제</span>
+              <span className="text-gray-900">계좌이체</span>
             </div>
             <div className="flex items-center justify-between px-[16px] text-sm">
               <span className="text-gray-500">총 결제금액</span>

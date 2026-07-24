@@ -3,7 +3,9 @@
 import { useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { Icon } from "@/apps/web-user/common/components/icons";
+import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 import { OrderResponse } from "@/apps/web-user/features/order/types/order.type";
 import { usePaymentComplete } from "@/apps/web-user/features/order/hooks/mutations/usePaymentComplete";
 import { usePaymentCountdown } from "@/apps/web-user/features/order/hooks/usePaymentCountdown";
@@ -26,6 +28,7 @@ function copyToClipboard(text: string) {
 }
 
 export function PaymentPendingCard({ order }: { order: OrderResponse }) {
+  const router = useRouter();
   const countdown = usePaymentCountdown(order);
   const [showCopyToast, setShowCopyToast] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
@@ -45,7 +48,8 @@ export function PaymentPendingCard({ order }: { order: OrderResponse }) {
   return (
     <>
       <div
-        className="rounded-xl overflow-hidden border border-blue-100"
+        onClick={() => router.push(PATHS.ORDER.DETAIL(order.id))}
+        className="rounded-xl overflow-hidden border border-blue-100 cursor-pointer"
         style={{ background: "linear-gradient(180deg, #EBF8FF 0%, #FFFFFF 30%)" }}
       >
         <div className="py-4 px-[18px]">
@@ -76,7 +80,8 @@ export function PaymentPendingCard({ order }: { order: OrderResponse }) {
                 <span className="text-sm text-gray-900">{accountInfo}</span>
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     copyToClipboard(accountNumber);
                     setShowCopyToast(true);
                   }}
@@ -97,7 +102,8 @@ export function PaymentPendingCard({ order }: { order: OrderResponse }) {
             <div className="flex gap-2">
               <button
                 type="button"
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation();
                   if (!isMobileDevice()) {
                     setIsAppOnlyModalOpen(true);
                     return;
@@ -113,7 +119,10 @@ export function PaymentPendingCard({ order }: { order: OrderResponse }) {
               <button
                 type="button"
                 disabled={isCompleting}
-                onClick={() => setIsPaymentSheetOpen(true)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsPaymentSheetOpen(true);
+                }}
                 className="flex-1 h-[32px] flex items-center justify-center gap-0.5 rounded-lg border border-gray-100 text-xs font-bold text-gray-900 bg-white disabled:opacity-50"
               >
                 {isCompleting ? "처리 중..." : "입금 완료했어요"}

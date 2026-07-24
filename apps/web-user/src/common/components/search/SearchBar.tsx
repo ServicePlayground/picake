@@ -3,6 +3,7 @@
 import { useState, useEffect, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
+import { primeSoftKeyboard } from "@/apps/web-user/common/utils/soft-keyboard.util";
 import { Icon } from "../icons";
 
 interface SearchBarProps {
@@ -59,10 +60,16 @@ export function SearchBar({
 
   // 버튼 모드: 입력 대신 검색 페이지로 이동만 한다
   if (asButton) {
+    // 검색 페이지에 도착하자마자 키보드가 올라오도록, 탭 제스처 안에서 미리 띄워둔다
+    const handleButtonClick = () => {
+      primeSoftKeyboard();
+      router.push(PATHS.SEARCH);
+    };
+
     return (
       <button
         type="button"
-        onClick={() => router.push(PATHS.SEARCH)}
+        onClick={handleButtonClick}
         className={`${CONTAINER_CLASS} max-w-full text-left`}
       >
         <Icon name="search" width={20} height={20} className="text-gray-800 shrink-0" />
