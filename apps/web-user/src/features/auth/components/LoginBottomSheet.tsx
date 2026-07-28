@@ -13,6 +13,7 @@ import {
   getKakaoOAuthLoginUrl,
 } from "@/apps/web-user/features/auth/utils/oauth-login-url.util";
 import { useLoginSheetStore } from "@/apps/web-user/common/store/login-sheet.store";
+import { setPostLoginRedirect } from "@/apps/web-user/features/auth/utils/post-login-redirect.util";
 
 /**
  * 비로그인 사용자에게 노출되는 로그인 / 회원가입 바텀시트.
@@ -40,7 +41,11 @@ export function LoginBottomSheet() {
 
         <div className="mt-14 flex flex-col gap-3">
           {kakaoAuthHref && (
-            <a href={kakaoAuthHref} className={oauthKakaoLoginButtonClassName}>
+            <a
+              href={kakaoAuthHref}
+              onClick={() => setPostLoginRedirect()}
+              className={oauthKakaoLoginButtonClassName}
+            >
               <Image
                 src="/images/contents/kakaotalk.png"
                 alt=""
@@ -52,7 +57,11 @@ export function LoginBottomSheet() {
             </a>
           )}
           {googleAuthHref && (
-            <a href={googleAuthHref} className={oauthGoogleLoginButtonClassName}>
+            <a
+              href={googleAuthHref}
+              onClick={() => setPostLoginRedirect()}
+              className={oauthGoogleLoginButtonClassName}
+            >
               <Image
                 src="/images/contents/google.png"
                 alt=""

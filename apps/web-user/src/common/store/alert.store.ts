@@ -10,6 +10,8 @@ export interface AlertState {
   title: string;
   message: string;
   onClose?: () => void;
+  /** 로그인 안내 알림 여부 (열려 있는 동안 다른 알림이 덮어쓰지 못함) */
+  isLoginRequired?: boolean;
 }
 
 interface AlertStore {
@@ -27,11 +29,17 @@ export const useAlertStore = create<AlertStore>((set) => ({
   },
 
   showAlert: (alert) => {
-    set({
-      alert: {
-        ...alert,
-        isOpen: true,
-      },
+    set((state) => {
+      // 401 로그인 안내가 떠 있는 동안엔 그 여파로 발생한 오류 알림이 안내를 덮어쓰지 않도록 무시
+      if (state.alert.isOpen && state.alert.isLoginRequired && !alert.isLoginRequired) {
+        return state;
+      }
+      return {
+        alert: {
+          ...alert,
+          isOpen: true,
+        },
+      };
     });
   },
 

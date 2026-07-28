@@ -8,6 +8,10 @@ import { AUTH_ERROR_MESSAGES } from "@/apps/web-user/features/auth/constants/aut
 import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 import { useAlertStore } from "@/apps/web-user/common/store/alert.store";
 import getApiMessage from "@/apps/web-user/common/utils/getApiMessage";
+import {
+  clearPostLoginRedirect,
+  consumePostLoginRedirect,
+} from "@/apps/web-user/features/auth/utils/post-login-redirect.util";
 
 function KakaoAuthCallbackContent() {
   const router = useRouter();
@@ -18,6 +22,7 @@ function KakaoAuthCallbackContent() {
   useEffect(() => {
     const code = searchParams.get("code");
     if (!code) {
+      clearPostLoginRedirect();
       router.replace(PATHS.HOME);
       return;
     }
@@ -26,7 +31,8 @@ function KakaoAuthCallbackContent() {
       try {
         const data = await authApi.kakaoLogin(code);
         login(data.accessToken);
-        router.replace(PATHS.HOME);
+        // 로그인을 시작했던 화면으로 복귀 (없으면 홈)
+        router.replace(consumePostLoginRedirect());
       } catch (error: unknown) {
         const err = error as {
           response?: {
@@ -39,8 +45,10 @@ function KakaoAuthCallbackContent() {
           const params = new URLSearchParams();
           params.set("kakaoId", kakaoId);
           params.set("kakaoEmail", kakaoEmail);
+          // 회원가입으로 이어지므로 복귀 경로는 유지 (가입 완료 후 사용)
           router.replace(`${PATHS.AUTH.KAKAO_REGISTER}?${params.toString()}`);
         } else {
+          clearPostLoginRedirect();
           router.replace(PATHS.HOME);
           showAlert({
             type: "error",
