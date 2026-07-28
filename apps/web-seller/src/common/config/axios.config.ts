@@ -44,7 +44,9 @@ const responseErrorHandler = async (error: AxiosError<any>) => {
   if (status === 401 && message?.includes("ACCESS_TOKEN_INVALID")) {
     removeAccessToken();
     window.location.href = ROUTES.AUTH.LOGIN;
-    return Promise.resolve();
+    // 페이지 이동 전까지 코드가 계속 실행되므로, resolve 하면 호출부가 성공으로 오인해
+    // 응답(undefined)을 참조하다 터진다. 반드시 reject 로 요청 체인을 끊는다.
+    return Promise.reject(error);
   }
 
   captureSentryApiError(error);
