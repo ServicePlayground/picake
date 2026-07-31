@@ -40,6 +40,28 @@ export function useVerifyPhoneCode() {
   });
 }
 
+/** 앱스토어/플레이스토어 심사용 로그인 (숨겨진 진입점에서만 사용) */
+export function useReviewLogin() {
+  const router = useRouter();
+  const login = useAuthStore((s) => s.login);
+  const { showAlert } = useAlertStore();
+
+  return useMutation({
+    mutationFn: authApi.reviewLogin,
+    onSuccess: (data) => {
+      login(data.accessToken);
+      router.replace(PATHS.HOME);
+    },
+    onError: (error) => {
+      showAlert({
+        type: "error",
+        title: "오류",
+        message: getApiMessage.error(error),
+      });
+    },
+  });
+}
+
 export function useGoogleRegister(options?: {
   onDuplicateAccount?: (payload: DuplicateAccountPayload) => void;
 }) {

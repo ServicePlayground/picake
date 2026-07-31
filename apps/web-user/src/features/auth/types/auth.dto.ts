@@ -31,6 +31,11 @@ export interface KakaoLoginRequestDto {
   code: string;
 }
 
+/** 앱스토어/플레이스토어 심사(리뷰) 전용 로그인 요청 */
+export interface ReviewLoginRequestDto {
+  code: string;
+}
+
 export interface GoogleRegisterRequestDto {
   googleId: string;
   googleEmail: string;

@@ -15,6 +15,7 @@ import { AuthMypagePhoneService } from "@apps/backend/modules/auth/services/auth
 import { AuthMypageProfileService } from "@apps/backend/modules/auth/services/auth-mypage-profile.service";
 import { AuthWithdrawService } from "@apps/backend/modules/auth/services/auth-withdraw.service";
 import { AuthAdminService } from "@apps/backend/modules/auth/services/auth-admin.service";
+import { AuthReviewLoginService } from "@apps/backend/modules/auth/services/auth-review-login.service";
 import { JwtUtil } from "@apps/backend/modules/auth/utils/jwt.util";
 import { JwtStrategy } from "@apps/backend/modules/auth/strategies/jwt.strategy";
 import { AuthGuard } from "@apps/backend/modules/auth/guards/auth.guard";
@@ -47,6 +48,7 @@ import { AuthGuard } from "@apps/backend/modules/auth/guards/auth.guard";
     AuthGoogleOauthService,
     AuthKakaoOauthService,
     AuthAdminService,
+    AuthReviewLoginService,
     JwtUtil,
     JwtStrategy,
     AuthGuard,
