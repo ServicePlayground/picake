@@ -25,6 +25,8 @@ export const AUTH_ERROR_MESSAGES = {
   PHONE_KAKAO_ACCOUNT_EXISTS: "해당 휴대폰 번호로 이미 등록된 카카오 계정이 있습니다.",
   KAKAO_ID_ALREADY_EXISTS: "이미 사용 중인 카카오 계정입니다.",
   KAKAO_OAUTH_TOKEN_EXCHANGE_FAILED: "카카오 OAuth 토큰 교환 실패",
+  /** 앱스토어/플레이스토어 심사용 로그인 — 코드 불일치 또는 미설정(비활성화) */
+  REVIEW_LOGIN_INVALID_CODE: "심사용 로그인 코드가 올바르지 않습니다.",
   THROTTLE_LIMIT_EXCEEDED: "ThrottlerException: Too Many Requests",
   USERNAME_ALREADY_EXISTS: "이미 사용 중인 아이디입니다.",
   ADMIN_LOGIN_INVALID_CREDENTIALS: "아이디 또는 비밀번호가 올바르지 않습니다.",
@@ -98,6 +100,21 @@ export const OAUTH_REDIRECT_PATHS = {
 
 /** 관리자 `Admin.password_hash` bcrypt cost — `AuthAdminService.register`·`prisma/seed` 동일 */
 export const ADMIN_BCRYPT_SALT_ROUNDS = 12;
+
+/**
+ * 앱스토어/플레이스토어 심사(리뷰) 전용 로그인 코드 (하드코딩).
+ * env 설정 없이 바로 동작하도록 소스에 고정값으로 둡니다.
+ * ⚠️ 저장소 접근 권한이 있으면 누구나 볼 수 있는 값이므로, 심사가 끝나면 다른 값으로 교체하거나
+ * `AuthReviewLoginService`/`review-login` 라우트 자체를 제거하는 걸 권장합니다.
+ */
+export const REVIEW_LOGIN_CODE = "482915";
+
+/**
+ * 심사용 계정을 식별하는 전용 마커 (`Consumer.phone`에 저장).
+ * 실제 휴대폰 번호 형식(010-...)이 아니라서 실사용자 계정과 절대 겹치지 않습니다.
+ * `AuthReviewLoginService`가 최초 호출 시 이 값으로 계정을 자동 생성(upsert)합니다.
+ */
+export const REVIEW_LOGIN_ACCOUNT_PHONE_MARKER = "REVIEW_ACCOUNT";
 
 /** Google Authenticator 등 OTP 앱에 표시되는 발급자 이름 */
 export const ADMIN_TOTP_ISSUER = "Picake Admin";

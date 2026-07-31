@@ -15,6 +15,7 @@ import {
   SendVerificationCodeRequestDto,
   VerifyPhoneCodeRequestDto,
 } from "@apps/backend/modules/auth/dto/auth-phone-verification.dto";
+import { ReviewLoginRequestDto } from "@apps/backend/modules/auth/dto/auth-review-login.dto";
 import { Auth } from "@apps/backend/modules/auth/decorators/auth.decorator";
 import { SwaggerResponse } from "@apps/backend/common/decorators/swagger-response.decorator";
 import { SwaggerAuthResponses } from "@apps/backend/common/decorators/swagger-auth-responses.decorator";
@@ -201,6 +202,22 @@ export class ConsumerAuthController {
       audience: AUDIENCE.CONSUMER,
     });
     return createMessageObject(AUTH_SUCCESS_MESSAGES.PHONE_VERIFICATION_CONFIRMED);
+  }
+
+  @Post("review-login")
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 5, ttl: 3600000 } })
+  @ApiOperation({
+    summary: "심사용 로그인 (구매자, App Store/Play 스토어 대응)",
+    description:
+      "심사 대응용 임시 로그인 경로입니다. 코드는 서버에 하드코딩되어 있으며, 심사용 계정은 최초 호출 시 자동 생성됩니다.",
+  })
+  @SwaggerResponse(200, { dataExample: SWAGGER_EXAMPLES.TOKEN_RESPONSE })
+  @SwaggerResponse(401, {
+    dataExample: createMessageObject(AUTH_ERROR_MESSAGES.REVIEW_LOGIN_INVALID_CODE),
+  })
+  async reviewLogin(@Body() dto: ReviewLoginRequestDto) {
+    return await this.authService.consumerReviewLogin(dto);
   }
 
   @Get("me")

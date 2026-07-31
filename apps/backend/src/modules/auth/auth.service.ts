@@ -4,7 +4,9 @@ import { AuthGoogleOauthService } from "@apps/backend/modules/auth/services/auth
 import { AuthKakaoOauthService } from "@apps/backend/modules/auth/services/auth-kakao-oauth.service";
 import { AuthAdminService } from "@apps/backend/modules/auth/services/auth-admin.service";
 import { AuthAccountFindService } from "@apps/backend/modules/auth/services/auth-account-find.service";
+import { AuthReviewLoginService } from "@apps/backend/modules/auth/services/auth-review-login.service";
 import { FindAccountRequestDto } from "@apps/backend/modules/auth/dto/auth-find-account.dto";
+import { ReviewLoginRequestDto } from "@apps/backend/modules/auth/dto/auth-review-login.dto";
 import {
   GoogleLoginRequestDto,
   GoogleRegisterRequestDto,
@@ -37,6 +39,7 @@ export class AuthService {
     private readonly authGoogleOauthService: AuthGoogleOauthService,
     private readonly authKakaoOauthService: AuthKakaoOauthService,
     private readonly authAdminService: AuthAdminService,
+    private readonly authReviewLoginService: AuthReviewLoginService,
   ) {}
 
   private getSessionAvailabilityResponse(): SessionAvailabilityResponse {
@@ -97,6 +100,13 @@ export class AuthService {
    */
   async sellerKakaoRegisterWithPhone(dto: KakaoRegisterRequestDto) {
     return this.authKakaoOauthService.sellerKakaoRegisterWithPhone(dto);
+  }
+
+  /**
+   * 앱스토어/플레이스토어 심사 전용 로그인 (구매자) — 코드가 맞으면 심사용 계정(자동 생성)으로 로그인 처리
+   */
+  async consumerReviewLogin(dto: ReviewLoginRequestDto) {
+    return this.authReviewLoginService.consumerReviewLogin(dto);
   }
 
   /**
