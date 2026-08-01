@@ -39,7 +39,7 @@ export function MapUnenteredStoreCard({ store }: MapUnenteredStoreCardProps) {
 
   const handleRequestEntry = () => {
     if (!isAuthenticated) {
-      openLoginSheet();
+      openLoginSheet("like_button");
       return;
     }
     if (disabled) return;

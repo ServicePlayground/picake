@@ -34,6 +34,8 @@ import {
   buildConsumerTermsDocumentIds,
   mapConsumerActiveTermsToDocIds,
 } from "@/apps/web-user/features/terms/utils/terms-consent.util";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
+import { resolvePhoneVerificationFailReason } from "@/apps/web-user/features/auth/utils/phone-verification-error.util";
 
 function formatCountdownMmSs(totalSeconds: number): string {
   const s = Math.max(0, Math.floor(totalSeconds));
@@ -55,6 +57,8 @@ export function GoogleRegisterVerificationScreen() {
   const [duplicateAccount, setDuplicateAccount] = useState<DuplicateAccountPayload | null>(null);
   const handleDuplicateAccount = useCallback((payload: DuplicateAccountPayload) => {
     setDuplicateAccount(payload);
+    // duplicate_type: 현재 백엔드는 휴대폰 번호 기준 중복만 감지 (existing_user_id는 응답에 없어 미전송)
+    trackEvent("view_duplicate_account", { provider: "google", duplicate_type: "phone_number" });
   }, []);
   const { showAlert } = useAlertStore();
   const googleRegisterMutation = useGoogleRegister({ onDuplicateAccount: handleDuplicateAccount });
@@ -91,6 +95,7 @@ export function GoogleRegisterVerificationScreen() {
     }
     setGoogleLoginData({ googleId, googleEmail });
     setBooting(false);
+    trackEvent("view_phone_verification", { provider: "google" });
   }, [router, searchParams]);
 
   const validateDisplayName = useCallback((value: string) => {
@@ -141,6 +146,7 @@ export function GoogleRegisterVerificationScreen() {
   };
 
   const handleSendVerificationCode = async () => {
+    trackEvent("request_phone_verification", { provider: "google" });
     const normalized = normalizePhone(phone);
     const { expiresAt } = await sendPhoneVerificationMutation.mutateAsync({
       phone: normalized,
@@ -173,11 +179,19 @@ export function GoogleRegisterVerificationScreen() {
     if (!isRequiredTermsAllChecked(termsState)) return;
 
     const normalized = normalizePhone(phone);
-    await verifyPhoneCodeMutation.mutateAsync({
-      phone: normalized,
-      verificationCode,
-      purpose: PHONE_VERIFICATION_PURPOSE.GOOGLE_REGISTRATION,
-    });
+    try {
+      await verifyPhoneCodeMutation.mutateAsync({
+        phone: normalized,
+        verificationCode,
+        purpose: PHONE_VERIFICATION_PURPOSE.GOOGLE_REGISTRATION,
+      });
+    } catch (error) {
+      trackEvent("fail_phone_verification", {
+        fail_reason: resolvePhoneVerificationFailReason(error),
+      });
+      return;
+    }
+    trackEvent("success_phone_verification", { provider: "google" });
 
     const termsDocumentIds = buildConsumerTermsDocumentIds(termsState, activeTermsDocIds);
     if (!termsDocumentIds) {
@@ -189,6 +203,7 @@ export function GoogleRegisterVerificationScreen() {
       return;
     }
 
+    trackEvent("request_signup", { provider: "google" });
     await googleRegisterMutation.mutateAsync({
       ...googleLoginData,
       phone: normalized,

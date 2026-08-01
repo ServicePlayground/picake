@@ -12,6 +12,7 @@ import {
   APP_ONLY_MODAL,
   PAYMENT_COMPLETE_MODAL,
 } from "@/apps/web-user/common/constants/messages.constant";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
 
 function isMobileDevice(): boolean {
   return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -43,6 +44,7 @@ export function PaymentPendingActions({ order }: PaymentPendingActionsProps) {
                 { src: "/images/contents/kakao.png", alt: "카카오" },
               ],
               onClick: () => {
+                trackEvent("engage_easy_payment", { reservation_id: order.id });
                 if (!isMobileDevice()) {
                   setIsAppOnlyModalOpen(true);
                   return;
@@ -52,7 +54,10 @@ export function PaymentPendingActions({ order }: PaymentPendingActionsProps) {
             },
             {
               label: isCompleting ? "처리 중..." : "입금 완료했어요",
-              onClick: () => setIsPaymentSheetOpen(true),
+              onClick: () => {
+                trackEvent("engage_payment_complete", { reservation_id: order.id });
+                setIsPaymentSheetOpen(true);
+              },
             },
           ]}
         />
@@ -61,6 +66,7 @@ export function PaymentPendingActions({ order }: PaymentPendingActionsProps) {
       <PaymentConfirmBottomSheet
         isOpen={isPaymentSheetOpen}
         onClose={() => setIsPaymentSheetOpen(false)}
+        reservationId={order.id}
         amount={order.totalPrice}
         onConfirm={(name) => {
           setDepositorName(name);
@@ -106,6 +112,7 @@ export function PaymentPendingActions({ order }: PaymentPendingActionsProps) {
       <EasyPaymentBottomSheet
         isOpen={isEasyPayOpen}
         onClose={() => setIsEasyPayOpen(false)}
+        reservationId={order.id}
         bankAccountNumber={order.storeBankAccountNumber}
         bankName={order.storeBankName}
         amount={order.totalPrice}

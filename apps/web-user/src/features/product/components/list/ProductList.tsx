@@ -46,7 +46,7 @@ function ProductItem({ product }: ProductItemProps) {
   const handleLikeClick = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!isAuthenticated) {
-      openLoginSheet();
+      openLoginSheet("like_button");
       return;
     }
     if (isLikeLoading) return;

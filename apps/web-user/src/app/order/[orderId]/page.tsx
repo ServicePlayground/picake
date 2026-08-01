@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import Header from "@/apps/web-user/common/components/headers/Header";
 import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 import { Toast } from "@/apps/web-user/common/components/toast/Toast";
@@ -11,10 +11,26 @@ import {
   PendingToast,
   usePendingToastStore,
 } from "@/apps/web-user/common/store/pending-toast.store";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
+import type { ReservationDetailEntryPoint } from "@/apps/web-user/common/types/analytics.type";
+
+const RESERVATION_DETAIL_ENTRY_POINTS: ReservationDetailEntryPoint[] = [
+  "mypage_card",
+  "reservation_list",
+  "payment_alarm",
+  "reservation_complete",
+];
 
 export default function OrderDetailPage() {
   const params = useParams<{ orderId: string }>();
   const orderId = params?.orderId ?? "";
+  const searchParams = useSearchParams();
+  const entryPointParam = searchParams.get("entry_point");
+  const entryPoint: ReservationDetailEntryPoint = RESERVATION_DETAIL_ENTRY_POINTS.includes(
+    entryPointParam as ReservationDetailEntryPoint,
+  )
+    ? (entryPointParam as ReservationDetailEntryPoint)
+    : "reservation_list";
   const { data: order, isLoading } = useOrderDetail(orderId);
 
   const consumePendingToast = usePendingToastStore((s) => s.consumePendingToast);
@@ -24,6 +40,16 @@ export default function OrderDetailPage() {
     const pending = consumePendingToast();
     if (pending) setToast(pending);
   }, [consumePendingToast]);
+
+  // 예약 상세 페이지 노출
+  useEffect(() => {
+    if (!order) return;
+    trackEvent("view_reservation_detail", {
+      reservation_id: order.id,
+      status: order.orderStatus,
+      entry_point: entryPoint,
+    });
+  }, [order?.id, order?.orderStatus, entryPoint]);
 
   return (
     <div>

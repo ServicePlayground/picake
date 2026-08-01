@@ -12,6 +12,7 @@ import {
   OrderResponse,
 } from "@/apps/web-user/features/order/types/order.type";
 import { useUpdateReservationOrderItems } from "@/apps/web-user/features/order/hooks/mutations/useUpdateReservationOrderItems";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
 
 interface OptionChangeBottomSheetProps {
   isOpen: boolean;
@@ -134,10 +135,18 @@ export function OptionChangeBottomSheet({
       0,
     );
 
+    trackEvent("request_change_reservation", {
+      reservation_id: order.id,
+      change_type: "product_option",
+    });
     updateItems(
       { orderId: order.id, items: newItems, totalQuantity, totalPrice },
       {
         onSuccess: () => {
+          trackEvent("success_change_reservation", {
+            reservation_id: order.id,
+            change_type: "product_option",
+          });
           onClose();
           onSuccess();
         },

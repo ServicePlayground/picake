@@ -14,9 +14,15 @@ import { BottomNav } from "@/apps/web-user/common/components/navigation/BottomNa
 import { useUserCurrentLocationStore } from "@/apps/web-user/common/store/user-current-location.store";
 import { useStoreRegions } from "@/apps/web-user/features/store/hooks/queries/useStoreRegions";
 import { buildRegionsParam } from "@/apps/web-user/common/utils/region-match.util";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
 
 export default function Home() {
   const router = useRouter();
+
+  // 홈 화면 노출
+  useEffect(() => {
+    trackEvent("view_home");
+  }, []);
   const searchBarRef = useRef<HTMLDivElement>(null);
   const { setIsHomeSearchVisible } = useHeaderStore();
   const { selectedRegion } = useUserCurrentLocationStore();
@@ -60,7 +66,7 @@ export default function Home() {
   const popularProducts: Product[] = popularData?.pages?.[0]?.data?.slice(0, 10) || [];
 
   const handleProductClick = (productId: string) => {
-    router.push(PATHS.PRODUCT.DETAIL(productId));
+    router.push(`${PATHS.PRODUCT.DETAIL(productId)}?entry_point=home`);
   };
 
   return (

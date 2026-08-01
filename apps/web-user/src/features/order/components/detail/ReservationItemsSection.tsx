@@ -7,6 +7,7 @@ import {
 import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 import { OrderDetailSectionTitle } from "./OrderDetailSectionTitle";
 import { ReservationItemCard } from "./ReservationItemCard";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
 
 interface ReservationItemsSectionProps {
   order: OrderResponse;
@@ -35,6 +36,7 @@ export function ReservationItemsSection({ order, onChangeOptions }: ReservationI
     return (
       <Link
         href={PATHS.ORDER.CANCEL(order.id)}
+        onClick={() => trackEvent("engage_cancel_reservation", { reservation_id: order.id })}
         className="text-xs text-gray-500 font-bold underline"
       >
         예약취소

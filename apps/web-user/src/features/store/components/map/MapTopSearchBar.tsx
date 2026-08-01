@@ -9,6 +9,7 @@ import {
   formatMapPickupFilterInline,
   type MapPickupFilter,
 } from "@/apps/web-user/features/store/utils/map.util";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
 
 interface MapTopSearchBarProps {
   /** 검색어가 있으면 뒤로가기+검색어+닫기 UI, 없으면 플레이스홀더 버튼 */
@@ -227,7 +228,10 @@ export function MapTopSearchBar({
         <div className="flex w-full items-center gap-2" style={{ gap: 8 }}>
           <button
             type="button"
-            onClick={() => router.push(buildMapSearchUrl(pickupFilter ?? null))}
+            onClick={() => {
+              trackEvent("engage_map_search_bar");
+              router.push(buildMapSearchUrl(pickupFilter ?? null));
+            }}
             className="min-w-0 flex-1 text-left"
           >
             <div

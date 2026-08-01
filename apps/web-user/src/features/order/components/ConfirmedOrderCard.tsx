@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Icon } from "@/apps/web-user/common/components/icons";
@@ -9,16 +9,25 @@ import { OrderResponse } from "@/apps/web-user/features/order/types/order.type";
 import { OrderCardContent } from "./OrderCardContent";
 import { NavigationBottomSheet } from "@/apps/web-user/common/components/bottom-sheets/NavigationBottomSheet";
 import { StoreInquiryBottomSheet } from "@/apps/web-user/common/components/bottom-sheets/StoreInquiryBottomSheet";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
 
 export function ConfirmedOrderCard({ order }: { order: OrderResponse }) {
   const router = useRouter();
   const [isMapSheetOpen, setIsMapSheetOpen] = useState(false);
   const [isInquirySheetOpen, setIsInquirySheetOpen] = useState(false);
 
+  // 마이페이지 상단 예약 상태 카드 노출
+  useEffect(() => {
+    trackEvent("view_mypage_reservation_card", {
+      card_status: "confirmed",
+      reservation_id: order.id,
+    });
+  }, [order.id]);
+
   return (
     <>
       <div
-        onClick={() => router.push(PATHS.ORDER.DETAIL(order.id))}
+        onClick={() => router.push(`${PATHS.ORDER.DETAIL(order.id)}?entry_point=mypage_card`)}
         className="rounded-xl overflow-hidden border border-primary-100 cursor-pointer"
         style={{ background: "linear-gradient(180deg, #FFEFEB 0%, #FFFFFF 30%)" }}
       >

@@ -14,6 +14,7 @@ import { ReservationConfirmView } from "./ReservationConfirmView";
 import { useCreateOrder } from "@/apps/web-user/features/order/hooks/mutations/useCreateOrder";
 import { CreateOrderRequest } from "@/apps/web-user/features/order/types/order.type";
 import { useUploadFile } from "@/apps/web-user/features/upload/hooks/mutations/useUploadFile";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
 
 export function ReservationBottomSheet({
   isOpen,
@@ -108,6 +109,7 @@ export function ReservationBottomSheet({
     handleRemoveImage,
   } = useReservationBottomSheet({
     isOpen,
+    productId,
     price,
     productType,
     cakeSizeOptions,
@@ -122,6 +124,8 @@ export function ReservationBottomSheet({
     // 이미 제출 중이면 중복 호출 차단 (더블클릭 방지)
     if (isSubmitting) return;
     setIsSubmitting(true);
+
+    trackEvent("request_reservation", { product_count: totalQuantity, product_id: productId });
 
     try {
       // 각 OrderItem의 이미지를 업로드하고 URL 받기

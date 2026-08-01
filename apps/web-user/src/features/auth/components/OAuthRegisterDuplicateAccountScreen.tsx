@@ -15,6 +15,7 @@ import {
 } from "@/apps/web-user/features/auth/utils/oauth-login-url.util";
 import type { DuplicateAccountPayload } from "@/apps/web-user/features/auth/types/auth.dto";
 import { resolveLoginProviderFromDuplicateMessage } from "@/apps/web-user/features/auth/utils/register-duplicate-account.util";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
 
 type OAuthRegisterDuplicateAccountScreenProps = {
   payload: DuplicateAccountPayload;
@@ -29,6 +30,7 @@ export function OAuthRegisterDuplicateAccountScreen({
   const provider = resolveLoginProviderFromDuplicateMessage(payload.message);
 
   const handleLoginClick = useCallback(() => {
+    trackEvent("engage_duplicate_login", { provider });
     const href = provider === "kakao" ? getKakaoOAuthLoginUrl() : getGoogleOAuthLoginUrl();
     if (!href) {
       showAlert({

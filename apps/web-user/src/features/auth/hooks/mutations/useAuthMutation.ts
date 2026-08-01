@@ -8,6 +8,8 @@ import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 import type { PhoneVerificationPurpose } from "@/apps/web-user/features/auth/types/auth.dto";
 import type { DuplicateAccountPayload } from "@/apps/web-user/features/auth/types/auth.dto";
 import { parseDuplicateAccountPayload } from "@/apps/web-user/features/auth/utils/register-duplicate-account.util";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
+import { decodeJwtPayload } from "@/apps/web-user/features/auth/utils/jwt.util";
 
 export function useSendPhoneVerification() {
   const { showAlert } = useAlertStore();
@@ -72,6 +74,10 @@ export function useGoogleRegister(options?: {
   return useMutation({
     mutationFn: authApi.googleRegister,
     onSuccess: (data) => {
+      const userId = decodeJwtPayload<{ sub: string }>(data.accessToken)?.sub;
+      if (userId) {
+        trackEvent("success_signup", { provider: "google", user_id: userId });
+      }
       login(data.accessToken);
       router.replace(PATHS.HOME);
     },
@@ -100,6 +106,10 @@ export function useKakaoRegister(options?: {
   return useMutation({
     mutationFn: authApi.kakaoRegister,
     onSuccess: (data) => {
+      const userId = decodeJwtPayload<{ sub: string }>(data.accessToken)?.sub;
+      if (userId) {
+        trackEvent("success_signup", { provider: "kakao", user_id: userId });
+      }
       login(data.accessToken);
       router.replace(PATHS.HOME);
     },

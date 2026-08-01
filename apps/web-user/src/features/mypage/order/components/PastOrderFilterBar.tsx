@@ -1,6 +1,17 @@
 "use client";
 
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
+import type { ReservationFilterName } from "@/apps/web-user/common/types/analytics.type";
+
 export type PastFilter = "ALL" | "PICKUP_PENDING" | "PICKUP_COMPLETED" | "CANCEL_NOSHOW";
+
+/** PastFilter → 텍소노미 filter_name 매핑 */
+const FILTER_NAME_MAP: Record<PastFilter, ReservationFilterName> = {
+  ALL: "all",
+  PICKUP_PENDING: "pickup_waiting",
+  PICKUP_COMPLETED: "pickup_complete",
+  CANCEL_NOSHOW: "cancelled",
+};
 
 const PAST_FILTER_TABS: { key: Exclude<PastFilter, "ALL">; label: string }[] = [
   { key: "PICKUP_PENDING", label: "픽업대기" },
@@ -14,11 +25,16 @@ interface PastOrderFilterBarProps {
 }
 
 export function PastOrderFilterBar({ activeFilter, onChange }: PastOrderFilterBarProps) {
+  const handleChange = (filter: PastFilter) => {
+    trackEvent("engage_reservation_filter", { filter_name: FILTER_NAME_MAP[filter] });
+    onChange(filter);
+  };
+
   return (
     <div className="flex items-center gap-5 -mt-1 mb-0.5 pb-5">
       <button
         type="button"
-        onClick={() => onChange("ALL")}
+        onClick={() => handleChange("ALL")}
         className={`flex-shrink-0 h-8 px-3 text-sm border rounded-full ${
           activeFilter === "ALL"
             ? "text-primary font-bold bg-primary-50 border-primary-100"
@@ -33,7 +49,7 @@ export function PastOrderFilterBar({ activeFilter, onChange }: PastOrderFilterBa
             <button
               key={key}
               type="button"
-              onClick={() => onChange(key)}
+              onClick={() => handleChange(key)}
               className={`flex-shrink-0 h-8 px-3 text-sm border rounded-full ${
                 activeFilter === key
                   ? "text-primary font-bold bg-primary-50 border-primary-100"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useProductList } from "@/apps/web-user/features/product/hooks/queries/useProductList";
 import {
@@ -21,6 +21,8 @@ interface SearchProductListSectionProps {
   maxPrice?: number;
   productCategoryTypes?: ProductCategoryType[];
   sortBy?: MapListSortBy;
+  /** 검색 결과 개수를 상위(검색 화면)로 보고 — 애널리틱스 이벤트용 */
+  onResultCountChange?: (count: number) => void;
 }
 
 function toProductSortBy(sortBy: MapListSortBy): SortBy {
@@ -33,6 +35,7 @@ export function SearchProductListSection({
   maxPrice,
   productCategoryTypes,
   sortBy = "distance",
+  onResultCountChange,
 }: SearchProductListSectionProps) {
   const loadMoreRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -48,6 +51,11 @@ export function SearchProductListSection({
   useInfiniteScroll({ hasNextPage, isFetchingNextPage, fetchNextPage, loadMoreRef });
 
   const products = flattenAndDeduplicateInfiniteData<Product>(data);
+  const totalCount = data?.pages[0]?.meta.totalItems;
+
+  useEffect(() => {
+    if (totalCount != null) onResultCountChange?.(totalCount);
+  }, [totalCount, onResultCountChange]);
 
   if (isLoading) return <></>;
 
@@ -65,7 +73,7 @@ export function SearchProductListSection({
           <CakeListItem
             key={product.id}
             product={product}
-            onCardClick={(id) => router.push(PATHS.PRODUCT.DETAIL(id))}
+            onCardClick={(id) => router.push(`${PATHS.PRODUCT.DETAIL(id)}?entry_point=search`)}
           />
         ))}
       </div>

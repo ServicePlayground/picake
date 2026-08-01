@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Icon } from "@/apps/web-user/common/components/icons";
 import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
@@ -16,6 +16,7 @@ import { useUpdateMypageProfile } from "@/apps/web-user/features/mypage/hooks/mu
 import { Toast } from "@/apps/web-user/common/components/toast/Toast";
 import { useLoginSheetStore } from "@/apps/web-user/common/store/login-sheet.store";
 import { useScrollRestoration } from "@/apps/web-user/common/hooks/useScrollRestoration";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
 
 function getLoginInfo(user: {
   googleId: string;
@@ -58,6 +59,11 @@ const TERMS_MENU = [
 ] as const;
 
 export default function MypagePage() {
+  // 마이페이지 메인 화면 노출
+  useEffect(() => {
+    trackEvent("view_mypage");
+  }, []);
+
   const { isAuthenticated } = useAuthStore();
   const hasHydrated = useAuthHasHydrated();
   // 메뉴 클릭 후 뒤로가기 시 클릭했던 스크롤 위치로 복원 (레이아웃이 정해지는 hydration 이후 활성화)
@@ -174,7 +180,7 @@ export default function MypagePage() {
           <p className="text-sm text-gray-700">더욱 편리한 이용을 위해</p>
           <button
             type="button"
-            onClick={openLoginSheet}
+            onClick={() => openLoginSheet("mypage")}
             className="py-[10px] px-5 text-sm font-bold text-white bg-primary rounded-lg"
           >
             로그인 / 회원가입

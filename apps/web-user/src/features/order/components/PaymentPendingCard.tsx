@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -18,6 +18,7 @@ import {
   APP_ONLY_MODAL,
   PAYMENT_COMPLETE_MODAL,
 } from "@/apps/web-user/common/constants/messages.constant";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
 
 function isMobileDevice(): boolean {
   return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -45,10 +46,18 @@ export function PaymentPendingCard({ order }: { order: OrderResponse }) {
   const accountHolder = order.storeAccountHolderName ?? "";
   const accountInfo = `${bankName} · ${accountNumber}`;
 
+  // 마이페이지 상단 예약 상태 카드 노출
+  useEffect(() => {
+    trackEvent("view_mypage_reservation_card", {
+      card_status: "pending_payment",
+      reservation_id: order.id,
+    });
+  }, [order.id]);
+
   return (
     <>
       <div
-        onClick={() => router.push(PATHS.ORDER.DETAIL(order.id))}
+        onClick={() => router.push(`${PATHS.ORDER.DETAIL(order.id)}?entry_point=mypage_card`)}
         className="rounded-xl overflow-hidden border border-blue-100 cursor-pointer"
         style={{ background: "linear-gradient(180deg, #EBF8FF 0%, #FFFFFF 30%)" }}
       >
@@ -104,6 +113,7 @@ export function PaymentPendingCard({ order }: { order: OrderResponse }) {
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
+                  trackEvent("engage_easy_payment", { reservation_id: order.id });
                   if (!isMobileDevice()) {
                     setIsAppOnlyModalOpen(true);
                     return;
@@ -121,6 +131,7 @@ export function PaymentPendingCard({ order }: { order: OrderResponse }) {
                 disabled={isCompleting}
                 onClick={(e) => {
                   e.stopPropagation();
+                  trackEvent("engage_payment_complete", { reservation_id: order.id });
                   setIsPaymentSheetOpen(true);
                 }}
                 className="flex-1 h-[32px] flex items-center justify-center gap-0.5 rounded-lg border border-gray-100 text-xs font-bold text-gray-900 bg-white disabled:opacity-50"
@@ -153,6 +164,7 @@ export function PaymentPendingCard({ order }: { order: OrderResponse }) {
         <EasyPaymentBottomSheet
           isOpen={isEasyPayOpen}
           onClose={() => setIsEasyPayOpen(false)}
+          reservationId={order.id}
           bankAccountNumber={order.storeBankAccountNumber}
           bankName={order.storeBankName}
           amount={order.totalPrice}
@@ -164,6 +176,7 @@ export function PaymentPendingCard({ order }: { order: OrderResponse }) {
         <PaymentConfirmBottomSheet
           isOpen={isPaymentSheetOpen}
           onClose={() => setIsPaymentSheetOpen(false)}
+          reservationId={order.id}
           amount={order.totalPrice}
           onConfirm={(name) => {
             setDepositorName(name);

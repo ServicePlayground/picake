@@ -8,6 +8,9 @@ import { AUTH_ERROR_MESSAGES } from "@/apps/web-user/features/auth/constants/aut
 import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 import { useAlertStore } from "@/apps/web-user/common/store/alert.store";
 import getApiMessage from "@/apps/web-user/common/utils/getApiMessage";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
+import { decodeJwtPayload } from "@/apps/web-user/features/auth/utils/jwt.util";
+import { resolveSocialAuthFailReason } from "@/apps/web-user/features/auth/utils/social-auth-error.util";
 
 function KakaoAuthCallbackContent() {
   const router = useRouter();
@@ -18,13 +21,21 @@ function KakaoAuthCallbackContent() {
   useEffect(() => {
     const code = searchParams.get("code");
     if (!code) {
+      // 카카오 인증 화면에서 사용자가 취소한 경우 code 없이 리다이렉트됨
+      trackEvent("fail_social_auth", { provider: "kakao", fail_reason: "cancel" });
       router.replace(PATHS.HOME);
       return;
     }
 
     const run = async () => {
+      trackEvent("request_social_auth", { provider: "kakao" });
+
       try {
         const data = await authApi.kakaoLogin(code);
+        const userId = decodeJwtPayload<{ sub: string }>(data.accessToken)?.sub;
+        if (userId) {
+          trackEvent("success_login", { provider: "kakao", user_id: userId });
+        }
         login(data.accessToken);
         router.replace(PATHS.HOME);
       } catch (error: unknown) {
@@ -41,6 +52,10 @@ function KakaoAuthCallbackContent() {
           params.set("kakaoEmail", kakaoEmail);
           router.replace(`${PATHS.AUTH.KAKAO_REGISTER}?${params.toString()}`);
         } else {
+          trackEvent("fail_social_auth", {
+            provider: "kakao",
+            fail_reason: resolveSocialAuthFailReason(error),
+          });
           router.replace(PATHS.HOME);
           showAlert({
             type: "error",

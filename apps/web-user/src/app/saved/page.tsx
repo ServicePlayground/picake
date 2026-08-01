@@ -22,7 +22,7 @@ export default function SavedPage() {
       {!hasHydrated ? null : isAuthenticated ? (
         <AuthedSavedContent />
       ) : (
-        <UnauthenticatedSavedContent onLoginClick={openLoginSheet} />
+        <UnauthenticatedSavedContent onLoginClick={() => openLoginSheet("save_menu")} />
       )}
 
       <BottomNav />
