@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Header from "@/apps/web-user/common/components/headers/Header";
 import { Tabs } from "@/apps/web-user/common/components/tabs/Tabs";
 import {
@@ -10,16 +11,26 @@ import {
   PastOrderList,
   usePastOrderCount,
 } from "@/apps/web-user/features/mypage/order/components/PastOrderList";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
+import type { ReservationTabName } from "@/apps/web-user/common/types/analytics.type";
 
 export default function MyOrdersPage() {
   const upcomingCount = useUpcomingOrderCount();
   const pastCount = usePastOrderCount();
+
+  // "내 예약" 메뉴 진입 - 전체 예약 목록 화면 노출
+  useEffect(() => {
+    trackEvent("view_reservation_list");
+  }, []);
 
   return (
     <div>
       <Header variant="back-title" title="내 예약" />
       <Tabs
         defaultTab="upcoming"
+        onTabChange={(tabId) => {
+          trackEvent("engage_reservation_tab", { tab_name: tabId as ReservationTabName });
+        }}
         tabs={[
           {
             id: "upcoming",

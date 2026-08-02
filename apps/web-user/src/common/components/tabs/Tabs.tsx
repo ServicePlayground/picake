@@ -17,6 +17,8 @@ export interface TabsProps {
   scrollOffset?: number;
   /** 콘텐츠 영역을 좌우로 스와이프해 이전/다음 탭으로 이동 (기본 false) */
   swipeable?: boolean;
+  /** 탭이 전환될 때(클릭/스와이프 공통) 호출 — 애널리틱스 등 부가 로직용 */
+  onTabChange?: (tabId: string) => void;
 }
 
 /** 스와이프로 인정할 최소 가로 이동 거리(px) */
@@ -43,6 +45,7 @@ export function Tabs({
   scrollOnSelect = false,
   scrollOffset = 52,
   swipeable = false,
+  onTabChange,
 }: TabsProps) {
   const [activeTab, setActiveTab] = useState<string>(defaultTab || tabs[0]?.id || "");
   // sticky 탭 바는 붙어있을 때 위치가 52px로 고정돼 위치 계산이 불가하므로,
@@ -89,6 +92,7 @@ export function Tabs({
 
     setDirection(to > from ? 1 : -1);
     setActiveTab(tabId);
+    onTabChange?.(tabId);
     return true;
   };
 

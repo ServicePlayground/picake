@@ -14,6 +14,7 @@ import {
   MAP_PICKUP_URL_PERIOD_KEY,
   type MapPickupFilter,
 } from "@/apps/web-user/features/store/utils/map.util";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
 
 const RECENT_SEARCHES_KEY = "recentSearches";
 const MAX_RECENT = 10;
@@ -90,6 +91,7 @@ export default function MapSearchPage() {
 
   const handleSearch = (term: string) => {
     if (!term.trim()) return;
+    trackEvent("request_map_search", { keyword: term.trim() });
     saveRecentSearch(term.trim());
     setSearchTerm(term.trim());
     router.push(buildMapPageUrl(term.trim(), pickupFilter));

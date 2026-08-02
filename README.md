@@ -196,6 +196,7 @@ hotfix/xxx (긴급 수정 브랜치)
 - **[프로젝트 구조 가이드](./docs/common/structure/프로젝트%20구조%20-%20가이드.md)**: 프로젝트 전체 구조 및 디렉토리 설명
 - **[Yarn Berry PnP 가이드](<./docs/common/structure/(이전버전)yarnberry%20pnp%20-%20가이드.md>)**: Yarn Berry PnP 설정 및 사용법 (이전 버전)
 - **[Yarn Berry node_modules 가이드](<./docs/common/structure/(현재버전)yarnberry%20nodemodules%20-%20가이드.md>)**: Yarn Berry node_modules 설정 및 사용법 (현재 적용)
+- **[AI 코딩 에이전트 가이드](./docs/common/structure/AI%20코딩%20에이전트%20-%20가이드.md)**: CLAUDE.md, `.claude/skills`, `.mcp.json` 등 AI 코딩 에이전트 설정
 
 #### 기능 관련
 

@@ -10,6 +10,11 @@ const SUPER_PROPERTIES = {
   environment: NODE_ENV,
 };
 
+/** PostHog 활성화 여부 (키가 설정된 경우만 true) — Sentry의 isSentryEnabled와 동일한 정책 */
+export function isPostHogEnabled(): boolean {
+  return !!POSTHOG_KEY;
+}
+
 /**
  * PostHog 클라이언트를 초기화합니다.
  * - 키가 없으면(로컬 등 미설정) 초기화를 건너뜁니다.

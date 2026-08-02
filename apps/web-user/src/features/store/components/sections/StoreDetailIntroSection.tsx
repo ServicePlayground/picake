@@ -48,7 +48,7 @@ export function StoreDetailIntroSection({ store }: StoreDetailIntroSectionProps)
 
   const handleLikeToggle = () => {
     if (!isAuthenticated) {
-      openLoginSheet();
+      openLoginSheet("like_button");
       return;
     }
     if (isLikeLoading) return;

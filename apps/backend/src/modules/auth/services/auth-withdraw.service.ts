@@ -7,6 +7,7 @@ import {
   AUDIENCE,
 } from "@apps/backend/modules/auth/constants/auth.constants";
 import { ORDER_STATUSES_BLOCKING_ACCOUNT_WITHDRAWAL } from "@apps/backend/modules/order/constants/order.constants";
+import { AuthAppleOauthService } from "@apps/backend/modules/auth/services/auth-apple-oauth.service";
 
 /**
  * 회원 탈퇴 — 계정을 "익명화 후 비활성화" 처리합니다(하드 삭제 아님).
@@ -27,7 +28,10 @@ import { ORDER_STATUSES_BLOCKING_ACCOUNT_WITHDRAWAL } from "@apps/backend/module
  */
 @Injectable()
 export class AuthWithdrawService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly authAppleOauthService: AuthAppleOauthService,
+  ) {}
 
   async withdraw(audience: AudienceConst, accountId: string, reason: string): Promise<void> {
     LoggerUtil.log(
@@ -37,7 +41,7 @@ export class AuthWithdrawService {
     if (audience === AUDIENCE.CONSUMER) {
       const row = await this.prisma.consumer.findUnique({
         where: { id: accountId },
-        select: { id: true, withdrawnAt: true },
+        select: { id: true, withdrawnAt: true, appleRefreshToken: true },
       });
       if (!row) {
         throw new NotFoundException(AUTH_ERROR_MESSAGES.USER_NOT_FOUND);
@@ -48,9 +52,21 @@ export class AuthWithdrawService {
       }
 
       await this.assertNoActiveOrdersForConsumer(accountId);
+
+      // Apple 가이드라인 5.1.1(v) — 계정 삭제 시 Sign in with Apple 인가를 revoke. 실패해도 탈퇴는 계속 진행.
+      if (row.appleRefreshToken) {
+        await this.authAppleOauthService.revokeToken(row.appleRefreshToken);
+      }
+
       await this.prisma.consumer.update({
         where: { id: accountId },
-        data: this.buildAnonymizedWithdrawalData(accountId, reason),
+        data: {
+          ...this.buildAnonymizedWithdrawalData(accountId, reason),
+          // Apple 필드는 Consumer 전용(Seller는 미지원)이라 공용 빌더에 넣지 않고 여기서만 null 처리
+          appleId: null,
+          appleEmail: null,
+          appleRefreshToken: null,
+        },
       });
       return;
     }

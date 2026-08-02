@@ -16,8 +16,14 @@ import { Icon } from "@/apps/web-user/common/components/icons";
 import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 import { useWritableReviews } from "@/apps/web-user/features/review/hooks/queries/useWritableReviews";
 import { EmptyState } from "@/apps/web-user/common/components/fallbacks/EmptyState";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
 
 export default function MyReviewsPage() {
+  // 내 후기 페이지
+  useEffect(() => {
+    trackEvent("view_review_list");
+  }, []);
+
   const [sortBy] = useState<ReviewSortBy>(ReviewSortBy.LATEST);
   const { data } = useMyReviews({ sortBy });
   const { mutate: deleteReview } = useDeleteMyReview();

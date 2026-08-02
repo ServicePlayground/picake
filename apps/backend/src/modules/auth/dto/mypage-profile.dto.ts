@@ -122,6 +122,12 @@ export class MypageProfileBaseResponseDto {
  * 구매자 마이페이지 — 프로필 조회 응답
  */
 export class ConsumerMypageProfileResponseDto extends MypageProfileBaseResponseDto {
+  @ApiProperty({ example: SWAGGER_EXAMPLES.CONSUMER_DATA.appleId })
+  appleId: string;
+
+  @ApiProperty({ example: SWAGGER_EXAMPLES.CONSUMER_DATA.appleEmail })
+  appleEmail: string;
+
   @ApiProperty({
     description: "주문 푸시 알림 수신 여부",
     example: true,

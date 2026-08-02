@@ -30,7 +30,7 @@ export class AuthAccountFindService {
     dto: FindAccountRequestDto,
     audience: typeof AUDIENCE.CONSUMER | typeof AUDIENCE.SELLER,
   ): Promise<{
-    loginType: "google" | "kakao";
+    loginType: "google" | "kakao" | "apple";
     loginId: string;
     loginEmail: string | null;
   }> {
@@ -53,6 +53,8 @@ export class AuthAccountFindService {
           googleEmail: true,
           kakaoId: true,
           kakaoEmail: true,
+          appleId: true,
+          appleEmail: true,
         },
       });
       if (!row) {
@@ -73,6 +75,13 @@ export class AuthAccountFindService {
           loginType: "google",
           loginId: row.googleId,
           loginEmail: row.googleEmail ?? null,
+        };
+      }
+      if (row.appleId) {
+        return {
+          loginType: "apple",
+          loginId: row.appleId,
+          loginEmail: row.appleEmail ?? null,
         };
       }
       throw new NotFoundException(AUTH_ERROR_MESSAGES.ACCOUNT_NOT_FOUND_BY_PHONE);

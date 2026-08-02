@@ -11,6 +11,7 @@ import {
   measureMapLayoutViewportHeightSync,
   sampleMapLayoutViewportHeight,
 } from "@/apps/web-user/features/store/constants/map.constant";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
 
 /** 스냅 단계: 없음(0) / 중간 / 꽉채우기 */
 function getSnapPoints(layoutHeight: number) {
@@ -132,6 +133,7 @@ export function useMapListSheet(getStoresForList: () => StoreInfo[]) {
   }, []);
 
   const commitOpenListSheet = useCallback(() => {
+    trackEvent("view_map_list");
     const stores = getStoresForList();
     setListSheetStores(stores);
     void sampleMapLayoutViewportHeight().then((layoutHeight) => {

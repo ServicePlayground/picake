@@ -60,6 +60,8 @@ import {
   isStoreOpenOnSeoulCalendarDay,
   storeCalendarOverlapsMapPickupHalfDay,
 } from "@/apps/web-user/features/store/utils/store-business-calendar.util";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
+import type { MapAreaSearchTrigger } from "@/apps/web-user/common/types/analytics.type";
 
 declare global {
   interface Window {
@@ -86,6 +88,18 @@ export default function MapPageClient() {
   const [pickupCalendarOpen, setPickupCalendarOpen] = useState(false);
   const [mapListFilterPanelOpen, setMapListFilterPanelOpen] = useState(false);
 
+  // 지도 화면 노출
+  useEffect(() => {
+    trackEvent("view_map");
+  }, []);
+
+  // 마지막 지도 이동 트리거 (드래그/줌/현재위치) — success_map_area_search용
+  const lastMapGestureRef = useRef<MapAreaSearchTrigger | null>(null);
+  // 필터 적용 직후 다음 스토어 개수 갱신을 success_filter_apply로 처리하기 위한 플래그
+  const pendingFilterApplyRef = useRef(false);
+  // view_map_search_result 중복 발화 방지
+  const lastViewedMapSearchKeyRef = useRef<string | null>(null);
+
   /** URL에 픽업이 있으면 상태에 반영 (검색 페이지 등에서 돌아올 때) */
   useEffect(() => {
     const hasPickupInUrl =
@@ -105,6 +119,10 @@ export default function MapPageClient() {
 
   const handlePickupConfirm = useCallback(
     (f: MapPickupFilter) => {
+      trackEvent("success_pickup_date_select", {
+        selected_date: f.date.toISOString(),
+        selected_time_slot: f.kind,
+      });
       setPickupFilter(f);
       applyPickupToUrl(f);
     },
@@ -322,6 +340,7 @@ export default function MapPageClient() {
       entries.set(store.id, entry);
 
       window.kakao.maps.event.addListener(marker, "click", () => {
+        trackEvent("engage_store_pin", { store_id: entry.store.id });
         if (markerImageRef.current)
           kakaoMarkerEntriesRef.current.forEach((e) => e.marker.setImage(markerImageRef.current));
         resetPlatformMarkerImages();
@@ -437,6 +456,7 @@ export default function MapPageClient() {
           image: markerImageRef.current,
         });
         window.kakao.maps.event.addListener(marker, "click", () => {
+          trackEvent("engage_store_pin", { store_id: "none" });
           setSelectedStore(null);
           setSelectedUnenteredStore({
             kakaoPlaceId: String(place.id ?? ""),
@@ -607,12 +627,14 @@ export default function MapPageClient() {
 
         // 제스처(드래그·줌) 진행 여부 추적 — 제스처 중에는 마커 DOM 갱신을 전부 보류해 터치 끊김을 방지
         window.kakao.maps.event.addListener(map, "dragstart", () => {
+          lastMapGestureRef.current = "drag";
           isUserInteractingRef.current = true;
         });
         window.kakao.maps.event.addListener(map, "dragend", () => {
           isUserInteractingRef.current = false;
         });
         window.kakao.maps.event.addListener(map, "zoom_start", () => {
+          lastMapGestureRef.current = "zoom";
           isUserInteractingRef.current = true;
         });
         window.kakao.maps.event.addListener(map, "zoom_changed", () => {
@@ -640,6 +662,11 @@ export default function MapPageClient() {
               applyKeywordSearchResultsRef.current(pending);
             }
             drawPlatformStoreMarkersRef.current();
+            trackEvent("success_map_area_search", {
+              trigger_type: lastMapGestureRef.current ?? "drag",
+              result_count: getStoresForListRef.current().length,
+            });
+            lastMapGestureRef.current = null;
             const allowKakaoUnopened =
               searchStoresRef.current === null &&
               !searchQueryRef.current &&
@@ -730,9 +757,18 @@ export default function MapPageClient() {
       ) {
         searchPlaces(map.getCenter());
       }
+      // "내 위치로 이동" 버튼으로 명시적으로 재요청한 경우에만 재검색 완료 이벤트 전송
+      // (최초 진입 시 자동 중심 이동은 사용자 액션이 아니므로 제외)
+      if (lastMapGestureRef.current === "current_location") {
+        trackEvent("success_map_area_search", {
+          trigger_type: "current_location",
+          result_count: getStoresToShow(map).length,
+        });
+        lastMapGestureRef.current = null;
+      }
     }
     usedUserLocationForCenterRef.current = true;
-  }, [userLocation, searchQuery, pickupFilter, searchPlaces]);
+  }, [userLocation, searchQuery, pickupFilter, searchPlaces, getStoresToShow]);
 
   // 현재위치 변경 또는 지도 준비 완료 시 현재위치 마커(점) 갱신
   useEffect(() => {
@@ -755,6 +791,17 @@ export default function MapPageClient() {
     // 목록 패널이 열려 있을 때 필터 변경 시 목록 즉시 반영
     if (listSheetPanelOffsetRef.current > 0) {
       setListSheetStores(getStoresForList());
+    }
+    // 필터 적용 직후였다면, 새로 조회된 스토어 개수로 필터 적용 완료 이벤트 전송
+    if (pendingFilterApplyRef.current) {
+      pendingFilterApplyRef.current = false;
+      trackEvent("success_filter_apply", {
+        size_filter: listFilter.sizes?.join(",") || undefined,
+        price_min: listFilter.minPrice,
+        price_max: listFilter.maxPrice,
+        type_filter: listFilter.productCategoryTypes?.join(",") || undefined,
+        result_count: platformStores.length,
+      });
     }
   }, [
     platformStores,
@@ -793,6 +840,13 @@ export default function MapPageClient() {
         const stores = filterStoresWithCoordinates(res.data ?? []);
         if (cancelled) return;
         searchStoresRef.current = stores;
+        if (lastViewedMapSearchKeyRef.current !== searchQuery) {
+          lastViewedMapSearchKeyRef.current = searchQuery;
+          trackEvent("view_map_search_result", {
+            keyword: searchQuery,
+            result_count: stores.length,
+          });
+        }
         const map = mapInstanceRef.current;
         if (!map || !window.kakao?.maps) return;
         clearKakaoMarkers(); // 검색 모드 진입 시 기존 미입점 마커 제거
@@ -875,6 +929,8 @@ export default function MapPageClient() {
   // ---- Handlers ----
   /** 내 위치 버튼: 현재위치 재요청 후 다음 effect에서 지도 중심 이동 */
   const handleRefreshLocation = () => {
+    trackEvent("engage_current_location");
+    lastMapGestureRef.current = "current_location";
     usedUserLocationForCenterRef.current = false;
     refreshUserLocation();
   };
@@ -937,7 +993,10 @@ export default function MapPageClient() {
       <MapTopSearchBar
         searchQuery={searchQuery}
         pickupFilter={pickupFilter}
-        onCalendarClick={() => setPickupCalendarOpen(true)}
+        onCalendarClick={() => {
+          trackEvent("engage_date_picker_open");
+          setPickupCalendarOpen(true);
+        }}
         onPickupClear={handlePickupClear}
         onSearchBackClick={() => router.push(buildMapSearchUrl(pickupFilter))}
         onSearchEditClick={() =>
@@ -1039,7 +1098,10 @@ export default function MapPageClient() {
               sortBy={listSortBy}
               onSortByChange={setListSortBy}
               listFilter={listFilter}
-              onListFilterChange={setListFilter}
+              onListFilterChange={(f) => {
+                pendingFilterApplyRef.current = true;
+                setListFilter(f);
+              }}
               onFilterPanelOpenChange={setMapListFilterPanelOpen}
             />
           )}

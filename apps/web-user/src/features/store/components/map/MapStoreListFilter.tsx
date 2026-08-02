@@ -11,6 +11,7 @@ import {
   MAP_STORE_LIST_FILTER_MODAL_ID,
 } from "@/apps/web-user/features/store/constants/map.constant";
 import type { ProductCategoryType } from "@/apps/web-user/features/product/types/product.type";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
 
 // ---------------------------------------------------------------------------
 // 필터 활성 여부
@@ -217,7 +218,10 @@ export function MapStoreListFilter({
         <div className="relative shrink-0">
           <button
             type="button"
-            onClick={() => setPanelOpen(true)}
+            onClick={() => {
+              trackEvent("engage_filter_open");
+              setPanelOpen(true);
+            }}
             className={styles.filterButton}
             style={{
               width: 36,

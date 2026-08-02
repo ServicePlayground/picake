@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useMemo } from "react";
+import { useRef, useMemo, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -28,12 +28,15 @@ interface SearchStoreListSectionProps {
   search?: string;
   filter?: StoreListFilter;
   sortBy?: MapListSortBy;
+  /** 검색 결과 개수를 상위(검색 화면)로 보고 — 애널리틱스 이벤트용 */
+  onResultCountChange?: (count: number) => void;
 }
 
 export function SearchStoreListSection({
   search,
   filter,
   sortBy = "distance",
+  onResultCountChange,
 }: SearchStoreListSectionProps) {
   const router = useRouter();
   const loadMoreRef = useRef<HTMLDivElement>(null);
@@ -48,12 +51,17 @@ export function SearchStoreListSection({
     ...filter,
     sortBy: "popular",
   });
+  const totalCount = data?.pages[0]?.meta.totalCount;
+
+  useEffect(() => {
+    if (totalCount != null) onResultCountChange?.(totalCount);
+  }, [totalCount, onResultCountChange]);
 
   const handleLike = (e: React.MouseEvent, store: StoreInfo) => {
     e.preventDefault();
     e.stopPropagation();
     if (!isAuthenticated) {
-      openLoginSheet();
+      openLoginSheet("like_button");
       return;
     }
     if (store.isLiked) {
@@ -166,7 +174,9 @@ export function SearchStoreListSection({
                   imageWidth={160}
                   imageHeight={120}
                   edgeToEdge={20}
-                  onImageClick={(image) => router.push(PATHS.PRODUCT.DETAIL(image.id))}
+                  onImageClick={(image) =>
+                    router.push(`${PATHS.PRODUCT.DETAIL(image.id)}?entry_point=search`)
+                  }
                 />
               )}
             </Link>

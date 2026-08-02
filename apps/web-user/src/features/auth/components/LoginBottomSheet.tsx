@@ -4,15 +4,19 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { DragHandleBottomSheet } from "@/apps/web-user/common/components/bottom-sheets/DragHandleBottomSheet";
 import {
+  AppleLogoIcon,
+  oauthAppleLoginButtonClassName,
   oauthGoogleLoginButtonClassName,
   oauthKakaoLoginButtonClassName,
   oauthLoginButtonIconClassName,
 } from "@/apps/web-user/common/components/buttons/oauth-provider-login-buttons";
 import {
+  getAppleOAuthLoginUrl,
   getGoogleOAuthLoginUrl,
   getKakaoOAuthLoginUrl,
 } from "@/apps/web-user/features/auth/utils/oauth-login-url.util";
 import { useLoginSheetStore } from "@/apps/web-user/common/store/login-sheet.store";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
 
 /**
  * 비로그인 사용자에게 노출되는 로그인 / 회원가입 바텀시트.
@@ -23,14 +27,24 @@ import { useLoginSheetStore } from "@/apps/web-user/common/store/login-sheet.sto
  */
 export function LoginBottomSheet() {
   const isOpen = useLoginSheetStore((s) => s.isOpen);
+  const entryPoint = useLoginSheetStore((s) => s.entryPoint);
   const closeLoginSheet = useLoginSheetStore((s) => s.closeLoginSheet);
   const [googleAuthHref, setGoogleAuthHref] = useState<string | null>(null);
   const [kakaoAuthHref, setKakaoAuthHref] = useState<string | null>(null);
+  const [appleAuthHref, setAppleAuthHref] = useState<string | null>(null);
 
   useEffect(() => {
     setGoogleAuthHref(getGoogleOAuthLoginUrl());
     setKakaoAuthHref(getKakaoOAuthLoginUrl());
+    setAppleAuthHref(getAppleOAuthLoginUrl());
   }, []);
+
+  // 로그인/회원가입 진입 화면 노출
+  useEffect(() => {
+    if (isOpen && entryPoint) {
+      trackEvent("view_login_entry", { entry_point: entryPoint });
+    }
+  }, [isOpen, entryPoint]);
 
   return (
     <DragHandleBottomSheet isOpen={isOpen} onClose={closeLoginSheet} draggable={false}>
@@ -40,7 +54,11 @@ export function LoginBottomSheet() {
 
         <div className="mt-14 flex flex-col gap-3">
           {kakaoAuthHref && (
-            <a href={kakaoAuthHref} className={oauthKakaoLoginButtonClassName}>
+            <a
+              href={kakaoAuthHref}
+              className={oauthKakaoLoginButtonClassName}
+              onClick={() => trackEvent("engage_social_select", { provider: "kakao" })}
+            >
               <Image
                 src="/images/contents/kakaotalk.png"
                 alt=""
@@ -52,7 +70,11 @@ export function LoginBottomSheet() {
             </a>
           )}
           {googleAuthHref && (
-            <a href={googleAuthHref} className={oauthGoogleLoginButtonClassName}>
+            <a
+              href={googleAuthHref}
+              className={oauthGoogleLoginButtonClassName}
+              onClick={() => trackEvent("engage_social_select", { provider: "google" })}
+            >
               <Image
                 src="/images/contents/google.png"
                 alt=""
@@ -61,6 +83,16 @@ export function LoginBottomSheet() {
                 className={oauthLoginButtonIconClassName}
               />
               구글로 시작하기
+            </a>
+          )}
+          {appleAuthHref && (
+            <a
+              href={appleAuthHref}
+              className={oauthAppleLoginButtonClassName}
+              onClick={() => trackEvent("engage_social_select", { provider: "apple" })}
+            >
+              <AppleLogoIcon />
+              Apple로 시작하기
             </a>
           )}
         </div>

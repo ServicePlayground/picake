@@ -20,6 +20,8 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
+firebase-debug.log*
+.firebase/
 
 # Runtime data
 pids

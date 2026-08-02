@@ -35,7 +35,7 @@ export function LikedStoreListSection() {
     e.preventDefault();
     e.stopPropagation();
     if (!isAuthenticated) {
-      openLoginSheet();
+      openLoginSheet("like_button");
       return;
     }
     if (store.isLiked) {

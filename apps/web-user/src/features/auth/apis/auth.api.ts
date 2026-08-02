@@ -1,5 +1,7 @@
 import { consumerClient } from "@/apps/web-user/common/config/axios.config";
 import {
+  AppleLoginRequestDto,
+  AppleRegisterRequestDto,
   AUDIENCE,
   GoogleLoginRequestDto,
   GoogleRegisterRequestDto,
@@ -32,6 +34,17 @@ export const authApi = {
 
   kakaoRegister: async (data: KakaoRegisterRequestDto): Promise<TokenResponseDto> => {
     const response = await consumerClient.post("/auth/kakao/register", data);
+    return response.data.data;
+  },
+
+  appleLogin: async (code: string): Promise<TokenResponseDto> => {
+    const requestDto: AppleLoginRequestDto = { code };
+    const response = await consumerClient.post("/auth/apple/login", requestDto);
+    return response.data.data;
+  },
+
+  appleRegister: async (data: AppleRegisterRequestDto): Promise<TokenResponseDto> => {
+    const response = await consumerClient.post("/auth/apple/register", data);
     return response.data.data;
   },
 

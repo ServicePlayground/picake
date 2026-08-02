@@ -23,7 +23,8 @@ export function parseDuplicateAccountPayload(error: unknown): DuplicateAccountPa
 
   if (
     message !== AUTH_ERROR_MESSAGES.PHONE_KAKAO_ACCOUNT_EXISTS &&
-    message !== AUTH_ERROR_MESSAGES.PHONE_GOOGLE_ACCOUNT_EXISTS
+    message !== AUTH_ERROR_MESSAGES.PHONE_GOOGLE_ACCOUNT_EXISTS &&
+    message !== AUTH_ERROR_MESSAGES.PHONE_APPLE_ACCOUNT_EXISTS
   ) {
     return null;
   }
@@ -32,14 +33,16 @@ export function parseDuplicateAccountPayload(error: unknown): DuplicateAccountPa
 }
 
 /**
- * 백엔드 message 문자열로 로그인 수단(구글/카카오)을 추론합니다.
- * 중복 계정 화면에는 `PHONE_KAKAO_ACCOUNT_EXISTS` / `PHONE_GOOGLE_ACCOUNT_EXISTS`만 옵니다.
+ * 백엔드 message 문자열로 로그인 수단(구글/카카오/애플)을 추론합니다.
+ * 중복 계정 화면에는 `PHONE_KAKAO_ACCOUNT_EXISTS` / `PHONE_GOOGLE_ACCOUNT_EXISTS` / `PHONE_APPLE_ACCOUNT_EXISTS`만 옵니다.
  */
 export function resolveLoginProviderFromDuplicateMessage(
   message:
     | typeof AUTH_ERROR_MESSAGES.PHONE_KAKAO_ACCOUNT_EXISTS
-    | typeof AUTH_ERROR_MESSAGES.PHONE_GOOGLE_ACCOUNT_EXISTS,
+    | typeof AUTH_ERROR_MESSAGES.PHONE_GOOGLE_ACCOUNT_EXISTS
+    | typeof AUTH_ERROR_MESSAGES.PHONE_APPLE_ACCOUNT_EXISTS,
 ): OAuthLoginProvider {
   if (message === AUTH_ERROR_MESSAGES.PHONE_KAKAO_ACCOUNT_EXISTS) return "kakao";
+  if (message === AUTH_ERROR_MESSAGES.PHONE_APPLE_ACCOUNT_EXISTS) return "apple";
   return "google";
 }

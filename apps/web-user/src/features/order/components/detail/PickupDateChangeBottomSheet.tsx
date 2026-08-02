@@ -6,6 +6,7 @@ import { Button } from "@/apps/web-user/common/components/buttons/Button";
 import { ReservationCalendarView } from "@/apps/web-user/features/product/components/sections/reservation-bottom-sheet/ReservationCalendarView";
 import { useUpdateReservationPickupDate } from "@/apps/web-user/features/order/hooks/mutations/useUpdateReservationPickupDate";
 import type { StoreBusinessCalendar } from "@/apps/web-user/features/store/types/store.type";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
 
 interface PickupDateChangeBottomSheetProps {
   isOpen: boolean;
@@ -48,10 +49,18 @@ export function PickupDateChangeBottomSheet({
     combined.setHours(tempTime.getHours());
     combined.setMinutes(tempTime.getMinutes());
     combined.setSeconds(0, 0);
+    trackEvent("request_change_reservation", {
+      reservation_id: orderId,
+      change_type: "pickup_date",
+    });
     mutate(
       { orderId, pickupDate: combined.toISOString() },
       {
         onSuccess: () => {
+          trackEvent("success_change_reservation", {
+            reservation_id: orderId,
+            change_type: "pickup_date",
+          });
           onClose();
           onSuccess();
         },

@@ -24,6 +24,8 @@ export class ConsumerMapperUtil {
       googleEmail: user.googleEmail ?? "",
       kakaoId: user.kakaoId ?? "",
       kakaoEmail: user.kakaoEmail ?? "",
+      appleId: user.appleId ?? "",
+      appleEmail: user.appleEmail ?? "",
       createdAt: user.createdAt,
       lastLoginAt: lastLoginAt ?? user.lastLoginAt ?? new Date(),
       pushNotificationsEnabled,

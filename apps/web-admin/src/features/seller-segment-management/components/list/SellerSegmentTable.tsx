@@ -47,7 +47,12 @@ export function SellerSegmentTable({ items, onAutoAssign }: SellerSegmentTablePr
               </td>
               <td className={cn("px-4 py-3", LIST_TABLE_CELL)}>
                 <div className="flex justify-end">
-                  <Button type="button" variant="outline" size="sm" onClick={() => onAutoAssign(item)}>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onAutoAssign(item)}
+                  >
                     가입일 기준 자동 편입
                   </Button>
                 </div>

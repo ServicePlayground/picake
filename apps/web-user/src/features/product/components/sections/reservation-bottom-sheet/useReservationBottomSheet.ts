@@ -6,9 +6,11 @@ import {
   ProductType,
 } from "@/apps/web-user/features/product/types/product.type";
 import { useMypageProfile } from "@/apps/web-user/features/mypage/hooks/queries/useMypageProfile";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
 
 interface UseReservationBottomSheetProps {
   isOpen: boolean;
+  productId: string;
   price: number;
   productType: ProductType;
   cakeSizeOptions?: CakeSizeOption[];
@@ -26,6 +28,7 @@ interface UseReservationBottomSheetProps {
  */
 export function useReservationBottomSheet({
   isOpen,
+  productId,
   price,
   productType,
   cakeSizeOptions,
@@ -36,6 +39,21 @@ export function useReservationBottomSheet({
   // 뷰 상태 관리
   // ========================================
   const [view, setView] = useState<ViewType>("options");
+
+  // 옵션 선택 화면에 머무른 시간 측정용 (request_option_complete의 duration_ms)
+  const optionsViewEnteredAtRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (view === "options") {
+      optionsViewEnteredAtRef.current = Date.now();
+    }
+  }, [view]);
+
+  // 주문 확인 화면 view 이벤트 (재진입 포함, 화면에 노출될 때마다 전송)
+  useEffect(() => {
+    if (isOpen && view === "confirm") {
+      trackEvent("view_order_confirm");
+    }
+  }, [isOpen, view]);
 
   // ========================================
   // 날짜/시간 선택 상태
@@ -245,6 +263,11 @@ export function useReservationBottomSheet({
 
   // 현재 옵션을 주문 목록에 추가하고 확인 뷰로 이동
   const handleGoToConfirm = () => {
+    const durationMs = optionsViewEnteredAtRef.current
+      ? Date.now() - optionsViewEnteredAtRef.current
+      : 0;
+    trackEvent("request_option_complete", { duration_ms: durationMs, product_id: productId });
+
     const sizePrice = cakeSizeOptions?.find((s) => s.displayName === selectedSize)?.price ?? 0;
     const flavorPrice =
       cakeFlavorOptions?.find((f) => f.displayName === selectedFlavor)?.price ?? 0;
@@ -289,6 +312,7 @@ export function useReservationBottomSheet({
 
   // 삭제 확인 모달 오픈
   const handleDeleteClick = (index: number) => {
+    trackEvent("engage_delete_product", { product_id: productId });
     setDeleteTargetIndex(index);
     setIsDeleteModalOpen(true);
   };
@@ -304,6 +328,7 @@ export function useReservationBottomSheet({
 
   // 특정 상품 편집 모드로 전환
   const handleEditItem = (index: number) => {
+    trackEvent("engage_edit_option");
     const item = orderItems[index];
     setSelectedSize(item.size);
     setSelectedFlavor(item.flavor);
@@ -320,6 +345,7 @@ export function useReservationBottomSheet({
 
   // 새 상품 추가 모드로 전환
   const handleAddNewItem = () => {
+    trackEvent("engage_add_product");
     resetCurrentOptions();
     setIsAddingFromConfirm(true);
     setIsEditingFromConfirm(false);

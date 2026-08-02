@@ -8,6 +8,9 @@ export const PAYMENT_PENDING_MAX_VALIDITY_MS = 12 * 60 * 60 * 1000;
 /** 픽업 안내(알림톡·푸시)를 픽업 시각보다 얼마나 앞서 보낼지 */
 export const PICKUP_REMINDER_LEAD_MS = 24 * 60 * 60 * 1000;
 
+/** 재입금 안내(알림톡·푸시)를 입금 마감보다 얼마나 앞서 보낼지 */
+export const PAYMENT_REMINDER_LEAD_MS = 3 * 60 * 60 * 1000;
+
 const MS_1H = 60 * 60 * 1000;
 const MS_6H = 6 * MS_1H;
 const MS_12H = 12 * MS_1H;
@@ -95,4 +98,26 @@ export function isPickupReminderDue(pickupDate: Date, now: Date): boolean {
   const reminderAt = pickupDate.getTime() - PICKUP_REMINDER_LEAD_MS;
   const t = now.getTime();
   return t >= reminderAt && t < pickupDate.getTime();
+}
+
+/**
+ * 입금 마감까지 준 시간(입금대기 전환 시각~마감)이 리드타임(3시간)보다 길 때만 재입금 안내 대상.
+ * 픽업이 임박해 마감 구간이 1시간으로 짧게 잡힌 주문은 리마인더를 보내지 않습니다(마감 전 안내가 이미 충분).
+ */
+export function isPaymentReminderEligible(
+  paymentPendingAt: Date,
+  paymentPendingDeadlineAt: Date,
+): boolean {
+  const windowMs = paymentPendingDeadlineAt.getTime() - paymentPendingAt.getTime();
+  return windowMs > PAYMENT_REMINDER_LEAD_MS;
+}
+
+/**
+ * 재입금 안내 발송 시점 도달 여부.
+ * - `paymentPendingDeadlineAt - 3h <= now < paymentPendingDeadlineAt` 이면 true
+ */
+export function isPaymentReminderDue(paymentPendingDeadlineAt: Date, now: Date): boolean {
+  const reminderAt = paymentPendingDeadlineAt.getTime() - PAYMENT_REMINDER_LEAD_MS;
+  const t = now.getTime();
+  return t >= reminderAt && t < paymentPendingDeadlineAt.getTime();
 }

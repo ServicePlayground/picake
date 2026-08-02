@@ -12,6 +12,7 @@ import {
 import type { StoreListFilter } from "@/apps/web-user/features/store/types/store.type";
 import { hasActiveFilter } from "@/apps/web-user/features/store/components/map/MapStoreListFilter";
 import { releaseSoftKeyboard } from "@/apps/web-user/common/utils/soft-keyboard.util";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
 
 const RECENT_SEARCHES_KEY = "recentSearches";
 const MAX_RECENT = 10;
@@ -42,6 +43,20 @@ export default function SearchPage() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [listFilter, setListFilter] = useState<StoreListFilter>({});
   const [sortBy, setSortBy] = useState<SearchSortBy>(DEFAULT_SORT_BY);
+  const [resultCount, setResultCount] = useState<number | undefined>(undefined);
+  // 필터 적용 직후 다음 result_count 갱신을 success_filter_apply로 처리하기 위한 플래그
+  const pendingFilterApplyRef = useRef(false);
+  // view_search_result 중복 발화 방지 (탭+검색어 조합이 바뀔 때만 재발화)
+  const lastViewedResultKeyRef = useRef<string | null>(null);
+  // resultCount 이펙트에서 최신값을 읽기 위한 ref (탭 전환 등으로 인한 조기 발화 방지 목적으로 deps에서는 제외)
+  const activeTabRef = useRef(activeTab);
+  activeTabRef.current = activeTab;
+  const submittedTermRef = useRef(submittedTerm);
+  submittedTermRef.current = submittedTerm;
+  const sortByRef = useRef(sortBy);
+  sortByRef.current = sortBy;
+  const listFilterRef = useRef(listFilter);
+  listFilterRef.current = listFilter;
 
   useEffect(() => {
     const q = searchParams.get("q");
@@ -57,8 +72,39 @@ export default function SearchPage() {
     releaseSoftKeyboard();
   }, []);
 
+  // 검색 화면(입력 전) 노출
+  useEffect(() => {
+    trackEvent("view_search");
+  }, []);
+
+  // 필터 적용 후 또는 검색 결과가 바뀔 때 result_count가 갱신되면 해당 이벤트를 전송
+  // (submittedTerm/activeTab/sortBy/listFilter는 ref로만 읽어 탭 전환 시 이전 카운트로 조기 발화되지 않게 함)
+  useEffect(() => {
+    const submitted = submittedTermRef.current;
+    if (resultCount == null || !submitted.trim()) return;
+    if (pendingFilterApplyRef.current) {
+      pendingFilterApplyRef.current = false;
+      const filter = listFilterRef.current;
+      trackEvent("success_filter_apply", {
+        sort_type: sortByRef.current,
+        size_filter: filter.sizes?.join(",") || undefined,
+        price_min: filter.minPrice,
+        price_max: filter.maxPrice,
+        type_filter: filter.productCategoryTypes?.join(",") || undefined,
+        result_count: resultCount,
+      });
+      lastViewedResultKeyRef.current = `${activeTabRef.current}:${submitted}`;
+      return;
+    }
+    const key = `${activeTabRef.current}:${submitted}`;
+    if (lastViewedResultKeyRef.current === key) return;
+    lastViewedResultKeyRef.current = key;
+    trackEvent("view_search_result", { keyword: submitted, result_count: resultCount });
+  }, [resultCount]);
+
   const handleSearch = (term: string) => {
     if (!term.trim()) return;
+    trackEvent("request_search", { keyword: term.trim() });
     saveRecentSearch(term.trim());
     setSearchTerm(term.trim());
     setSubmittedTerm(term.trim());
@@ -103,7 +149,10 @@ export default function SearchPage() {
           <div className="flex items-center gap-[24px] py-[16px] px-[20px]">
             <button
               type="button"
-              onClick={() => setIsFilterOpen(true)}
+              onClick={() => {
+                trackEvent("engage_filter");
+                setIsFilterOpen(true);
+              }}
               aria-label="필터"
               aria-pressed={isFilterActive}
               className={`flex items-center justify-center w-[36px] h-[36px] shrink-0 border rounded-full ${
@@ -144,9 +193,15 @@ export default function SearchPage() {
                 maxPrice={listFilter.maxPrice}
                 productCategoryTypes={listFilter.productCategoryTypes}
                 sortBy={sortBy}
+                onResultCountChange={setResultCount}
               />
             ) : (
-              <SearchStoreListSection search={submittedTerm} filter={listFilter} sortBy={sortBy} />
+              <SearchStoreListSection
+                search={submittedTerm}
+                filter={listFilter}
+                sortBy={sortBy}
+                onResultCountChange={setResultCount}
+              />
             )}
           </div>
         </>
@@ -156,7 +211,10 @@ export default function SearchPage() {
         isOpen={isFilterOpen}
         onClose={() => setIsFilterOpen(false)}
         filter={listFilter}
-        onFilterChange={setListFilter}
+        onFilterChange={(f) => {
+          pendingFilterApplyRef.current = true;
+          setListFilter(f);
+        }}
         sortBy={sortBy}
         onSortByChange={setSortBy}
       />

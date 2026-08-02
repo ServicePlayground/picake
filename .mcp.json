@@ -1,0 +1,48 @@
+{
+  "mcpServers": {
+    "posthog": {
+      "type": "http",
+      "url": "https://mcp.posthog.com/mcp"
+    },
+    "vercel": {
+      "type": "http",
+      "url": "https://mcp.vercel.com"
+    },
+    "sentry": {
+      "type": "http",
+      "url": "https://mcp.sentry.dev/mcp"
+    },
+    "awslabs.aws-api-mcp-server": {
+      "command": "uvx",
+      "args": ["awslabs.aws-api-mcp-server@latest"],
+      "env": {
+        "AWS_REGION": "ap-northeast-2",
+        "FASTMCP_LOG_LEVEL": "ERROR"
+      }
+    },
+    "kakao-playmcp": {
+      "type": "http",
+      "url": "https://playmcp.kakao.com/mcp"
+    },
+    "gcloud-mcp": {
+      "command": "npx",
+      "args": ["-y", "@google-cloud/gcloud-mcp"]
+    },
+    "firebase": {
+      "command": "firebase",
+      "args": ["experimental:mcp"]
+    },
+    "solapi": {
+      "command": "npx",
+      "args": ["--latest", "-y", "@solapi/mcp-server"]
+    },
+    "google-sheets": {
+      "type": "http",
+      "url": "https://sheetsmcp.googleapis.com/mcp/v1"
+    },
+    "google-docs": {
+      "type": "http",
+      "url": "https://docsmcp.googleapis.com/mcp/v1"
+    }
+  }
+}

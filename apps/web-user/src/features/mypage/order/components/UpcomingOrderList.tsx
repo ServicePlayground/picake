@@ -64,7 +64,7 @@ function UpcomingOrderItem({ order, isLast }: { order: OrderResponse; isLast: bo
             <p className="text-2sm text-gray-500">{formatAddressToDistrict(order.pickupAddress)}</p>
           </div>
           <Link
-            href={`/order/${order.id}`}
+            href={`/order/${order.id}?entry_point=reservation_list`}
             className="flex items-center justify-center w-[46px] h-[21px] text-xs font-bold text-gray-400 underline"
           >
             예약상세
