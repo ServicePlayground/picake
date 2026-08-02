@@ -7,6 +7,7 @@ const AUTH_ERROR_MESSAGES = {
   /** 백엔드 `AUTH_ERROR_MESSAGES`와 동일 (OAuth 회원가입 409 응답 message 매칭용) */
   PHONE_GOOGLE_ACCOUNT_EXISTS: "해당 휴대폰 번호로 이미 등록된 구글 계정이 있습니다.",
   PHONE_KAKAO_ACCOUNT_EXISTS: "해당 휴대폰 번호로 이미 등록된 카카오 계정이 있습니다.",
+  PHONE_APPLE_ACCOUNT_EXISTS: "해당 휴대폰 번호로 이미 등록된 애플 계정이 있습니다.",
   /** 백엔드 `AUTH_ERROR_MESSAGES`와 동일 (인증번호 확인 실패 응답 message 매칭용) */
   PHONE_VERIFICATION_FAILED: "인증번호가 올바르지 않습니다.",
   PHONE_VERIFICATION_EXPIRED: "인증번호가 만료되었습니다.",

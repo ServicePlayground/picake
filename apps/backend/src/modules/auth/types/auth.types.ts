@@ -29,7 +29,7 @@ export interface AuthenticatedUser extends JwtVerifiedPayload {
   id: string;
   aud: AudienceConst;
   phone?: string;
-  loginType?: "google" | "kakao";
+  loginType?: "google" | "kakao" | "apple";
   loginId?: string;
   /** aud === "seller" 일 때만 */
   sellerVerificationStatus?: "REGISTERED" | "BUSINESS_VERIFIED";
@@ -55,4 +55,24 @@ export interface KakaoUserInfo {
     kakaoId: string;
     kakaoEmail: string;
   };
+}
+
+/**
+ * 애플 토큰 교환 직후 id_token 검증 결과 — 서비스 내부 전달용, HTTP DTO 아님.
+ * `refreshToken`은 탈퇴 시 `/auth/revoke` 호출용으로 암호화해 저장합니다.
+ */
+export interface AppleUserInfo {
+  userInfo: {
+    appleId: string;
+    appleEmail: string;
+  };
+  refreshToken: string;
+}
+
+/** 애플 id_token(JWT) 검증 후 얻는 클레임 중 사용하는 것만 — Google/Kakao의 userinfo 응답에 대응 */
+export interface AppleIdTokenPayload {
+  sub: string;
+  email?: string;
+  aud: string;
+  iss: string;
 }

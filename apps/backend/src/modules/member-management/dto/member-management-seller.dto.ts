@@ -17,7 +17,8 @@ export class MemberSellerListQueryDto extends MemberListQueryDto {
   verificationStatus?: SellerVerificationStatus;
 
   @ApiPropertyOptional({
-    description: "소속 세그먼트 키 필터 (예: EARLY_BIRD_2026). 어드민 > 판매자 세그먼트 관리에서 확인 가능",
+    description:
+      "소속 세그먼트 키 필터 (예: EARLY_BIRD_2026). 어드민 > 판매자 세그먼트 관리에서 확인 가능",
   })
   @IsOptional()
   @IsString()

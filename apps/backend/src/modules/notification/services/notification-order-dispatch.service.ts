@@ -141,7 +141,9 @@ export class NotificationOrderDispatchService {
       if (!order) return;
 
       const copy = buildPaymentReminderNotificationCopy();
-      const alimtalk = buildPaymentReminderAlimtalkPayload(this.toAlimtalkOrderInfo(order, orderId));
+      const alimtalk = buildPaymentReminderAlimtalkPayload(
+        this.toAlimtalkOrderInfo(order, orderId),
+      );
 
       const item = await this.notificationService.createUserWebOrderNotification({
         recipientUserId: order.consumerId,

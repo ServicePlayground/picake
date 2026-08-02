@@ -286,6 +286,13 @@ jobs:
             KAKAO_CLIENT_ID_SELLER=${{ secrets.KAKAO_CLIENT_ID_SELLER }}
             KAKAO_CLIENT_SECRET_SELLER=${{ secrets.KAKAO_CLIENT_SECRET_SELLER }}
 
+            # APPLE OAuth (Consumer, web-user 전용) - development & staging & production (공용)
+            APPLE_TEAM_ID=${{ secrets.APPLE_TEAM_ID }}
+            APPLE_KEY_ID=${{ secrets.APPLE_KEY_ID }}
+            APPLE_CLIENT_ID=${{ secrets.APPLE_CLIENT_ID }}
+            APPLE_PRIVATE_KEY=${{ secrets.APPLE_PRIVATE_KEY }}
+            APPLE_REFRESH_TOKEN_ENCRYPTION_KEY=${{ secrets.APPLE_REFRESH_TOKEN_ENCRYPTION_KEY }}
+
             # FIREBASE Admin SDK - development & staging & production (공용)
             FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }}
             FIREBASE_PRIVATE_KEY=${{ secrets.FIREBASE_PRIVATE_KEY }}

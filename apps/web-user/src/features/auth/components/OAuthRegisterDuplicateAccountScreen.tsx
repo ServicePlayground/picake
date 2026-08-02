@@ -5,11 +5,14 @@ import { useCallback } from "react";
 import { useAlertStore } from "@/apps/web-user/common/store/alert.store";
 import Header from "@/apps/web-user/common/components/headers/Header";
 import {
+  AppleLogoIcon,
+  OAuthAppleLoginButton,
   OAuthGoogleLoginButton,
   OAuthKakaoLoginButton,
   oauthLoginButtonIconClassName,
 } from "@/apps/web-user/common/components/buttons/oauth-provider-login-buttons";
 import {
+  getAppleOAuthLoginUrl,
   getGoogleOAuthLoginUrl,
   getKakaoOAuthLoginUrl,
 } from "@/apps/web-user/features/auth/utils/oauth-login-url.util";
@@ -31,7 +34,12 @@ export function OAuthRegisterDuplicateAccountScreen({
 
   const handleLoginClick = useCallback(() => {
     trackEvent("engage_duplicate_login", { provider });
-    const href = provider === "kakao" ? getKakaoOAuthLoginUrl() : getGoogleOAuthLoginUrl();
+    const href =
+      provider === "kakao"
+        ? getKakaoOAuthLoginUrl()
+        : provider === "apple"
+          ? getAppleOAuthLoginUrl()
+          : getGoogleOAuthLoginUrl();
     if (!href) {
       showAlert({
         type: "error",
@@ -78,7 +86,7 @@ export function OAuthRegisterDuplicateAccountScreen({
                 로그인수단
               </dt>
               <dd className="min-w-0 flex-1 text-left text-[14px] font-normal text-[var(--grayscale-gr-900,#1F1F1E)]">
-                {provider === "google" ? "구글" : "카카오"}
+                {provider === "google" ? "구글" : provider === "apple" ? "애플" : "카카오"}
               </dd>
             </div>
           </dl>
@@ -96,6 +104,11 @@ export function OAuthRegisterDuplicateAccountScreen({
               />
               카카오로 로그인
             </OAuthKakaoLoginButton>
+          ) : provider === "apple" ? (
+            <OAuthAppleLoginButton type="button" onClick={handleLoginClick}>
+              <AppleLogoIcon />
+              Apple로 로그인
+            </OAuthAppleLoginButton>
           ) : (
             <OAuthGoogleLoginButton type="button" onClick={handleLoginClick}>
               <Image

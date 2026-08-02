@@ -4699,6 +4699,7 @@ __metadata:
     "@types/bcrypt": "npm:^6.0.0"
     "@types/cookie-parser": "npm:^1.4.9"
     "@types/express": "npm:^4.17.17"
+    "@types/jsonwebtoken": "npm:^9.0.10"
     "@types/morgan": "npm:^1.9.9"
     "@types/node": "npm:^20.3.1"
     "@types/passport": "npm:1.0.17"
@@ -4712,6 +4713,8 @@ __metadata:
     dotenv-cli: "npm:^7.4.1"
     firebase-admin: "npm:^12.7.0"
     helmet: "npm:^7.1.0"
+    jsonwebtoken: "npm:^9.0.3"
+    jwks-rsa: "npm:^3.2.2"
     morgan: "npm:^1.10.0"
     passport: "npm:^0.7.0"
     passport-jwt: "npm:^4.0.1"
@@ -8004,7 +8007,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/jsonwebtoken@npm:*, @types/jsonwebtoken@npm:9.0.10, @types/jsonwebtoken@npm:^9.0.4":
+"@types/jsonwebtoken@npm:*, @types/jsonwebtoken@npm:9.0.10, @types/jsonwebtoken@npm:^9.0.10, @types/jsonwebtoken@npm:^9.0.4":
   version: 9.0.10
   resolution: "@types/jsonwebtoken@npm:9.0.10"
   dependencies:
@@ -13477,7 +13480,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jsonwebtoken@npm:9.0.3, jsonwebtoken@npm:^9.0.0":
+"jsonwebtoken@npm:9.0.3, jsonwebtoken@npm:^9.0.0, jsonwebtoken@npm:^9.0.3":
   version: 9.0.3
   resolution: "jsonwebtoken@npm:9.0.3"
   dependencies:
@@ -13506,7 +13509,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jwks-rsa@npm:^3.1.0":
+"jwks-rsa@npm:^3.1.0, jwks-rsa@npm:^3.2.2":
   version: 3.2.2
   resolution: "jwks-rsa@npm:3.2.2"
   dependencies:

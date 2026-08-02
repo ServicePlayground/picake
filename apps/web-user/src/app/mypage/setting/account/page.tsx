@@ -11,10 +11,13 @@ import { WithdrawBottomSheet } from "@/apps/web-user/features/mypage/components/
 import { useAuthStore } from "@/apps/web-user/common/store/auth.store";
 import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 
-function getLoginProviderLabel(user: { kakaoId: string; googleId: string } | undefined): string {
+function getLoginProviderLabel(
+  user: { kakaoId: string; googleId: string; appleId: string } | undefined,
+): string {
   if (!user) return "-";
   if (user.kakaoId) return "카카오톡";
   if (user.googleId) return "구글";
+  if (user.appleId) return "Apple";
   return "-";
 }
 

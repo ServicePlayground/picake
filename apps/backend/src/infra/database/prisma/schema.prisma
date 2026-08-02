@@ -118,6 +118,10 @@ model Consumer {
   googleEmail String? @map("google_email")
   kakaoId     String? @unique @map("kakao_id")
   kakaoEmail  String? @map("kakao_email")
+  appleId     String? @unique @map("apple_id")
+  appleEmail  String? @map("apple_email")
+  /// Apple `refresh_token` (AES-256-GCM 암호화, `TokenEncryptionUtil`) — 탈퇴 시 `/auth/revoke` 호출용으로만 사용
+  appleRefreshToken String? @map("apple_refresh_token")
 
   createdAt   DateTime @default(now()) @map("created_at")
   lastLoginAt DateTime? @map("last_login_at")
@@ -137,6 +141,7 @@ model Consumer {
   @@index([phone])
   @@index([googleId])
   @@index([kakaoId])
+  @@index([appleId])
   @@map("consumers")
 }
 

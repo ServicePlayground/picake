@@ -43,8 +43,8 @@ export function SellerSegmentCreateForm() {
     <div className="space-y-4">
       <p className="text-sm text-muted-foreground">
         혜택 내용·인원·기간이 정해지지 않아도 먼저 "누구를 구분해둘지" 그룹만 만들어둘 수 있습니다.
-        나중에 혜택이 정해지면 이 세그먼트를 대상으로 지급하면 됩니다. 이름에 기준·목적을 함께 적어두면
-        나중에 알아보기 쉽습니다.
+        나중에 혜택이 정해지면 이 세그먼트를 대상으로 지급하면 됩니다. 이름에 기준·목적을 함께
+        적어두면 나중에 알아보기 쉽습니다.
       </p>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -57,7 +57,9 @@ export function SellerSegmentCreateForm() {
             placeholder="예: EARLY_BIRD_2026"
             disabled={isBusy}
           />
-          <p className="text-xs text-muted-foreground">등록 후 변경 불가. 영문 대문자·숫자·_만 사용</p>
+          <p className="text-xs text-muted-foreground">
+            등록 후 변경 불가. 영문 대문자·숫자·_만 사용
+          </p>
         </div>
 
         <div className="space-y-2">

@@ -20,23 +20,25 @@ Picake의 데이터는 두 곳에 나뉘어 있습니다. **행동 데이터(페
 프로젝트는 이미 `.mcp.json`에 연결되어 있습니다 (`posthog` MCP, project id `497749`, org "picake"). `mcp__posthog__exec` 도구로 아래를 조회하세요.
 
 ### 기본 제품 분석 지표 (PostHog 기본 기능)
+
 - 활성 사용자: DAU / WAU / MAU (고유 사용자 수 트렌드)
 - `$pageview` 총 건수, 신규 vs 재방문 사용자 비율
 - 이미 PostHog에 저장된 Insight/Dashboard가 있다면 함께 조회해서 보여주세요 (팀이 이미 만들어둔 지표를 놓치지 않기 위함) — `insight`/`dashboard` 도메인 조회.
 
 ### 커스텀 이벤트 기반 전환 퍼널 (팀이 추가한 기능)
+
 전체 이벤트 정의는 `apps/web-user/src/common/types/analytics.type.ts`에 있습니다 (총 65개, `view_*`=화면 노출 `engage_*`=클릭 `request_*`=요청 전송 `success_*`/`fail_*`=서버 응답 네이밍 규칙). 아래 퍼널 단위로 단계별 전환율을 HogQL/퍼널 쿼리로 계산하세요.
 
-| 퍼널 | 이벤트 순서 |
-| --- | --- |
-| 예약(주문) | `view_product_detail` → `engage_reservation` → `request_reservation` → `success_reservation` |
-| 회원가입 | `view_login_entry` → `engage_social_select` → `request_signup` → `success_signup` |
-| 검색 | `engage_search_bar` → `request_search` → `view_search_result` |
-| 지도 탐색 | `view_map` → `engage_store_pin` |
-| 미입금 리마인드 대응 | `view_payment_alarm` → `engage_easy_payment` → `success_payment_complete` |
-| 리뷰 작성 | `engage_review_write` → `success_review_submit` |
-| 예약 취소 | `engage_cancel_reservation` → `request_cancel_reservation` → `success_cancel_reservation` |
-| 환불 정보 등록 | `request_refund_info` → `success_refund_info` |
+| 퍼널                 | 이벤트 순서                                                                                  |
+| -------------------- | -------------------------------------------------------------------------------------------- |
+| 예약(주문)           | `view_product_detail` → `engage_reservation` → `request_reservation` → `success_reservation` |
+| 회원가입             | `view_login_entry` → `engage_social_select` → `request_signup` → `success_signup`            |
+| 검색                 | `engage_search_bar` → `request_search` → `view_search_result`                                |
+| 지도 탐색            | `view_map` → `engage_store_pin`                                                              |
+| 미입금 리마인드 대응 | `view_payment_alarm` → `engage_easy_payment` → `success_payment_complete`                    |
+| 리뷰 작성            | `engage_review_write` → `success_review_submit`                                              |
+| 예약 취소            | `engage_cancel_reservation` → `request_cancel_reservation` → `success_cancel_reservation`    |
+| 환불 정보 등록       | `request_refund_info` → `success_refund_info`                                                |
 
 사용자가 위 목록에 없는 세부 질문(특정 이벤트의 기간별 추이, 특정 유저 세그먼트 등)을 하면 같은 MCP로 자유롭게 추가 질의하세요.
 
@@ -48,13 +50,13 @@ Picake의 데이터는 두 곳에 나뉘어 있습니다. **행동 데이터(페
 
 토큰을 받으면 아래 엔드포인트를 `Authorization: Bearer <token>`으로 호출합니다 (base URL은 0번에서 정한 환경 기준). **API에는 전역 prefix `/v1`이 붙습니다** (`apps/backend/src/common/constants/app.constants.ts`의 `API_PREFIX`) — `/admin/statistics/...`가 아니라 `/v1/admin/statistics/...`로 호출해야 합니다. prefix를 빼먹으면 404(Not Found)가 납니다.
 
-| 메서드/경로 | 응답 형태 |
-| --- | --- |
-| `GET /v1/admin/statistics/users` | `{ consumers: {total, today, last7Days, last30Days, withdrawn}, sellers: {...} }` |
-| `GET /v1/admin/statistics/orders` | `{ total, gmv, byStatus: [{status, count}] }` |
-| `GET /v1/admin/statistics/stores` | `{ stores: {total, today, last7Days, last30Days}, businessVerifiedStores: {...} }` |
-| `GET /v1/admin/statistics/store-entry-requests` | `{ storeEntryRequests: {total, today, last7Days, last30Days} }` |
-| `GET /v1/admin/statistics/daily-trends?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD&metrics=signups,orders,stores,entryRequests` | `{ days: [...] }` (날짜는 Asia/Seoul 기준) |
+| 메서드/경로                                                                                                                 | 응답 형태                                                                          |
+| --------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `GET /v1/admin/statistics/users`                                                                                            | `{ consumers: {total, today, last7Days, last30Days, withdrawn}, sellers: {...} }`  |
+| `GET /v1/admin/statistics/orders`                                                                                           | `{ total, gmv, byStatus: [{status, count}] }`                                      |
+| `GET /v1/admin/statistics/stores`                                                                                           | `{ stores: {total, today, last7Days, last30Days}, businessVerifiedStores: {...} }` |
+| `GET /v1/admin/statistics/store-entry-requests`                                                                             | `{ storeEntryRequests: {total, today, last7Days, last30Days} }`                    |
+| `GET /v1/admin/statistics/daily-trends?startDate=YYYY-MM-DD&endDate=YYYY-MM-DD&metrics=signups,orders,stores,entryRequests` | `{ days: [...] }` (날짜는 Asia/Seoul 기준)                                         |
 
 예: `https://api.picakes.com/v1/admin/statistics/users`, `https://api-staging.picakes.com/v1/admin/statistics/orders`.
 

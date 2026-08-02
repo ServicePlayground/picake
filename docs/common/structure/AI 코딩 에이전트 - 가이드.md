@@ -10,14 +10,15 @@
 
 반복적으로 수행하는 작업을 저장소 전용 규칙으로 정의해 둔 슬래시 커맨드(skill) 모음입니다. 각 skill은 `.claude/skills/<이름>/SKILL.md`에 정의되어 있습니다.
 
-| Skill               | 용도                                                             |
-| ------------------- | ------------------------------------------------------------------ |
+| Skill               | 용도                                                                             |
+| ------------------- | -------------------------------------------------------------------------------- |
 | `commit-convention` | 저장소 커밋 메시지 접두사 규칙(`[프로젝트][타입]: 내용`)에 맞춰 커밋 메시지 작성 |
-| `deploy`            | 태그 기반 배포 진행 (backend는 AWS EC2, web-user/web-seller/web-admin은 Vercel) |
-| `docs-sync`         | 코드 변경 작업을 마칠 때마다 관련 문서(README/docs)를 자동으로 최신화             |
-| `docs-refresh`      | 특정 변경과 무관하게 문서 전체를 현재 코드베이스 기준으로 재점검                    |
-| `pr-create`         | Pull Request 생성                                                 |
+| `deploy`            | 태그 기반 배포 진행 (backend는 AWS EC2, web-user/web-seller/web-admin은 Vercel)  |
+| `docs-sync`         | 코드 변경 작업을 마칠 때마다 관련 문서(README/docs)를 자동으로 최신화            |
+| `docs-refresh`      | 특정 변경과 무관하게 문서 전체를 현재 코드베이스 기준으로 재점검                 |
+| `pr-create`         | Pull Request 생성                                                                |
 | `data-report`       | PostHog(행동 데이터)와 관리자 통계(DB 데이터)를 함께 조회해 리포트 제공          |
+| `social-login`      | 구글/카카오/애플 등 소셜 로그인(OAuth) 기능 추가·수정 시 기존 패턴 재사용        |
 
 ## 📄 .claude/settings.json
 

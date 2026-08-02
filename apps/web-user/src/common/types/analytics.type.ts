@@ -23,7 +23,7 @@ export type ReservationCompleteAction = "reservation" | "home";
 export type LoginEntryPoint = "reservation_button" | "save_menu" | "mypage" | "like_button";
 
 /** 소셜 로그인 제공자 */
-export type OAuthProvider = "kakao" | "google";
+export type OAuthProvider = "kakao" | "google" | "apple";
 
 /** 기존 계정과 중복으로 판단된 기준 */
 export type DuplicateAccountType = "social" | "phone_number";

@@ -127,3 +127,35 @@ export function useKakaoRegister(options?: {
     },
   });
 }
+
+export function useAppleRegister(options?: {
+  onDuplicateAccount?: (payload: DuplicateAccountPayload) => void;
+}) {
+  const router = useRouter();
+  const login = useAuthStore((s) => s.login);
+  const { showAlert } = useAlertStore();
+
+  return useMutation({
+    mutationFn: authApi.appleRegister,
+    onSuccess: (data) => {
+      const userId = decodeJwtPayload<{ sub: string }>(data.accessToken)?.sub;
+      if (userId) {
+        trackEvent("success_signup", { provider: "apple", user_id: userId });
+      }
+      login(data.accessToken);
+      router.replace(PATHS.HOME);
+    },
+    onError: (error) => {
+      const duplicate = parseDuplicateAccountPayload(error);
+      if (duplicate) {
+        options?.onDuplicateAccount?.(duplicate);
+        return;
+      }
+      showAlert({
+        type: "error",
+        title: "오류",
+        message: getApiMessage.error(error),
+      });
+    },
+  });
+}
