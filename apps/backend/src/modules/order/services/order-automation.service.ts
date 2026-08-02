@@ -6,7 +6,10 @@ import {
   isPickupReminderDue,
   isPickupReminderLeadEligible,
   isPaymentPendingExpired,
+  isPaymentReminderDue,
+  isPaymentReminderEligible,
   PICKUP_REMINDER_LEAD_MS,
+  PAYMENT_REMINDER_LEAD_MS,
 } from "@apps/backend/modules/order/utils/order-datetime.util";
 import { LoggerUtil } from "@apps/backend/common/utils/logger.util";
 import { SentryUtil } from "@apps/backend/common/utils/sentry.util";
@@ -42,6 +45,7 @@ export class OrderAutomationService implements OnModuleInit, OnModuleDestroy {
   /**
    * 단일 주문에 대해 만료·픽업 전환·픽업 안내 규칙을 즉시 적용 (최신 상태 보장)
    * 만료 규칙: 입금대기 상태에서 `paymentPendingDeadlineAt`(없으면 픽업·진입 시각 기준 복원)이 지난 주문을 취소완료로 전환합니다. 예약신청 단계는 자동 만료하지 않습니다.
+   * 재입금 안내: 입금대기 상태에서 마감까지 준 시간이 3시간 초과인 주문에 한해, 마감 3시간 전 구매자 안내를 1회 발송합니다. (마감 구간이 1시간으로 짧게 잡힌 픽업 임박 주문은 생략)
    * 픽업 안내: 예약확정 상태에서 픽업 24시간 전이면 구매자 안내를 1회 발송합니다. (주문~픽업이 24시간 미만이면 생략)
    * 픽업 규칙: 예약확정 상태에서 픽업 시각이 도달했거나 지난 주문을 픽업대기로 전환합니다.
    */
@@ -72,6 +76,14 @@ export class OrderAutomationService implements OnModuleInit, OnModuleDestroy {
             source: ORDER_STATUS_TRANSITION_SOURCE.AUTOMATION_SYNC,
           });
         }
+      } else if (order.paymentPendingAt && order.paymentPendingDeadlineAt) {
+        await this.trySendPaymentReminder({
+          orderId,
+          paymentPendingAt: order.paymentPendingAt,
+          paymentPendingDeadlineAt: order.paymentPendingDeadlineAt,
+          paymentReminderSentAt: order.paymentReminderSentAt,
+          now,
+        });
       }
       return;
     }
@@ -143,6 +155,37 @@ export class OrderAutomationService implements OnModuleInit, OnModuleDestroy {
             source: ORDER_STATUS_TRANSITION_SOURCE.AUTOMATION_BATCH,
           });
         }
+      }
+
+      // 재입금 안내 (입금대기 · 미발송 · 마감이 아직 남음)
+      const paymentReminderWindowEnd = new Date(now.getTime() + PAYMENT_REMINDER_LEAD_MS);
+      const paymentReminderCandidates = await this.prisma.order.findMany({
+        where: {
+          orderStatus: OrderStatus.PAYMENT_PENDING,
+          paymentReminderSentAt: null,
+          paymentPendingAt: { not: null },
+          paymentPendingDeadlineAt: {
+            gt: now,
+            lte: paymentReminderWindowEnd,
+          },
+        },
+        select: {
+          id: true,
+          paymentPendingAt: true,
+          paymentPendingDeadlineAt: true,
+          paymentReminderSentAt: true,
+        },
+      });
+
+      for (const row of paymentReminderCandidates) {
+        if (!row.paymentPendingAt || !row.paymentPendingDeadlineAt) continue;
+        await this.trySendPaymentReminder({
+          orderId: row.id,
+          paymentPendingAt: row.paymentPendingAt,
+          paymentPendingDeadlineAt: row.paymentPendingDeadlineAt,
+          paymentReminderSentAt: row.paymentReminderSentAt,
+          now,
+        });
       }
 
       // 픽업 24시간 전 안내 (예약확정 · 미발송 · 픽업이 아직 남음)
@@ -254,5 +297,36 @@ export class OrderAutomationService implements OnModuleInit, OnModuleDestroy {
     if (count !== 1) return;
 
     await this.notificationOrderDispatchService.handlePickupReminder(orderId);
+  }
+
+  /**
+   * 재입금 안내를 1회만 발송합니다.
+   * - 마감까지 준 시간이 3시간(리드타임) 이하면(픽업 임박으로 짧게 잡힌 마감) 발송하지 않습니다.
+   * - `paymentReminderSentAt`을 먼저 확정해 배치·sync 경합 시 중복 발송을 막습니다.
+   */
+  private async trySendPaymentReminder(params: {
+    orderId: string;
+    paymentPendingAt: Date;
+    paymentPendingDeadlineAt: Date;
+    paymentReminderSentAt: Date | null;
+    now: Date;
+  }): Promise<void> {
+    const { orderId, paymentPendingAt, paymentPendingDeadlineAt, paymentReminderSentAt, now } =
+      params;
+    if (paymentReminderSentAt) return;
+    if (!isPaymentReminderEligible(paymentPendingAt, paymentPendingDeadlineAt)) return;
+    if (!isPaymentReminderDue(paymentPendingDeadlineAt, now)) return;
+
+    const { count } = await this.prisma.order.updateMany({
+      where: {
+        id: orderId,
+        orderStatus: OrderStatus.PAYMENT_PENDING,
+        paymentReminderSentAt: null,
+      },
+      data: { paymentReminderSentAt: now },
+    });
+    if (count !== 1) return;
+
+    await this.notificationOrderDispatchService.handlePaymentReminder(orderId);
   }
 }

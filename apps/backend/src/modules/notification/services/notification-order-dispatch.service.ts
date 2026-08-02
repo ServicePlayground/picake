@@ -4,10 +4,12 @@ import { PrismaService } from "@apps/backend/infra/database/prisma.service";
 import type { OrderStatusTransitionPayload } from "@apps/backend/modules/order/types/order-lifecycle.types";
 import { buildSellerOrderNotificationCopy } from "@apps/backend/modules/notification/utils/seller-order-notification-copy.util";
 import {
+  buildPaymentReminderNotificationCopy,
   buildPickupReminderNotificationCopy,
   buildUserOrderNotificationCopy,
 } from "@apps/backend/modules/notification/utils/user-order-notification-copy.util";
 import {
+  buildPaymentReminderAlimtalkPayload,
   buildPickupReminderAlimtalkPayload,
   buildUserOrderAlimtalkPayload,
   type UserOrderAlimtalkOrderInfo,
@@ -121,6 +123,64 @@ export class NotificationOrderDispatchService {
       SentryUtil.captureException(e, "error", {
         module: "notification-order-dispatch",
         channel: "user-pickup-reminder",
+        orderId,
+      });
+    }
+  }
+
+  /**
+   * 입금 마감 3시간 전 재입금 안내(인앱·FCM·알림톡).
+   * 호출 측에서 `paymentReminderSentAt`을 먼저 확정한 뒤 호출합니다.
+   */
+  async handlePaymentReminder(orderId: string): Promise<void> {
+    try {
+      const order = await this.prisma.order.findUnique({
+        where: { id: orderId },
+        select: USER_ORDER_NOTIFICATION_SELECT,
+      });
+      if (!order) return;
+
+      const copy = buildPaymentReminderNotificationCopy();
+      const alimtalk = buildPaymentReminderAlimtalkPayload(this.toAlimtalkOrderInfo(order, orderId));
+
+      const item = await this.notificationService.createUserWebOrderNotification({
+        recipientUserId: order.consumerId,
+        title: copy.title,
+        body: copy.body,
+        storeId: order.storeId,
+        orderId,
+      });
+
+      this.notificationGateway.emitUserOrderNotification(order.consumerId, item);
+
+      const prefs = await this.notificationService.getOrCreatePreferenceUserWeb(order.consumerId);
+      if (prefs.pushNotificationsEnabled) {
+        await this.consumerOrderFcmPushService.sendOrderPush({
+          consumerId: order.consumerId,
+          title: copy.title,
+          body: copy.body,
+          orderId,
+        });
+      }
+
+      if (alimtalk) {
+        const recipientPhone = order.reservationPhone ?? order.consumer.phone;
+        if (recipientPhone) {
+          await this.consumerOrderAlimtalkService.sendOrderAlimtalk({
+            to: recipientPhone,
+            templateId: alimtalk.templateId,
+            variables: alimtalk.variables,
+            orderId,
+          });
+        }
+      }
+    } catch (e) {
+      LoggerUtil.log(
+        `[NotificationOrderDispatch/payment-reminder] 실패 order=${orderId}: ${e instanceof Error ? e.message : String(e)}`,
+      );
+      SentryUtil.captureException(e, "error", {
+        module: "notification-order-dispatch",
+        channel: "user-payment-reminder",
         orderId,
       });
     }
