@@ -18,6 +18,16 @@ export function PostHogPageView() {
     });
   }, [location.pathname, location.search]);
 
+  // /auth/* 는 OAuth 콜백·가입 플로우라 화면 녹화(세션 리플레이) 자체를 꺼서
+  // 이메일 등 화면에 노출되는 정보가 리플레이로 남지 않게 한다.
+  useEffect(() => {
+    if (location.pathname.startsWith("/auth")) {
+      posthog.stopSessionRecording();
+    } else {
+      posthog.startSessionRecording();
+    }
+  }, [location.pathname]);
+
   return null;
 }
 

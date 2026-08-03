@@ -1,4 +1,4 @@
-import posthog from "posthog-js";
+import posthog, { type CaptureResult } from "posthog-js";
 
 const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com";
@@ -9,6 +9,63 @@ const SUPER_PROPERTIES = {
   app: "web-user",
   environment: NODE_ENV,
 };
+
+/**
+ * $current_url/$referrer 쿼리스트링에 남을 수 있는 민감정보 파라미터.
+ * 소셜 로그인 콜백(OAuth code)·가입 화면(이메일)에서 실제로 관측된 키들.
+ */
+const SENSITIVE_URL_PARAMS = [
+  "code",
+  "token",
+  "access_token",
+  "id_token",
+  "googleEmail",
+  "appleEmail",
+  "googleId",
+  "appleId",
+  "iss",
+  "scope",
+  "authuser",
+];
+
+function sanitizeUrl(rawUrl: string): string {
+  try {
+    const url = new URL(rawUrl);
+    // /auth/* 는 통째로 OAuth 콜백·가입 플로우라 쿼리스트링 자체가 필요 없음 — 전부 제거
+    if (url.pathname.startsWith("/auth/")) {
+      url.search = "";
+      return url.toString();
+    }
+    let changed = false;
+    for (const key of SENSITIVE_URL_PARAMS) {
+      if (url.searchParams.has(key)) {
+        url.searchParams.delete(key);
+        changed = true;
+      }
+    }
+    return changed ? url.toString() : rawUrl;
+  } catch {
+    return rawUrl;
+  }
+}
+
+/**
+ * 전송 직전의 모든 이벤트(수동 $pageview + trackEvent 커스텀 이벤트 전부)에서
+ * $current_url/$referrer에 남은 OAuth 코드·이메일 같은 민감정보를 제거합니다.
+ * posthog-js가 모든 이벤트에 $current_url을 자동으로 붙이기 때문에, PostHogPageView의
+ * 캡처 호출만 고쳐서는 부족합니다(예: /auth/register/google?...&googleEmail=... 페이지에
+ * 머무는 동안 발생한 success_signup 같은 커스텀 이벤트에도 같은 URL이 자동으로 붙음).
+ */
+function sanitizeEvent(event: CaptureResult | null): CaptureResult | null {
+  if (!event?.properties) return event;
+  if (typeof event.properties.$current_url === "string") {
+    event.properties.$current_url = sanitizeUrl(event.properties.$current_url);
+  }
+  if (typeof event.properties.$referrer === "string") {
+    event.properties.$referrer = sanitizeUrl(event.properties.$referrer);
+  }
+  return event;
+}
 
 /** PostHog 활성화 여부 (키가 설정된 경우만 true) — Sentry의 isSentryEnabled와 동일한 정책 */
 export function isPostHogEnabled(): boolean {
@@ -31,6 +88,7 @@ export function initPostHog(): void {
     capture_pageview: false,
     capture_pageleave: true,
     person_profiles: "identified_only",
+    before_send: sanitizeEvent,
     loaded: (ph) => {
       ph.register(SUPER_PROPERTIES);
     },
