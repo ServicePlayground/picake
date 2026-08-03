@@ -14,11 +14,16 @@ import { NODE_ENV, type NodeEnv } from "@/apps/web-user/common/constants/environ
  * `appID`는 `{Apple Team ID}.{Bundle ID}` 형식입니다. Team ID(`S5AJRJ2DLR`)는
  * Sign in with Apple 설정 때 받은 것과 같은 Apple Developer 계정입니다.
  *
- * ⚠️ Bundle ID는 스테이징/프로덕션 구분 없이 `com.product.picake` 하나만 확인된 값입니다
- * (Android처럼 `.staging` 접미사로 분리된 별도 Bundle ID는 없음 — 앱담당자 확인 후 그대로 사용
- * 하기로 결정). 같은 Bundle ID를 쓰면 iOS 특성상 기기에 앱이 하나만 설치되므로, 그 기기에
- * 설치된 빌드가 무엇이든 staging/production 도메인 링크를 누르면 전부 그 앱으로 열립니다
- * (예: 스테이징 앱이 설치된 기기에서 프로덕션 알림톡 링크를 눌러도 스테이징 앱이 열림).
+ * ⚠️ **iOS Universal Links는 현재 비활성화 상태입니다(2026-08-03, 앱담당자 확인).**
+ * Universal Links로 앱이 열리면 웹뷰 네비게이션 직후(~1초) iOS가 자체적으로 앱을 백그라운드로
+ * 내리고 Safari를 다시 띄우는 현상이 확인됐습니다(카카오톡·메모 앱 등 진입 경로 무관하게 재현,
+ * 앱 쪽 코드에 외부 브라우저를 여는 경로 없음 확인 — iOS 자체 동작으로 판단). 대신 커스텀 스킴
+ * (`picake://`)으로 전환했습니다 — `common/components/deep-link/IosCustomSchemeRedirect.tsx`가
+ * `/order/*`, `/mypage/order`, `/mypage/reviews/write`에서 이 URL의 경로+쿼리를 그대로
+ * `picake://`로 바꿔 리다이렉트합니다. 이 파일의 `IOS_APP_ID_BY_ENV`는 그래서 빈 문자열로
+ * 두어(아래 `getAppleAppSiteAssociation`이 `details: []`를 반환) AASA에서 appID 자체를
+ * 아예 선언하지 않습니다 — Bundle ID는 이미 확인해뒀으니(`com.product.picake`, 환경 공용),
+ * 나중에 Universal Links를 다시 켜려면 `IOS_APP_ID` 값을 `IOS_APP_ID_BY_ENV`에 다시 채우면 됩니다.
  */
 export type AppleAppSiteAssociationDetail = {
   appIDs: string[];
@@ -46,13 +51,17 @@ const UNIVERSAL_LINK_COMPONENTS: AppleAppSiteAssociationDetail["components"] = [
   { "/": "/mypage/order", comment: "내 주문 목록" },
 ];
 
-/** Team ID + Bundle ID — 환경 구분 없이 공용(위 주석 참고) */
+/** Team ID + Bundle ID — 환경 구분 없이 공용(위 주석 참고). 확인된 값이지만 현재 미사용(아래 참고). */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const IOS_APP_ID = "S5AJRJ2DLR.com.product.picake";
 
-/** 환경별 `{Team ID}.{Bundle ID}`. 비어 있으면 해당 환경 응답에서 제외됩니다. */
+/**
+ * 환경별 `{Team ID}.{Bundle ID}`. 비어 있으면 해당 환경 응답에서 제외됩니다.
+ * 현재 둘 다 비워서 Universal Links를 껐습니다 — 재활성화 시 `IOS_APP_ID`를 채워 넣으세요.
+ */
 const IOS_APP_ID_BY_ENV: Record<typeof NODE_ENV.STAGING | typeof NODE_ENV.PRODUCTION, string> = {
-  [NODE_ENV.STAGING]: IOS_APP_ID,
-  [NODE_ENV.PRODUCTION]: IOS_APP_ID,
+  [NODE_ENV.STAGING]: "",
+  [NODE_ENV.PRODUCTION]: "",
 };
 
 /** `NEXT_PUBLIC_NODE_ENV` 기준으로 노출할 apple-app-site-association을 반환합니다. */

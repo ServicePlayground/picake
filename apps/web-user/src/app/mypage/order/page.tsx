@@ -13,6 +13,7 @@ import {
 } from "@/apps/web-user/features/mypage/order/components/PastOrderList";
 import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
 import type { ReservationTabName } from "@/apps/web-user/common/types/analytics.type";
+import { IosCustomSchemeRedirect } from "@/apps/web-user/common/components/deep-link/IosCustomSchemeRedirect";
 
 export default function MyOrdersPage() {
   const upcomingCount = useUpcomingOrderCount();
@@ -25,6 +26,7 @@ export default function MyOrdersPage() {
 
   return (
     <div>
+      <IosCustomSchemeRedirect />
       <Header variant="back-title" title="내 예약" />
       <Tabs
         defaultTab="upcoming"
