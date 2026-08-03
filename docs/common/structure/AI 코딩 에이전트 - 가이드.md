@@ -19,6 +19,9 @@
 | `pr-create`         | Pull Request 생성                                                                |
 | `data-report`       | PostHog(행동 데이터)와 관리자 통계(DB 데이터)를 함께 조회해 리포트 제공          |
 | `social-login`      | 구글/카카오/애플 등 소셜 로그인(OAuth) 기능 추가·수정 시 기존 패턴 재사용        |
+| `app-deep-links`    | web-user 도메인 링크를 iOS/Android 네이티브 앱으로 여는 딥링크 설정 추가·수정    |
+| `kakao-template`    | 카카오 알림톡 템플릿을 SOLAPI에 신규 등록하거나 승인요청(검수 제출)              |
+| `file-exchange`     | 클립보드 복사/붙여넣기가 어려울 때 파일을 통해 텍스트를 주고받음                 |
 
 ## 📄 .claude/settings.json
 

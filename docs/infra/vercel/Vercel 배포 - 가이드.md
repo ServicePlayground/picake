@@ -119,9 +119,11 @@ Picake 프로젝트의 web-user, web-seller, web-admin 애플리케이션을 Ver
 
 자세한 워크플로 내용은 `.github/workflows/deploy-web.yml` 파일을 참고하세요.
 
+> ⚠️ 태그를 여러 개 동시에 push하면(`git push origin tag1 tag2 ...`) 태그는 정상 생성되어도 GitHub Actions가 트리거되지 않는 현상이 있습니다. 태그마다 개별로 나눠 push하세요. 자세한 재현·대응 방법은 `.claude/skills/deploy/SKILL.md` 참고.
+
 ### 4. 도메인 구성 (선택사항)
 
-커스텀 도메인 설정은 [EC2 배포 가이드](../aws/EC2_Route53_S3_CloudFront.md)의 Route53 섹션을 참고하세요.
+커스텀 도메인 설정은 [EC2 배포 가이드(검증)](<../aws/(검증)EC2_Route53_S3_CloudFront.md>)의 Route53 섹션을 참고하세요.
 
 ## 참고 자료
 
