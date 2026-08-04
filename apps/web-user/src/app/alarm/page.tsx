@@ -59,16 +59,24 @@ export default function AlarmPage() {
                     </div>
 
                     <div className="flex-1 flex flex-col gap-[6px] min-w-0">
-                      <p className="text-sm font-bold text-gray-900 truncate">{alarm.title}</p>
-                      <p className="text-sm text-gray-700 line-clamp-2">{alarm.content}</p>
-                    </div>
+                      {/* 제목이 시간 영역을 침범하지 않도록 같은 행에 두고 남는 폭만큼만 차지시킨다 */}
+                      <div className="flex items-start gap-[10px]">
+                        <p className="flex-1 min-w-0 text-sm font-bold text-gray-900 truncate">
+                          {alarm.title}
+                        </p>
 
-                    <div className="absolute right-0 top-[14px] flex flex-col gap-0.5 self-start shrink-0 text-xs text-gray-400 items-end text-right">
-                      <span>{alarm.date ? `${alarm.date} ${alarm.time}` : alarm.time}</span>
-                      {/* TODO: 알림 읽음 추루 원복 가능성 있음 */}
-                      {/* {alarm.read === false && (
-                        <span className="text-[10px] font-bold text-primary">NEW</span>
-                      )} */}
+                        <div className="flex flex-col gap-0.5 shrink-0 text-xs text-gray-400 items-end text-right">
+                          <span className="whitespace-nowrap">
+                            {alarm.date ? `${alarm.date} ${alarm.time}` : alarm.time}
+                          </span>
+                          {/* TODO: 알림 읽음 추루 원복 가능성 있음 */}
+                          {/* {alarm.read === false && (
+                            <span className="text-[10px] font-bold text-primary">NEW</span>
+                          )} */}
+                        </div>
+                      </div>
+
+                      <p className="text-sm text-gray-700 line-clamp-2">{alarm.content}</p>
                     </div>
                   </Link>
                 </li>
