@@ -24,6 +24,22 @@ module.exports = [
   },
   js.configs.recommended,
   {
+    // 로컬 개발용 Node 스크립트 (NestJS 밖에서 Prisma만 직접 사용)
+    files: ["apps/*/scripts/**/*.js"],
+    languageOptions: {
+      sourceType: "commonjs",
+      globals: {
+        require: "readonly",
+        module: "writable",
+        exports: "writable",
+        process: "readonly",
+        console: "readonly",
+        __dirname: "readonly",
+        __filename: "readonly",
+      },
+    },
+  },
+  {
     files: ["**/*.ts", "**/*.tsx"],
     languageOptions: {
       parser: tsParser,
