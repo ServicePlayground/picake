@@ -10,6 +10,10 @@ interface PaymentConfirmBottomSheetProps {
   onClose: () => void;
   amount: number;
   onConfirm: (depositorName: string) => void;
+  /** 입금자명 기본값 (미지정 시 프로필 이름) */
+  defaultDepositorName?: string | null;
+  /** 오버레이·시트 스택 순서 (다른 시트 위에 띄울 때 사용) */
+  zIndexClassName?: string;
 }
 
 export function PaymentConfirmBottomSheet({
@@ -17,16 +21,18 @@ export function PaymentConfirmBottomSheet({
   onClose,
   amount,
   onConfirm,
+  defaultDepositorName,
+  zIndexClassName,
 }: PaymentConfirmBottomSheetProps) {
   const { data: profile } = useMypageProfile();
   const [depositorName, setDepositorName] = useState("");
 
-  // 시트가 열릴 때 사용자 이름을 기본값으로 채워줌
+  // 시트가 열릴 때 기본값(미지정 시 사용자 이름)을 채워줌
   useEffect(() => {
     if (isOpen) {
-      setDepositorName(profile?.name ?? "");
+      setDepositorName(defaultDepositorName?.trim() || profile?.name || "");
     }
-  }, [isOpen, profile?.name]);
+  }, [isOpen, profile?.name, defaultDepositorName]);
 
   const handleClose = () => {
     setDepositorName("");
@@ -42,6 +48,7 @@ export function PaymentConfirmBottomSheet({
       isOpen={isOpen}
       onClose={handleClose}
       title="입금정보 확인"
+      zIndexClassName={zIndexClassName}
       footerShadow={false}
       footer={
         <div className="flex gap-2 px-5 py-2">

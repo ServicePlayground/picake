@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { BottomSheet } from "@/apps/web-user/common/components/bottom-sheets/BottomSheet";
 import { Button } from "@/apps/web-user/common/components/buttons/Button";
 import { Icon } from "@/apps/web-user/common/components/icons";
-import { Modal } from "@/apps/web-user/common/components/modals/Modal";
+import { PaymentConfirmBottomSheet } from "@/apps/web-user/common/components/bottom-sheets/PaymentConfirmBottomSheet";
 import { Toast } from "@/apps/web-user/common/components/toast/Toast";
 import { OrderResponse, OrderStatus } from "@/apps/web-user/features/order/types/order.type";
 import { useMyOrders } from "@/apps/web-user/features/order/hooks/queries/useMyOrders";
@@ -14,7 +14,6 @@ import {
   resolveDeadlineMs,
   usePaymentCountdown,
 } from "@/apps/web-user/features/order/hooks/usePaymentCountdown";
-import { useMypageProfile } from "@/apps/web-user/features/mypage/hooks/queries/useMypageProfile";
 import { isWebViewEnvironment } from "@/apps/web-user/common/utils/webview.bridge";
 import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 
@@ -84,7 +83,6 @@ function LaunchSheetView({
 }) {
   const router = useRouter();
   const countdown = usePaymentCountdown(order);
-  const { data: profile } = useMypageProfile();
   const { mutate: paymentComplete, isPending } = usePaymentComplete();
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
@@ -96,12 +94,13 @@ function LaunchSheetView({
     router.push(PATHS.ORDER.DETAIL(order.id));
   };
 
-  const handlePaymentComplete = () => {
+  const handlePaymentComplete = (depositorName: string) => {
     if (isPending) return;
     setIsConfirmOpen(false);
-    // 입금자명: 주문 시 입력한 예약자명 우선, 없으면 프로필 이름
-    const depositorName = order.reservationContactName?.trim() || profile?.name?.trim() || "";
-    paymentComplete({ orderId: order.id, depositorName }, { onSuccess: onPaid });
+    paymentComplete(
+      { orderId: order.id, depositorName: depositorName.trim() },
+      { onSuccess: onPaid },
+    );
   };
 
   return (
@@ -150,25 +149,14 @@ function LaunchSheetView({
         </div>
       </BottomSheet>
 
-      <Modal
+      {/* 런치 시트 위에 겹쳐 노출되므로 z-index를 한 단계 올린다 */}
+      <PaymentConfirmBottomSheet
         isOpen={isConfirmOpen}
         onClose={() => setIsConfirmOpen(false)}
-        title="입금 완료하셨나요?"
-        description={
-          <>
-            입금 완료 버튼을 누르면
-            <br />
-            판매자에게 확인 알림이 전달되며,
-            <br />
-            <span className="text-primary font-bold">입금 확인 후 예약이 확정</span>됩니다.
-          </>
-        }
-        confirmText="취소"
-        confirmVariant="outline"
-        cancelText="입금 완료"
-        cancelVariant="primary"
-        onConfirm={() => setIsConfirmOpen(false)}
-        onCancel={handlePaymentComplete}
+        amount={order.totalPrice}
+        defaultDepositorName={order.reservationContactName}
+        onConfirm={handlePaymentComplete}
+        zIndexClassName="z-[60]"
       />
     </>
   );
