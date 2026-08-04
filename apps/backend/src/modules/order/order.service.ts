@@ -6,6 +6,12 @@ import { OrderSellerActionService } from "@apps/backend/modules/order/services/o
 import { OrderUserListService } from "@apps/backend/modules/order/services/order-user-list.service";
 import { OrderUserActionService } from "@apps/backend/modules/order/services/order-user-action.service";
 import { OrderUserReservationEditService } from "@apps/backend/modules/order/services/order-user-reservation-edit.service";
+import { OrderAdminActionService } from "@apps/backend/modules/order/services/order-admin-action.service";
+import {
+  AdminRefundCandidateListRequestDto,
+  AdminRefundCandidateListResponseDto,
+  AdminRevertToRefundPendingRequestDto,
+} from "@apps/backend/modules/order/dto/order-admin-action.dto";
 import {
   CreateOrderRequestDto,
   CreateOrderResponseDto,
@@ -20,6 +26,7 @@ import {
   CancelOrderBeforePaymentRequestDto,
   MarkPaymentCompleteRequestDto,
   RequestCancelRefundRequestDto,
+  SubmitRefundAccountRequestDto,
 } from "@apps/backend/modules/order/dto/order-user-action.dto";
 import {
   UpdateReservationOrderItemsRequestDto,
@@ -43,6 +50,7 @@ export class OrderService {
     private readonly orderUserListService: OrderUserListService,
     private readonly orderUserActionService: OrderUserActionService,
     private readonly orderUserReservationEditService: OrderUserReservationEditService,
+    private readonly orderAdminActionService: OrderAdminActionService,
   ) {}
 
   /**
@@ -146,5 +154,34 @@ export class OrderService {
     dto: UpdateReservationOrderItemsRequestDto,
   ): Promise<{ id: string }> {
     return this.orderUserReservationEditService.updateOrderItems(orderId, user.sub, dto);
+  }
+
+  /** 취소환불대기 주문에 환불 계좌 입력 (사용자) */
+  async submitRefundAccountForUser(
+    orderId: string,
+    user: JwtVerifiedPayload,
+    dto: SubmitRefundAccountRequestDto,
+  ): Promise<{ id: string }> {
+    return this.orderUserActionService.submitRefundAccount(orderId, user.sub, dto);
+  }
+
+  /** 환불 구제가 필요할 수 있는 취소완료 주문 목록 (관리자) */
+  async getRefundCandidatesForAdmin(
+    query: AdminRefundCandidateListRequestDto,
+  ): Promise<AdminRefundCandidateListResponseDto> {
+    return this.orderAdminActionService.listRefundCandidates(query);
+  }
+
+  /** 주문 상세조회 (관리자) */
+  async getOrderByIdForAdmin(orderId: string): Promise<OrderResponseDto> {
+    return this.orderAdminActionService.getOrderById(orderId);
+  }
+
+  /** 취소완료 → 취소환불대기 되돌리기 (관리자) */
+  async revertOrderToRefundPendingForAdmin(
+    orderId: string,
+    dto: AdminRevertToRefundPendingRequestDto,
+  ): Promise<{ id: string }> {
+    return this.orderAdminActionService.revertToRefundPending(orderId, dto);
   }
 }

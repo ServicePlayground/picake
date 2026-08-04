@@ -3,6 +3,7 @@ import type { OrderStatusTransitionPayload } from "@apps/backend/modules/order/t
 import {
   isPaymentExpiredCancelSource,
   isReservationRequestedOnCreate,
+  isAdminStatusUpdate,
   isSellerStatusUpdate,
   isUserAction,
 } from "@apps/backend/modules/notification/utils/user-order-notification-transition.util";
@@ -98,6 +99,13 @@ export function buildUserOrderNotificationCopy(
       return {
         title: "취소·환불을 진행 중이에요",
         body: "스토어에서 환불 절차를 진행하고 있어요. 진행 상황은 주문 상세에서 확인할 수 있어요.",
+      };
+    }
+    // 관리자가 취소완료 주문을 되돌린 경우. 환불 계좌가 비어 있어 입력 유도가 목적입니다.
+    if (isAdminStatusUpdate(payload)) {
+      return {
+        title: "환불 처리가 시작됐어요",
+        body: "입금이 확인되어 환불을 진행해요. 주문 상세에서 환불받으실 계좌를 입력해 주세요.",
       };
     }
     return null;
