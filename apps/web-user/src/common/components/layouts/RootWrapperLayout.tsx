@@ -60,14 +60,8 @@ export default function RootWrapperLayout({ children }: RootWrapperLayoutProps) 
     if (pathname === "/mypage/setting/notification")
       return { variant: "back-title", title: "알림 설정", backFallbackPath: PATHS.MYPAGE };
     if (pathname === "/qa") return { variant: "minimal" };
-    if (
-      pathname === "/auth/register/google" ||
-      pathname === "/auth/login/google" ||
-      pathname === "/auth/register/kakao" ||
-      pathname === "/auth/login/kakao"
-    ) {
-      return { variant: "minimal" };
-    }
+    // 로그인/회원가입 화면(콜백 포함)은 자체 레이아웃을 쓰므로 공통 헤더 없음
+    if (pathname?.startsWith("/auth/")) return { variant: "minimal" };
     if (pathname?.startsWith("/mypage/")) return { variant: "minimal" };
     if (pathname?.startsWith("/order/")) return { variant: "minimal" };
     if (pathname === "/mypage") return { variant: "minimal" };
