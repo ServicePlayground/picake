@@ -38,6 +38,7 @@ export const PATHS = {
     CANCEL: (orderId: string) => `/order/${orderId}/cancel`,
     CANCEL_REFUND: (orderId: string) => `/order/${orderId}/cancel/refund`,
     CANCEL_DETAIL: (orderId: string) => `/order/${orderId}/cancel-detail`,
+    REFUND_ACCOUNT: (orderId: string) => `/order/${orderId}/refund-account`,
   },
 
   // 마이페이지
