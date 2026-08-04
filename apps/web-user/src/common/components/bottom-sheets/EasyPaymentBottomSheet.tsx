@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { BottomSheet } from "@/apps/web-user/common/components/bottom-sheets/BottomSheet";
 import { Modal } from "@/apps/web-user/common/components/modals/Modal";
+import { Toast } from "@/apps/web-user/common/components/toast/Toast";
 import { BottomSheetOptionList } from "./BottomSheetOptionList";
 import { APP_ONLY_MODAL } from "@/apps/web-user/common/constants/messages.constant";
 import {
@@ -15,32 +16,8 @@ function isMobileDevice(): boolean {
   return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 }
 
-function isIOSDevice(): boolean {
-  return /iPhone|iPad|iPod/i.test(navigator.userAgent);
-}
-
 /** 스키마 실행 후 이탈이 없으면 미설치로 판단하는 대기 시간 */
 const APP_LAUNCH_TIMEOUT_MS = 1500;
-
-type EasyPaymentApp = "toss" | "kakaopay";
-
-const EASY_PAYMENT_APPS: Record<
-  EasyPaymentApp,
-  { title: string; description: string; iosStoreUrl: string; androidStoreUrl: string }
-> = {
-  toss: {
-    title: "토스 앱이 필요해요",
-    description: "토스 앱을 설치한 뒤 다시 시도해주세요.",
-    iosStoreUrl: "https://apps.apple.com/kr/app/id839333328",
-    androidStoreUrl: "https://play.google.com/store/apps/details?id=viva.republica.toss",
-  },
-  kakaopay: {
-    title: "카카오톡 앱이 필요해요",
-    description: "카카오페이 송금은 카카오톡 앱에서 이용할 수 있습니다.",
-    iosStoreUrl: "https://apps.apple.com/kr/app/id362057947",
-    androidStoreUrl: "https://play.google.com/store/apps/details?id=com.kakao.talk",
-  },
-};
 
 interface EasyPaymentBottomSheetProps {
   isOpen: boolean;
@@ -61,7 +38,7 @@ export function EasyPaymentBottomSheet({
   amount,
 }: EasyPaymentBottomSheetProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [notInstalledApp, setNotInstalledApp] = useState<EasyPaymentApp | null>(null);
+  const [isNotInstalledToastOpen, setIsNotInstalledToastOpen] = useState(false);
 
   // 실행 감지 중인 리스너/타이머 정리 함수
   const cleanupRef = useRef<(() => void) | null>(null);
@@ -78,7 +55,7 @@ export function EasyPaymentBottomSheet({
    * 외부 앱 스키마 실행 후 앱 전환 여부로 설치 상태를 판단한다.
    * 앱이 열리면 페이지가 백그라운드로 내려가고, 미설치면 화면에 그대로 남는다.
    */
-  const handleDeepLink = (url: string, app: EasyPaymentApp) => {
+  const handleDeepLink = (url: string) => {
     if (!isMobileDevice()) {
       setIsModalOpen(true);
       return;
@@ -105,7 +82,8 @@ export function EasyPaymentBottomSheet({
         onClose();
         return;
       }
-      setNotInstalledApp(app);
+      // 시트는 닫지 않는다 — 다른 결제 수단을 바로 고를 수 있어야 함
+      setIsNotInstalledToastOpen(true);
     }, APP_LAUNCH_TIMEOUT_MS);
 
     const cleanup = () => {
@@ -120,8 +98,6 @@ export function EasyPaymentBottomSheet({
     // 웹뷰에서는 Flutter가 가로채 외부 앱을 실행하도록 커스텀 스키마로 감싼다
     window.location.href = isWebViewEnvironment() ? toExternalAppSchemeUrl(url) : url;
   };
-
-  const notInstalledInfo = notInstalledApp ? EASY_PAYMENT_APPS[notInstalledApp] : null;
 
   return (
     <>
@@ -162,7 +138,6 @@ export function EasyPaymentBottomSheet({
                 });
                 handleDeepLink(
                   `supertoss://send?bank=${bankName}&accountNo=${bankAccountNumber}&amount=${amount}`,
-                  "toss",
                 );
               },
             },
@@ -174,7 +149,7 @@ export function EasyPaymentBottomSheet({
                   reservation_id: reservationId,
                   payment_method: "kakao",
                 });
-                handleDeepLink("kakaotalk://kakaopay/money/to", "kakaopay");
+                handleDeepLink("kakaotalk://kakaopay/money/to");
               },
             },
           ]}
@@ -197,26 +172,14 @@ export function EasyPaymentBottomSheet({
         }}
       />
 
-      <Modal
-        isOpen={!!notInstalledInfo}
-        onClose={() => setNotInstalledApp(null)}
-        title={notInstalledInfo?.title ?? ""}
-        description={notInstalledInfo?.description}
-        confirmText="취소"
-        confirmVariant="outline"
-        cancelText="설치하러 가기"
-        cancelVariant="primary"
-        onConfirm={() => setNotInstalledApp(null)}
-        onCancel={() => {
-          if (notInstalledInfo) {
-            window.open(
-              isIOSDevice() ? notInstalledInfo.iosStoreUrl : notInstalledInfo.androidStoreUrl,
-              "_blank",
-            );
-          }
-          setNotInstalledApp(null);
-        }}
-      />
+      {isNotInstalledToastOpen && (
+        <Toast
+          message="해당 앱이 존재하지 않습니다."
+          iconName="alertCircle"
+          iconClassName="text-red-400"
+          onClose={() => setIsNotInstalledToastOpen(false)}
+        />
+      )}
     </>
   );
 }

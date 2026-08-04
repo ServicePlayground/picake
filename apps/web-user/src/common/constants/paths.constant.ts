@@ -68,6 +68,8 @@ export const PATHS = {
   QA: "/qa",
 
   AUTH: {
+    /** 로그인 화면 (로그인이 필요한 상황에서 이동) */
+    LOGIN: "/auth/login",
     GOOGLE_REDIRECT_URI: "/auth/login/google",
     GOOGLE_REGISTER: "/auth/register/google",
     KAKAO_REDIRECT_URI: "/auth/login/kakao",
