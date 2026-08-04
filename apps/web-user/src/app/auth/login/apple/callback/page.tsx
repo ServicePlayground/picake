@@ -26,6 +26,7 @@ function AppleAuthCallbackContent() {
 
   useEffect(() => {
     const code = searchParams.get("code");
+    const appleName = searchParams.get("appleName");
     if (!code) {
       // 애플 인증 화면에서 사용자가 취소한 경우 error만 붙어 리다이렉트됨
       trackEvent("fail_social_auth", { provider: "apple", fail_reason: "cancel" });
@@ -56,6 +57,9 @@ function AppleAuthCallbackContent() {
           const params = new URLSearchParams();
           params.set("appleId", appleId);
           params.set("appleEmail", appleEmail);
+          if (appleName) {
+            params.set("appleName", appleName);
+          }
           router.replace(`${PATHS.AUTH.APPLE_REGISTER}?${params.toString()}`);
         } else {
           trackEvent("fail_social_auth", {
