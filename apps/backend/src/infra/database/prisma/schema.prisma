@@ -643,6 +643,12 @@ model Order {
   paymentPendingAt DateTime? @map("payment_pending_at")
   /** 입금 마감 시각(픽업까지 남은 시간에 따라 12h/6h/1h 티어 및 픽업 시각과의 min). 입금대기가 아니면 null */
   paymentPendingDeadlineAt DateTime? @map("payment_pending_deadline_at")
+  /**
+   * 입금 기한 만료로 "자동" 취소된 시각. 값이 있으면 사용자·판매자가 의도한 취소가 아니라
+   * 시스템이 취소한 건입니다(사유 필드가 모두 null이라 레코드만으로는 구분되지 않아 별도 표시).
+   * 실제로 입금했으나 완료 처리를 못 한 손님을 찾아 환불 처리할 때의 조회 기준입니다.
+   */
+  paymentPendingExpiredAt DateTime? @map("payment_pending_expired_at")
   /** 사용자가 입금완료 처리 시 입력한 입금자명 */
   depositorName String? @map("depositor_name")
   /** 입금 전 사용자 취소 시 입력한 사유 (자동 만료 취소 등은 null) */
@@ -653,6 +659,13 @@ model Order {
   sellerNoShowReason String? @map("seller_no_show_reason") @db.Text
   /** 판매자가 취소환불대기로 전환할 때 입력한 사유 (사용자 요청 사유 `refundRequestReason`과 별도) */
   sellerCancelRefundPendingReason String? @map("seller_cancel_refund_pending_reason") @db.Text
+  /**
+   * 관리자가 취소완료 주문을 취소환불대기로 되돌릴 때 입력한 사유.
+   * 종착 상태를 예외적으로 되돌리는 조치라 감사 기록용으로 남깁니다.
+   */
+  adminRefundRevertReason String? @map("admin_refund_revert_reason") @db.Text
+  /** 관리자가 되돌린 시각 (값이 있으면 예외 구제된 주문) */
+  adminRefundRevertedAt DateTime? @map("admin_refund_reverted_at")
   /** 입금 이후 사용자 취소·환불 요청 시 사유 */
   refundRequestReason String? @map("refund_request_reason") @db.Text
   /** 환불 받을 은행 (스토어 정산 계좌와 동일 `StoreBankName`) */
