@@ -108,7 +108,7 @@ export function RefundRequestView({ order }: RefundRequestViewProps) {
     <div className="pt-5 pb-[96px]">
       {/* 안내 박스 */}
       <div className="px-5 py-4">
-        <InfoNotice message="정확한 환불 정보를 입력해주세요." />
+        <InfoNotice message={`환불예정 금액 : ${order.totalPrice.toLocaleString()}원`} />
       </div>
 
       <div className="px-5">
