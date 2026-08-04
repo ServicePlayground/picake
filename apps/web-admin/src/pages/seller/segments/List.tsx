@@ -58,9 +58,7 @@ export const SellerSegmentsListPage: React.FC = () => {
           {isLoading && (
             <ContentLoading variant="section" message="세그먼트를 불러오는 중…" className="py-12" />
           )}
-          {!isLoading && items.length === 0 && (
-            <EmptyState message="등록된 세그먼트가 없습니다." />
-          )}
+          {!isLoading && items.length === 0 && <EmptyState message="등록된 세그먼트가 없습니다." />}
           {!isLoading && items.length > 0 && (
             <SellerSegmentTable
               items={items}

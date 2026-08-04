@@ -118,6 +118,10 @@ model Consumer {
   googleEmail String? @map("google_email")
   kakaoId     String? @unique @map("kakao_id")
   kakaoEmail  String? @map("kakao_email")
+  appleId     String? @unique @map("apple_id")
+  appleEmail  String? @map("apple_email")
+  /// Apple `refresh_token` (AES-256-GCM 암호화, `TokenEncryptionUtil`) — 탈퇴 시 `/auth/revoke` 호출용으로만 사용
+  appleRefreshToken String? @map("apple_refresh_token")
 
   createdAt   DateTime @default(now()) @map("created_at")
   lastLoginAt DateTime? @map("last_login_at")
@@ -137,6 +141,7 @@ model Consumer {
   @@index([phone])
   @@index([googleId])
   @@index([kakaoId])
+  @@index([appleId])
   @@map("consumers")
 }
 
@@ -656,6 +661,8 @@ model Order {
   refundAccountHolderName String? @map("refund_account_holder_name")
   /** 픽업 24시간 전 안내(알림톡·푸시) 발송 시각. 미발송이면 null */
   pickupReminderSentAt DateTime? @map("pickup_reminder_sent_at")
+  /** 재입금 안내(알림톡·푸시) 발송 시각. 미발송이면 null */
+  paymentReminderSentAt DateTime? @map("payment_reminder_sent_at")
 
   // 시스템 필드
   createdAt DateTime @default(now()) @map("created_at")
@@ -674,6 +681,7 @@ model Order {
   @@index([productId]) // 상품별 주문 조회
   @@index([orderStatus]) // 주문 상태별 조회
   @@index([orderStatus, paymentPendingDeadlineAt]) // 입금대기 만료 배치
+  @@index([orderStatus, paymentPendingDeadlineAt, paymentReminderSentAt]) // 재입금 안내 배치
   @@index([orderStatus, pickupDate, pickupReminderSentAt]) // 픽업 24시간 전 안내 배치
   @@index([orderNumber]) // 주문 번호로 조회
   @@index([pickupDate]) // 픽업 예정/지난 예약 필터

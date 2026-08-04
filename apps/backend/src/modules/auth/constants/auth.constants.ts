@@ -25,6 +25,11 @@ export const AUTH_ERROR_MESSAGES = {
   PHONE_KAKAO_ACCOUNT_EXISTS: "해당 휴대폰 번호로 이미 등록된 카카오 계정이 있습니다.",
   KAKAO_ID_ALREADY_EXISTS: "이미 사용 중인 카카오 계정입니다.",
   KAKAO_OAUTH_TOKEN_EXCHANGE_FAILED: "카카오 OAuth 토큰 교환 실패",
+  PHONE_APPLE_ACCOUNT_EXISTS: "해당 휴대폰 번호로 이미 등록된 애플 계정이 있습니다.",
+  APPLE_ID_ALREADY_EXISTS: "이미 사용 중인 애플 계정입니다.",
+  APPLE_OAUTH_TOKEN_EXCHANGE_FAILED: "애플 OAuth 토큰 교환 실패",
+  /** 앱스토어/플레이스토어 심사용 로그인 — 코드 불일치 또는 미설정(비활성화) */
+  REVIEW_LOGIN_INVALID_CODE: "심사용 로그인 코드가 올바르지 않습니다.",
   THROTTLE_LIMIT_EXCEEDED: "ThrottlerException: Too Many Requests",
   USERNAME_ALREADY_EXISTS: "이미 사용 중인 아이디입니다.",
   ADMIN_LOGIN_INVALID_CREDENTIALS: "아이디 또는 비밀번호가 올바르지 않습니다.",
@@ -94,10 +99,48 @@ export type AudienceConst = (typeof AUDIENCE)[keyof typeof AUDIENCE];
 export const OAUTH_REDIRECT_PATHS = {
   GOOGLE: "/auth/login/google",
   KAKAO: "/auth/login/kakao",
+  /** Apple Return URL — Services ID에 등록된 값과 정확히 일치해야 함(쿼리 아님, form_post로 옴) */
+  APPLE: "/auth/login/apple",
 } as const;
+
+/**
+ * Apple Developer 계정 식별자 — Team ID/Key ID/Services ID는 dev/staging/prod 구분 없이 공용(env),
+ * Primary App ID(네이티브 앱)는 값이 고정이라 비밀도 아니어서 코드 상수로 둡니다.
+ * `aud` 검증 시 Services ID(APPLE_CLIENT_ID, env)와 이 값을 모두 허용합니다.
+ */
+export const APPLE_PRIMARY_APP_ID = "com.product.picake";
+
+/** Apple id_token 발급처 — issuer 검증에 사용 */
+export const APPLE_ISSUER = "https://appleid.apple.com";
+
+/**
+ * Apple Return URL의 redirect_uri 베이스 도메인.
+ * Apple Services ID의 Website URLs는 HTTPS 도메인만 등록 가능해 `PUBLIC_USER_DOMAIN`의 dev 값
+ * (`http://localhost:3001`)을 재사용할 수 없습니다 — dev도 staging 도메인으로 고정합니다
+ * (실제 콜백 처리는 스테이징 배포본이 담당, 로컬로 돌아오지 않음. web-user의
+ * `getAppleAppSiteAssociation`과 동일한 "NODE_ENV 분기" 패턴).
+ */
+export function getAppleRedirectBaseUrl(nodeEnv: string | undefined): string {
+  return nodeEnv === "production" ? "https://picakes.com" : "https://staging.picakes.com";
+}
 
 /** 관리자 `Admin.password_hash` bcrypt cost — `AuthAdminService.register`·`prisma/seed` 동일 */
 export const ADMIN_BCRYPT_SALT_ROUNDS = 12;
+
+/**
+ * 앱스토어/플레이스토어 심사(리뷰) 전용 로그인 코드 (하드코딩).
+ * env 설정 없이 바로 동작하도록 소스에 고정값으로 둡니다.
+ * ⚠️ 저장소 접근 권한이 있으면 누구나 볼 수 있는 값이므로, 심사가 끝나면 다른 값으로 교체하거나
+ * `AuthReviewLoginService`/`review-login` 라우트 자체를 제거하는 걸 권장합니다.
+ */
+export const REVIEW_LOGIN_CODE = "482915";
+
+/**
+ * 심사용 계정을 식별하는 전용 마커 (`Consumer.phone`에 저장).
+ * 실제 휴대폰 번호 형식(010-...)이 아니라서 실사용자 계정과 절대 겹치지 않습니다.
+ * `AuthReviewLoginService`가 최초 호출 시 이 값으로 계정을 자동 생성(upsert)합니다.
+ */
+export const REVIEW_LOGIN_ACCOUNT_PHONE_MARKER = "REVIEW_ACCOUNT";
 
 /** Google Authenticator 등 OTP 앱에 표시되는 발급자 이름 */
 export const ADMIN_TOTP_ISSUER = "Picake Admin";
@@ -110,6 +153,7 @@ export enum PhoneVerificationPurpose {
   REGISTRATION = "registration",
   GOOGLE_REGISTRATION = "google_registration",
   KAKAO_REGISTRATION = "kakao_registration",
+  APPLE_REGISTRATION = "apple_registration",
   PHONE_CHANGE = "phone_change",
   FIND_ACCOUNT = "find_account",
 }
@@ -149,6 +193,8 @@ export const SWAGGER_EXAMPLES = {
     googleEmail: "user@gmail.com",
     kakaoId: "1234567890",
     kakaoEmail: "user@kakao.com",
+    appleId: "001234.abcd1234efgh5678.5678",
+    appleEmail: "user@privaterelay.appleid.com",
     createdAt: new Date("2024-01-01T00:00:00.000Z"),
     lastLoginAt: new Date("2024-01-01T00:00:00.000Z"),
   },
@@ -196,6 +242,9 @@ export const SWAGGER_EXAMPLES = {
   KAKAO_CODE: "abcde1234567890example",
   KAKAO_ID: "1234567890",
   KAKAO_EMAIL: "user@kakao.com",
+  APPLE_CODE: "c1234567890abcdef.0.example_authorization_code",
+  APPLE_ID: "001234.abcd1234efgh5678.5678",
+  APPLE_EMAIL: "user@privaterelay.appleid.com",
   VERIFICATION_CODE: "123456",
 } as const;
 
@@ -213,11 +262,15 @@ export const SWAGGER_DESCRIPTIONS = {
   GOOGLE_EMAIL: "구글 계정 이메일",
   KAKAO_ID: "카카오 사용자 ID (`/v2/user/me`의 `id`)",
   KAKAO_EMAIL: "카카오 계정 이메일 (동의 항목에 따라 없을 수 있음)",
-  DISPLAY_NAME: "이름 (구글 회원가입 시 필수, 1~50자)",
+  APPLE_CODE: "애플 OAuth Authorization Code (Return URL·Services ID와 짝이 맞아야 함)",
+  APPLE_ID: "애플 사용자 ID (id_token `sub`)",
+  APPLE_EMAIL:
+    "애플 계정 이메일 (id_token `email`, 릴레이 이메일 `@privaterelay.appleid.com` 포함 가능)",
+  DISPLAY_NAME: "이름 (구글/애플 회원가입 시 필수, 1~50자)",
   NICKNAME: "표시용 닉네임 (구글 최초 가입 시 `{실명}_{난수}` 자동 부여 가능)",
   REFRESH_TOKEN: "리프레시 토큰",
   PHONE_VERIFICATION_PURPOSE:
-    "인증 목적 enum — registration | google_registration | kakao_registration | phone_change | find_account (경로에 따라 audience는 consumer/seller로 고정)",
+    "인증 목적 enum — registration | google_registration | kakao_registration | apple_registration | phone_change | find_account (경로에 따라 audience는 consumer/seller로 고정)",
   PHONE_VERIFICATION_AUDIENCE:
     "요청 DTO에 포함되나, consumer/seller 각 인증 API에서는 서버가 audience를 덮어씁니다.",
   ADMIN_USERNAME: "관리자 아이디 (4-20자 영문·숫자·언더스코어)",

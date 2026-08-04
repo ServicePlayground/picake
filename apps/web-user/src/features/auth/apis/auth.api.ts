@@ -1,5 +1,7 @@
 import { consumerClient } from "@/apps/web-user/common/config/axios.config";
 import {
+  AppleLoginRequestDto,
+  AppleRegisterRequestDto,
   AUDIENCE,
   GoogleLoginRequestDto,
   GoogleRegisterRequestDto,
@@ -7,6 +9,7 @@ import {
   KakaoRegisterRequestDto,
   MessageResponseDto,
   PhoneVerificationPurpose,
+  ReviewLoginRequestDto,
   TokenResponseDto,
   VerifyPhoneCodeRequestDto,
 } from "@/apps/web-user/features/auth/types/auth.dto";
@@ -31,6 +34,24 @@ export const authApi = {
 
   kakaoRegister: async (data: KakaoRegisterRequestDto): Promise<TokenResponseDto> => {
     const response = await consumerClient.post("/auth/kakao/register", data);
+    return response.data.data;
+  },
+
+  appleLogin: async (code: string): Promise<TokenResponseDto> => {
+    const requestDto: AppleLoginRequestDto = { code };
+    const response = await consumerClient.post("/auth/apple/login", requestDto);
+    return response.data.data;
+  },
+
+  appleRegister: async (data: AppleRegisterRequestDto): Promise<TokenResponseDto> => {
+    const response = await consumerClient.post("/auth/apple/register", data);
+    return response.data.data;
+  },
+
+  /** 앱스토어/플레이스토어 심사용 로그인 — 서버에 설정된 코드와 일치해야 함 */
+  reviewLogin: async (code: string): Promise<TokenResponseDto> => {
+    const requestDto: ReviewLoginRequestDto = { code };
+    const response = await consumerClient.post("/auth/review-login", requestDto);
     return response.data.data;
   },
 

@@ -14,6 +14,8 @@ function getLoginInfo(user: {
   googleEmail: string;
   kakaoId: string;
   kakaoEmail: string;
+  appleId: string;
+  appleEmail: string;
   phone: string;
 }) {
   if (user.kakaoId && user.kakaoEmail) {
@@ -29,6 +31,14 @@ function getLoginInfo(user: {
       <div className="flex items-center gap-[6px]">
         <span className="px-1 py-0.5 bg-gray-50 text-2xs font-bold rounded-sm">구글</span>
         {user.googleEmail}
+      </div>
+    );
+  }
+  if (user.appleId && user.appleEmail) {
+    return (
+      <div className="flex items-center gap-[6px]">
+        <span className="px-1 py-0.5 bg-gray-50 text-2xs font-bold rounded-sm">Apple</span>
+        {user.appleEmail}
       </div>
     );
   }

@@ -12,6 +12,7 @@ import { useProductDetail } from "@/apps/web-user/features/product/hooks/queries
 import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 import { navigateBack } from "@/apps/web-user/common/utils/navigate-back.util";
 import { Toast } from "@/apps/web-user/common/components/toast/Toast";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
 
 const formatDateTime = (dateString: string | null) => {
   if (!dateString) return "";
@@ -66,6 +67,13 @@ export default function ReservationCompletePage() {
       router.replace("/");
     }
   }, [orderId, router]);
+
+  // 예약완료 후 결과화면 노출
+  useEffect(() => {
+    if (orderData) {
+      trackEvent("view_reservation_confirm", { reservation_id: orderData.id });
+    }
+  }, [orderData]);
 
   const isLoading = isOrderLoading || isProductLoading;
 
@@ -259,10 +267,28 @@ export default function ReservationCompletePage() {
           </div>
           <div className="fixed bottom-0 left-0 right-0 px-[20px] py-[12px] max-w-[638px] mx-auto bg-white">
             <div className="flex gap-[8px]">
-              <Link href={PATHS.ORDER.DETAIL(orderData.id)} className="flex-1">
+              <Link
+                href={`${PATHS.ORDER.DETAIL(orderData.id)}?entry_point=reservation_complete`}
+                className="flex-1"
+                onClick={() =>
+                  trackEvent("engage_reservation_complete_action", {
+                    reservation_id: orderData.id,
+                    action: "reservation",
+                  })
+                }
+              >
                 <Button variant="outline">예약 상세보기</Button>
               </Link>
-              <Link href="/" className="flex-1">
+              <Link
+                href="/"
+                className="flex-1"
+                onClick={() =>
+                  trackEvent("engage_reservation_complete_action", {
+                    reservation_id: orderData.id,
+                    action: "home",
+                  })
+                }
+              >
                 <Button variant="outline">홈으로 가기</Button>
               </Link>
             </div>

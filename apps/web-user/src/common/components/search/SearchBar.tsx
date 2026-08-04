@@ -4,6 +4,7 @@ import { useState, useEffect, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 import { primeSoftKeyboard } from "@/apps/web-user/common/utils/soft-keyboard.util";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
 import { Icon } from "../icons";
 
 interface SearchBarProps {
@@ -62,6 +63,7 @@ export function SearchBar({
   if (asButton) {
     // 검색 페이지에 도착하자마자 키보드가 올라오도록, 탭 제스처 안에서 미리 띄워둔다
     const handleButtonClick = () => {
+      trackEvent("engage_search_bar");
       primeSoftKeyboard();
       router.push(PATHS.SEARCH);
     };

@@ -2,9 +2,12 @@ import { Injectable } from "@nestjs/common";
 import { AuthPhoneService } from "@apps/backend/modules/auth/services/auth-phone.service";
 import { AuthGoogleOauthService } from "@apps/backend/modules/auth/services/auth-google-oauth.service";
 import { AuthKakaoOauthService } from "@apps/backend/modules/auth/services/auth-kakao-oauth.service";
+import { AuthAppleOauthService } from "@apps/backend/modules/auth/services/auth-apple-oauth.service";
 import { AuthAdminService } from "@apps/backend/modules/auth/services/auth-admin.service";
 import { AuthAccountFindService } from "@apps/backend/modules/auth/services/auth-account-find.service";
+import { AuthReviewLoginService } from "@apps/backend/modules/auth/services/auth-review-login.service";
 import { FindAccountRequestDto } from "@apps/backend/modules/auth/dto/auth-find-account.dto";
+import { ReviewLoginRequestDto } from "@apps/backend/modules/auth/dto/auth-review-login.dto";
 import {
   GoogleLoginRequestDto,
   GoogleRegisterRequestDto,
@@ -13,6 +16,10 @@ import {
   KakaoLoginRequestDto,
   KakaoRegisterRequestDto,
 } from "@apps/backend/modules/auth/dto/auth-kakao-oauth.dto";
+import {
+  AppleLoginRequestDto,
+  AppleRegisterRequestDto,
+} from "@apps/backend/modules/auth/dto/auth-apple-oauth.dto";
 import {
   SendVerificationCodeRequestDto,
   VerifyPhoneCodeRequestDto,
@@ -36,7 +43,9 @@ export class AuthService {
     private readonly authPhoneService: AuthPhoneService,
     private readonly authGoogleOauthService: AuthGoogleOauthService,
     private readonly authKakaoOauthService: AuthKakaoOauthService,
+    private readonly authAppleOauthService: AuthAppleOauthService,
     private readonly authAdminService: AuthAdminService,
+    private readonly authReviewLoginService: AuthReviewLoginService,
   ) {}
 
   private getSessionAvailabilityResponse(): SessionAvailabilityResponse {
@@ -97,6 +106,27 @@ export class AuthService {
    */
   async sellerKakaoRegisterWithPhone(dto: KakaoRegisterRequestDto) {
     return this.authKakaoOauthService.sellerKakaoRegisterWithPhone(dto);
+  }
+
+  /**
+   * 애플 — Authorization Code 로그인 (구매자, web-user 전용 — 판매자 미지원)
+   */
+  async consumerAppleLoginWithCode(dto: AppleLoginRequestDto) {
+    return this.authAppleOauthService.consumerAppleLoginWithCode(dto);
+  }
+
+  /**
+   * 애플 — 회원가입·최초 연동 (휴대폰 인증 완료 후, 구매자)
+   */
+  async consumerAppleRegisterWithPhone(dto: AppleRegisterRequestDto) {
+    return this.authAppleOauthService.consumerAppleRegisterWithPhone(dto);
+  }
+
+  /**
+   * 앱스토어/플레이스토어 심사 전용 로그인 (구매자) — 코드가 맞으면 심사용 계정(자동 생성)으로 로그인 처리
+   */
+  async consumerReviewLogin(dto: ReviewLoginRequestDto) {
+    return this.authReviewLoginService.consumerReviewLogin(dto);
   }
 
   /**

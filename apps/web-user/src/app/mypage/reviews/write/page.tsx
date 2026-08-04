@@ -12,6 +12,7 @@ import { useCreateReview } from "@/apps/web-user/features/review/hooks/mutations
 import { Toast } from "@/apps/web-user/common/components/toast/Toast";
 import { useKeyboardOpen } from "@/apps/web-user/common/hooks/useKeyboardOpen";
 import type { WritableReviewOrderItem } from "@/apps/web-user/features/review/types/review.type";
+import { IosCustomSchemeRedirect } from "@/apps/web-user/common/components/deep-link/IosCustomSchemeRedirect";
 
 const MAX_IMAGES = 5;
 
@@ -160,6 +161,7 @@ export default function ReviewWritePage() {
 
   return (
     <div className="flex flex-col min-h-dvh">
+      <IosCustomSchemeRedirect />
       <Header variant="back-title" title="후기 작성" backFallbackPath={PATHS.MY_ORDERS} />
 
       {/* 하단 등록 버튼이 fixed라 문서 흐름에서 빠지므로, 그 높이만큼 여백을 둬 가려지지 않게 한다 */}

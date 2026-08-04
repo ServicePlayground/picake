@@ -14,6 +14,7 @@
  *  7. 취소완료(판매자 취소)               → CANCEL_COMPLETED_BY_SELLER
  *  8. 취소환불대기(판매자 환불 진행)       → CANCEL_REFUND_PENDING_BY_SELLER
  *  9. 취소환불완료(판매자 환불 완료)       → CANCEL_REFUND_COMPLETED
+ * 10. 재입금안내(입금 마감 3시간 전 자동)   → PAYMENT_REMINDER
  */
 export const USER_ORDER_ALIMTALK_TEMPLATE_IDS = {
   /** 템플릿1 예약신청: 주문 접수 안내 */
@@ -34,6 +35,12 @@ export const USER_ORDER_ALIMTALK_TEMPLATE_IDS = {
   CANCEL_REFUND_PENDING_BY_SELLER: "KA01TP260709152017983qyEZLcjRAe4",
   /** 템플릿9 취소환불완료 */
   CANCEL_REFUND_COMPLETED: "KA01TP260709152105867mWUzCUiR1E8",
+  /**
+   * 템플릿10 재입금안내: 입금 마감 3시간 전 안내
+   * ⚠️ 2026-08-01 기준 SOLAPI 검수 요청(INSPECTING) 상태 — 승인 전까지는 발송 시 카카오 API에서 실패합니다.
+   * 승인 완료되면 이 주석만 지우면 됩니다 (ID는 이미 최종값).
+   */
+  PAYMENT_REMINDER: "KA01TP260801104055878SSm3ZiqQQxF",
 } as const;
 
 /**
@@ -46,7 +53,7 @@ export const USER_ORDER_ALIMTALK_TEMPLATE_IDS = {
 export const USER_ORDER_ALIMTALK_BUTTON_URLS = {
   /** 템플릿1·3·4·6·7·8·9 [주문 상세보기] */
   ORDER_DETAIL: "https://#{도메인}/order/#{주문ID}",
-  /** 템플릿2 [입금 완료하기] — 주문 상세에서 입금 완료 처리 */
+  /** 템플릿2·10 [입금 완료하기] — 주문 상세에서 입금 완료 처리 */
   PAYMENT_COMPLETE: "https://#{도메인}/order/#{주문ID}",
   /** 템플릿4 [길찾기] — 카카오맵 길찾기 (픽업대기 템플릿의 #{위도}·#{경도}·#{스토어명} 사용) */
   MAP_DIRECTION: "https://map.kakao.com/link/map/#{스토어명},#{위도},#{경도}",

@@ -77,9 +77,7 @@ export class SellerSegmentWriteService {
       select: { sellerId: true },
     });
     const alreadyMemberIds = new Set(existingMemberships.map((m) => m.sellerId));
-    const newSellerIds = eligibleSellers
-      .map((s) => s.id)
-      .filter((id) => !alreadyMemberIds.has(id));
+    const newSellerIds = eligibleSellers.map((s) => s.id).filter((id) => !alreadyMemberIds.has(id));
 
     if (newSellerIds.length > 0) {
       await this.prisma.sellerSegmentMembership.createMany({

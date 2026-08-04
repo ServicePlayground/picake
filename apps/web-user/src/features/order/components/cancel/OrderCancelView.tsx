@@ -10,6 +10,7 @@ import { Icon } from "@/apps/web-user/common/components/icons";
 import { usePendingToastStore } from "@/apps/web-user/common/store/pending-toast.store";
 import { useCancelFlowStore } from "@/apps/web-user/common/store/cancel-flow.store";
 import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
 
 const PRE_PAYMENT_CANCELLABLE_STATUSES: OrderStatus[] = [
   OrderStatus.RESERVATION_REQUESTED,
@@ -89,6 +90,12 @@ export function OrderCancelView({ order }: OrderCancelViewProps) {
     }
 
     // 결제 전: cancel-before-payment API 즉시 호출
+    trackEvent("request_cancel_reservation", {
+      reservation_id: order.id,
+      cancel_reason: reason,
+      status: order.orderStatus,
+      refund_status: "before_payment",
+    });
     cancelOrder(
       { orderId: order.id, reason },
       {

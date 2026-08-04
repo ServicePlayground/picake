@@ -9,6 +9,7 @@ import {
   isWebViewEnvironment,
   toExternalAppSchemeUrl,
 } from "@/apps/web-user/common/utils/webview.bridge";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
 
 function isMobileDevice(): boolean {
   return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -44,6 +45,8 @@ const EASY_PAYMENT_APPS: Record<
 interface EasyPaymentBottomSheetProps {
   isOpen: boolean;
   onClose: () => void;
+  /** 입금하려는 예약 고유 식별자 (애널리틱스용) */
+  reservationId: string;
   bankAccountNumber?: string | null;
   bankName?: string | null;
   amount: number;
@@ -52,6 +55,7 @@ interface EasyPaymentBottomSheetProps {
 export function EasyPaymentBottomSheet({
   isOpen,
   onClose,
+  reservationId,
   bankAccountNumber,
   bankName,
   amount,
@@ -62,6 +66,13 @@ export function EasyPaymentBottomSheet({
   // 실행 감지 중인 리스너/타이머 정리 함수
   const cleanupRef = useRef<(() => void) | null>(null);
   useEffect(() => () => cleanupRef.current?.(), []);
+
+  // 간편 입금하기 바텀시트 노출
+  useEffect(() => {
+    if (isOpen) {
+      trackEvent("view_easy_payment_option", { reservation_id: reservationId });
+    }
+  }, [isOpen, reservationId]);
 
   /**
    * 외부 앱 스키마 실행 후 앱 전환 여부로 설치 상태를 판단한다.
@@ -144,16 +155,27 @@ export function EasyPaymentBottomSheet({
             {
               icon: { type: "image", src: "/images/contents/toss.png", alt: "토스" },
               label: "토스",
-              onClick: () =>
+              onClick: () => {
+                trackEvent("engage_easy_payment_option", {
+                  reservation_id: reservationId,
+                  payment_method: "toss",
+                });
                 handleDeepLink(
                   `supertoss://send?bank=${bankName}&accountNo=${bankAccountNumber}&amount=${amount}`,
                   "toss",
-                ),
+                );
+              },
             },
             {
               icon: { type: "image", src: "/images/contents/kakao.png", alt: "카카오페이" },
               label: "카카오페이",
-              onClick: () => handleDeepLink("kakaotalk://kakaopay/money/to", "kakaopay"),
+              onClick: () => {
+                trackEvent("engage_easy_payment_option", {
+                  reservation_id: reservationId,
+                  payment_method: "kakao",
+                });
+                handleDeepLink("kakaotalk://kakaopay/money/to", "kakaopay");
+              },
             },
           ]}
         />

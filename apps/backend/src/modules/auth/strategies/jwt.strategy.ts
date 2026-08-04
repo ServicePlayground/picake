@@ -130,6 +130,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         phone: true,
         googleId: true,
         kakaoId: true,
+        appleId: true,
         isActive: true,
       },
     });
@@ -142,8 +143,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException(AUTH_ERROR_MESSAGES.ACCESS_TOKEN_ACCOUNT_INACTIVE);
     }
 
-    const loginType = c.kakaoId ? ("kakao" as const) : ("google" as const);
-    const loginId = c.kakaoId ?? c.googleId ?? "";
+    const loginType = c.kakaoId
+      ? ("kakao" as const)
+      : c.appleId
+        ? ("apple" as const)
+        : ("google" as const);
+    const loginId = c.kakaoId ?? c.appleId ?? c.googleId ?? "";
 
     return {
       ...payload,

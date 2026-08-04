@@ -6,7 +6,8 @@ Picake 플랫폼을 위한 Next.js 기반 사용자 웹 애플리케이션입니
 
 ### ✅ 구현 완료
 
-- **인증 시스템**: Flutter WebView 연동 + Google/Kakao OAuth 콜백
+- **인증 시스템**: Flutter WebView 연동 + Google/Kakao/Apple OAuth 콜백 + 앱스토어 심사용 로그인
+- **iOS 딥링크**: 커스텀 스킴(`picake://`)으로 앱 열기 (유니버설 링크는 비활성화)
 - **홈 / 탐색**: 상품 목록, 배너 슬라이더, 카테고리 필터, 검색, 지역 기반 필터링
 - **상품**: 상품 목록, 상세 페이지, 줌/핀치 이미지 뷰어 (react-zoom-pan-pinch)
 - **스토어**: 스토어 상세 페이지, 스토어 피드
@@ -42,10 +43,13 @@ Picake 플랫폼을 위한 Next.js 기반 사용자 웹 애플리케이션입니
 
 - **Google 로그인 콜백**: `/auth/login/google`
 - **Kakao 로그인 콜백**: `/auth/login/kakao`
+- **Apple 로그인 콜백**: `/auth/login/apple`, `/auth/login/apple/callback`
 - **Google 회원가입 콜백**: `/auth/register/google`
 - **Kakao 회원가입 콜백**: `/auth/register/kakao`
+- **Apple 회원가입**: `/auth/register/apple`
 
-> 기본 로그인·회원가입은 Flutter WebView 앱에서 처리합니다.
+> 기본 로그인·회원가입은 Flutter WebView 앱에서 처리합니다. Apple 로그인은 Apple Developer 정책상 웹뷰 환경 심사 대응을 위해 web-user에서 직접 처리하며, dev 환경은 별도 지원 없이 staging 도메인으로 대체됩니다.
+> 앱스토어 심사용 로그인(`review-login`)은 심사관 계정으로 로그인해야 하는 요구사항에 대응하기 위한 별도 플로우입니다.
 
 ### 상품 / 스토어
 

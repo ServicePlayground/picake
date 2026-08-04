@@ -10,14 +10,17 @@ import { AuthPhoneService } from "@apps/backend/modules/auth/services/auth-phone
 import { AuthSmsService } from "@apps/backend/modules/auth/services/auth-sms.service";
 import { AuthGoogleOauthService } from "@apps/backend/modules/auth/services/auth-google-oauth.service";
 import { AuthKakaoOauthService } from "@apps/backend/modules/auth/services/auth-kakao-oauth.service";
+import { AuthAppleOauthService } from "@apps/backend/modules/auth/services/auth-apple-oauth.service";
 import { AuthAccountFindService } from "@apps/backend/modules/auth/services/auth-account-find.service";
 import { AuthMypagePhoneService } from "@apps/backend/modules/auth/services/auth-mypage-phone.service";
 import { AuthMypageProfileService } from "@apps/backend/modules/auth/services/auth-mypage-profile.service";
 import { AuthWithdrawService } from "@apps/backend/modules/auth/services/auth-withdraw.service";
 import { AuthAdminService } from "@apps/backend/modules/auth/services/auth-admin.service";
+import { AuthReviewLoginService } from "@apps/backend/modules/auth/services/auth-review-login.service";
 import { JwtUtil } from "@apps/backend/modules/auth/utils/jwt.util";
 import { JwtStrategy } from "@apps/backend/modules/auth/strategies/jwt.strategy";
 import { AuthGuard } from "@apps/backend/modules/auth/guards/auth.guard";
+import { TokenEncryptionUtil } from "@apps/backend/common/utils/token-encryption.util";
 
 /**
  * 인증 모듈
@@ -46,10 +49,13 @@ import { AuthGuard } from "@apps/backend/modules/auth/guards/auth.guard";
     AuthSmsService,
     AuthGoogleOauthService,
     AuthKakaoOauthService,
+    AuthAppleOauthService,
     AuthAdminService,
+    AuthReviewLoginService,
     JwtUtil,
     JwtStrategy,
     AuthGuard,
+    TokenEncryptionUtil,
   ],
   exports: [
     AuthService,

@@ -16,6 +16,7 @@ import {
 } from "@/apps/web-user/features/order/hooks/usePaymentCountdown";
 import { isWebViewEnvironment } from "@/apps/web-user/common/utils/webview.bridge";
 import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
 
 const STORAGE_KEY = "picake:payment-pending-launch-shown";
 
@@ -89,9 +90,14 @@ function LaunchSheetView({
   const extraCount = order.orderItems.length - 1;
   const productLabel = extraCount > 0 ? `${order.productName} 외 ${extraCount}` : order.productName;
 
+  // 입금 대기 중인 예약이 있어요 팝업 알림 노출
+  useEffect(() => {
+    trackEvent("view_payment_alarm", { reservation_id: order.id });
+  }, [order.id]);
+
   const handleGoPay = () => {
     onClose();
-    router.push(PATHS.ORDER.DETAIL(order.id));
+    router.push(`${PATHS.ORDER.DETAIL(order.id)}?entry_point=payment_alarm`);
   };
 
   const handlePaymentComplete = (depositorName: string) => {
@@ -112,7 +118,13 @@ function LaunchSheetView({
         footerShadow={false}
         footer={
           <div className="flex flex-col gap-2 px-5 py-4">
-            <Button variant="outline" onClick={() => setIsConfirmOpen(true)}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                trackEvent("engage_payment_complete", { reservation_id: order.id });
+                setIsConfirmOpen(true);
+              }}
+            >
               이미 입금했어요
             </Button>
             <Button variant="primary" onClick={handleGoPay}>
@@ -153,6 +165,7 @@ function LaunchSheetView({
       <PaymentConfirmBottomSheet
         isOpen={isConfirmOpen}
         onClose={() => setIsConfirmOpen(false)}
+        reservationId={order.id}
         amount={order.totalPrice}
         defaultDepositorName={order.reservationContactName}
         onConfirm={handlePaymentComplete}

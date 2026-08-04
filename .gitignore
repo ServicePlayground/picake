@@ -20,6 +20,8 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
+firebase-debug.log*
+.firebase/
 
 # Runtime data
 pids
@@ -121,3 +123,6 @@ coverage/
 junit.xml
 
 *storybook.log
+
+# Claude Code 파일 기반 텍스트 교환 스크래치 (file-exchange skill)
+.claude/exchange.md

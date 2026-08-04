@@ -12,9 +12,14 @@ import {
   KakaoRegisterRequestDto,
 } from "@apps/backend/modules/auth/dto/auth-kakao-oauth.dto";
 import {
+  AppleLoginRequestDto,
+  AppleRegisterRequestDto,
+} from "@apps/backend/modules/auth/dto/auth-apple-oauth.dto";
+import {
   SendVerificationCodeRequestDto,
   VerifyPhoneCodeRequestDto,
 } from "@apps/backend/modules/auth/dto/auth-phone-verification.dto";
+import { ReviewLoginRequestDto } from "@apps/backend/modules/auth/dto/auth-review-login.dto";
 import { Auth } from "@apps/backend/modules/auth/decorators/auth.decorator";
 import { SwaggerResponse } from "@apps/backend/common/decorators/swagger-response.decorator";
 import { SwaggerAuthResponses } from "@apps/backend/common/decorators/swagger-auth-responses.decorator";
@@ -135,6 +140,64 @@ export class ConsumerAuthController {
     return await this.authService.consumerKakaoRegisterWithPhone(registerDto);
   }
 
+  @Post("apple/login")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: "애플 로그인 (구매자, web-user 전용)",
+    description:
+      "프론트엔드에서 받은 Authorization Code로 애플 로그인을 처리합니다. 응답에서 accessToken과 refreshToken을 반환합니다. 400 PHONE_VERIFICATION_REQUIRED 오류가 발생했을 때는 appleId와 appleEmail을 반환하며 휴대폰 인증 후 애플 회원가입 API로 해당 파라미터 값을 전달하여 회원가입을 처리해야 합니다.",
+  })
+  @SwaggerResponse(200, { dataExample: SWAGGER_EXAMPLES.TOKEN_RESPONSE })
+  @SwaggerResponse(400, {
+    dataExample: {
+      message: AUTH_ERROR_MESSAGES.PHONE_VERIFICATION_REQUIRED,
+      appleId: SWAGGER_EXAMPLES.APPLE_ID,
+      appleEmail: SWAGGER_EXAMPLES.APPLE_EMAIL,
+    },
+  })
+  @SwaggerResponse(400, {
+    dataExample: createMessageObject(AUTH_ERROR_MESSAGES.APPLE_OAUTH_TOKEN_EXCHANGE_FAILED),
+  })
+  @SwaggerResponse(403, {
+    dataExample: createMessageObject(AUTH_ERROR_MESSAGES.ACCOUNT_INACTIVE),
+  })
+  async appleAuth(@Body() authDto: AppleLoginRequestDto) {
+    return await this.authService.consumerAppleLoginWithCode(authDto);
+  }
+
+  @Post("apple/register")
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: "애플 회원가입 (구매자, 휴대폰 인증 후)",
+    description:
+      "새로운 애플 사용자를 등록합니다. 응답에서 accessToken과 refreshToken을 반환합니다. 휴대폰 인증이 완료된 상태여야 합니다. 동일한 애플 ID와 휴대폰 번호가 존재할 경우 중복 에러가 발생합니다.",
+  })
+  @SwaggerResponse(201, { dataExample: SWAGGER_EXAMPLES.TOKEN_RESPONSE })
+  @SwaggerResponse(409, {
+    dataExample: {
+      message: AUTH_ERROR_MESSAGES.PHONE_GOOGLE_ACCOUNT_EXISTS,
+      name: "홍*동",
+      phone: "010-****-5678",
+    },
+  })
+  @SwaggerResponse(409, {
+    dataExample: {
+      message: AUTH_ERROR_MESSAGES.PHONE_KAKAO_ACCOUNT_EXISTS,
+      name: "홍*동",
+      phone: "010-****-5678",
+    },
+  })
+  @SwaggerResponse(409, {
+    dataExample: {
+      message: AUTH_ERROR_MESSAGES.PHONE_APPLE_ACCOUNT_EXISTS,
+      name: "홍*동",
+      phone: "010-****-5678",
+    },
+  })
+  async appleRegisterWithPhone(@Body() registerDto: AppleRegisterRequestDto) {
+    return await this.authService.consumerAppleRegisterWithPhone(registerDto);
+  }
+
   @Post("find-account")
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -201,6 +264,22 @@ export class ConsumerAuthController {
       audience: AUDIENCE.CONSUMER,
     });
     return createMessageObject(AUTH_SUCCESS_MESSAGES.PHONE_VERIFICATION_CONFIRMED);
+  }
+
+  @Post("review-login")
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 5, ttl: 3600000 } })
+  @ApiOperation({
+    summary: "심사용 로그인 (구매자, App Store/Play 스토어 대응)",
+    description:
+      "심사 대응용 임시 로그인 경로입니다. 코드는 서버에 하드코딩되어 있으며, 심사용 계정은 최초 호출 시 자동 생성됩니다.",
+  })
+  @SwaggerResponse(200, { dataExample: SWAGGER_EXAMPLES.TOKEN_RESPONSE })
+  @SwaggerResponse(401, {
+    dataExample: createMessageObject(AUTH_ERROR_MESSAGES.REVIEW_LOGIN_INVALID_CODE),
+  })
+  async reviewLogin(@Body() dto: ReviewLoginRequestDto) {
+    return await this.authService.consumerReviewLogin(dto);
   }
 
   @Get("me")

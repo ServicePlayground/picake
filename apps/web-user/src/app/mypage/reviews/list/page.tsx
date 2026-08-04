@@ -1,11 +1,13 @@
 "use client";
 
+import { useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import Header from "@/apps/web-user/common/components/headers/Header";
 import { useWritableReviews } from "@/apps/web-user/features/review/hooks/queries/useWritableReviews";
 import type { WritableReviewOrder } from "@/apps/web-user/features/review/types/review.type";
 import { EmptyState } from "@/apps/web-user/common/components/fallbacks/EmptyState";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
 
 const DAY_NAMES = ["일", "월", "화", "수", "목", "금", "토"];
 
@@ -25,6 +27,11 @@ function getProductSummary(order: WritableReviewOrder) {
 }
 
 export default function ReviewListPage() {
+  // 내 후기 > 작성후기선택 페이지
+  useEffect(() => {
+    trackEvent("view_review_option_list");
+  }, []);
+
   const { data } = useWritableReviews();
   const orders = data?.data ?? [];
 
@@ -59,6 +66,7 @@ export default function ReviewListPage() {
             {/* 후기 작성 버튼 */}
             <Link
               href={`/mypage/reviews/write?orderId=${order.id}`}
+              onClick={() => trackEvent("engage_review_write", { reservation_id: order.id })}
               className="flex-shrink-0 flex items-center justify-center bg-primary text-white text-sm font-bold w-24 h-10 rounded-lg"
             >
               후기 작성
@@ -66,9 +74,7 @@ export default function ReviewListPage() {
           </div>
         ))}
 
-        {data && orders.length === 0 && (
-          <EmptyState message="작성 가능한 후기가 없습니다." fill />
-        )}
+        {data && orders.length === 0 && <EmptyState message="작성 가능한 후기가 없습니다." fill />}
       </div>
     </div>
   );

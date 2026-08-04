@@ -12,6 +12,7 @@ import { usePendingToastStore } from "@/apps/web-user/common/store/pending-toast
 import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 import { useRequestRefund } from "@/apps/web-user/features/order/hooks/mutations/useRequestRefund";
 import { useMypageProfile } from "@/apps/web-user/features/mypage/hooks/queries/useMypageProfile";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
 import { BankSelectBottomSheet } from "./BankSelectBottomSheet";
 import { RefundConfirmBottomSheet } from "./RefundConfirmBottomSheet";
 
@@ -78,6 +79,7 @@ export function RefundRequestView({ order }: RefundRequestViewProps) {
 
   const handleSubmitRefund = () => {
     if (!isValid || !selectedBank || isPending) return;
+    trackEvent("request_refund_info", { reservation_id: order.id });
     requestRefund(
       {
         orderId: order.id,
@@ -181,7 +183,18 @@ export function RefundRequestView({ order }: RefundRequestViewProps) {
             </Button>
           </span>
           <span className="flex-[2]">
-            <Button onClick={() => setIsConfirmSheetOpen(true)} disabled={!isValid || isPending}>
+            <Button
+              onClick={() => {
+                trackEvent("request_cancel_reservation", {
+                  reservation_id: order.id,
+                  cancel_reason: reason,
+                  status: order.orderStatus,
+                  refund_status: "available",
+                });
+                setIsConfirmSheetOpen(true);
+              }}
+              disabled={!isValid || isPending}
+            >
               예약 취소 요청
             </Button>
           </span>

@@ -10,7 +10,7 @@ export function useRequireLogin(isLoginRequired: boolean) {
 
   useEffect(() => {
     if (isLoginRequired) {
-      openLoginSheet();
+      openLoginSheet("session_expired");
     }
   }, [isLoginRequired, openLoginSheet]);
 }

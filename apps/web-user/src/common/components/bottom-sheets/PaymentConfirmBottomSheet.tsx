@@ -4,10 +4,13 @@ import { useEffect, useState } from "react";
 import { Icon } from "@/apps/web-user/common/components/icons";
 import { useMypageProfile } from "@/apps/web-user/features/mypage/hooks/queries/useMypageProfile";
 import { BottomSheet } from "./BottomSheet";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
 
 interface PaymentConfirmBottomSheetProps {
   isOpen: boolean;
   onClose: () => void;
+  /** 입금하려는 예약 고유 식별자 (애널리틱스용) */
+  reservationId: string;
   amount: number;
   onConfirm: (depositorName: string) => void;
   /** 입금자명 기본값 (미지정 시 프로필 이름) */
@@ -19,6 +22,7 @@ interface PaymentConfirmBottomSheetProps {
 export function PaymentConfirmBottomSheet({
   isOpen,
   onClose,
+  reservationId,
   amount,
   onConfirm,
   defaultDepositorName,
@@ -33,6 +37,13 @@ export function PaymentConfirmBottomSheet({
       setDepositorName(defaultDepositorName?.trim() || profile?.name || "");
     }
   }, [isOpen, profile?.name, defaultDepositorName]);
+
+  // "입금정보확인" 바텀시트 노출
+  useEffect(() => {
+    if (isOpen) {
+      trackEvent("view_payment_info_confirm", { reservation_id: reservationId });
+    }
+  }, [isOpen, reservationId]);
 
   const handleClose = () => {
     setDepositorName("");

@@ -112,6 +112,33 @@ export function buildPickupReminderAlimtalkPayload(
 }
 
 /**
+ * 재입금 안내(입금 마감 3시간 전) 알림톡 페이로드.
+ * - 상태 전환과 무관하게 배치/동기화에서 호출합니다.
+ * - 계좌 정보(#{은행명}·#{계좌번호}·#{예금주})는 입금대기(템플릿2)와 동일하게 채웁니다.
+ */
+export function buildPaymentReminderAlimtalkPayload(
+  order: UserOrderAlimtalkOrderInfo,
+): UserOrderAlimtalkPayload | null {
+  const base = buildCommonVariables(order);
+  if (!base) return null;
+
+  const templateId = USER_ORDER_ALIMTALK_TEMPLATE_IDS.PAYMENT_REMINDER;
+  if (!templateId) return null;
+
+  return {
+    templateId,
+    variables: {
+      ...base,
+      "#{결제금액}": formatPrice(order.totalPrice),
+      "#{입금마감}": formatDateTime(order.paymentPendingDeadlineAt),
+      "#{은행명}": formatBankLabel(order.storeBankName),
+      "#{계좌번호}": order.storeBankAccountNumber ?? "",
+      "#{예금주}": order.storeAccountHolderName ?? "",
+    },
+  };
+}
+
+/**
  * 주문 상태 전환 → 구매자 알림톡 페이로드(템플릿 ID + 변수).
  *
  * - 템플릿 ID가 비어 있거나(미등록) 매핑이 없는 상태·케이스는 `null`을 반환해 발송을 건너뜁니다.

@@ -1,9 +1,4 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-  ServiceUnavailableException,
-} from "@nestjs/common";
+import { CanActivate, Injectable, ServiceUnavailableException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { API_RESPONSE_MESSAGES } from "@apps/backend/common/constants/app.constants";
 import { isServiceMaintenanceMode } from "@apps/backend/common/utils/maintenance.util";
@@ -16,7 +11,7 @@ import { isServiceMaintenanceMode } from "@apps/backend/common/utils/maintenance
 export class MaintenanceGuard implements CanActivate {
   constructor(private readonly configService: ConfigService) {}
 
-  canActivate(_context: ExecutionContext): boolean {
+  canActivate(): boolean {
     if (isServiceMaintenanceMode(this.configService)) {
       throw new ServiceUnavailableException(API_RESPONSE_MESSAGES.SERVICE_UNAVAILABLE);
     }

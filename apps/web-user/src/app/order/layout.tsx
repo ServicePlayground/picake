@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { IosCustomSchemeRedirect } from "@/apps/web-user/common/components/deep-link/IosCustomSchemeRedirect";
 
 export const metadata: Metadata = {
   title: "주문",
@@ -6,5 +7,10 @@ export const metadata: Metadata = {
 };
 
 export default function OrderLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  return (
+    <>
+      <IosCustomSchemeRedirect />
+      {children}
+    </>
+  );
 }

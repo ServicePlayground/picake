@@ -20,6 +20,7 @@ import { Toast } from "@/apps/web-user/common/components/toast/Toast";
 import { RegionSelectSheet } from "@/apps/web-user/common/components/headers/RegionSelectSheet";
 import { useAlarmUnreadCount } from "@/apps/web-user/features/alarm/hooks/queries/useAlarmUnreadCount";
 import { isProduction } from "@/apps/web-user/common/utils/environment.util";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
 
 const REGION_STORAGE_KEY = "picake:selected-region";
 const showQaButton = !isProduction(process.env.NEXT_PUBLIC_NODE_ENV);
@@ -228,7 +229,10 @@ export default function Header({
   const LocationButton = () => (
     <button
       type="button"
-      onClick={() => setShowRegionSheet(true)}
+      onClick={() => {
+        trackEvent("engage_location_setting");
+        setShowRegionSheet(true);
+      }}
       className="flex items-center justify-center"
     >
       <Icon name="location" width={20} height={20} className="text-primary" />
@@ -369,6 +373,13 @@ export default function Header({
               setRegionToast("loading");
             }
             setOverrideResult(result);
+            const selectedRegions = result.selectedLabels?.length
+              ? result.selectedLabels
+              : [result.label];
+            trackEvent("success_location_change", {
+              selected_regions: selectedRegions.join(","),
+              region_count: selectedRegions.length,
+            });
           }}
           onGpsInactive={handleGpsInactive}
         />

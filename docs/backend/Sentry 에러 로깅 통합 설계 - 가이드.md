@@ -4,7 +4,7 @@
 
 본 문서는 Picake 백엔드에 구현된 Sentry 에러 로깅 시스템의 구조와 동작 방식을 설명하는 가이드입니다.
 
-**최종 업데이트**: 2026-07-05  
+**최종 업데이트**: 2026-08-03  
 **대상**: `apps/backend` 디렉토리
 
 ---
@@ -291,7 +291,7 @@ Sentry에서 태그: `responseId: 1706004000000-error-uuid-hex`
 
 3. **비즈니스 로직 에러**
    - 서비스에서 직접 `SentryUtil.captureException()` 호출
-   - 예: DB 연결 실패, WebSocket 연결 에러
+   - 예: DB 연결 실패, WebSocket 연결 에러, 알림 발송 실패(`notification-order-dispatch.service.ts`의 픽업/재입금 안내 발송 등)
 
 ### 8.2 에러 레벨
 

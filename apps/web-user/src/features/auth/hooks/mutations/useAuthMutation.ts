@@ -7,7 +7,10 @@ import getApiMessage from "@/apps/web-user/common/utils/getApiMessage";
 import type { PhoneVerificationPurpose } from "@/apps/web-user/features/auth/types/auth.dto";
 import type { DuplicateAccountPayload } from "@/apps/web-user/features/auth/types/auth.dto";
 import { parseDuplicateAccountPayload } from "@/apps/web-user/features/auth/utils/register-duplicate-account.util";
+import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 import { consumePostLoginRedirect } from "@/apps/web-user/features/auth/utils/post-login-redirect.util";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
+import { decodeJwtPayload } from "@/apps/web-user/features/auth/utils/jwt.util";
 
 export function useSendPhoneVerification() {
   const { showAlert } = useAlertStore();
@@ -40,6 +43,28 @@ export function useVerifyPhoneCode() {
   });
 }
 
+/** 앱스토어/플레이스토어 심사용 로그인 (숨겨진 진입점에서만 사용) */
+export function useReviewLogin() {
+  const router = useRouter();
+  const login = useAuthStore((s) => s.login);
+  const { showAlert } = useAlertStore();
+
+  return useMutation({
+    mutationFn: authApi.reviewLogin,
+    onSuccess: (data) => {
+      login(data.accessToken);
+      router.replace(PATHS.HOME);
+    },
+    onError: (error) => {
+      showAlert({
+        type: "error",
+        title: "오류",
+        message: getApiMessage.error(error),
+      });
+    },
+  });
+}
+
 export function useGoogleRegister(options?: {
   onDuplicateAccount?: (payload: DuplicateAccountPayload) => void;
 }) {
@@ -50,6 +75,10 @@ export function useGoogleRegister(options?: {
   return useMutation({
     mutationFn: authApi.googleRegister,
     onSuccess: (data) => {
+      const userId = decodeJwtPayload<{ sub: string }>(data.accessToken)?.sub;
+      if (userId) {
+        trackEvent("success_signup", { provider: "google", user_id: userId });
+      }
       login(data.accessToken);
       // 로그인을 시작했던 화면으로 복귀 (없으면 홈)
       router.replace(consumePostLoginRedirect());
@@ -79,6 +108,43 @@ export function useKakaoRegister(options?: {
   return useMutation({
     mutationFn: authApi.kakaoRegister,
     onSuccess: (data) => {
+      const userId = decodeJwtPayload<{ sub: string }>(data.accessToken)?.sub;
+      if (userId) {
+        trackEvent("success_signup", { provider: "kakao", user_id: userId });
+      }
+      login(data.accessToken);
+      // 로그인을 시작했던 화면으로 복귀 (없으면 홈)
+      router.replace(consumePostLoginRedirect());
+    },
+    onError: (error) => {
+      const duplicate = parseDuplicateAccountPayload(error);
+      if (duplicate) {
+        options?.onDuplicateAccount?.(duplicate);
+        return;
+      }
+      showAlert({
+        type: "error",
+        title: "오류",
+        message: getApiMessage.error(error),
+      });
+    },
+  });
+}
+
+export function useAppleRegister(options?: {
+  onDuplicateAccount?: (payload: DuplicateAccountPayload) => void;
+}) {
+  const router = useRouter();
+  const login = useAuthStore((s) => s.login);
+  const { showAlert } = useAlertStore();
+
+  return useMutation({
+    mutationFn: authApi.appleRegister,
+    onSuccess: (data) => {
+      const userId = decodeJwtPayload<{ sub: string }>(data.accessToken)?.sub;
+      if (userId) {
+        trackEvent("success_signup", { provider: "apple", user_id: userId });
+      }
       login(data.accessToken);
       // 로그인을 시작했던 화면으로 복귀 (없으면 홈)
       router.replace(consumePostLoginRedirect());

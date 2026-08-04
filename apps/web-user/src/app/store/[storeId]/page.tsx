@@ -1,6 +1,6 @@
 "use client";
 
-import { use } from "react";
+import { use, useEffect } from "react";
 import { useStoreDetail } from "@/apps/web-user/features/store/hooks/queries/useStoreDetail";
 import { useProductList } from "@/apps/web-user/features/product/hooks/queries/useProductList";
 import { useStoreFeeds } from "@/apps/web-user/features/feed/hooks/queries/useStoreFeeds";
@@ -10,6 +10,7 @@ import { StoreDetailReviewSection } from "@/apps/web-user/features/store/compone
 import { StoreDetailFeedSection } from "@/apps/web-user/features/store/components/sections/StoreDetailFeedSection";
 import { Tabs } from "@/apps/web-user/common/components/tabs/Tabs";
 import { StoreDetailSkeleton } from "@/apps/web-user/common/components/skeleton/StoreDetailSkeleton";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
 
 interface StoreDetailPageProps {
   params: Promise<{ storeId: string }>;
@@ -25,6 +26,13 @@ export default function StoreDetailPage({ params }: StoreDetailPageProps) {
   // 상품 개수 (첫 페이지 meta에서 가져옴)
   const productCount = productData?.pages[0]?.meta.totalItems ?? 0;
   const feedCount = feedData?.meta.totalItems ?? 0;
+
+  // 스토어 상세화면 노출
+  useEffect(() => {
+    if (data) {
+      trackEvent("view_store_detail", { store_id: storeId });
+    }
+  }, [data, storeId]);
 
   if (isLoading) {
     return <StoreDetailSkeleton />;

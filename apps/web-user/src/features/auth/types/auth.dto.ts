@@ -12,6 +12,7 @@ export const PHONE_VERIFICATION_PURPOSE = {
   REGISTRATION: "registration",
   GOOGLE_REGISTRATION: "google_registration",
   KAKAO_REGISTRATION: "kakao_registration",
+  APPLE_REGISTRATION: "apple_registration",
   PHONE_CHANGE: "phone_change",
   FIND_ACCOUNT: "find_account",
 } as const;
@@ -28,6 +29,15 @@ export interface GoogleLoginRequestDto {
 }
 
 export interface KakaoLoginRequestDto {
+  code: string;
+}
+
+export interface AppleLoginRequestDto {
+  code: string;
+}
+
+/** 앱스토어/플레이스토어 심사(리뷰) 전용 로그인 요청 */
+export interface ReviewLoginRequestDto {
   code: string;
 }
 
@@ -57,6 +67,19 @@ export interface KakaoRegisterRequestDto {
   termsDocumentIds?: string[];
 }
 
+export interface AppleRegisterRequestDto {
+  appleId: string;
+  appleEmail: string;
+  name: string;
+  phone: string;
+  agreedToTerms: boolean;
+  agreedToPrivacy: boolean;
+  agreedToThirdParty: boolean;
+  agreedToLocationTerms: boolean;
+  /** 동의한 약관 문서 ID 목록 (버전 이력 기록용) */
+  termsDocumentIds?: string[];
+}
+
 export interface VerifyPhoneCodeRequestDto {
   phone: string;
   verificationCode: string;
@@ -73,9 +96,10 @@ export interface MessageResponseDto {
 export type DuplicateAccountPayload = {
   message:
     | typeof AUTH_ERROR_MESSAGES.PHONE_KAKAO_ACCOUNT_EXISTS
-    | typeof AUTH_ERROR_MESSAGES.PHONE_GOOGLE_ACCOUNT_EXISTS;
+    | typeof AUTH_ERROR_MESSAGES.PHONE_GOOGLE_ACCOUNT_EXISTS
+    | typeof AUTH_ERROR_MESSAGES.PHONE_APPLE_ACCOUNT_EXISTS;
   name: string;
   phone: string;
 };
 
-export type OAuthLoginProvider = "google" | "kakao";
+export type OAuthLoginProvider = "google" | "kakao" | "apple";

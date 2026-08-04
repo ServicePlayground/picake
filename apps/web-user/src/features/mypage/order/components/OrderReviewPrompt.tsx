@@ -5,6 +5,7 @@ import {
   OrderResponse,
   OrderMyReviewUiStatus,
 } from "@/apps/web-user/features/order/types/order.type";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
 
 interface OrderReviewPromptProps {
   order: OrderResponse;
@@ -21,6 +22,7 @@ export function OrderReviewPrompt({ order }: OrderReviewPromptProps) {
     return (
       <Link
         href={PATHS.REVIEW_WRITE(order.id)}
+        onClick={() => trackEvent("engage_review_write", { reservation_id: order.id })}
         className="flex flex-col items-center gap-3 -mx-4 py-5 px-4 border-t border-gray-100 mt-3"
       >
         <p className="text-xs font-bold text-gray-900">맛있게 드셨나요? 후기를 남겨주세요</p>

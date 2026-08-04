@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { useProductDetail } from "@/apps/web-user/features/product/hooks/queries/useProductDetail";
 import { useProductReviews } from "@/apps/web-user/features/review/hooks/queries/useProductReviews";
 import { useAddProductLike } from "@/apps/web-user/features/like/hooks/mutations/useAddProductLike";
@@ -20,6 +21,21 @@ import { ProductDetailSkeleton } from "@/apps/web-user/common/components/skeleto
 import { useStoreDetail } from "@/apps/web-user/features/store/hooks/queries/useStoreDetail";
 import { useAuthStore } from "@/apps/web-user/common/store/auth.store";
 import { useLoginSheetStore } from "@/apps/web-user/common/store/login-sheet.store";
+import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
+import type {
+  ProductEntryPoint,
+  ProductTabName,
+} from "@/apps/web-user/common/types/analytics.type";
+
+const PRODUCT_ENTRY_POINTS: ProductEntryPoint[] = ["home", "search", "category", "map"];
+
+/** 탭 id → 텍소노미 tab_name 매핑 */
+const TAB_NAME_MAP: Record<string, ProductTabName> = {
+  detail: "detail",
+  "size-flavor": "size_taste",
+  review: "review",
+  notice: "info",
+};
 
 interface ProductDetailPageProps {
   params: Promise<{ productId: string }>;
@@ -27,6 +43,14 @@ interface ProductDetailPageProps {
 
 export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   const { productId } = use(params);
+  const searchParams = useSearchParams();
+  // 상품 상세 진입 경로. 목록에서 진입 시 쿼리로 전달되며, 그 외(최근본/찜 등)는 home으로 집계
+  const entryPointParam = searchParams.get("entry_point");
+  const entryPoint: ProductEntryPoint = PRODUCT_ENTRY_POINTS.includes(
+    entryPointParam as ProductEntryPoint,
+  )
+    ? (entryPointParam as ProductEntryPoint)
+    : "home";
   const { data, isLoading } = useProductDetail(productId);
   const { data: reviewData } = useProductReviews({ productId });
   const { mutate: addLike, isPending: isAddingLike } = useAddProductLike();
@@ -42,12 +66,21 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
   const openLoginSheet = useLoginSheetStore((s) => s.openLoginSheet);
 
   const handleReservationClick = () => {
+    trackEvent("engage_reservation");
+
     if (!isAuthenticated) {
-      openLoginSheet();
+      openLoginSheet("reservation_button");
       return;
     }
     setIsBottomSheetOpen(true);
   };
+
+  // 상품 상세 페이지 노출
+  const isDataLoaded = !!data;
+  useEffect(() => {
+    if (!isDataLoaded) return;
+    trackEvent("view_product_detail", { product_id: productId, entry_point: entryPoint });
+  }, [isDataLoaded, productId, entryPoint]);
 
   // 서버에서 isLiked 값이 변경되면 로컬 상태 동기화
   useEffect(() => {
@@ -58,7 +91,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
 
   const handleLikeToggle = () => {
     if (!isAuthenticated) {
-      openLoginSheet();
+      openLoginSheet("like_button");
       return;
     }
     if (isLikeLoading) return;
@@ -101,6 +134,10 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
         defaultTab="detail"
         scrollOnSelect
         swipeable
+        onTabChange={(tabId) => {
+          const tabName = TAB_NAME_MAP[tabId];
+          if (tabName) trackEvent("engage_product_tab_menu", { tab_name: tabName });
+        }}
         tabs={[
           {
             id: "detail",

@@ -127,3 +127,11 @@ export function buildPickupReminderNotificationCopy(): UserOrderNotificationCopy
     body: "예약하신 상품을 내일 픽업하는 날이에요. 시간에 맞춰 방문해 주세요.",
   };
 }
+
+/** 입금 마감 3시간 전 재입금 안내 구매자 인앱·푸시 문구 */
+export function buildPaymentReminderNotificationCopy(): UserOrderNotificationCopy {
+  return {
+    title: "입금 마감이 얼마 남지 않았어요",
+    body: "아직 입금이 확인되지 않았어요. 마감 시간이 지나면 예약이 자동으로 취소되니 서둘러 입금해 주세요.",
+  };
+}

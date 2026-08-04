@@ -111,7 +111,7 @@ export function MapStoreCardContent({
     e.preventDefault();
     e.stopPropagation();
     if (!isAuthenticated) {
-      openLoginSheet();
+      openLoginSheet("like_button");
       return;
     }
     if (isLikeLoading) return;
@@ -159,7 +159,7 @@ export function MapStoreCardContent({
             <button
               key={item.productId}
               type="button"
-              onClick={() => router.push(PATHS.PRODUCT.DETAIL(item.productId))}
+              onClick={() => router.push(`${PATHS.PRODUCT.DETAIL(item.productId)}?entry_point=map`)}
               className="flex-shrink-0 overflow-hidden bg-gray-100"
               style={{
                 scrollSnapAlign: "start",

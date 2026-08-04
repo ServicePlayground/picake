@@ -51,7 +51,7 @@ const responseErrorHandler = async (error: AxiosError<{ data?: { message?: strin
       title: "로그인",
       message: "로그인한 뒤 이용해 주세요.",
       isLoginRequired: true,
-      onClose: () => useLoginSheetStore.getState().openLoginSheet(),
+      onClose: () => useLoginSheetStore.getState().openLoginSheet("session_expired"),
     });
     // resolve 하면 호출부가 성공으로 오인해 응답(undefined)을 참조하다 터지므로 반드시 reject
     return Promise.reject(error);

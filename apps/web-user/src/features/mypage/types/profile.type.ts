@@ -10,6 +10,8 @@ export interface MypageProfile {
   googleEmail: string;
   kakaoId: string;
   kakaoEmail: string;
+  appleId: string;
+  appleEmail: string;
   createdAt: string;
   lastLoginAt: string;
   /** 동의한 서비스 이용약관 버전 (미동의 시 null) */
