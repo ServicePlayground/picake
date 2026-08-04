@@ -11,6 +11,9 @@ export const PICKUP_REMINDER_LEAD_MS = 24 * 60 * 60 * 1000;
 /** 재입금 안내(알림톡·푸시)를 입금 마감보다 얼마나 앞서 보낼지 */
 export const PAYMENT_REMINDER_LEAD_MS = 3 * 60 * 60 * 1000;
 
+/** 입금 마감 2차(최종) 안내를 마감보다 얼마나 앞서 보낼지 */
+export const PAYMENT_FINAL_REMINDER_LEAD_MS = 30 * 60 * 1000;
+
 const MS_1H = 60 * 60 * 1000;
 const MS_6H = 6 * MS_1H;
 const MS_12H = 12 * MS_1H;
@@ -118,6 +121,31 @@ export function isPaymentReminderEligible(
  */
 export function isPaymentReminderDue(paymentPendingDeadlineAt: Date, now: Date): boolean {
   const reminderAt = paymentPendingDeadlineAt.getTime() - PAYMENT_REMINDER_LEAD_MS;
+  const t = now.getTime();
+  return t >= reminderAt && t < paymentPendingDeadlineAt.getTime();
+}
+
+/**
+ * 마감 30분 전 2차(최종) 안내 대상 여부.
+ *
+ * 1차 안내(3시간 전)와 달리 **짧은 마감 구간도 포함**합니다. 픽업이 임박해 입금 창구가 1시간으로
+ * 잡힌 주문은 1차 안내를 받지 못하는데, 정작 시간이 가장 촉박해 놓치기 쉬운 건들이기 때문입니다.
+ * 리드타임(30분)보다 창구가 짧으면 안내 시점이 이미 지나 있으므로 제외합니다.
+ */
+export function isPaymentFinalReminderEligible(
+  paymentPendingAt: Date,
+  paymentPendingDeadlineAt: Date,
+): boolean {
+  const windowMs = paymentPendingDeadlineAt.getTime() - paymentPendingAt.getTime();
+  return windowMs > PAYMENT_FINAL_REMINDER_LEAD_MS;
+}
+
+/**
+ * 2차(최종) 안내 발송 시점 도달 여부.
+ * - `paymentPendingDeadlineAt - 30m <= now < paymentPendingDeadlineAt` 이면 true
+ */
+export function isPaymentFinalReminderDue(paymentPendingDeadlineAt: Date, now: Date): boolean {
+  const reminderAt = paymentPendingDeadlineAt.getTime() - PAYMENT_FINAL_REMINDER_LEAD_MS;
   const t = now.getTime();
   return t >= reminderAt && t < paymentPendingDeadlineAt.getTime();
 }

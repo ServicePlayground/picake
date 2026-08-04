@@ -4,6 +4,7 @@ import { PrismaService } from "@apps/backend/infra/database/prisma.service";
 import type { OrderStatusTransitionPayload } from "@apps/backend/modules/order/types/order-lifecycle.types";
 import { buildSellerOrderNotificationCopy } from "@apps/backend/modules/notification/utils/seller-order-notification-copy.util";
 import {
+  buildPaymentFinalReminderNotificationCopy,
   buildPaymentReminderNotificationCopy,
   buildPickupReminderNotificationCopy,
   buildUserOrderNotificationCopy,
@@ -133,6 +134,24 @@ export class NotificationOrderDispatchService {
    * 호출 측에서 `paymentReminderSentAt`을 먼저 확정한 뒤 호출합니다.
    */
   async handlePaymentReminder(orderId: string): Promise<void> {
+    await this.dispatchPaymentReminder(orderId, buildPaymentReminderNotificationCopy());
+  }
+
+  /**
+   * 입금 마감 30분 전 2차(최종) 안내. 호출 측에서 `paymentFinalReminderSentAt`을 먼저 확정합니다.
+   *
+   * 알림톡은 1차와 **같은 템플릿을 재사용**합니다. 카카오 템플릿은 사전 승인이 필요해, 문구가
+   * 크게 다르지 않은 2차 안내를 위해 별도 템플릿을 추가하지 않았습니다.
+   * (인앱·푸시 문구만 2차 전용으로 분기)
+   */
+  async handlePaymentFinalReminder(orderId: string): Promise<void> {
+    await this.dispatchPaymentReminder(orderId, buildPaymentFinalReminderNotificationCopy());
+  }
+
+  private async dispatchPaymentReminder(
+    orderId: string,
+    copy: { title: string; body: string },
+  ): Promise<void> {
     try {
       const order = await this.prisma.order.findUnique({
         where: { id: orderId },
@@ -140,7 +159,6 @@ export class NotificationOrderDispatchService {
       });
       if (!order) return;
 
-      const copy = buildPaymentReminderNotificationCopy();
       const alimtalk = buildPaymentReminderAlimtalkPayload(
         this.toAlimtalkOrderInfo(order, orderId),
       );

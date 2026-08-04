@@ -143,3 +143,16 @@ export function buildPaymentReminderNotificationCopy(): UserOrderNotificationCop
     body: "아직 입금이 확인되지 않았어요. 마감 시간이 지나면 예약이 자동으로 취소되니 서둘러 입금해 주세요.",
   };
 }
+
+/**
+ * 입금 마감 30분 전 2차(최종) 안내.
+ *
+ * 1차(3시간 전)보다 급박함을 분명히 하고, **이미 입금했다면 완료 처리를 눌러야 한다**는 점을
+ * 명시합니다. 서버는 입금 여부를 알 수 없어, 입금하고도 버튼을 누르지 않으면 자동 취소되기 때문입니다.
+ */
+export function buildPaymentFinalReminderNotificationCopy(): UserOrderNotificationCopy {
+  return {
+    title: "입금 마감 30분 전이에요",
+    body: "곧 예약이 자동으로 취소돼요. 아직이라면 지금 입금해 주시고, 이미 입금하셨다면 '입금완료했어요'를 눌러주세요.",
+  };
+}
