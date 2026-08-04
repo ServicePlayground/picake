@@ -40,3 +40,8 @@ export function isSellerStatusUpdate(ctx: Pick<OrderStatusTransitionPayload, "so
 export function isUserAction(ctx: Pick<OrderStatusTransitionPayload, "source">): boolean {
   return ctx.source === ORDER_STATUS_TRANSITION_SOURCE.USER_ACTION;
 }
+
+/** 관리자 주문 상태 변경 (취소완료 → 취소환불대기 되돌리기) */
+export function isAdminStatusUpdate(ctx: Pick<OrderStatusTransitionPayload, "source">): boolean {
+  return ctx.source === ORDER_STATUS_TRANSITION_SOURCE.ADMIN_STATUS_UPDATE;
+}

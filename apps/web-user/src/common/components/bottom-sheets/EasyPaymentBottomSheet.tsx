@@ -1,15 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BottomSheet } from "@/apps/web-user/common/components/bottom-sheets/BottomSheet";
 import { Modal } from "@/apps/web-user/common/components/modals/Modal";
+import { Toast } from "@/apps/web-user/common/components/toast/Toast";
 import { BottomSheetOptionList } from "./BottomSheetOptionList";
 import { APP_ONLY_MODAL } from "@/apps/web-user/common/constants/messages.constant";
+import {
+  isWebViewEnvironment,
+  toExternalAppSchemeUrl,
+} from "@/apps/web-user/common/utils/webview.bridge";
 import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
 
 function isMobileDevice(): boolean {
   return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 }
+
+/** 스키마 실행 후 이탈이 없으면 미설치로 판단하는 대기 시간 */
+const APP_LAUNCH_TIMEOUT_MS = 1500;
 
 interface EasyPaymentBottomSheetProps {
   isOpen: boolean;
@@ -30,6 +38,11 @@ export function EasyPaymentBottomSheet({
   amount,
 }: EasyPaymentBottomSheetProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isNotInstalledToastOpen, setIsNotInstalledToastOpen] = useState(false);
+
+  // 실행 감지 중인 리스너/타이머 정리 함수
+  const cleanupRef = useRef<(() => void) | null>(null);
+  useEffect(() => () => cleanupRef.current?.(), []);
 
   // 간편 입금하기 바텀시트 노출
   useEffect(() => {
@@ -38,13 +51,52 @@ export function EasyPaymentBottomSheet({
     }
   }, [isOpen, reservationId]);
 
+  /**
+   * 외부 앱 스키마 실행 후 앱 전환 여부로 설치 상태를 판단한다.
+   * 앱이 열리면 페이지가 백그라운드로 내려가고, 미설치면 화면에 그대로 남는다.
+   */
   const handleDeepLink = (url: string) => {
     if (!isMobileDevice()) {
       setIsModalOpen(true);
       return;
     }
-    window.open(url, "_blank");
-    onClose();
+
+    cleanupRef.current?.();
+
+    let hasLeftPage = false;
+    const markLeftOnHidden = () => {
+      if (document.hidden) hasLeftPage = true;
+    };
+    const markLeft = () => {
+      hasLeftPage = true;
+    };
+
+    document.addEventListener("visibilitychange", markLeftOnHidden);
+    window.addEventListener("pagehide", markLeft);
+    window.addEventListener("blur", markLeft);
+
+    const timer = window.setTimeout(() => {
+      cleanup();
+      // 앱으로 전환됐다면 시트를 닫고, 그대로 남아 있으면 미설치로 안내
+      if (hasLeftPage || document.hidden) {
+        onClose();
+        return;
+      }
+      // 시트는 닫지 않는다 — 다른 결제 수단을 바로 고를 수 있어야 함
+      setIsNotInstalledToastOpen(true);
+    }, APP_LAUNCH_TIMEOUT_MS);
+
+    const cleanup = () => {
+      window.clearTimeout(timer);
+      document.removeEventListener("visibilitychange", markLeftOnHidden);
+      window.removeEventListener("pagehide", markLeft);
+      window.removeEventListener("blur", markLeft);
+      cleanupRef.current = null;
+    };
+    cleanupRef.current = cleanup;
+
+    // 웹뷰에서는 Flutter가 가로채 외부 앱을 실행하도록 커스텀 스키마로 감싼다
+    window.location.href = isWebViewEnvironment() ? toExternalAppSchemeUrl(url) : url;
   };
 
   return (
@@ -119,6 +171,15 @@ export function EasyPaymentBottomSheet({
           setIsModalOpen(false);
         }}
       />
+
+      {isNotInstalledToastOpen && (
+        <Toast
+          message="해당 앱이 존재하지 않습니다."
+          iconName="alertCircle"
+          iconClassName="text-red-400"
+          onClose={() => setIsNotInstalledToastOpen(false)}
+        />
+      )}
     </>
   );
 }

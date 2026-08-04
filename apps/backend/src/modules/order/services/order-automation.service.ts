@@ -6,9 +6,12 @@ import {
   isPickupReminderDue,
   isPickupReminderLeadEligible,
   isPaymentPendingExpired,
+  isPaymentFinalReminderDue,
+  isPaymentFinalReminderEligible,
   isPaymentReminderDue,
   isPaymentReminderEligible,
   PICKUP_REMINDER_LEAD_MS,
+  PAYMENT_FINAL_REMINDER_LEAD_MS,
   PAYMENT_REMINDER_LEAD_MS,
 } from "@apps/backend/modules/order/utils/order-datetime.util";
 import { LoggerUtil } from "@apps/backend/common/utils/logger.util";
@@ -45,7 +48,8 @@ export class OrderAutomationService implements OnModuleInit, OnModuleDestroy {
   /**
    * 단일 주문에 대해 만료·픽업 전환·픽업 안내 규칙을 즉시 적용 (최신 상태 보장)
    * 만료 규칙: 입금대기 상태에서 `paymentPendingDeadlineAt`(없으면 픽업·진입 시각 기준 복원)이 지난 주문을 취소완료로 전환합니다. 예약신청 단계는 자동 만료하지 않습니다.
-   * 재입금 안내: 입금대기 상태에서 마감까지 준 시간이 3시간 초과인 주문에 한해, 마감 3시간 전 구매자 안내를 1회 발송합니다. (마감 구간이 1시간으로 짧게 잡힌 픽업 임박 주문은 생략)
+   * 재입금 안내(1차): 입금대기 상태에서 마감까지 준 시간이 3시간 초과인 주문에 한해, 마감 3시간 전 구매자 안내를 1회 발송합니다. (마감 구간이 1시간으로 짧게 잡힌 픽업 임박 주문은 생략)
+   * 재입금 안내(2차): 마감 30분 전 최종 안내를 1회 발송합니다. 1차와 달리 창구가 짧은 주문도 대상입니다(창구가 30분 이하면 생략).
    * 픽업 안내: 예약확정 상태에서 픽업 24시간 전이면 구매자 안내를 1회 발송합니다. (주문~픽업이 24시간 미만이면 생략)
    * 픽업 규칙: 예약확정 상태에서 픽업 시각이 도달했거나 지난 주문을 픽업대기로 전환합니다.
    */
@@ -66,7 +70,7 @@ export class OrderAutomationService implements OnModuleInit, OnModuleDestroy {
       if (isPaymentPendingExpired(now, expiryInput)) {
         const { count } = await this.prisma.order.updateMany({
           where: { id: orderId, orderStatus: OrderStatus.PAYMENT_PENDING },
-          data: { orderStatus: OrderStatus.CANCEL_COMPLETED },
+          data: { orderStatus: OrderStatus.CANCEL_COMPLETED, paymentPendingExpiredAt: now },
         });
         if (count === 1) {
           this.orderLifecycleHookService.afterOrderStatusTransition({
@@ -77,6 +81,13 @@ export class OrderAutomationService implements OnModuleInit, OnModuleDestroy {
           });
         }
       } else if (order.paymentPendingAt && order.paymentPendingDeadlineAt) {
+        await this.trySendPaymentFinalReminder({
+          orderId,
+          paymentPendingAt: order.paymentPendingAt,
+          paymentPendingDeadlineAt: order.paymentPendingDeadlineAt,
+          paymentFinalReminderSentAt: order.paymentFinalReminderSentAt,
+          now,
+        });
         await this.trySendPaymentReminder({
           orderId,
           paymentPendingAt: order.paymentPendingAt,
@@ -145,7 +156,7 @@ export class OrderAutomationService implements OnModuleInit, OnModuleDestroy {
         }
         const { count } = await this.prisma.order.updateMany({
           where: { id: row.id, orderStatus: OrderStatus.PAYMENT_PENDING },
-          data: { orderStatus: OrderStatus.CANCEL_COMPLETED },
+          data: { orderStatus: OrderStatus.CANCEL_COMPLETED, paymentPendingExpiredAt: now },
         });
         if (count === 1) {
           this.orderLifecycleHookService.afterOrderStatusTransition({
@@ -184,6 +195,37 @@ export class OrderAutomationService implements OnModuleInit, OnModuleDestroy {
           paymentPendingAt: row.paymentPendingAt,
           paymentPendingDeadlineAt: row.paymentPendingDeadlineAt,
           paymentReminderSentAt: row.paymentReminderSentAt,
+          now,
+        });
+      }
+
+      // 입금 마감 30분 전 2차 안내 (입금대기 · 미발송 · 마감이 아직 남음)
+      const paymentFinalWindowEnd = new Date(now.getTime() + PAYMENT_FINAL_REMINDER_LEAD_MS);
+      const paymentFinalCandidates = await this.prisma.order.findMany({
+        where: {
+          orderStatus: OrderStatus.PAYMENT_PENDING,
+          paymentFinalReminderSentAt: null,
+          paymentPendingAt: { not: null },
+          paymentPendingDeadlineAt: {
+            gt: now,
+            lte: paymentFinalWindowEnd,
+          },
+        },
+        select: {
+          id: true,
+          paymentPendingAt: true,
+          paymentPendingDeadlineAt: true,
+          paymentFinalReminderSentAt: true,
+        },
+      });
+
+      for (const row of paymentFinalCandidates) {
+        if (!row.paymentPendingAt || !row.paymentPendingDeadlineAt) continue;
+        await this.trySendPaymentFinalReminder({
+          orderId: row.id,
+          paymentPendingAt: row.paymentPendingAt,
+          paymentPendingDeadlineAt: row.paymentPendingDeadlineAt,
+          paymentFinalReminderSentAt: row.paymentFinalReminderSentAt,
           now,
         });
       }
@@ -328,5 +370,38 @@ export class OrderAutomationService implements OnModuleInit, OnModuleDestroy {
     if (count !== 1) return;
 
     await this.notificationOrderDispatchService.handlePaymentReminder(orderId);
+  }
+
+  /**
+   * 입금 마감 30분 전 2차(최종) 안내를 1회만 발송합니다.
+   *
+   * 1차(3시간 전)와 달리 입금 창구가 짧은 주문도 대상입니다. 픽업 임박으로 창구가 1시간인 주문은
+   * 1차 안내를 받지 못하는데, 시간이 가장 촉박해 놓치기 쉬운 건들이라 2차는 반드시 닿아야 합니다.
+   * `paymentFinalReminderSentAt`을 먼저 확정해 배치·sync 경합 시 중복 발송을 막습니다.
+   */
+  private async trySendPaymentFinalReminder(params: {
+    orderId: string;
+    paymentPendingAt: Date;
+    paymentPendingDeadlineAt: Date;
+    paymentFinalReminderSentAt: Date | null;
+    now: Date;
+  }): Promise<void> {
+    const { orderId, paymentPendingAt, paymentPendingDeadlineAt, paymentFinalReminderSentAt, now } =
+      params;
+    if (paymentFinalReminderSentAt) return;
+    if (!isPaymentFinalReminderEligible(paymentPendingAt, paymentPendingDeadlineAt)) return;
+    if (!isPaymentFinalReminderDue(paymentPendingDeadlineAt, now)) return;
+
+    const { count } = await this.prisma.order.updateMany({
+      where: {
+        id: orderId,
+        orderStatus: OrderStatus.PAYMENT_PENDING,
+        paymentFinalReminderSentAt: null,
+      },
+      data: { paymentFinalReminderSentAt: now },
+    });
+    if (count !== 1) return;
+
+    await this.notificationOrderDispatchService.handlePaymentFinalReminder(orderId);
   }
 }

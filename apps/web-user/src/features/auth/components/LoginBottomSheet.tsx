@@ -16,6 +16,7 @@ import {
   getKakaoOAuthLoginUrl,
 } from "@/apps/web-user/features/auth/utils/oauth-login-url.util";
 import { useLoginSheetStore } from "@/apps/web-user/common/store/login-sheet.store";
+import { setPostLoginRedirect } from "@/apps/web-user/features/auth/utils/post-login-redirect.util";
 import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
 
 /**
@@ -57,7 +58,10 @@ export function LoginBottomSheet() {
             <a
               href={kakaoAuthHref}
               className={oauthKakaoLoginButtonClassName}
-              onClick={() => trackEvent("engage_social_select", { provider: "kakao" })}
+              onClick={() => {
+                setPostLoginRedirect();
+                trackEvent("engage_social_select", { provider: "kakao" });
+              }}
             >
               <Image
                 src="/images/contents/kakaotalk.png"
@@ -73,7 +77,10 @@ export function LoginBottomSheet() {
             <a
               href={googleAuthHref}
               className={oauthGoogleLoginButtonClassName}
-              onClick={() => trackEvent("engage_social_select", { provider: "google" })}
+              onClick={() => {
+                setPostLoginRedirect();
+                trackEvent("engage_social_select", { provider: "google" });
+              }}
             >
               <Image
                 src="/images/contents/google.png"
@@ -89,7 +96,10 @@ export function LoginBottomSheet() {
             <a
               href={appleAuthHref}
               className={oauthAppleLoginButtonClassName}
-              onClick={() => trackEvent("engage_social_select", { provider: "apple" })}
+              onClick={() => {
+                setPostLoginRedirect();
+                trackEvent("engage_social_select", { provider: "apple" });
+              }}
             >
               <AppleLogoIcon />
               Apple로 시작하기

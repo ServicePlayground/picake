@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   OrderItemResponse,
   OrderResponse,
@@ -67,6 +68,7 @@ interface OrderDetailViewProps {
 }
 
 export function OrderDetailView({ order }: OrderDetailViewProps) {
+  const router = useRouter();
   // 픽업 날짜 변경 바텀시트의 캘린더 휴무일/영업시간 적용용
   const { data: storeDetail } = useStoreDetail(order.storeId);
   const [isMapSheetOpen, setIsMapSheetOpen] = useState(false);
@@ -85,6 +87,27 @@ export function OrderDetailView({ order }: OrderDetailViewProps) {
       {isPaymentPending && (
         <div className="-mt-5 mb-3">
           <PaymentPendingCountdownHeader order={order} />
+        </div>
+      )}
+      {/*
+        환불 처리 중인데 환불 계좌가 비어 있는 경우 입력을 유도합니다.
+        관리자가 취소완료 주문을 되돌리면 계좌가 비어 있어, 손님이 직접 알려줘야 환불이 진행됩니다.
+      */}
+      {order.orderStatus === OrderStatus.CANCEL_REFUND_PENDING && !order.refundBankAccountNumber && (
+        <div className="px-5 pb-1">
+          <div className="rounded-lg border border-primary/30 bg-primary/5 px-4 py-3.5">
+            <p className="text-sm font-bold text-gray-900">환불받으실 계좌를 알려주세요</p>
+            <p className="mt-1 text-xs text-gray-500">
+              입금이 확인되어 환불을 진행하고 있어요. 계좌를 입력해야 환불이 시작됩니다.
+            </p>
+            <button
+              type="button"
+              onClick={() => router.push(PATHS.ORDER.REFUND_ACCOUNT(order.id))}
+              className="mt-3 h-[38px] w-full rounded-lg bg-primary text-sm font-bold text-white"
+            >
+              환불 계좌 입력하기
+            </button>
+          </div>
         </div>
       )}
       {(() => {

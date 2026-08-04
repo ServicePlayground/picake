@@ -38,6 +38,7 @@ export const PATHS = {
     CANCEL: (orderId: string) => `/order/${orderId}/cancel`,
     CANCEL_REFUND: (orderId: string) => `/order/${orderId}/cancel/refund`,
     CANCEL_DETAIL: (orderId: string) => `/order/${orderId}/cancel-detail`,
+    REFUND_ACCOUNT: (orderId: string) => `/order/${orderId}/refund-account`,
   },
 
   // 마이페이지
@@ -67,6 +68,8 @@ export const PATHS = {
   QA: "/qa",
 
   AUTH: {
+    /** 로그인 화면 (로그인이 필요한 상황에서 이동) */
+    LOGIN: "/auth/login",
     GOOGLE_REDIRECT_URI: "/auth/login/google",
     GOOGLE_REGISTER: "/auth/register/google",
     KAKAO_REDIRECT_URI: "/auth/login/kakao",

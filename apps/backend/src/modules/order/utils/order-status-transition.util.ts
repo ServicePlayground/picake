@@ -57,6 +57,23 @@ export const USER_CANCEL_REFUND_REQUEST_SOURCE_STATUSES: ReadonlySet<OrderStatus
   OrderStatus.PICKUP_PENDING,
 ]);
 
+/**
+ * 관리자가 취소환불대기로 "되돌릴" 수 있는 상태.
+ *
+ * 취소완료(CANCEL_COMPLETED)는 원래 나가는 경로가 없는 종착 상태입니다. 그런데 무통장입금이라
+ * 서버는 입금 여부를 알 수 없어, 실제로 입금한 손님이 (직접 취소·판매자 취소·기한 만료 자동 취소로)
+ * 이 상태에 빠지면 환불을 처리할 수단이 없습니다. 그 예외 구제 경로를 관리자에게만 엽니다.
+ *
+ * 판매자·사용자에게는 열지 않습니다 — 종착 상태를 되돌리는 것은 강한 권한이라 관리자가 통제하고,
+ * 실제 환불 송금은 되돌린 뒤 기존 취소환불대기 플로우에서 판매자가 집행합니다.
+ */
+export const ADMIN_REVERT_TO_REFUND_PENDING_ALLOWED_FROM_STATUSES: ReadonlySet<OrderStatus> =
+  new Set([OrderStatus.CANCEL_COMPLETED]);
+
+export function isAdminRevertToRefundPendingAllowed(from: OrderStatus): boolean {
+  return ADMIN_REVERT_TO_REFUND_PENDING_ALLOWED_FROM_STATUSES.has(from);
+}
+
 /** 입금 전 사용자 취소 가능 상태 (예약신청·입금대기) */
 export const ORDER_PRE_PAYMENT_WINDOW_STATUSES: ReadonlySet<OrderStatus> = new Set([
   OrderStatus.RESERVATION_REQUESTED,

@@ -5,12 +5,13 @@ import { useRouter } from "next/navigation";
 import { InfoNotice } from "@/apps/web-user/common/components/notice/InfoNotice";
 import { Button } from "@/apps/web-user/common/components/buttons/Button";
 import { SelectTrigger } from "@/apps/web-user/common/components/selectboxs/SelectTrigger";
-import { OrderResponse } from "@/apps/web-user/features/order/types/order.type";
+import { OrderResponse, OrderStatus } from "@/apps/web-user/features/order/types/order.type";
 import { BankItem } from "@/apps/web-user/common/constants/banks.constant";
 import { useCancelFlowStore } from "@/apps/web-user/common/store/cancel-flow.store";
 import { usePendingToastStore } from "@/apps/web-user/common/store/pending-toast.store";
 import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 import { useRequestRefund } from "@/apps/web-user/features/order/hooks/mutations/useRequestRefund";
+import { useCancelBeforePayment } from "@/apps/web-user/features/order/hooks/mutations/useCancelBeforePayment";
 import { useMypageProfile } from "@/apps/web-user/features/mypage/hooks/queries/useMypageProfile";
 import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
 import { BankSelectBottomSheet } from "./BankSelectBottomSheet";
@@ -25,7 +26,11 @@ export function RefundRequestView({ order }: RefundRequestViewProps) {
   const reason = useCancelFlowStore((s) => s.reason);
   const clearReason = useCancelFlowStore((s) => s.clear);
   const setPendingToast = usePendingToastStore((s) => s.setPendingToast);
-  const { mutate: requestRefund, isPending } = useRequestRefund();
+  const { mutate: requestRefund, isPending: isRequestingRefund } = useRequestRefund();
+  // 입금대기 상태에서 "이미 입금했다"고 신고하고 온 경우는 취소 API가 환불 절차까지 처리합니다.
+  const { mutate: cancelWithDeposit, isPending: isCancelling } = useCancelBeforePayment();
+  const isPrePaymentDepositReport = order.orderStatus === OrderStatus.PAYMENT_PENDING;
+  const isPending = isRequestingRefund || isCancelling;
   const { data: profile } = useMypageProfile();
 
   const [selectedBank, setSelectedBank] = useState<BankItem | null>(null);
@@ -80,6 +85,39 @@ export function RefundRequestView({ order }: RefundRequestViewProps) {
   const handleSubmitRefund = () => {
     if (!isValid || !selectedBank || isPending) return;
     trackEvent("request_refund_info", { reservation_id: order.id });
+
+    const handleSuccess = () => {
+      setIsLeaving(true);
+      clearReason();
+      setPendingToast({
+        message: "취소 요청 완료",
+        iconName: "checkCircle",
+        iconClassName: "text-green-400",
+        variant: "column",
+        position: "center",
+      });
+      setIsConfirmSheetOpen(false);
+      router.replace(PATHS.ORDER.DETAIL(order.id));
+    };
+
+    // 입금대기 상태는 아직 "입금완료"로 넘어가기 전이라 환불 요청 API를 쓸 수 없습니다.
+    // 취소 API에 입금 신고를 실어 보내면 서버가 취소환불대기로 전환해 줍니다.
+    if (isPrePaymentDepositReport) {
+      cancelWithDeposit(
+        {
+          orderId: order.id,
+          reason,
+          deposited: {
+            bankName: selectedBank.value,
+            bankAccountNumber: accountNumber.trim(),
+            accountHolderName: holderName.trim(),
+          },
+        },
+        { onSuccess: handleSuccess },
+      );
+      return;
+    }
+
     requestRefund(
       {
         orderId: order.id,
@@ -88,21 +126,7 @@ export function RefundRequestView({ order }: RefundRequestViewProps) {
         bankAccountNumber: accountNumber.trim(),
         accountHolderName: holderName.trim(),
       },
-      {
-        onSuccess: () => {
-          setIsLeaving(true);
-          clearReason();
-          setPendingToast({
-            message: "취소 요청 완료",
-            iconName: "checkCircle",
-            iconClassName: "text-green-400",
-            variant: "column",
-            position: "center",
-          });
-          setIsConfirmSheetOpen(false);
-          router.replace(PATHS.ORDER.DETAIL(order.id));
-        },
-      },
+      { onSuccess: handleSuccess },
     );
   };
 
@@ -110,7 +134,7 @@ export function RefundRequestView({ order }: RefundRequestViewProps) {
     <div className="pt-5 pb-[96px]">
       {/* 안내 박스 */}
       <div className="px-5 py-4">
-        <InfoNotice message="정확한 환불 정보를 입력해주세요." />
+        <InfoNotice message={`환불예정 금액 : ${order.totalPrice.toLocaleString()}원`} />
       </div>
 
       <div className="px-5">

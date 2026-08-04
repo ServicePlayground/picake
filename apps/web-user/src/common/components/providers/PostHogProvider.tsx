@@ -29,6 +29,17 @@ function PostHogPageView() {
     ph.capture("$pageview", { $current_url: url });
   }, [pathname, searchParams, ph]);
 
+  // /auth/* 는 OAuth 콜백·가입 플로우라 화면 녹화(세션 리플레이) 자체를 꺼서
+  // 이메일 등 화면에 노출되는 정보가 리플레이로 남지 않게 한다.
+  useEffect(() => {
+    if (!ph) return;
+    if (pathname?.startsWith("/auth")) {
+      ph.stopSessionRecording();
+    } else {
+      ph.startSessionRecording();
+    }
+  }, [pathname, ph]);
+
   return null;
 }
 

@@ -795,7 +795,7 @@ export default function MapPageClient() {
     // 필터 적용 직후였다면, 새로 조회된 스토어 개수로 필터 적용 완료 이벤트 전송
     if (pendingFilterApplyRef.current) {
       pendingFilterApplyRef.current = false;
-      trackEvent("success_filter_apply", {
+      trackEvent("success_map_filter_apply", {
         size_filter: listFilter.sizes?.join(",") || undefined,
         price_min: listFilter.minPrice,
         price_max: listFilter.maxPrice,

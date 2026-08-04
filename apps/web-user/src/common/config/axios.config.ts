@@ -2,6 +2,8 @@ import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from "ax
 import { useAuthStore } from "@/apps/web-user/common/store/auth.store";
 import { useAlertStore } from "@/apps/web-user/common/store/alert.store";
 import { captureSentryApiError } from "@/apps/web-user/common/utils/sentry.util";
+import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
+import { setPostLoginRedirect } from "@/apps/web-user/features/auth/utils/post-login-redirect.util";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_DOMAIN;
 
@@ -49,8 +51,15 @@ const responseErrorHandler = async (error: AxiosError<{ data?: { message?: strin
       type: "error",
       title: "로그인",
       message: "로그인한 뒤 이용해 주세요.",
+      isLoginRequired: true,
+      onClose: () => {
+        // 로그인 완료 후 돌아올 수 있도록 현재 경로를 저장한 뒤 로그인 화면으로 이동
+        setPostLoginRedirect();
+        window.location.href = PATHS.AUTH.LOGIN;
+      },
     });
-    return Promise.resolve();
+    // resolve 하면 호출부가 성공으로 오인해 응답(undefined)을 참조하다 터지므로 반드시 reject
+    return Promise.reject(error);
   }
 
   captureSentryApiError(error);

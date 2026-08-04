@@ -643,6 +643,12 @@ model Order {
   paymentPendingAt DateTime? @map("payment_pending_at")
   /** 입금 마감 시각(픽업까지 남은 시간에 따라 12h/6h/1h 티어 및 픽업 시각과의 min). 입금대기가 아니면 null */
   paymentPendingDeadlineAt DateTime? @map("payment_pending_deadline_at")
+  /**
+   * 입금 기한 만료로 "자동" 취소된 시각. 값이 있으면 사용자·판매자가 의도한 취소가 아니라
+   * 시스템이 취소한 건입니다(사유 필드가 모두 null이라 레코드만으로는 구분되지 않아 별도 표시).
+   * 실제로 입금했으나 완료 처리를 못 한 손님을 찾아 환불 처리할 때의 조회 기준입니다.
+   */
+  paymentPendingExpiredAt DateTime? @map("payment_pending_expired_at")
   /** 사용자가 입금완료 처리 시 입력한 입금자명 */
   depositorName String? @map("depositor_name")
   /** 입금 전 사용자 취소 시 입력한 사유 (자동 만료 취소 등은 null) */
@@ -653,6 +659,13 @@ model Order {
   sellerNoShowReason String? @map("seller_no_show_reason") @db.Text
   /** 판매자가 취소환불대기로 전환할 때 입력한 사유 (사용자 요청 사유 `refundRequestReason`과 별도) */
   sellerCancelRefundPendingReason String? @map("seller_cancel_refund_pending_reason") @db.Text
+  /**
+   * 관리자가 취소완료 주문을 취소환불대기로 되돌릴 때 입력한 사유.
+   * 종착 상태를 예외적으로 되돌리는 조치라 감사 기록용으로 남깁니다.
+   */
+  adminRefundRevertReason String? @map("admin_refund_revert_reason") @db.Text
+  /** 관리자가 되돌린 시각 (값이 있으면 예외 구제된 주문) */
+  adminRefundRevertedAt DateTime? @map("admin_refund_reverted_at")
   /** 입금 이후 사용자 취소·환불 요청 시 사유 */
   refundRequestReason String? @map("refund_request_reason") @db.Text
   /** 환불 받을 은행 (스토어 정산 계좌와 동일 `StoreBankName`) */
@@ -663,6 +676,11 @@ model Order {
   pickupReminderSentAt DateTime? @map("pickup_reminder_sent_at")
   /** 재입금 안내(알림톡·푸시) 발송 시각. 미발송이면 null */
   paymentReminderSentAt DateTime? @map("payment_reminder_sent_at")
+  /**
+   * 입금 마감 30분 전 2차(최종) 안내 발송 시각. 미발송이면 null.
+   * 3시간 전 1차 안내(`paymentReminderSentAt`)와 별도로 1회만 발송하기 위한 중복 방지 플래그입니다.
+   */
+  paymentFinalReminderSentAt DateTime? @map("payment_final_reminder_sent_at")
 
   // 시스템 필드
   createdAt DateTime @default(now()) @map("created_at")
@@ -682,6 +700,7 @@ model Order {
   @@index([orderStatus]) // 주문 상태별 조회
   @@index([orderStatus, paymentPendingDeadlineAt]) // 입금대기 만료 배치
   @@index([orderStatus, paymentPendingDeadlineAt, paymentReminderSentAt]) // 재입금 안내 배치
+  @@index([orderStatus, paymentPendingDeadlineAt, paymentFinalReminderSentAt]) // 재입금 2차 안내 배치
   @@index([orderStatus, pickupDate, pickupReminderSentAt]) // 픽업 24시간 전 안내 배치
   @@index([orderNumber]) // 주문 번호로 조회
   @@index([pickupDate]) // 픽업 예정/지난 예약 필터

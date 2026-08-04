@@ -10,8 +10,20 @@ export function useCancelBeforePayment() {
   const { showAlert } = useAlertStore();
 
   return useMutation({
-    mutationFn: ({ orderId, reason }: { orderId: string; reason: string }) =>
-      orderApi.cancelBeforePayment(orderId, reason),
+    mutationFn: ({
+      orderId,
+      reason,
+      deposited,
+    }: {
+      orderId: string;
+      reason: string;
+      /** 이미 입금했다고 신고하는 경우의 환불 계좌. 있으면 취소환불대기로 전환됩니다. */
+      deposited?: {
+        bankName: string;
+        bankAccountNumber: string;
+        accountHolderName: string;
+      };
+    }) => orderApi.cancelBeforePayment(orderId, reason, deposited),
     onSuccess: (_data, variables) => {
       trackEvent("success_cancel_reservation", { reservation_id: variables.orderId });
       queryClient.invalidateQueries({ queryKey: orderQueryKeys.all });

@@ -25,6 +25,7 @@ import {
   CancelOrderBeforePaymentRequestDto,
   MarkPaymentCompleteRequestDto,
   RequestCancelRefundRequestDto,
+  SubmitRefundAccountRequestDto,
 } from "@apps/backend/modules/order/dto/order-user-action.dto";
 import {
   UpdateReservationOrderItemsRequestDto,
@@ -52,6 +53,7 @@ import {
   CancelOrderBeforePaymentRequestDto,
   MarkPaymentCompleteRequestDto,
   RequestCancelRefundRequestDto,
+  SubmitRefundAccountRequestDto,
   UpdateReservationPickupDateRequestDto,
   UpdateReservationOrderItemsRequestDto,
 )
@@ -142,7 +144,7 @@ export class ConsumerOrderController {
   @ApiOperation({
     summary: "(로그인 필요) 입금 전 예약 취소",
     description:
-      "예약신청(RESERVATION_REQUESTED) 또는 입금대기(PAYMENT_PENDING) 주문을 취소완료(CANCEL_COMPLETED)로 변경합니다. 취소 사유를 함께 저장합니다.",
+      "예약신청(RESERVATION_REQUESTED) 또는 입금대기(PAYMENT_PENDING) 주문을 취소합니다. 취소 사유를 함께 저장합니다. 사용자가 이미 입금했다고 신고하면(hasDeposited=true, 입금대기 상태에서만 가능) 취소완료가 아니라 취소환불대기(CANCEL_REFUND_PENDING)로 전환되며 환불 계좌 3종을 함께 저장합니다. 그 외에는 취소완료(CANCEL_COMPLETED)로 종료됩니다.",
   })
   @SwaggerResponse(200, { dataDto: UpdateOrderStatusResponseDto })
   @SwaggerAuthResponses()
@@ -269,6 +271,35 @@ export class ConsumerOrderController {
     @Request() req: { user: JwtVerifiedPayload },
   ): Promise<UpdateOrderStatusResponseDto> {
     return await this.orderService.requestOrderRefundForUser(id, req.user, dto);
+  }
+
+  /**
+   * 환불 계좌 입력 (사용자)
+   */
+  @Patch(":id/refund-account")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: "(로그인 필요) 환불 계좌 입력",
+    description:
+      "이미 취소환불대기(CANCEL_REFUND_PENDING)인 주문에 환불받을 계좌만 입력합니다. 주문 상태는 바뀌지 않습니다. 관리자가 취소완료 주문을 환불 처리로 되돌린 경우 환불 계좌가 비어 있어, 이 API로 구매자가 직접 입력합니다. 환불이 완료되기 전까지는 다시 입력해 수정할 수 있습니다.",
+  })
+  @SwaggerResponse(200, { dataDto: UpdateOrderStatusResponseDto })
+  @SwaggerAuthResponses()
+  @SwaggerResponse(400, {
+    dataExample: createMessageObject(ORDER_ERROR_MESSAGES.INVALID_USER_ORDER_ACTION),
+  })
+  @SwaggerResponse(403, {
+    dataExample: createMessageObject(ORDER_ERROR_MESSAGES.FORBIDDEN),
+  })
+  @SwaggerResponse(404, {
+    dataExample: createMessageObject(ORDER_ERROR_MESSAGES.NOT_FOUND),
+  })
+  async submitRefundAccount(
+    @Param("id") id: string,
+    @Body() dto: SubmitRefundAccountRequestDto,
+    @Request() req: { user: JwtVerifiedPayload },
+  ): Promise<UpdateOrderStatusResponseDto> {
+    return await this.orderService.submitRefundAccountForUser(id, req.user, dto);
   }
 
   /**

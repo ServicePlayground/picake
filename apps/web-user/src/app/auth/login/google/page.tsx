@@ -8,6 +8,10 @@ import { AUTH_ERROR_MESSAGES } from "@/apps/web-user/features/auth/constants/aut
 import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 import { useAlertStore } from "@/apps/web-user/common/store/alert.store";
 import getApiMessage from "@/apps/web-user/common/utils/getApiMessage";
+import {
+  clearPostLoginRedirect,
+  consumePostLoginRedirect,
+} from "@/apps/web-user/features/auth/utils/post-login-redirect.util";
 import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
 import { decodeJwtPayload } from "@/apps/web-user/features/auth/utils/jwt.util";
 import { resolveSocialAuthFailReason } from "@/apps/web-user/features/auth/utils/social-auth-error.util";
@@ -25,6 +29,7 @@ function GoogleAuthCallbackContent() {
   useEffect(() => {
     const code = searchParams.get("code");
     if (!code) {
+      clearPostLoginRedirect();
       // 구글 인증 화면에서 사용자가 취소한 경우 code 없이 리다이렉트됨
       trackEvent("fail_social_auth", { provider: "google", fail_reason: "cancel" });
       router.replace(PATHS.HOME);
@@ -41,7 +46,8 @@ function GoogleAuthCallbackContent() {
           trackEvent("success_login", { provider: "google", user_id: userId });
         }
         login(data.accessToken);
-        router.replace(PATHS.HOME);
+        // 로그인을 시작했던 화면으로 복귀 (없으면 홈)
+        router.replace(consumePostLoginRedirect());
       } catch (error: unknown) {
         const err = error as {
           response?: {
@@ -58,8 +64,10 @@ function GoogleAuthCallbackContent() {
           const params = new URLSearchParams();
           params.set("googleId", googleId);
           params.set("googleEmail", googleEmail);
+          // 회원가입으로 이어지므로 복귀 경로는 유지 (가입 완료 후 사용)
           router.replace(`${PATHS.AUTH.GOOGLE_REGISTER}?${params.toString()}`);
         } else {
+          clearPostLoginRedirect();
           trackEvent("fail_social_auth", {
             provider: "google",
             fail_reason: resolveSocialAuthFailReason(error),

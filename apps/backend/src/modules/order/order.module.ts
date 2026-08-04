@@ -9,6 +9,7 @@ import { OrderSellerActionService } from "@apps/backend/modules/order/services/o
 import { OrderUserListService } from "@apps/backend/modules/order/services/order-user-list.service";
 import { OrderAutomationService } from "@apps/backend/modules/order/services/order-automation.service";
 import { OrderUserActionService } from "@apps/backend/modules/order/services/order-user-action.service";
+import { OrderAdminActionService } from "@apps/backend/modules/order/services/order-admin-action.service";
 import { OrderUserReservationEditService } from "@apps/backend/modules/order/services/order-user-reservation-edit.service";
 import { OrderLifecycleHookService } from "@apps/backend/modules/order/services/order-lifecycle-hook.service";
 
@@ -26,6 +27,7 @@ import { OrderLifecycleHookService } from "@apps/backend/modules/order/services/
     OrderSellerListService,
     OrderSellerActionService,
     OrderUserActionService,
+    OrderAdminActionService,
     OrderUserReservationEditService,
     OrderUserListService,
     OrderService,

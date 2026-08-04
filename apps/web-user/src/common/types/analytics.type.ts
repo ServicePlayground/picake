@@ -19,8 +19,16 @@ export type ProductTabName = "detail" | "size_taste" | "review" | "info";
 /** 예약 완료 화면에서 선택한 버튼 */
 export type ReservationCompleteAction = "reservation" | "home";
 
-/** 로그인/회원가입 진입을 유발한 지점 */
-export type LoginEntryPoint = "reservation_button" | "save_menu" | "mypage" | "like_button";
+/**
+ * 로그인/회원가입 진입을 유발한 지점.
+ * `session_expired` 는 사용자가 누른 게 아니라 401 등으로 로그인이 요구된 경우다.
+ */
+export type LoginEntryPoint =
+  | "reservation_button"
+  | "save_menu"
+  | "mypage"
+  | "like_button"
+  | "session_expired";
 
 /** 소셜 로그인 제공자 */
 export type OAuthProvider = "kakao" | "google" | "apple";
@@ -198,10 +206,10 @@ export interface AnalyticsEventMap {
   request_search: { keyword: string };
   /** 검색 결과 화면 노출 (결과 0건 이상) */
   view_search_result: { keyword: string; result_count: number };
-  /** 필터 아이콘 클릭 → 정렬&필터 바텀시트 전환 */
+  /** 필터 아이콘 클릭 → 정렬&필터 바텀시트 전환 (홈/검색) */
   engage_filter: never;
   /**
-   * 필터적용시 (주문과정/홈검색은 sort_type 포함, 지도는 미포함이라 optional 처리)
+   * 홈/검색 필터 적용시 (지도 필터 적용은 success_map_filter_apply로 분리)
    * 정렬 기준 선택, 사이즈 필터, 최소/최대 가격, 타입 필터, 적용 후 결과 개수
    */
   success_filter_apply: {
@@ -234,12 +242,23 @@ export interface AnalyticsEventMap {
   engage_date_picker_open: never;
   /** 픽업 날짜·시간 선택 완료 (기본값: 오늘) */
   success_pickup_date_select: { selected_date: string; selected_time_slot: string };
-  /** 필터 아이콘 클릭 → 정렬&필터 바텀시트 전환 */
-  engage_filter_open: never;
+  /** 필터 아이콘 클릭 → 정렬&필터 바텀시트 전환 (지도) */
+  engage_map_filter_open: never;
   /** 현재 위치 버튼 클릭 */
   engage_current_location: never;
   /** 지도 이동 또는 현재 위치 설정 후 해당 영역의 스토어 검색 완료 */
   success_map_area_search: { trigger_type: MapAreaSearchTrigger; result_count: number };
+  /**
+   * 지도 필터 적용 완료 (홈/검색의 success_filter_apply와 별개 — 지도는 정렬(sort_type) 개념이 없음)
+   * 사이즈 필터, 최소/최대 가격, 타입 필터, 적용 후 결과 개수
+   */
+  success_map_filter_apply: {
+    size_filter?: string;
+    price_min?: number;
+    price_max?: number;
+    type_filter?: string;
+    result_count: number;
+  };
 }
 
 export type AnalyticsEventName = keyof AnalyticsEventMap;

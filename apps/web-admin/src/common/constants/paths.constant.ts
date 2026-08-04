@@ -8,6 +8,7 @@ import { StatisticsOrdersPage } from "@/apps/web-admin/pages/statistics/orders/I
 import { StatisticsStoresPage } from "@/apps/web-admin/pages/statistics/stores/Index";
 import { StatisticsStoreEntryRequestsPage } from "@/apps/web-admin/pages/statistics/store-entry-requests/Index";
 import { ConsumerMembersListPage } from "@/apps/web-admin/pages/consumer/members/List";
+import { RefundCandidatesListPage } from "@/apps/web-admin/pages/consumer/refund-candidates/List";
 import { SellerMembersListPage } from "@/apps/web-admin/pages/seller/members/List";
 import { SellerStoresListPage } from "@/apps/web-admin/pages/seller/stores/List";
 import { SellerSegmentsListPage } from "@/apps/web-admin/pages/seller/segments/List";
@@ -48,6 +49,7 @@ export const ROUTES = {
     NOTICES: "/consumer/notices",
     QNAS: "/consumer/qnas",
     MEMBERS: "/consumer/members",
+    REFUND_CANDIDATES: "/consumer/refund-candidates",
   },
   SELLER: {
     TERMS: "/seller/terms",
@@ -83,6 +85,7 @@ export const ADMIN_ROUTE_CONFIG = [
   { path: ROUTES.CONSUMER.NOTICES, element: NoticesListPage },
   { path: ROUTES.CONSUMER.QNAS, element: QnasListPage },
   { path: ROUTES.CONSUMER.MEMBERS, element: ConsumerMembersListPage },
+  { path: ROUTES.CONSUMER.REFUND_CANDIDATES, element: RefundCandidatesListPage },
   // 판매자 앱
   { path: ROUTES.SELLER.TERMS, element: SellerTermsListPage },
   { path: ROUTES.SELLER.MEMBERS, element: SellerMembersListPage },

@@ -261,6 +261,14 @@ export class OrderResponseDto extends PickupAddressDto {
   depositorName: string | null;
 
   @ApiPropertyOptional({
+    description:
+      "입금 기한 만료로 자동 취소된 시각. 값이 있으면 사용자·판매자가 의도한 취소가 아니라 시스템이 취소한 건입니다. 그 외에는 null",
+    example: "2024-01-15T14:00:00.000Z",
+    nullable: true,
+  })
+  paymentPendingExpiredAt: Date | null;
+
+  @ApiPropertyOptional({
     description: "주문 시 선택 입력한 예약자명. 미입력 시 null",
     example: SWAGGER_EXAMPLES.ORDER_DATA.reservationContactName,
     nullable: true,
@@ -311,6 +319,22 @@ export class OrderResponseDto extends PickupAddressDto {
     nullable: true,
   })
   sellerCancelRefundPendingReason: string | null;
+
+  @ApiPropertyOptional({
+    description:
+      "관리자가 취소완료 주문을 취소환불대기로 되돌릴 때 입력한 사유. 되돌린 적이 없으면 null",
+    example: "고객 입금 확인됨 - 통장 내역 대조 완료",
+    nullable: true,
+  })
+  adminRefundRevertReason: string | null;
+
+  @ApiPropertyOptional({
+    description:
+      "관리자가 취소완료 주문을 취소환불대기로 되돌린 시각. 값이 있으면 예외 구제된 주문입니다.",
+    example: "2024-01-15T14:00:00.000Z",
+    nullable: true,
+  })
+  adminRefundRevertedAt: Date | null;
 
   @ApiPropertyOptional({
     description: "환불받을 은행 (취소·환불 요청 시). 해당 없으면 null",

@@ -81,6 +81,8 @@ export interface OrderResponseDto {
   paymentPendingDeadlineAt?: Date | string | null;
   /** 사용자가 입금완료 처리 시 입력한 입금자명 */
   depositorName?: string | null;
+  /** 입금 기한 만료로 자동 취소된 시각. 값이 있으면 고객·판매자가 의도한 취소가 아님 */
+  paymentPendingExpiredAt?: Date | string | null;
   /** 주문 시 선택 입력한 예약자명 */
   reservationContactName?: string | null;
   /** 주문 시 선택 입력한 예약 연락처(휴대폰) */

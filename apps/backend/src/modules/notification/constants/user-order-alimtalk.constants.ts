@@ -35,11 +35,7 @@ export const USER_ORDER_ALIMTALK_TEMPLATE_IDS = {
   CANCEL_REFUND_PENDING_BY_SELLER: "KA01TP260709152017983qyEZLcjRAe4",
   /** 템플릿9 취소환불완료 */
   CANCEL_REFUND_COMPLETED: "KA01TP260709152105867mWUzCUiR1E8",
-  /**
-   * 템플릿10 재입금안내: 입금 마감 3시간 전 안내
-   * ⚠️ 2026-08-01 기준 SOLAPI 검수 요청(INSPECTING) 상태 — 승인 전까지는 발송 시 카카오 API에서 실패합니다.
-   * 승인 완료되면 이 주석만 지우면 됩니다 (ID는 이미 최종값).
-   */
+  /** 템플릿10 재입금안내: 입금 마감 3시간 전 안내 (30분 전 2차 안내도 동일 템플릿 재사용) */
   PAYMENT_REMINDER: "KA01TP260801104055878SSm3ZiqQQxF",
 } as const;
 

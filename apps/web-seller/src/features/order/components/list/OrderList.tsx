@@ -110,9 +110,20 @@ export function OrderList({ orders, sortBy, onSortChange }: OrderListProps) {
                   {order.productName}
                 </td>
                 <td className={tdBase}>
-                  <StatusBadge variant={getOrderStatusBadgeVariant(order.orderStatus)}>
-                    {getOrderStatusLabel(order.orderStatus)}
-                  </StatusBadge>
+                  <div className="flex flex-wrap items-center gap-1">
+                    <StatusBadge variant={getOrderStatusBadgeVariant(order.orderStatus)}>
+                      {getOrderStatusLabel(order.orderStatus)}
+                    </StatusBadge>
+                    {/* 자동 만료 취소는 고객·판매자가 의도한 취소가 아니어서 목록에서 바로 구분되어야 합니다. */}
+                    {order.paymentPendingExpiredAt && (
+                      <span
+                        className="whitespace-nowrap rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[11px] font-medium text-amber-700"
+                        title="입금 기한이 지나 시스템이 자동으로 취소한 주문입니다. 고객이 입금했는지 확인이 필요할 수 있습니다."
+                      >
+                        기한 만료
+                      </span>
+                    )}
+                  </div>
                 </td>
                 <td className={cn(tdBase, "whitespace-nowrap")}>{formatDate(order.pickupDate)}</td>
                 <td className={cn(tdBase, "whitespace-nowrap text-slate-500")}>

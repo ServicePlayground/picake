@@ -3,6 +3,7 @@ import { UploadModule } from "@apps/backend/modules/upload/upload.module";
 import { AuthModule } from "@apps/backend/modules/auth/auth.module";
 import { AdminManagementModule } from "@apps/backend/modules/admin-management/admin-management.module";
 import { MemberManagementModule } from "@apps/backend/modules/member-management/member-management.module";
+import { OrderModule } from "@apps/backend/modules/order/order.module";
 import { StoreManagementModule } from "@apps/backend/modules/store-management/store-management.module";
 import { StoreEntryRequestModule } from "@apps/backend/modules/store-entry-request/store-entry-request.module";
 import { SellerSegmentModule } from "@apps/backend/modules/seller-segment/seller-segment.module";
@@ -21,6 +22,7 @@ import { AdminNoticeController } from "@apps/backend/apis/admin/controllers/noti
 import { AdminQnaController } from "@apps/backend/apis/admin/controllers/qna.controller";
 import { AdminStatisticsController } from "@apps/backend/apis/admin/controllers/statistics.controller";
 import { AdminMemberManagementController } from "@apps/backend/apis/admin/controllers/member-management.controller";
+import { AdminOrderManagementController } from "@apps/backend/apis/admin/controllers/order-management.controller";
 import { AdminStoreManagementController } from "@apps/backend/apis/admin/controllers/store-management.controller";
 import { AdminStoreEntryRequestManagementController } from "@apps/backend/apis/admin/controllers/store-entry-request-management.controller";
 import { AdminSellerSegmentManagementController } from "@apps/backend/apis/admin/controllers/seller-segment-management.controller";
@@ -41,6 +43,7 @@ import { AdminSellerSegmentManagementController } from "@apps/backend/apis/admin
     QnaModule,
     StatisticsModule,
     MemberManagementModule,
+    OrderModule,
     StoreManagementModule,
     StoreEntryRequestModule,
     SellerSegmentModule,
@@ -56,6 +59,7 @@ import { AdminSellerSegmentManagementController } from "@apps/backend/apis/admin
     AdminQnaController,
     AdminStatisticsController,
     AdminMemberManagementController,
+    AdminOrderManagementController,
     AdminStoreManagementController,
     AdminStoreEntryRequestManagementController,
     AdminSellerSegmentManagementController,

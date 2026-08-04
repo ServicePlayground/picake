@@ -219,7 +219,7 @@ export function MapStoreListFilter({
           <button
             type="button"
             onClick={() => {
-              trackEvent("engage_filter_open");
+              trackEvent("engage_map_filter_open");
               setPanelOpen(true);
             }}
             className={styles.filterButton}

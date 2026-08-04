@@ -26,6 +26,14 @@ type NotesRow = { key: string; value: string };
 
 function buildNotesRows(order: OrderResponseDto): NotesRow[] {
   const rows: NotesRow[] = [];
+  // 자동 만료 취소는 고객·판매자 취소 사유가 모두 비어 있어 레코드만으로는 구분되지 않습니다.
+  // 실제로 입금했으나 완료 처리를 못 한 고객일 수 있어, 사유 목록 맨 위에 명시합니다.
+  if (order.paymentPendingExpiredAt) {
+    rows.push({
+      key: "취소 경위",
+      value: `입금 기한 만료로 자동 취소됨 (${new Date(order.paymentPendingExpiredAt).toLocaleString("ko-KR")}) — 고객이 입금했는지 통장 내역 확인이 필요할 수 있습니다`,
+    });
+  }
   if (order.userCancelReason) {
     rows.push({ key: "고객 입금 전 취소 사유", value: order.userCancelReason });
   }

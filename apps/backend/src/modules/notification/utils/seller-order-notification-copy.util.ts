@@ -1,6 +1,7 @@
 import { OrderStatus } from "@apps/backend/modules/order/constants/order.constants";
 import type { OrderStatusTransitionPayload } from "@apps/backend/modules/order/types/order-lifecycle.types";
 import {
+  isAdminStatusUpdate,
   isPaymentExpiredCancelSource,
   isReservationRequestedOnCreate,
   isSellerStatusUpdate,
@@ -93,6 +94,13 @@ export function buildSellerOrderNotificationCopy(
       return {
         title: "환불 대기로 변경했습니다",
         body: "취소·환불 대기 상태입니다. 고객 안내와 환불 처리를 진행해 주세요.",
+      };
+    }
+    // 취소완료로 종료됐던 주문을 관리자가 되돌린 경우. 판매자가 예상하지 못한 변화라 경위를 밝힙니다.
+    if (isAdminStatusUpdate(payload)) {
+      return {
+        title: "관리자가 환불 대기로 전환했습니다",
+        body: "취소완료였던 주문입니다. 고객 입금 내역을 확인한 뒤 환불을 진행해 주세요.",
       };
     }
     return null;

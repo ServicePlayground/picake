@@ -18,6 +18,11 @@ export const ORDER_STATUS_TRANSITION_SOURCE = {
   USER_ACTION: "USER_ACTION",
   /** 입금완료 처리 시도 중 입금 대기 기한 만료로 취소된 경우(직접 취소와 구분) */
   USER_ACTION_PAYMENT_EXPIRED: "USER_ACTION_PAYMENT_EXPIRED",
+  /**
+   * 관리자 주문 상태 변경. 현재는 취소완료 → 취소환불대기 되돌리기 전용입니다.
+   * 판매자·사용자 전이와 알림 문구가 달라야 해서 별도 source로 둡니다.
+   */
+  ADMIN_STATUS_UPDATE: "ADMIN_STATUS_UPDATE",
   ORDER_CREATE: "ORDER_CREATE",
 } as const;
 

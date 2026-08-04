@@ -34,6 +34,13 @@ const REASON_OPTIONS: RadioOption<ReasonOption>[] = (
   Object.keys(REASON_LABELS) as ReasonOption[]
 ).map((value) => ({ value, label: REASON_LABELS[value] }));
 
+type DepositAnswer = "YES" | "NO";
+
+const DEPOSIT_OPTIONS: RadioOption<DepositAnswer>[] = [
+  { value: "NO", label: "아직 입금하지 않았어요" },
+  { value: "YES", label: "이미 입금했어요 (환불 필요)" },
+];
+
 interface OrderCancelViewProps {
   order: OrderResponse;
 }
@@ -46,6 +53,8 @@ export function OrderCancelView({ order }: OrderCancelViewProps) {
 
   const [selectedReason, setSelectedReason] = useState<ReasonOption | null>(null);
   const [otherReasonText, setOtherReasonText] = useState("");
+  // 입금대기 단계에서만 묻습니다. 서버는 입금 여부를 알 수 없어 손님 신고에 의존합니다.
+  const [hasDeposited, setHasDeposited] = useState<DepositAnswer | null>(null);
   // 취소 성공 직후 invalidate로 인한 refetch가 navigation보다 먼저 끝나
   // 가드 텍스트가 깜빡이는 걸 방지하는 플래그
   const [isLeaving, setIsLeaving] = useState(false);
@@ -72,9 +81,14 @@ export function OrderCancelView({ order }: OrderCancelViewProps) {
     return "";
   };
 
+  // 입금대기 상태에서만 입금 여부를 묻습니다.
+  // 예약신청 단계는 판매자가 계좌를 안내하기 전이라 입금 자체가 불가능합니다.
+  const shouldAskDeposit = order.orderStatus === OrderStatus.PAYMENT_PENDING;
+
   const isValid = (() => {
     if (!selectedReason) return false;
-    if (selectedReason === "OTHER") return otherReasonText.trim().length > 0;
+    if (selectedReason === "OTHER" && otherReasonText.trim().length === 0) return false;
+    if (shouldAskDeposit && hasDeposited === null) return false;
     return true;
   })();
 
@@ -84,6 +98,13 @@ export function OrderCancelView({ order }: OrderCancelViewProps) {
 
     // 결제 후: 사유를 store에 저장하고 환불 계좌 입력 페이지(2/2)로 이동
     if (isPostPayment) {
+      setCancelReason(reason);
+      router.push(PATHS.ORDER.CANCEL_REFUND(order.id));
+      return;
+    }
+
+    // 입금대기인데 이미 입금했다고 신고한 경우: 결제 후와 동일하게 환불 계좌를 받아야 합니다.
+    if (shouldAskDeposit && hasDeposited === "YES") {
       setCancelReason(reason);
       router.push(PATHS.ORDER.CANCEL_REFUND(order.id));
       return;
@@ -179,6 +200,21 @@ export function OrderCancelView({ order }: OrderCancelViewProps) {
             />
           )}
         </section>
+
+        {/* 입금 여부 확인 — 입금했는데 취소하면 환불 계좌를 받아야 하므로 반드시 묻습니다 */}
+        {shouldAskDeposit && (
+          <section className="mt-14">
+            <h2 className="text-lg/[25px] font-bold text-gray-900 mb-1.5">입금하셨나요?</h2>
+            <p className="mb-4 text-xs text-gray-500">
+              입금하셨다면 환불이 필요해요. 환불받으실 계좌를 다음 단계에서 입력해 주세요.
+            </p>
+            <RadioGroup<DepositAnswer>
+              value={hasDeposited}
+              onChange={setHasDeposited}
+              options={DEPOSIT_OPTIONS}
+            />
+          </section>
+        )}
       </div>
 
       {/* 하단 취소 버튼 */}

@@ -203,6 +203,8 @@ hotfix/xxx (긴급 수정 브랜치)
 - **[사용자 - 웹뷰 인증 가이드](./docs/common/feature/사용자%20-%20웹뷰%20인증.md)**: Flutter WebView 환경에서의 사용자 인증 시스템 가이드
 - **[판매자 인증 가이드](./docs/common/feature/판매자%20인증.md)**: 웹 애플리케이션 환경에서의 판매자 인증 시스템 가이드
 - **[스토어 등록(3단계) 가이드](<./docs/common/feature/스토어%20등록(3단계)%20-%20가이드.md>)**: 스토어 등록(3단계) 가이드
+- **[채팅 시스템 가이드](./docs/common/feature/채팅%20시스템%20-%20가이드.md)**: Socket.IO 기반 실시간 채팅 시스템 가이드
+- **[위치 필터 기능 스펙](./docs/location-filter-spec.md)**: 지역(시/도·시/군/구) 기반 상품/스토어 필터링 스펙
 
 ### 백엔드 문서
 
@@ -219,11 +221,15 @@ hotfix/xxx (긴급 수정 브랜치)
 - **[Web Seller README](./docs/web-seller/README.md)**: 판매자 웹 애플리케이션 개요 및 사용법
 - **[Web Seller 기술 스택 가이드](./docs/web-seller/기술%20스택%20-%20가이드.md)**: 판매자 웹 애플리케이션 기술 스택
 
+- **[Web Admin README](./docs/web-admin/README.md)**: 관리자 웹 애플리케이션 개요 및 사용법
+- **[Web Admin 기술 스택 가이드](./docs/web-admin/기술%20스택%20-%20가이드.md)**: 관리자 웹 애플리케이션 기술 스택
+
 ### 인프라 문서
 
 #### AWS 인프라
 
-- **[EC2 배포 가이드](./docs/infra/aws/EC2_Route53_S3_CloudFront.md)**: AWS EC2 백엔드 배포 가이드 (PostgreSQL, Nginx, PM2 포함)
+- **[EC2 배포 가이드(검증)](<./docs/infra/aws/(검증)EC2_Route53_S3_CloudFront.md>)**: AWS EC2 백엔드 배포 가이드 (PostgreSQL, Nginx, PM2, Route53, S3, CloudFront 포함)
+- **[EC2 배포 가이드(상용)](<./docs/infra/aws/(상용)EC2_Route53_S3_CloudFront.md>)**: 프로덕션 환경 참고 (검증 가이드와 동일한 구성을 staging → production에 적용)
 
 #### 배포 플랫폼
 

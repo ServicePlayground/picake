@@ -6,7 +6,12 @@ export function Alert() {
   const { alert, hideAlert } = useAlertStore();
 
   const handleClose = () => {
-    setTimeout(hideAlert, 300); // 애니메이션 완료 후 닫기
+    const { onClose } = alert;
+    // 애니메이션 완료 후 닫고, 후속 동작(로그인 시트 열기 등) 실행
+    setTimeout(() => {
+      hideAlert();
+      onClose?.();
+    }, 300);
   };
 
   if (!alert.isOpen) return null;

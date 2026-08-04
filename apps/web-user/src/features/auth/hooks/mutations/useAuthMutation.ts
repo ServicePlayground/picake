@@ -4,10 +4,11 @@ import { authApi } from "@/apps/web-user/features/auth/apis/auth.api";
 import { useAuthStore } from "@/apps/web-user/common/store/auth.store";
 import { useAlertStore } from "@/apps/web-user/common/store/alert.store";
 import getApiMessage from "@/apps/web-user/common/utils/getApiMessage";
-import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 import type { PhoneVerificationPurpose } from "@/apps/web-user/features/auth/types/auth.dto";
 import type { DuplicateAccountPayload } from "@/apps/web-user/features/auth/types/auth.dto";
 import { parseDuplicateAccountPayload } from "@/apps/web-user/features/auth/utils/register-duplicate-account.util";
+import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
+import { consumePostLoginRedirect } from "@/apps/web-user/features/auth/utils/post-login-redirect.util";
 import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
 import { decodeJwtPayload } from "@/apps/web-user/features/auth/utils/jwt.util";
 
@@ -79,7 +80,8 @@ export function useGoogleRegister(options?: {
         trackEvent("success_signup", { provider: "google", user_id: userId });
       }
       login(data.accessToken);
-      router.replace(PATHS.HOME);
+      // 로그인을 시작했던 화면으로 복귀 (없으면 홈)
+      router.replace(consumePostLoginRedirect());
     },
     onError: (error) => {
       const duplicate = parseDuplicateAccountPayload(error);
@@ -111,7 +113,8 @@ export function useKakaoRegister(options?: {
         trackEvent("success_signup", { provider: "kakao", user_id: userId });
       }
       login(data.accessToken);
-      router.replace(PATHS.HOME);
+      // 로그인을 시작했던 화면으로 복귀 (없으면 홈)
+      router.replace(consumePostLoginRedirect());
     },
     onError: (error) => {
       const duplicate = parseDuplicateAccountPayload(error);
@@ -143,7 +146,8 @@ export function useAppleRegister(options?: {
         trackEvent("success_signup", { provider: "apple", user_id: userId });
       }
       login(data.accessToken);
-      router.replace(PATHS.HOME);
+      // 로그인을 시작했던 화면으로 복귀 (없으면 홈)
+      router.replace(consumePostLoginRedirect());
     },
     onError: (error) => {
       const duplicate = parseDuplicateAccountPayload(error);
