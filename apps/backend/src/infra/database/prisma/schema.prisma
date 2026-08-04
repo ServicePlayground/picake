@@ -676,6 +676,11 @@ model Order {
   pickupReminderSentAt DateTime? @map("pickup_reminder_sent_at")
   /** 재입금 안내(알림톡·푸시) 발송 시각. 미발송이면 null */
   paymentReminderSentAt DateTime? @map("payment_reminder_sent_at")
+  /**
+   * 입금 마감 30분 전 2차(최종) 안내 발송 시각. 미발송이면 null.
+   * 3시간 전 1차 안내(`paymentReminderSentAt`)와 별도로 1회만 발송하기 위한 중복 방지 플래그입니다.
+   */
+  paymentFinalReminderSentAt DateTime? @map("payment_final_reminder_sent_at")
 
   // 시스템 필드
   createdAt DateTime @default(now()) @map("created_at")
@@ -695,6 +700,7 @@ model Order {
   @@index([orderStatus]) // 주문 상태별 조회
   @@index([orderStatus, paymentPendingDeadlineAt]) // 입금대기 만료 배치
   @@index([orderStatus, paymentPendingDeadlineAt, paymentReminderSentAt]) // 재입금 안내 배치
+  @@index([orderStatus, paymentPendingDeadlineAt, paymentFinalReminderSentAt]) // 재입금 2차 안내 배치
   @@index([orderStatus, pickupDate, pickupReminderSentAt]) // 픽업 24시간 전 안내 배치
   @@index([orderNumber]) // 주문 번호로 조회
   @@index([pickupDate]) // 픽업 예정/지난 예약 필터
