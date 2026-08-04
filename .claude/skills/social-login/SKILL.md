@@ -116,7 +116,7 @@ analytics 이벤트는 `request_social_auth` / `success_login` / `fail_social_au
 ### 구현 시 추가로 다른 점 (구글/카카오와 근본적으로 다른 부분)
 
 - **`client_secret`이 고정 문자열이 아님**: 매 요청 직전 백엔드가 `APPLE_TEAM_ID`/`APPLE_KEY_ID`/`APPLE_PRIVATE_KEY`로 직접 서명하는 JWT(ES256, `aud: https://appleid.apple.com`, `sub: APPLE_CLIENT_ID`, 매 요청 재발급)입니다. `jsonwebtoken`(ES256 서명)과 `jwks-rsa`(Apple JWKS에서 id_token 검증용 공개키 조회)를 백엔드에 명시적 의존성으로 추가했습니다 — 둘 다 `@nestjs/jwt`/`firebase-admin`의 transitive dep으로 이미 node_modules엔 있었지만, 직접 import하려면 package.json에 명시해야 합니다.
-- **`scope=email`만 요청** (name은 요청하지 않음): Google/Kakao 회원가입 화면도 어차피 이름을 직접 입력받으므로 Apple의 `user`(이름, 최초 1회만 옴) 파라미터를 쓸 이유가 없어 범위를 최소화했습니다. 이 덕분에 route.ts는 `code`/`error`만 다루면 되고 `user` JSON을 파싱·중계할 필요가 없습니다.
+- **`scope=name email` 요청** (2026-08-04 이전엔 `scope=email`만 요청했다가 변경): Google/Kakao 회원가입 화면처럼 이름을 직접 입력받게 하면 되니 처음엔 Apple의 `user`(이름, 최초 1회만 옴) 파라미터를 쓸 이유가 없다고 보고 범위를 최소화했으나, 이게 실제 App Store 심사 반려 사유였습니다(가이드라인 4 — "인증 프레임워크가 이미 제공한 이름을 다시 입력하도록 요구함", [[ios-app-review]] skill 참고). 지금은 `route.ts`가 form_post 바디의 `user` JSON을 파싱(`extractAppleDisplayName`)해 `appleName` 쿼리로 콜백→회원가입 화면까지 전달해 "이름" 필드를 미리 채웁니다. `user`는 **최초 인가 1회에만** 오므로, 이미 한 번 인가한 계정으로 재가입 플로우를 테스트하면(예: Apple ID 설정에서 연결 해제 전) 이름이 안 채워지는 게 정상입니다 — 버그로 오인하지 마세요.
 - **`response_mode=form_post` 강제**: `scope`를 요청하면 Apple은 인가 응답을 GET 쿼리가 아니라 Return URL로 **POST**(form-urlencoded)로 보냅니다. 그래서 `/auth/login/apple`은 페이지가 아니라 **route.ts(POST 핸들러)**가 받고, `code`(또는 `error`)만 꺼내 클라이언트 콜백 페이지로 303 리다이렉트합니다. 실제 파일 구조:
   - `app/auth/login/apple/route.ts` — POST 핸들러, `request.formData()`로 `code`/`error` 파싱 → `/auth/login/apple/callback?code=...`로 303 리다이렉트
   - `app/auth/login/apple/callback/page.tsx` — Google `app/auth/login/google/page.tsx`와 동일한 클라이언트 콜백 로직(쿼리의 `code`로 `authApi.appleLogin` 호출)
