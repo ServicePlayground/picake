@@ -370,6 +370,14 @@ export class ChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewa
   }
 
   /**
+   * AI 응답 생성 중 타이핑 인디케이터 브로드캐스트
+   * LLM 왕복 수 초 동안 손님이 빈 화면을 보지 않도록 typing 상태를 알립니다.
+   */
+  broadcastAiTyping(roomId: string, isTyping: boolean) {
+    this.server.to(`room:${roomId}`).emit("ai-typing", { roomId, isTyping });
+  }
+
+  /**
    * Socket에서 JWT 토큰 추출
    *
    * 우선순위:

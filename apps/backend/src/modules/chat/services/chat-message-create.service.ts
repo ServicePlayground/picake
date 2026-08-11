@@ -7,6 +7,16 @@ import { ChatGateway } from "../gateways/chat.gateway";
 import { ChatMapperUtil } from "@apps/backend/modules/chat/utils/chat-mapper.util";
 import { Prisma } from "@apps/backend/infra/database/prisma/generated/client";
 import { LoggerUtil } from "@apps/backend/common/utils/logger.util";
+import { SYSTEM_SENDER_ID } from "@apps/backend/modules/chat/constants/chat.constants";
+import { ChatMessageHookRegistry } from "@apps/backend/modules/chat/services/chat-message-hook.registry";
+
+/** 내부 발신(AI/SYSTEM) 메시지 옵션 */
+export interface InternalMessageOptions {
+  isAiGenerated?: boolean;
+  aiSuggestsHandoff?: boolean;
+  productId?: string;
+  relatedCustomOrderRequestId?: string;
+}
 
 /**
  * 채팅 메시지 생성 서비스
@@ -21,21 +31,72 @@ export class ChatMessageCreateService {
     private readonly chatRoomDetailService: ChatRoomDetailService,
     @Inject(forwardRef(() => ChatGateway)) // forwardRef: ChatGateway가 ChatMessageCreateService에서 사용되므로 순환 의존성 방지
     private readonly chatGateway: ChatGateway,
+    private readonly hookRegistry: ChatMessageHookRegistry,
   ) {}
 
   /**
-   * 메시지 전송 (공통)
+   * 메시지 전송 (공통 — 사람 발신 전용, 권한 검증 포함)
+   * @param productId - 상품 상세에서 시작된 문의의 첫 메시지에만 전달 (메시지 단위 상품 컨텍스트)
    */
   async sendMessage(
     roomId: string,
     text: string,
     senderId: string,
     senderType: "consumer" | "store",
+    productId?: string,
   ): Promise<MessageResponseDto> {
     // 채팅방 조회 및 권한 확인
     const chatRoom = await this.chatRoomDetailService.findChatRoomById(roomId);
     await ChatPermissionUtil.verifyChatRoomAccess(chatRoom, senderId, senderType, this.prisma);
 
+    const messageDto = await this.persistAndBroadcast(roomId, text, senderId, senderType, {
+      productId,
+    });
+
+    // AI 자동응답 훅 (fire-and-forget — 실패해도 원 메시지 전송은 성공으로 유지)
+    this.hookRegistry.notifyHumanMessage(roomId, senderType, messageDto.text);
+
+    return messageDto;
+  }
+
+  /**
+   * AI/SYSTEM 메시지 발신 (내부 전용 — 권한 검증 생략)
+   *
+   * AI 자동응답(STORE + isAiGenerated=true)과 시스템 안내(SYSTEM)는
+   * ChatPermissionUtil을 통과할 수 없으므로 이 내부 경로를 사용합니다.
+   * lastMessage/unread 갱신과 WebSocket 브로드캐스트는 일반 메시지와 동일하게 처리됩니다.
+   */
+  async sendAiMessage(
+    roomId: string,
+    text: string,
+    storeId: string,
+    options: InternalMessageOptions = {},
+  ): Promise<MessageResponseDto> {
+    return await this.persistAndBroadcast(roomId, text, storeId, "store", {
+      ...options,
+      isAiGenerated: true,
+    });
+  }
+
+  /** 시스템 안내 메시지 발신 (내부 전용 — 무응답 안내, 이관 확인 등) */
+  async sendSystemMessage(
+    roomId: string,
+    text: string,
+    options: InternalMessageOptions = {},
+  ): Promise<MessageResponseDto> {
+    return await this.persistAndBroadcast(roomId, text, SYSTEM_SENDER_ID, "system", options);
+  }
+
+  /**
+   * 메시지 저장 + 채팅방 메타데이터 갱신 + 브로드캐스트 (공통 코어)
+   */
+  private async persistAndBroadcast(
+    roomId: string,
+    text: string,
+    senderId: string,
+    senderType: "consumer" | "store" | "system",
+    options: InternalMessageOptions = {},
+  ): Promise<MessageResponseDto> {
     // 메시지 검증
     const trimmedText = this.validateAndTrimMessage(text);
 
@@ -51,7 +112,11 @@ export class ChatMessageCreateService {
             roomId,
             text: trimmedText,
             senderId,
-            senderType: senderType.toUpperCase() as "CONSUMER" | "STORE",
+            senderType: senderType.toUpperCase() as "CONSUMER" | "STORE" | "SYSTEM",
+            isAiGenerated: options.isAiGenerated ?? false,
+            aiSuggestsHandoff: options.aiSuggestsHandoff ?? false,
+            productId: options.productId ?? null,
+            relatedCustomOrderRequestId: options.relatedCustomOrderRequestId ?? null,
           },
         });
 
@@ -108,12 +173,13 @@ export class ChatMessageCreateService {
 
   /**
    * 채팅방 메타데이터 업데이트
+   * SYSTEM 메시지(무응답 안내 등)는 구매자에게 보이는 안내이므로 userUnread를 증가시킵니다.
    */
   private async updateChatRoomMetadata(
     tx: Prisma.TransactionClient,
     roomId: string,
     lastMessagePreview: string,
-    senderType: "consumer" | "store",
+    senderType: "consumer" | "store" | "system",
   ): Promise<void> {
     const updateData = {
       lastMessage: lastMessagePreview,

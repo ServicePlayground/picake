@@ -66,14 +66,22 @@ export class ChatService {
 
   /**
    * 메시지 전송 (공통)
+   * @param productId - 상품 상세에서 시작된 문의의 첫 메시지에만 전달
    */
   async sendMessage(
     roomId: string,
     text: string,
     senderId: string,
     senderType: "consumer" | "store",
+    productId?: string,
   ): Promise<MessageResponseDto> {
-    return await this.chatMessageCreateService.sendMessage(roomId, text, senderId, senderType);
+    return await this.chatMessageCreateService.sendMessage(
+      roomId,
+      text,
+      senderId,
+      senderType,
+      productId,
+    );
   }
 
   /**

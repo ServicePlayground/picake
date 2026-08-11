@@ -17,7 +17,11 @@ export const CHAT_SUCCESS_MESSAGES = {
 export enum MessageSenderType {
   CONSUMER = "consumer",
   STORE = "store",
+  SYSTEM = "system",
 }
+
+/** SYSTEM 메시지의 고정 발신자 ID (Message.senderId가 필수 필드이므로 상수 사용) */
+export const SYSTEM_SENDER_ID = "system";
 
 export const SWAGGER_EXAMPLES = {
   ID: "QXZw02vBqVXNQ29c4w9n9ZdG",

@@ -137,6 +137,7 @@ model Consumer {
   notificationPreferences ConsumerNotificationPreference[]
   termsAgreements    ConsumerTermsAgreement[]
   storeEntryRequests StoreEntryRequest[]
+  customOrderRequests CustomOrderRequest[]
 
   @@index([phone])
   @@index([googleId])
@@ -292,6 +293,7 @@ model Product {
   salesStatus       EnableStatus @map("sales_status") // 판매 상태
   visibilityStatus  EnableStatus @map("visibility_status") // 노출 상태
   productType           ProductType @default(BASIC_CAKE) @map("product_type") // 상품 타입 (기본/커스텀)
+  requiresQuote         Boolean     @default(false) @map("requires_quote") // 상담 후 가격 결정 여부 (CUSTOM_CAKE && true인 상품만 견적 플로우, 등록 시 가격 미노출)
   productCategoryTypes  ProductCategoryType[] @default([]) @map("product_category_types") // 상품 카테고리 타입 (없거나 여러 개)
   searchTags            String[] @default([]) @map("search_tags") // 검색 태그 (없거나 여러 개)
   detailDescription     String? @map("detail_description") // 상세 설명
@@ -331,6 +333,7 @@ model Product {
   recentViews ProductRecentView[]
   reviews     ProductReview[]
   orders      Order[]
+  customOrderRequests CustomOrderRequest[]
 
   // 인덱스 최적화
   @@index([storeId]) // 스토어별 상품 조회
@@ -431,6 +434,10 @@ model Store {
   feeds     StoreFeed[]
   orders    Order[]
   notificationPreferences UserNotificationPreference[]
+  aiAssistantSetting      StoreAiAssistantSetting?
+  aiFaqs                  StoreAiFaq[]
+  aiUnansweredQuestions   StoreAiUnansweredQuestion[]
+  customOrderRequests     CustomOrderRequest[]
 
   @@unique([sellerId, businessNo, permissionManagementNumber])
   @@index([sellerId])
@@ -536,6 +543,11 @@ model ChatRoom {
   userUnread    Int @default(0) @map("user_unread") // 사용자 읽지 않은 메시지 개수
   storeUnread   Int @default(0) @map("store_unread") // 스토어 읽지 않은 메시지 개수
 
+  // 비즈니스 필드 - AI 자동응답
+  aiEnabled                 Boolean   @default(true) @map("ai_enabled") // 이 방에서 AI 자동응답 활성 여부 (사람 개입 시 false, 스토어 단위 설정이 우선 게이트)
+  awaitingSellerSince       DateTime? @map("awaiting_seller_since") // 판매자 응답 대기 시작 시각 (STORE 메시지 발생 시 null로 리셋)
+  awaitingSellerNudgeSentAt DateTime? @map("awaiting_seller_nudge_sent_at") // 무응답 안내 발송 시각 (중복 발송 방지, awaitingSellerSince 리셋 시 함께 초기화)
+
   // 시스템 필드
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
@@ -544,6 +556,7 @@ model ChatRoom {
   consumer Consumer @relation(fields: [consumerId], references: [id], onDelete: Cascade)
   store    Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
   messages Message[]
+  customOrderRequests CustomOrderRequest[]
 
   @@unique([consumerId, storeId]) // 1대1 채팅방 보장
   @@index([consumerId, lastMessageAt(sort: Desc)]) // 사용자 채팅방 목록 조회 최적화
@@ -563,8 +576,15 @@ model Message {
 
   // 비즈니스 필드
   text       String @db.Text // 메시지 내용
-  senderId   String @map("sender_id") // 발신자 ID
-  senderType MessageSenderType @map("sender_type") // 발신자 타입 (USER, STORE)
+  senderId   String @map("sender_id") // 발신자 ID (SYSTEM 메시지는 고정 상수 "system")
+  senderType MessageSenderType @map("sender_type") // 발신자 타입 (CONSUMER, STORE, SYSTEM)
+
+  // 비즈니스 필드 - AI 자동응답
+  isAiGenerated      Boolean            @default(false) @map("is_ai_generated") // AI가 생성한 메시지 여부 (senderType은 STORE 유지, 화면에서 뱃지 구분용)
+  aiSuggestsHandoff  Boolean            @default(false) @map("ai_suggests_handoff") // AI가 "모르겠어요, 연결해드릴까요?"라고 답한 메시지 (quick-reply 렌더 근거)
+  aiFeedback         AiMessageFeedback? @map("ai_feedback") // 사용자가 AI 답변에 남긴 만족도 (isAiGenerated=true인 메시지만)
+  productId          String?            @map("product_id") // 상품 상세에서 시작된 문의 메시지에만 부여 (방 전체가 아니라 메시지 단위 컨텍스트)
+  relatedCustomOrderRequestId String?   @map("related_custom_order_request_id") // 커스텀 주문 요청/견적 카드 렌더링용 (Phase 2)
 
   // 시스템 필드
   createdAt DateTime @default(now()) @map("created_at")
@@ -574,7 +594,106 @@ model Message {
 
   @@index([roomId, createdAt(sort: Desc)]) // 메시지 목록 조회 최적화
   @@index([roomId]) // 기존 인덱스 유지 (다른 쿼리에서 사용 가능)
+  @@index([isAiGenerated, createdAt]) // AI 호출 일일 한도 카운트/통계 집계용
   @@map("messages")
+}
+
+/// 스토어 단위 AI 자동응답 설정 — row가 없으면 AI가 동작하지 않음(opt-in)
+model StoreAiAssistantSetting {
+  id      String @id @default(cuid())
+  storeId String @unique @map("store_id")
+
+  /// AI 사용 시간대 — row 생성 시 기본 OFF, 온보딩 3단계(시간대 설정) 저장 시에만 활성 모드로 변경
+  scheduleMode AiAssistantScheduleMode @default(OFF) @map("schedule_mode")
+  /// 응대 지침 자유 텍스트 (초안 자동 생성 또는 직접 작성)
+  instructions String? @db.Text
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@map("store_ai_assistant_settings")
+}
+
+/// 스토어 AI FAQ (질문-답변 쌍, 스토어당 여러 개)
+model StoreAiFaq {
+  id        String @id @default(cuid())
+  storeId   String @map("store_id")
+  question  String @db.Text
+  answer    String @db.Text
+  sortOrder Int    @default(0) @map("sort_order")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId, sortOrder])
+  @@map("store_ai_faqs")
+}
+
+/// AI가 답하지 못한 구매자 질문 (FAQ 등록 후보) — 방이 삭제돼도 스토어 지식으로 남도록 roomId는 FK 없이 보관
+model StoreAiUnansweredQuestion {
+  id           String @id @default(cuid())
+  storeId      String @map("store_id")
+  roomId       String @map("room_id")
+  questionText String @map("question_text") @db.Text
+
+  /// 핸드오프 후 판매자가 실제로 답한 내용 자동 캡처 (FAQ 등록 초안으로 제시)
+  sellerAnswerDraft String? @map("seller_answer_draft") @db.Text
+  status StoreAiUnansweredQuestionStatus @default(PENDING)
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  store Store @relation(fields: [storeId], references: [id], onDelete: Cascade)
+
+  @@index([storeId, status, createdAt(sort: Desc)])
+  @@map("store_ai_unanswered_questions")
+}
+
+/// 커스텀 주문 요청 (상담 후 가격 결정 상품의 건별 견적) — 요청서 필드는 기존 예약 화면 수집 항목과 1:1
+model CustomOrderRequest {
+  id         String @id @default(cuid())
+  productId  String @map("product_id")
+  consumerId String @map("consumer_id")
+  storeId    String @map("store_id")
+  roomId     String @map("room_id")
+
+  // 요청 내용
+  images           String[] @default([]) // 참고 이미지 URL (기존 업로드 인프라 재사용)
+  requirementsText String   @map("requirements_text") @db.Text // 원하는 문구/디자인 자유 텍스트
+  quantity         Int      @default(1)
+  desiredBudgetMin Int?     @map("desired_budget_min") // 예산 범위 (참고용, 확정 가격 아님)
+  desiredBudgetMax Int?     @map("desired_budget_max")
+  desiredDate      DateTime @map("desired_date") // 희망 픽업 일시 (날짜+시간 필수, 승인 시 재검증)
+
+  // 픽업 연락처 (승인 시 Order로 매핑, 알림톡 수신번호)
+  reservationContactName String? @map("reservation_contact_name")
+  reservationPhone       String? @map("reservation_phone")
+
+  // 견적/상태
+  status      CustomOrderRequestStatus @default(REQUESTED)
+  quotedPrice Int?    @map("quoted_price") // 판매자 견적가 (1회 제시)
+  sellerNote  String? @map("seller_note") @db.Text // 견적 코멘트
+
+  // 승인 시 생성된 주문 연결 (이중 주문 방지 2차 방어선)
+  orderId String? @unique @map("order_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  consumer Consumer @relation(fields: [consumerId], references: [id], onDelete: Cascade)
+  store    Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  room     ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  order    Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([storeId, status, createdAt(sort: Desc)]) // 판매자 요청 목록 조회
+  @@index([consumerId, createdAt(sort: Desc)])
+  @@index([productId, status]) // 상품 수정/삭제 가드 (진행 중 요청 존재 확인)
+  @@map("custom_order_requests")
 }
 
 // Store feed model for store feed posts
@@ -692,6 +811,7 @@ model Order {
   store    Store      @relation(fields: [storeId], references: [id], onDelete: Cascade)
   orderItems OrderItem[]
   review     ProductReview?
+  customOrderRequest CustomOrderRequest?
 
   // 인덱스 최적화
   @@index([consumerId, createdAt(sort: Desc)]) // 사용자별 주문 목록 조회 최적화 (최신순)
@@ -971,6 +1091,32 @@ enum NotificationCategory {
 enum MessageSenderType {
   CONSUMER
   STORE
+  SYSTEM // 무응답 안내·이관 확인 등 시스템 발신 (senderId는 "system" 상수)
+}
+
+enum AiMessageFeedback {
+  POSITIVE
+  NEGATIVE
+}
+
+enum AiAssistantScheduleMode {
+  ALWAYS // 항상 AI 사용
+  OUTSIDE_BUSINESS_HOURS // 영업시간 외에만 AI 사용 (영업 중엔 직접 응대)
+  OFF // AI 사용 안 함
+}
+
+enum StoreAiUnansweredQuestionStatus {
+  PENDING // FAQ 등록 후보로 대기
+  CONVERTED_TO_FAQ // FAQ로 등록됨
+  DISMISSED // 판매자가 무시함
+}
+
+enum CustomOrderRequestStatus {
+  REQUESTED // 요청 접수 (견적 대기)
+  QUOTED // 견적 제시됨 (승인/거절 대기)
+  ACCEPTED // 손님 승인 → 주문 전환 완료
+  DECLINED // 손님 거절 (종결)
+  CANCELLED // 취소 (예약값, v1 미사용)
 }
 
 enum OrderStatus {

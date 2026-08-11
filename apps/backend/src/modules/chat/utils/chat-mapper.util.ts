@@ -69,6 +69,11 @@ export class ChatMapperUtil {
       text: message.text,
       senderId: message.senderId,
       senderType: message.senderType.toLowerCase() as MessageSenderType,
+      isAiGenerated: message.isAiGenerated,
+      aiSuggestsHandoff: message.aiSuggestsHandoff,
+      aiFeedback: message.aiFeedback,
+      productId: message.productId,
+      relatedCustomOrderRequestId: message.relatedCustomOrderRequestId,
       createdAt: message.createdAt,
     };
   }

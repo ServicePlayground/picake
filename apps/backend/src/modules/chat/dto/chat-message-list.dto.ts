@@ -41,6 +41,40 @@ export class MessageResponseDto {
   senderType: MessageSenderType;
 
   @ApiProperty({
+    description: "AI가 생성한 메시지 여부 (senderType은 store 유지, 화면 뱃지 구분용)",
+    example: false,
+  })
+  isAiGenerated: boolean;
+
+  @ApiProperty({
+    description: 'AI가 "모르겠어요, 연결해드릴까요?"라고 답한 메시지 여부 (quick-reply 렌더 근거)',
+    example: false,
+  })
+  aiSuggestsHandoff: boolean;
+
+  @ApiProperty({
+    description: "AI 답변 만족도 피드백 (isAiGenerated=true 메시지만)",
+    enum: ["POSITIVE", "NEGATIVE"],
+    nullable: true,
+    example: null,
+  })
+  aiFeedback: "POSITIVE" | "NEGATIVE" | null;
+
+  @ApiProperty({
+    description: "상품 상세에서 시작된 문의 메시지의 상품 ID (메시지 단위 컨텍스트)",
+    nullable: true,
+    example: null,
+  })
+  productId: string | null;
+
+  @ApiProperty({
+    description: "커스텀 주문 요청/견적 카드 렌더링용 요청 ID",
+    nullable: true,
+    example: null,
+  })
+  relatedCustomOrderRequestId: string | null;
+
+  @ApiProperty({
     description: "생성일시",
     example: SWAGGER_EXAMPLES.CREATED_AT,
   })

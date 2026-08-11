@@ -22,6 +22,10 @@ import { UploadModule } from "@apps/backend/modules/upload/upload.module";
 import { SellerUploadController } from "@apps/backend/apis/seller/controllers/upload.controller";
 import { TermsModule } from "@apps/backend/modules/terms/terms.module";
 import { SellerTermsController } from "@apps/backend/apis/seller/controllers/terms.controller";
+import { ChatModule } from "@apps/backend/modules/chat/chat.module";
+import { SellerChatController } from "@apps/backend/apis/seller/controllers/chat.controller";
+import { AiAssistantModule } from "@apps/backend/modules/ai-assistant/ai-assistant.module";
+import { SellerAiAssistantController } from "@apps/backend/apis/seller/controllers/ai-assistant.controller";
 
 /**
  * Seller API 모듈
@@ -41,7 +45,8 @@ import { SellerTermsController } from "@apps/backend/apis/seller/controllers/ter
     StatisticsModule,
     NotificationModule,
     TermsModule,
-    // ChatModule,
+    ChatModule,
+    AiAssistantModule,
   ],
   controllers: [
     SellerUploadController,
@@ -56,7 +61,8 @@ import { SellerTermsController } from "@apps/backend/apis/seller/controllers/ter
     SellerNotificationController,
     SellerMypageController,
     SellerTermsController,
-    // SellerChatController,
+    SellerChatController,
+    SellerAiAssistantController,
   ],
 })
 export class SellerApiModule {}

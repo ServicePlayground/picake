@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Param, Request, Query, HttpCode, HttpStatus } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Body,
+  Param,
+  Request,
+  Query,
+  HttpCode,
+  HttpStatus,
+} from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiExtraModels } from "@nestjs/swagger";
 import { ChatService } from "@apps/backend/modules/chat/chat.service";
 import { Auth } from "@apps/backend/modules/auth/decorators/auth.decorator";
@@ -14,6 +25,8 @@ import {
 } from "@apps/backend/modules/chat/dto/chat-room-list.dto";
 import { MessageListResponseDto } from "@apps/backend/modules/chat/dto/chat-message-list.dto";
 import { PaginationRequestDto } from "@apps/backend/common/dto/pagination-request.dto";
+import { AiAssistantService } from "@apps/backend/modules/ai-assistant/ai-assistant.service";
+import { ToggleAiRequestDto } from "@apps/backend/modules/ai-assistant/dto/ai-assistant.dto";
 
 /**
  * 채팅 관련 컨트롤러 (판매자용)
@@ -28,7 +41,10 @@ import { PaginationRequestDto } from "@apps/backend/common/dto/pagination-reques
 @Controller(`${AUDIENCE.SELLER}/chat-room`)
 @Auth({ isPublic: false, audiences: ["seller"] }) // 판매자 JWT(aud: seller)만 허용
 export class SellerChatController {
-  constructor(private readonly chatService: ChatService) {}
+  constructor(
+    private readonly chatService: ChatService,
+    private readonly aiAssistantService: AiAssistantService,
+  ) {}
 
   /**
    * 스토어의 채팅방 목록 조회 API
@@ -94,5 +110,28 @@ export class SellerChatController {
     @Request() req: { user: AuthenticatedUser },
   ) {
     return await this.chatService.getMessages(roomId, req.user.sub, "store", query);
+  }
+
+  /**
+   * 응대중 토글 API — 이 방만 AI 자동응답 on/off
+   */
+  @Patch(":roomId/ai-toggle")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: "(로그인 필요) 응대중 토글 (방 단위 AI on/off)",
+    description:
+      "이 채팅방의 AI 자동응답을 켜거나 끕니다. 끄면 직접 응대 모드가 되고 다른 채팅방에는 영향을 주지 않습니다.",
+  })
+  @SwaggerResponse(200, { dataExample: { aiEnabled: false } })
+  @SwaggerAuthResponses()
+  @SwaggerResponse(404, {
+    dataExample: createMessageObject(CHAT_ERROR_MESSAGES.CHAT_ROOM_NOT_FOUND),
+  })
+  async toggleAi(
+    @Param("roomId") roomId: string,
+    @Body() dto: ToggleAiRequestDto,
+    @Request() req: { user: JwtVerifiedPayload },
+  ) {
+    return await this.aiAssistantService.toggleAi(roomId, req.user.sub, dto.enabled);
   }
 }

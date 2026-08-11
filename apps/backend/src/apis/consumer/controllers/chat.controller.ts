@@ -26,8 +26,16 @@ import {
   ChatRoomListResponseDto,
   ChatRoomResponseDto,
 } from "@apps/backend/modules/chat/dto/chat-room-list.dto";
-import { MessageListResponseDto } from "@apps/backend/modules/chat/dto/chat-message-list.dto";
+import {
+  MessageListResponseDto,
+  MessageResponseDto,
+} from "@apps/backend/modules/chat/dto/chat-message-list.dto";
 import { PaginationRequestDto } from "@apps/backend/common/dto/pagination-request.dto";
+import { AiAssistantService } from "@apps/backend/modules/ai-assistant/ai-assistant.service";
+import {
+  SendChatMessageRequestDto,
+  AiMessageFeedbackRequestDto,
+} from "@apps/backend/modules/ai-assistant/dto/ai-assistant.dto";
 
 /**
  * 채팅 관련 컨트롤러 (사용자용)
@@ -43,7 +51,10 @@ import { PaginationRequestDto } from "@apps/backend/common/dto/pagination-reques
 @Controller(`${AUDIENCE.CONSUMER}/chat-room`)
 @Auth({ isPublic: false, audiences: ["consumer"] }) // 구매자 JWT(aud: user)만 허용
 export class ConsumerChatController {
-  constructor(private readonly chatService: ChatService) {}
+  constructor(
+    private readonly chatService: ChatService,
+    private readonly aiAssistantService: AiAssistantService,
+  ) {}
 
   /**
    * 채팅방 생성 또는 조회 API
@@ -125,5 +136,83 @@ export class ConsumerChatController {
     @Request() req: { user: AuthenticatedUser },
   ) {
     return await this.chatService.getMessages(roomId, req.user.sub, "consumer", query);
+  }
+
+  /**
+   * 메시지 전송 API (REST)
+   * WebSocket send-message와 동일 경로를 타되, 상품 상세發 문의의 첫 메시지에 productId를 첨부할 수 있습니다.
+   */
+  @Post(":roomId/messages")
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: "(로그인 필요) 메시지 전송",
+    description:
+      "채팅방에 메시지를 전송합니다. 상품 상세에서 시작된 문의라면 productId를 함께 전달해 AI가 해당 상품 정보를 참고하게 할 수 있습니다.",
+  })
+  @SwaggerResponse(201, { dataDto: MessageResponseDto })
+  @SwaggerAuthResponses()
+  @SwaggerResponse(404, {
+    dataExample: createMessageObject(CHAT_ERROR_MESSAGES.CHAT_ROOM_NOT_FOUND),
+  })
+  async sendMessage(
+    @Param("roomId") roomId: string,
+    @Body() dto: SendChatMessageRequestDto,
+    @Request() req: { user: JwtVerifiedPayload },
+  ) {
+    return await this.chatService.sendMessage(
+      roomId,
+      dto.text,
+      req.user.sub,
+      "consumer",
+      dto.productId,
+    );
+  }
+
+  /**
+   * 사장님 연결 요청 API (quick-reply "네, 연결해주세요" 전용)
+   * AI 자동응답을 멈추고 사람 응대 모드로 전환합니다.
+   */
+  @Post(":roomId/request-human")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: "(로그인 필요) 사장님 연결 요청",
+    description:
+      "이 채팅방의 AI 자동응답을 멈추고 사장님이 직접 응대하는 모드로 전환합니다. 전환 즉시 연결 확인 안내가 발송됩니다.",
+  })
+  @SwaggerResponse(200, { dataExample: { success: true } })
+  @SwaggerAuthResponses()
+  @SwaggerResponse(404, {
+    dataExample: createMessageObject(CHAT_ERROR_MESSAGES.CHAT_ROOM_NOT_FOUND),
+  })
+  async requestHuman(
+    @Param("roomId") roomId: string,
+    @Request() req: { user: JwtVerifiedPayload },
+  ) {
+    return await this.aiAssistantService.requestHuman(roomId, req.user.sub);
+  }
+
+  /**
+   * AI 메시지 피드백 API (👍/👎)
+   */
+  @Post(":roomId/messages/:messageId/feedback")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: "(로그인 필요) AI 답변 피드백",
+    description: "AI가 생성한 메시지에 만족도(👍/👎)를 남깁니다. AI 답변이 아닌 메시지에는 남길 수 없습니다.",
+  })
+  @SwaggerResponse(200, { dataExample: { success: true } })
+  @SwaggerAuthResponses()
+  async setMessageFeedback(
+    @Param("roomId") roomId: string,
+    @Param("messageId") messageId: string,
+    @Body() dto: AiMessageFeedbackRequestDto,
+    @Request() req: { user: JwtVerifiedPayload },
+  ) {
+    return await this.aiAssistantService.setMessageFeedback(
+      roomId,
+      messageId,
+      req.user.sub,
+      dto.rating,
+    );
   }
 }

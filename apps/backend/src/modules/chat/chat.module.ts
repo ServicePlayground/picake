@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { JwtModule } from "@nestjs/jwt";
 import { ConfigModule } from "@nestjs/config";
+import { ChatMessageHookRegistry } from "@apps/backend/modules/chat/services/chat-message-hook.registry";
 import { ChatService } from "@apps/backend/modules/chat/chat.service";
 import { ChatRoomCreateService } from "@apps/backend/modules/chat/services/chat-room-create.service";
 import { ChatRoomListService } from "@apps/backend/modules/chat/services/chat-room-list.service";
@@ -29,8 +30,9 @@ import { DatabaseModule } from "@apps/backend/infra/database/database.module";
     ChatRoomUpdateService,
     ChatMessageCreateService,
     ChatMessageListService,
+    ChatMessageHookRegistry,
     ChatGateway,
   ],
-  exports: [ChatService, ChatGateway],
+  exports: [ChatService, ChatGateway, ChatMessageCreateService, ChatMessageHookRegistry],
 })
 export class ChatModule {}
