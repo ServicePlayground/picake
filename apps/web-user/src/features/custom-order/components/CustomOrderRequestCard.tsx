@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { customOrderApi } from "@/apps/web-user/features/custom-order/apis/custom-order.api";
 import { useAlertStore } from "@/apps/web-user/common/store/alert.store";
 import getApiMessage from "@/apps/web-user/common/utils/getApiMessage";
+import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 import type { CustomOrderRequestStatus } from "@/apps/web-user/features/custom-order/types/custom-order.type";
 
 interface Props {
@@ -45,7 +46,7 @@ export const CustomOrderRequestCard: React.FC<Props> = ({ requestId }) => {
     mutationFn: () => customOrderApi.accept(requestId),
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["custom-order-request", requestId] });
-      router.push(`/orders/${data.orderId}`);
+      router.push(PATHS.ORDER.DETAIL(data.orderId));
     },
     onError: (error) => {
       showAlert({ type: "error", title: "오류", message: getApiMessage.error(error) });
