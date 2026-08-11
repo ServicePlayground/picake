@@ -15,7 +15,6 @@ export interface InternalMessageOptions {
   isAiGenerated?: boolean;
   aiSuggestsHandoff?: boolean;
   productId?: string;
-  relatedCustomOrderRequestId?: string;
 }
 
 /**
@@ -116,7 +115,6 @@ export class ChatMessageCreateService {
             isAiGenerated: options.isAiGenerated ?? false,
             aiSuggestsHandoff: options.aiSuggestsHandoff ?? false,
             productId: options.productId ?? null,
-            relatedCustomOrderRequestId: options.relatedCustomOrderRequestId ?? null,
           },
         });
 

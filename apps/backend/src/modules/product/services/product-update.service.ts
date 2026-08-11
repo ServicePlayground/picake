@@ -10,7 +10,6 @@ import { Prisma } from "@apps/backend/infra/database/prisma/generated/client";
 import { ProductOwnershipUtil } from "@apps/backend/modules/product/utils/product-ownership.util";
 import { validateProductPrices } from "@apps/backend/modules/product/utils/product-price.util";
 import { LoggerUtil } from "@apps/backend/common/utils/logger.util";
-import { assertNoActiveCustomOrderRequests } from "@apps/backend/modules/product/utils/product-custom-order-guard.util";
 
 @Injectable()
 export class ProductUpdateService {
@@ -78,14 +77,6 @@ export class ProductUpdateService {
     await ProductOwnershipUtil.verifyProductOwnership(this.prisma, id, user.sub, {
       sellerId: true,
     });
-
-    // 판매 방식(커스텀 여부·상담 후 가격 결정) 변경은 진행 중인 맞춤 주문 요청이 없을 때만 허용
-    if (
-      updateProductDto.imageUploadEnabled !== undefined ||
-      updateProductDto.requiresQuote !== undefined
-    ) {
-      await assertNoActiveCustomOrderRequests(this.prisma, id);
-    }
 
     // 기존 상품 정보 조회 (옵션 업데이트를 위해 필요)
     const product = await this.prisma.product.findUnique({
@@ -160,9 +151,6 @@ export class ProductUpdateService {
         updateProductDto.imageUploadEnabled === EnableStatus.ENABLE
           ? ProductType.CUSTOM_CAKE
           : ProductType.BASIC_CAKE;
-    }
-    if (updateProductDto.requiresQuote !== undefined) {
-      updateData.requiresQuote = updateProductDto.requiresQuote;
     }
     if (updateProductDto.detailDescription !== undefined) {
       updateData.detailDescription = updateProductDto.detailDescription;

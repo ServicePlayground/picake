@@ -3,7 +3,6 @@ import { PrismaService } from "@apps/backend/infra/database/prisma.service";
 import { JwtVerifiedPayload } from "@apps/backend/modules/auth/types/auth.types";
 import { ProductOwnershipUtil } from "@apps/backend/modules/product/utils/product-ownership.util";
 import { LoggerUtil } from "@apps/backend/common/utils/logger.util";
-import { assertNoActiveCustomOrderRequests } from "@apps/backend/modules/product/utils/product-custom-order-guard.util";
 
 @Injectable()
 export class ProductDeleteService {
@@ -17,9 +16,6 @@ export class ProductDeleteService {
     await ProductOwnershipUtil.verifyProductOwnership(this.prisma, id, user.sub, {
       sellerId: true,
     });
-
-    // 진행 중인 커스텀 주문 요청이 있으면 삭제 불가 (요청이 붕 뜨는 것 방지)
-    await assertNoActiveCustomOrderRequests(this.prisma, id);
 
     try {
       await this.prisma.product.delete({

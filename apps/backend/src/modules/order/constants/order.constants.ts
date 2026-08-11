@@ -20,8 +20,6 @@ export const ORDER_ERROR_MESSAGES = {
   SAME_STATUS: "이미 해당 상태입니다.",
   PAYMENT_PENDING_EXPIRED: "입금 가능 시간이 지나 예약이 취소되었습니다.",
   INVALID_USER_ORDER_ACTION: "지금 이 주문에 대해 수행할 수 없는 작업입니다.",
-  CUSTOM_QUOTE_ORDER_NOT_EDITABLE:
-    "맞춤 주문(견적) 주문은 예약 정보를 직접 변경할 수 없습니다. 사장님과 채팅으로 조율해주세요.",
   SELLER_CANCEL_REASON_REQUIRED: "예약 취소(취소완료) 시 취소 사유를 입력해 주세요.",
   SELLER_NO_SHOW_REASON_REQUIRED: "노쇼 처리 시 노쇼 사유를 입력해 주세요.",
   SELLER_CANCEL_REFUND_PENDING_REASON_REQUIRED: "취소환불대기로 변경할 때 사유를 입력해 주세요.",

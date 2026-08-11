@@ -53,9 +53,6 @@ export class AiContextBuildService {
           `판매가: ${product.salePrice.toLocaleString()}원`,
           `판매 가능 여부: ${saleAvailable ? "판매 중" : "현재 판매하지 않음"}`,
         ];
-        if (product.requiresQuote) {
-          lines.push("판매 방식: 상담 후 가격 결정 (맞춤 주문 요청으로 견적 진행)");
-        }
         if (product.cakeSizeOptions) {
           lines.push(`사이즈 옵션: ${JSON.stringify(product.cakeSizeOptions)}`);
         }
@@ -78,7 +75,7 @@ export class AiContextBuildService {
   }
 
   /**
-   * 최근 대화 히스토리 조회 (CONSUMER/STORE 텍스트만 — SYSTEM 안내·견적 카드는 프롬프트 노이즈라 제외)
+   * 최근 대화 히스토리 조회 (CONSUMER/STORE 텍스트만 — SYSTEM 안내는 프롬프트 노이즈라 제외)
    */
   async buildConversationHistory(
     roomId: string,
@@ -87,7 +84,6 @@ export class AiContextBuildService {
       where: {
         roomId,
         senderType: { in: ["CONSUMER", "STORE"] },
-        relatedCustomOrderRequestId: null,
       },
       orderBy: { createdAt: "desc" },
       take: AI_CONTEXT_RECENT_MESSAGE_COUNT,

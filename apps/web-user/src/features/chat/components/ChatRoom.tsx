@@ -9,7 +9,6 @@ import {
   useRequestHuman,
   useSetMessageFeedback,
 } from "@/apps/web-user/features/chat/hooks/queries/useChat";
-import { CustomOrderRequestCard } from "@/apps/web-user/features/custom-order/components/CustomOrderRequestCard";
 import { chatSocketService } from "@/apps/web-user/features/chat/services/chat-socket.service";
 import { Message } from "@/apps/web-user/features/chat/types/chat.type";
 import { Send } from "lucide-react";
@@ -34,16 +33,6 @@ export const ChatRoom: React.FC = () => {
     () => [...initialAllMessages, ...newAllMessages],
     [initialAllMessages, newAllMessages],
   );
-  // 요청별 마지막 카드 메시지 id — 같은 요청의 중복 카드 렌더링 방지
-  const latestCustomOrderMessageIds = useMemo(() => {
-    const latest: Record<string, string> = {};
-    for (const message of allMessages) {
-      if (message.relatedCustomOrderRequestId) {
-        latest[message.relatedCustomOrderRequestId] = message.id;
-      }
-    }
-    return latest;
-  }, [allMessages]);
   const [newMessage, setNewMessage] = useState(""); // 새로운 메시지 입력
   const markAsReadMutation = useMarkChatRoomAsRead();
   const requestHumanMutation = useRequestHuman();
@@ -180,19 +169,6 @@ export const ChatRoom: React.FC = () => {
               </div>
             )}
             {allMessages.map((message) => {
-              // 맞춤 주문 요청/견적은 카드로 렌더링.
-              // 같은 요청에 여러 단계(접수·견적·확정) 메시지가 쌓이므로 마지막 것만 카드로 보여준다
-              // (카드는 항상 최신 상태를 조회하므로, 다 그리면 승인 버튼이 여러 개 보인다)
-              if (message.relatedCustomOrderRequestId) {
-                if (message.id !== latestCustomOrderMessageIds[message.relatedCustomOrderRequestId])
-                  return null;
-                return (
-                  <div key={message.id} className="flex justify-start">
-                    <CustomOrderRequestCard requestId={message.relatedCustomOrderRequestId} />
-                  </div>
-                );
-              }
-
               // 시스템 안내(연결 확인, 무응답 안내)는 가운데 정렬
               if (message.senderType === "system") {
                 return (

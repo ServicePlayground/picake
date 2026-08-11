@@ -54,7 +54,6 @@ export interface ChatMessageResponseDto {
   aiSuggestsHandoff: boolean;
   aiFeedback: AiMessageFeedback | null;
   productId: string | null;
-  relatedCustomOrderRequestId: string | null;
   createdAt: Date;
 }
 

@@ -68,13 +68,6 @@ export class MessageResponseDto {
   productId: string | null;
 
   @ApiProperty({
-    description: "커스텀 주문 요청/견적 카드 렌더링용 요청 ID",
-    nullable: true,
-    example: null,
-  })
-  relatedCustomOrderRequestId: string | null;
-
-  @ApiProperty({
     description: "생성일시",
     example: SWAGGER_EXAMPLES.CREATED_AT,
   })

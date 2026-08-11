@@ -11,7 +11,6 @@ import { useToggleRoomAi } from "@/apps/web-seller/features/ai-assistant/hooks/m
 import { useRoomAiState } from "@/apps/web-seller/features/ai-assistant/hooks/queries/useAiAssistantQuery";
 import { aiAssistantQueryKeys } from "@/apps/web-seller/features/ai-assistant/constants/aiAssistantQueryKeys.constant";
 import { useQueryClient } from "@tanstack/react-query";
-import { CustomOrderRequestCard } from "@/apps/web-seller/features/custom-order/components/CustomOrderRequestCard";
 import { Badge } from "@/apps/web-seller/common/components/badges/Badge";
 import { cn } from "@/apps/web-seller/common/utils/classname.util";
 import { formatTime } from "@/apps/web-seller/common/utils/date.util";
@@ -58,17 +57,6 @@ export const ChatRoom: React.FC = () => {
   const [correctionText, setCorrectionText] = useState("");
 
   const hasAiMessage = allChatMessageResponseDtos.some((message) => message.isAiGenerated);
-
-  // 요청별 마지막 카드 메시지 id — 같은 요청의 중복 카드 렌더링 방지
-  const latestCustomOrderMessageIds = useMemo(() => {
-    const latest: Record<string, string> = {};
-    for (const message of allChatMessageResponseDtos) {
-      if (message.relatedCustomOrderRequestId) {
-        latest[message.relatedCustomOrderRequestId] = message.id;
-      }
-    }
-    return latest;
-  }, [allChatMessageResponseDtos]);
 
   // 무한 스크롤 훅 사용 (위로 스크롤하여 이전 메시지 로드)
   useInfiniteScroll({
@@ -227,19 +215,6 @@ export const ChatRoom: React.FC = () => {
               </div>
             )}
             {allChatMessageResponseDtos.map((message) => {
-              // 맞춤 주문 요청/견적은 카드로 렌더링.
-              // 같은 요청에 여러 단계 메시지가 쌓이므로 마지막 것만 카드로 보여준다
-              // (카드는 항상 최신 상태를 조회하므로, 다 그리면 견적 입력폼이 여러 개 보인다)
-              if (message.relatedCustomOrderRequestId) {
-                if (message.id !== latestCustomOrderMessageIds[message.relatedCustomOrderRequestId])
-                  return null;
-                return (
-                  <div key={message.id} className="flex justify-start">
-                    <CustomOrderRequestCard requestId={message.relatedCustomOrderRequestId} />
-                  </div>
-                );
-              }
-
               // 시스템 안내(무응답 안내, 이관 확인 등)는 가운데 정렬로 구분
               if (message.senderType === "system") {
                 return (

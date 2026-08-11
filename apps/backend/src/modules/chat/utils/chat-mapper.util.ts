@@ -73,7 +73,6 @@ export class ChatMapperUtil {
       aiSuggestsHandoff: message.aiSuggestsHandoff,
       aiFeedback: message.aiFeedback,
       productId: message.productId,
-      relatedCustomOrderRequestId: message.relatedCustomOrderRequestId,
       createdAt: message.createdAt,
     };
   }

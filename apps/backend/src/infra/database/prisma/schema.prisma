@@ -137,7 +137,6 @@ model Consumer {
   notificationPreferences ConsumerNotificationPreference[]
   termsAgreements    ConsumerTermsAgreement[]
   storeEntryRequests StoreEntryRequest[]
-  customOrderRequests CustomOrderRequest[]
 
   @@index([phone])
   @@index([googleId])
@@ -293,7 +292,6 @@ model Product {
   salesStatus       EnableStatus @map("sales_status") // 판매 상태
   visibilityStatus  EnableStatus @map("visibility_status") // 노출 상태
   productType           ProductType @default(BASIC_CAKE) @map("product_type") // 상품 타입 (기본/커스텀)
-  requiresQuote         Boolean     @default(false) @map("requires_quote") // 상담 후 가격 결정 여부 (CUSTOM_CAKE && true인 상품만 견적 플로우, 등록 시 가격 미노출)
   productCategoryTypes  ProductCategoryType[] @default([]) @map("product_category_types") // 상품 카테고리 타입 (없거나 여러 개)
   searchTags            String[] @default([]) @map("search_tags") // 검색 태그 (없거나 여러 개)
   detailDescription     String? @map("detail_description") // 상세 설명
@@ -333,7 +331,6 @@ model Product {
   recentViews ProductRecentView[]
   reviews     ProductReview[]
   orders      Order[]
-  customOrderRequests CustomOrderRequest[]
 
   // 인덱스 최적화
   @@index([storeId]) // 스토어별 상품 조회
@@ -437,7 +434,6 @@ model Store {
   aiAssistantSetting      StoreAiAssistantSetting?
   aiFaqs                  StoreAiFaq[]
   aiUnansweredQuestions   StoreAiUnansweredQuestion[]
-  customOrderRequests     CustomOrderRequest[]
 
   @@unique([sellerId, businessNo, permissionManagementNumber])
   @@index([sellerId])
@@ -556,7 +552,6 @@ model ChatRoom {
   consumer Consumer @relation(fields: [consumerId], references: [id], onDelete: Cascade)
   store    Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
   messages Message[]
-  customOrderRequests CustomOrderRequest[]
 
   @@unique([consumerId, storeId]) // 1대1 채팅방 보장
   @@index([consumerId, lastMessageAt(sort: Desc)]) // 사용자 채팅방 목록 조회 최적화
@@ -584,7 +579,6 @@ model Message {
   aiSuggestsHandoff  Boolean            @default(false) @map("ai_suggests_handoff") // AI가 "모르겠어요, 연결해드릴까요?"라고 답한 메시지 (quick-reply 렌더 근거)
   aiFeedback         AiMessageFeedback? @map("ai_feedback") // 사용자가 AI 답변에 남긴 만족도 (isAiGenerated=true인 메시지만)
   productId          String?            @map("product_id") // 상품 상세에서 시작된 문의 메시지에만 부여 (방 전체가 아니라 메시지 단위 컨텍스트)
-  relatedCustomOrderRequestId String?   @map("related_custom_order_request_id") // 커스텀 주문 요청/견적 카드 렌더링용 (Phase 2)
 
   // 시스템 필드
   createdAt DateTime @default(now()) @map("created_at")
@@ -651,49 +645,6 @@ model StoreAiUnansweredQuestion {
 
   @@index([storeId, status, createdAt(sort: Desc)])
   @@map("store_ai_unanswered_questions")
-}
-
-/// 커스텀 주문 요청 (상담 후 가격 결정 상품의 건별 견적) — 요청서 필드는 기존 예약 화면 수집 항목과 1:1
-model CustomOrderRequest {
-  id         String @id @default(cuid())
-  productId  String @map("product_id")
-  consumerId String @map("consumer_id")
-  storeId    String @map("store_id")
-  roomId     String @map("room_id")
-
-  // 요청 내용
-  images           String[] @default([]) // 참고 이미지 URL (기존 업로드 인프라 재사용)
-  requirementsText String   @map("requirements_text") @db.Text // 원하는 문구/디자인 자유 텍스트
-  quantity         Int      @default(1)
-  desiredBudgetMin Int?     @map("desired_budget_min") // 예산 범위 (참고용, 확정 가격 아님)
-  desiredBudgetMax Int?     @map("desired_budget_max")
-  desiredDate      DateTime @map("desired_date") // 희망 픽업 일시 (날짜+시간 필수, 승인 시 재검증)
-
-  // 픽업 연락처 (승인 시 Order로 매핑, 알림톡 수신번호)
-  reservationContactName String? @map("reservation_contact_name")
-  reservationPhone       String? @map("reservation_phone")
-
-  // 견적/상태
-  status      CustomOrderRequestStatus @default(REQUESTED)
-  quotedPrice Int?    @map("quoted_price") // 판매자 견적가 (1회 제시)
-  sellerNote  String? @map("seller_note") @db.Text // 견적 코멘트
-
-  // 승인 시 생성된 주문 연결 (이중 주문 방지 2차 방어선)
-  orderId String? @unique @map("order_id")
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  product  Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  consumer Consumer @relation(fields: [consumerId], references: [id], onDelete: Cascade)
-  store    Store    @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  room     ChatRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
-  order    Order?   @relation(fields: [orderId], references: [id], onDelete: SetNull)
-
-  @@index([storeId, status, createdAt(sort: Desc)]) // 판매자 요청 목록 조회
-  @@index([consumerId, createdAt(sort: Desc)])
-  @@index([productId, status]) // 상품 수정/삭제 가드 (진행 중 요청 존재 확인)
-  @@map("custom_order_requests")
 }
 
 // Store feed model for store feed posts
@@ -811,7 +762,6 @@ model Order {
   store    Store      @relation(fields: [storeId], references: [id], onDelete: Cascade)
   orderItems OrderItem[]
   review     ProductReview?
-  customOrderRequest CustomOrderRequest?
 
   // 인덱스 최적화
   @@index([consumerId, createdAt(sort: Desc)]) // 사용자별 주문 목록 조회 최적화 (최신순)
@@ -1109,14 +1059,6 @@ enum StoreAiUnansweredQuestionStatus {
   PENDING // FAQ 등록 후보로 대기
   CONVERTED_TO_FAQ // FAQ로 등록됨
   DISMISSED // 판매자가 무시함
-}
-
-enum CustomOrderRequestStatus {
-  REQUESTED // 요청 접수 (견적 대기)
-  QUOTED // 견적 제시됨 (승인/거절 대기)
-  ACCEPTED // 손님 승인 → 주문 전환 완료
-  DECLINED // 손님 거절 (종결)
-  CANCELLED // 취소 (예약값, v1 미사용)
 }
 
 enum OrderStatus {

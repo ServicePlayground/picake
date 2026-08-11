@@ -47,29 +47,17 @@ export function ProductDetailInfoSection({ product }: ProductDetailInfoSectionPr
           )}
           {product.storeName}
         </button>
-        {product.requiresQuote && (
-          <span className="mb-[8px] inline-flex items-center gap-[4px] rounded-md bg-[#FDF3E3] px-[8px] py-[4px] text-xs font-bold text-[#AB6E1E]">
-            🎨 상담 후 가격 결정
-          </span>
-        )}
         <h1 className="text-xl font-bold text-gray-900">{product.name}</h1>
         <div className="flex flex-col">
-          {product.requiresQuote ? (
-            // 가격을 미리 정할 수 없는 상품이라 시작가를 노출하지 않는다
-            <p className="text-base font-bold text-gray-900">가격은 상담 후 안내드려요</p>
-          ) : (
-            <>
-              {onSale && (
-                <span className="text-xs text-gray-500 line-through">
-                  {product.originalPrice.toLocaleString()}원
-                </span>
-              )}
-              <p className="flex items-center gap-[4px] text-xl font-bold text-gray-900">
-                {discountRate != null && <span className="text-[#FF653E]">{discountRate}%</span>}
-                {product.salePrice.toLocaleString()}원~
-              </p>
-            </>
+          {onSale && (
+            <span className="text-xs text-gray-500 line-through">
+              {product.originalPrice.toLocaleString()}원
+            </span>
           )}
+          <p className="flex items-center gap-[4px] text-xl font-bold text-gray-900">
+            {discountRate != null && <span className="text-[#FF653E]">{discountRate}%</span>}
+            {product.salePrice.toLocaleString()}원~
+          </p>
         </div>
       </div>
 
