@@ -8,4 +8,5 @@ export const aiAssistantQueryKeys = {
   unansweredQuestions: (storeId: string) =>
     ["ai-assistant", "unanswered-questions", storeId] as const,
   stats: (storeId: string, days: number) => ["ai-assistant", "stats", storeId, days] as const,
+  roomAiState: (roomId: string) => ["ai-assistant", "room-ai-state", roomId] as const,
 } as const;

@@ -26,6 +26,15 @@ export function useAiUnansweredQuestions(storeId: string) {
   });
 }
 
+/** 방의 AI 자동응답 상태 (응대중 토글 초기값) */
+export function useRoomAiState(roomId: string) {
+  return useQuery({
+    queryKey: aiAssistantQueryKeys.roomAiState(roomId),
+    queryFn: () => aiAssistantApi.getRoomAiState(roomId),
+    enabled: Boolean(roomId),
+  });
+}
+
 export function useAiStats(storeId: string, days = 7) {
   return useQuery({
     queryKey: aiAssistantQueryKeys.stats(storeId, days),

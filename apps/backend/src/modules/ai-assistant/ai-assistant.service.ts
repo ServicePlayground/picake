@@ -131,6 +131,16 @@ export class AiAssistantService implements OnModuleInit, ChatMessageHook {
   }
 
   /**
+   * 방의 AI 상태 조회 (판매자 화면의 응대중 토글 초기값)
+   */
+  async getRoomAiState(roomId: string, sellerId: string): Promise<{ aiEnabled: boolean }> {
+    const room = await this.prisma.chatRoom.findUnique({ where: { id: roomId } });
+    if (!room) throw new NotFoundException(AI_ASSISTANT_ERROR_MESSAGES.SETTING_NOT_FOUND);
+    await ChatPermissionUtil.verifyChatRoomAccess(room, sellerId, "store", this.prisma);
+    return { aiEnabled: room.aiEnabled };
+  }
+
+  /**
    * 판매자 응대중 토글 — 이 방만 AI on/off (다른 방에는 영향 없음)
    */
   async toggleAi(roomId: string, sellerId: string, enabled: boolean): Promise<{ aiEnabled: boolean }> {
@@ -222,8 +232,12 @@ export class AiAssistantService implements OnModuleInit, ChatMessageHook {
       // 일일 한도 확인 — 초과 시 LLM 호출 없이 "모르겠다" 폴백과 동일 경로
       const withinLimit = await this.checkDailyLimits(storeId, roomId);
 
+      // LLM을 호출조차 못한 경우(키 미설정·한도 초과)는 "AI가 답 못한 질문"으로 기록하지 않는다.
+      // 지침을 보완해야 할 질문이 아니라 운영 이슈이므로, FAQ 제안 목록을 오염시키면 안 된다.
+      const canCallLlm = withinLimit && this.responseGenerateService.isConfigured;
+
       let result;
-      if (!withinLimit || !this.responseGenerateService.isConfigured) {
+      if (!canCallLlm) {
         result = { answer: "", canAnswer: false, requestsHuman: false };
       } else {
         // 타이핑 인디케이터 — LLM 왕복 수 초 동안 손님이 빈 화면을 보지 않게
@@ -262,7 +276,9 @@ export class AiAssistantService implements OnModuleInit, ChatMessageHook {
         await this.chatMessageCreateService.sendAiMessage(roomId, fallbackText, storeId, {
           aiSuggestsHandoff: true,
         });
-        await this.unansweredCaptureService.capture(storeId, roomId, latestConsumerMessage.text);
+        if (canCallLlm) {
+          await this.unansweredCaptureService.capture(storeId, roomId, latestConsumerMessage.text);
+        }
       }
 
       // 락 중 도착한 신규 구매자 메시지 확인 — 없으면 종료
@@ -281,10 +297,13 @@ export class AiAssistantService implements OnModuleInit, ChatMessageHook {
    * 이관 확정 — aiEnabled=false + 대기 시작 + 확인 메시지 + (영업시간 외면) 즉시 안내
    */
   private async confirmHandoff(roomId: string, store: StoreRowForGate): Promise<void> {
-    await this.prisma.chatRoom.update({
-      where: { id: roomId },
+    // 이미 사람 응대로 넘어간 방이면 확인 메시지를 다시 보내지 않는다
+    // (연결 버튼 중복 클릭·requestsHuman 중복 판정 시 안내가 여러 번 쌓이는 것 방지)
+    const claimed = await this.prisma.chatRoom.updateMany({
+      where: { id: roomId, aiEnabled: true },
       data: { aiEnabled: false, awaitingSellerSince: new Date() },
     });
+    if (claimed.count === 0) return;
 
     // 이관 확인 메시지 — 손님이 다음 응답까지 침묵을 보지 않게
     await this.chatMessageCreateService.sendSystemMessage(

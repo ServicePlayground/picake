@@ -113,6 +113,21 @@ export class SellerChatController {
   }
 
   /**
+   * 방의 AI 자동응답 상태 조회 API (응대중 토글 초기값)
+   */
+  @Get(":roomId/ai-state")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: "(로그인 필요) 채팅방 AI 자동응답 상태 조회",
+    description: "이 채팅방에서 AI 자동응답이 켜져 있는지 조회합니다. 응대중 토글의 초기 상태로 사용합니다.",
+  })
+  @SwaggerResponse(200, { dataExample: { aiEnabled: true } })
+  @SwaggerAuthResponses()
+  async getAiState(@Param("roomId") roomId: string, @Request() req: { user: JwtVerifiedPayload }) {
+    return await this.aiAssistantService.getRoomAiState(roomId, req.user.sub);
+  }
+
+  /**
    * 응대중 토글 API — 이 방만 AI 자동응답 on/off
    */
   @Patch(":roomId/ai-toggle")

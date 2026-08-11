@@ -8,6 +8,9 @@ import { Send, AlertTriangle } from "lucide-react";
 import { BaseButton as Button } from "@/apps/web-seller/common/components/buttons/BaseButton";
 import { Textarea } from "@/apps/web-seller/common/components/textareas/Textarea";
 import { useToggleRoomAi } from "@/apps/web-seller/features/ai-assistant/hooks/mutations/useAiAssistantMutation";
+import { useRoomAiState } from "@/apps/web-seller/features/ai-assistant/hooks/queries/useAiAssistantQuery";
+import { aiAssistantQueryKeys } from "@/apps/web-seller/features/ai-assistant/constants/aiAssistantQueryKeys.constant";
+import { useQueryClient } from "@tanstack/react-query";
 import { CustomOrderRequestCard } from "@/apps/web-seller/features/custom-order/components/CustomOrderRequestCard";
 import { Badge } from "@/apps/web-seller/common/components/badges/Badge";
 import { cn } from "@/apps/web-seller/common/utils/classname.util";
@@ -41,14 +44,31 @@ export const ChatRoom: React.FC = () => {
   const markAsReadMutation = useMarkChatRoomAsRead();
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
-  // 응대중 토글 — 켜면 이 방만 AI를 끄고 직접 응대
+  // 응대중 토글 — 켜면 이 방만 AI를 끄고 직접 응대 (서버의 현재 AI 상태로 초기화)
+  const queryClient = useQueryClient();
+  const { data: roomAiState } = useRoomAiState(roomId);
   const [isDirectResponse, setIsDirectResponse] = useState(false);
   const toggleAiMutation = useToggleRoomAi();
+
+  useEffect(() => {
+    if (roomAiState) setIsDirectResponse(!roomAiState.aiEnabled);
+  }, [roomAiState]);
   // AI 오답 정정 안내
   const [isCorrectionOpen, setIsCorrectionOpen] = useState(false);
   const [correctionText, setCorrectionText] = useState("");
 
   const hasAiMessage = allChatMessageResponseDtos.some((message) => message.isAiGenerated);
+
+  // 요청별 마지막 카드 메시지 id — 같은 요청의 중복 카드 렌더링 방지
+  const latestCustomOrderMessageIds = useMemo(() => {
+    const latest: Record<string, string> = {};
+    for (const message of allChatMessageResponseDtos) {
+      if (message.relatedCustomOrderRequestId) {
+        latest[message.relatedCustomOrderRequestId] = message.id;
+      }
+    }
+    return latest;
+  }, [allChatMessageResponseDtos]);
 
   // 무한 스크롤 훅 사용 (위로 스크롤하여 이전 메시지 로드)
   useInfiniteScroll({
@@ -132,6 +152,8 @@ export const ChatRoom: React.FC = () => {
       // WebSocket으로 메시지 전송
       await chatSocketService.sendMessage(roomId, newChatMessageResponseDto);
       setNewChatMessageResponseDto("");
+      // 판매자가 직접 답장하면 서버가 이 방의 AI를 끄므로, 토글 상태를 다시 읽어온다
+      queryClient.invalidateQueries({ queryKey: aiAssistantQueryKeys.roomAiState(roomId) });
       // 서버에서 메시지를 저장하고 WebSocket으로 브로드캐스트하므로 onNewMessage 리스너를 통해 자동으로 수신됨
     } catch (error) {
       console.error("Failed to send message:", error);
@@ -205,8 +227,12 @@ export const ChatRoom: React.FC = () => {
               </div>
             )}
             {allChatMessageResponseDtos.map((message) => {
-              // 맞춤 주문 요청/견적은 카드로 렌더링
+              // 맞춤 주문 요청/견적은 카드로 렌더링.
+              // 같은 요청에 여러 단계 메시지가 쌓이므로 마지막 것만 카드로 보여준다
+              // (카드는 항상 최신 상태를 조회하므로, 다 그리면 견적 입력폼이 여러 개 보인다)
               if (message.relatedCustomOrderRequestId) {
+                if (message.id !== latestCustomOrderMessageIds[message.relatedCustomOrderRequestId])
+                  return null;
                 return (
                   <div key={message.id} className="flex justify-start">
                     <CustomOrderRequestCard requestId={message.relatedCustomOrderRequestId} />

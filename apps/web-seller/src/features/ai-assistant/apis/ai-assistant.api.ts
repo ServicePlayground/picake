@@ -101,6 +101,12 @@ export const aiAssistantApi = {
     return response.data.data;
   },
 
+  /** 방의 AI 자동응답 상태 (응대중 토글 초기값) */
+  getRoomAiState: async (roomId: string): Promise<{ aiEnabled: boolean }> => {
+    const response = await sellerClient.get(`/chat-room/${roomId}/ai-state`);
+    return response.data.data;
+  },
+
   /** 응대중 토글 — 이 방만 AI on/off */
   toggleRoomAi: async (roomId: string, enabled: boolean): Promise<{ aiEnabled: boolean }> => {
     const response = await sellerClient.patch(`/chat-room/${roomId}/ai-toggle`, { enabled });
