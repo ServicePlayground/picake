@@ -58,6 +58,15 @@ export function getMenuItems(storeId: string | null): MenuItem[] {
       ],
     },
     {
+      text: "채팅",
+      icon: React.createElement(MessageSquare, { className: "w-5 h-5" }),
+      children: [
+        { text: "채팅 목록", path: ROUTES.STORE_DETAIL_CHAT_LIST(storeId) },
+        { text: "AI 자동응답 설정", path: ROUTES.STORE_DETAIL_AI_SETTINGS(storeId) },
+        { text: "AI 처리 현황", path: ROUTES.STORE_DETAIL_AI_DASHBOARD(storeId) },
+      ],
+    },
+    {
       text: "상품",
       icon: React.createElement(Package, { className: "w-5 h-5" }),
       children: [
@@ -81,15 +90,6 @@ export function getMenuItems(storeId: string | null): MenuItem[] {
       children: [
         { text: "알림 목록", path: ROUTES.STORE_DETAIL_NOTIFICATIONS_LIST(storeId) },
         { text: "알림 설정", path: ROUTES.STORE_DETAIL_NOTIFICATIONS_SETTINGS(storeId) },
-      ],
-    },
-    {
-      text: "채팅",
-      icon: React.createElement(MessageSquare, { className: "w-5 h-5" }),
-      children: [
-        { text: "채팅 목록", path: ROUTES.STORE_DETAIL_CHAT_LIST(storeId) },
-        { text: "AI 자동응답 설정", path: ROUTES.STORE_DETAIL_AI_SETTINGS(storeId) },
-        { text: "AI 처리 현황", path: ROUTES.STORE_DETAIL_AI_DASHBOARD(storeId) },
       ],
     },
   ];
