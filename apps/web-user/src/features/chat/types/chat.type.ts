@@ -63,13 +63,24 @@ export interface GetMessagesRequest extends GetMessagesParams {
   page: number;
 }
 
+export type MessageSenderType = "consumer" | "store" | "system";
+
+export type AiMessageFeedback = "POSITIVE" | "NEGATIVE";
+
 // 메시지 정보
 export interface Message {
   id: string;
   roomId: string;
   text: string;
   senderId: string;
-  senderType: "user" | "store";
+  senderType: MessageSenderType;
+  /** AI가 생성한 답변 (senderType은 store 유지 — 손님에게도 AI임을 표시) */
+  isAiGenerated: boolean;
+  /** AI가 "모르겠어요, 연결해드릴까요?"라고 답한 메시지 — 이때만 연결 버튼 노출 */
+  aiSuggestsHandoff: boolean;
+  aiFeedback: AiMessageFeedback | null;
+  productId: string | null;
+  relatedCustomOrderRequestId: string | null;
   createdAt: Date;
 }
 

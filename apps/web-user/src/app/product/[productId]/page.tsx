@@ -16,6 +16,7 @@ import { ProductDetailSizeFlavorSection } from "@/apps/web-user/features/product
 import { Icon } from "@/apps/web-user/common/components/icons";
 import { Button } from "@/apps/web-user/common/components/buttons/Button";
 import { ReservationBottomSheet } from "@/apps/web-user/features/product/components/sections/reservation-bottom-sheet";
+import { CustomOrderRequestSheet } from "@/apps/web-user/features/custom-order/components/CustomOrderRequestSheet";
 import { ProductType } from "@/apps/web-user/features/product/types/product.type";
 import { ProductDetailSkeleton } from "@/apps/web-user/common/components/skeleton/ProductDetailSkeleton";
 import { useStoreDetail } from "@/apps/web-user/features/store/hooks/queries/useStoreDetail";
@@ -191,13 +192,27 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
           </button>
           <span className="flex-1">
             <Button onClick={handleReservationClick}>
-              {data.productType === ProductType.BASIC_CAKE ? "예약하기" : "예약신청"}
+              {data.requiresQuote
+                ? "맞춤 주문 요청하기"
+                : data.productType === ProductType.BASIC_CAKE
+                  ? "예약하기"
+                  : "예약신청"}
             </Button>
           </span>
         </div>
       </div>
 
-      {/* 예약 바텀시트 */}
+      {/* 맞춤 주문 요청서 (상담 후 가격 결정 상품) */}
+      {data.requiresQuote ? (
+        <CustomOrderRequestSheet
+          isOpen={isBottomSheetOpen}
+          productId={productId}
+          cakeTitle={data.name}
+          businessCalendar={storeDetail?.businessCalendar}
+          onClose={() => setIsBottomSheetOpen(false)}
+        />
+      ) : (
+      /* 예약 바텀시트 */
       <ReservationBottomSheet
         isOpen={isBottomSheetOpen}
         productId={productId}
@@ -223,6 +238,7 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
         refundCancellationPolicy={data.storeRefundCancellationPolicy}
         onClose={() => setIsBottomSheetOpen(false)}
       />
+      )}
     </div>
   );
 }

@@ -1,11 +1,15 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
+import { chatApi } from "@/apps/web-user/features/chat/apis/chat.api";
 import {
   useMessages,
   useMarkChatRoomAsRead,
+  useRequestHuman,
+  useSetMessageFeedback,
 } from "@/apps/web-user/features/chat/hooks/queries/useChat";
+import { CustomOrderRequestCard } from "@/apps/web-user/features/custom-order/components/CustomOrderRequestCard";
 import { chatSocketService } from "@/apps/web-user/features/chat/services/chat-socket.service";
 import { Message } from "@/apps/web-user/features/chat/types/chat.type";
 import { Send } from "lucide-react";
@@ -32,6 +36,12 @@ export const ChatRoom: React.FC = () => {
   );
   const [newMessage, setNewMessage] = useState(""); // 새로운 메시지 입력
   const markAsReadMutation = useMarkChatRoomAsRead();
+  const requestHumanMutation = useRequestHuman();
+  const feedbackMutation = useSetMessageFeedback();
+  // 상품 상세에서 진입한 경우의 상품 컨텍스트 (첫 메시지에만 붙임)
+  const searchParams = useSearchParams();
+  const productId = searchParams?.get("productId") ?? undefined;
+  const hasSentProductContext = useRef(false);
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
   // 무한 스크롤 훅 사용 (위로 스크롤하여 이전 메시지 로드)
@@ -112,8 +122,15 @@ export const ChatRoom: React.FC = () => {
     if (!newMessage.trim() || !roomId) return;
 
     try {
-      // WebSocket으로 메시지 전송
-      await chatSocketService.sendMessage(roomId, newMessage);
+      if (productId && !hasSentProductContext.current) {
+        // 상품 상세에서 시작한 문의의 첫 메시지는 REST로 보내 상품 컨텍스트를 붙인다
+        // (AI가 해당 상품의 가격·판매 상태를 참고해 답할 수 있도록)
+        hasSentProductContext.current = true;
+        await chatApi.sendMessage(roomId, newMessage, productId);
+      } else {
+        // 이후 대화는 기존 WebSocket 경로 그대로
+        await chatSocketService.sendMessage(roomId, newMessage);
+      }
       setNewMessage("");
       // 서버에서 메시지를 저장하고 WebSocket으로 브로드캐스트하므로 onNewMessage 리스너를 통해 자동으로 수신됨
     } catch (error) {
@@ -153,25 +170,95 @@ export const ChatRoom: React.FC = () => {
               </div>
             )}
             {allMessages.map((message) => {
-              const isUser = message.senderType === "user";
+              // 맞춤 주문 요청/견적은 카드로 렌더링
+              if (message.relatedCustomOrderRequestId) {
+                return (
+                  <div key={message.id} className="flex justify-start">
+                    <CustomOrderRequestCard requestId={message.relatedCustomOrderRequestId} />
+                  </div>
+                );
+              }
+
+              // 시스템 안내(연결 확인, 무응답 안내)는 가운데 정렬
+              if (message.senderType === "system") {
+                return (
+                  <div key={message.id} className="flex justify-center">
+                    <div className="max-w-[85%] rounded-lg bg-muted px-3 py-1.5 text-center text-xs text-muted-foreground">
+                      {message.text}
+                    </div>
+                  </div>
+                );
+              }
+
+              const isUser = message.senderType === "consumer";
               return (
                 <div
                   key={message.id}
                   className={`flex ${isUser ? "justify-end" : "justify-start"}`}
                 >
-                  <div
-                    className={`max-w-[70%] rounded-lg px-4 py-2 ${
-                      isUser ? "bg-primary text-primary-foreground" : "bg-muted"
-                    }`}
-                  >
-                    <p className="text-sm">{message.text}</p>
-                    <p
-                      className={`mt-1 text-xs ${
-                        isUser ? "text-primary-foreground/70" : "text-muted-foreground"
+                  <div className="flex max-w-[70%] flex-col items-start">
+                    {/* AI라는 걸 숨기지 않는다 — 손님 화면에도 표시 */}
+                    {message.isAiGenerated && (
+                      <span className="mb-1 rounded bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+                        AI 자동응답
+                      </span>
+                    )}
+                    <div
+                      className={`rounded-lg px-4 py-2 ${
+                        isUser ? "bg-primary text-primary-foreground" : "bg-muted"
                       }`}
                     >
-                      {formatTime(message.createdAt)}
-                    </p>
+                      <p className="text-sm">{message.text}</p>
+                      <p
+                        className={`mt-1 text-xs ${
+                          isUser ? "text-primary-foreground/70" : "text-muted-foreground"
+                        }`}
+                      >
+                        {formatTime(message.createdAt)}
+                      </p>
+                    </div>
+
+                    {/* AI 답변 피드백 */}
+                    {message.isAiGenerated && (
+                      <div className="mt-1 flex gap-1.5">
+                        {(["POSITIVE", "NEGATIVE"] as const).map((rating) => {
+                          const isSelected = message.aiFeedback === rating;
+                          return (
+                            <button
+                              key={rating}
+                              type="button"
+                              disabled={Boolean(message.aiFeedback)}
+                              onClick={() =>
+                                feedbackMutation.mutate({
+                                  roomId,
+                                  messageId: message.id,
+                                  rating: rating === "POSITIVE" ? "positive" : "negative",
+                                })
+                              }
+                              className={`rounded border px-1.5 py-0.5 text-xs ${
+                                isSelected
+                                  ? "border-primary bg-primary/10"
+                                  : "border-input bg-background disabled:opacity-40"
+                              }`}
+                            >
+                              {rating === "POSITIVE" ? "👍" : "👎"}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+
+                    {/* AI가 모른다고 답했을 때만 연결 버튼 노출 (상시 버튼은 두지 않음) */}
+                    {message.aiSuggestsHandoff && (
+                      <button
+                        type="button"
+                        onClick={() => requestHumanMutation.mutate(roomId)}
+                        disabled={requestHumanMutation.isPending}
+                        className="mt-1.5 rounded-full border-[1.5px] border-primary bg-background px-3 py-1.5 text-xs font-bold text-primary hover:bg-primary/5 disabled:opacity-50"
+                      >
+                        네, 연결해주세요
+                      </button>
+                    )}
                   </div>
                 </div>
               );

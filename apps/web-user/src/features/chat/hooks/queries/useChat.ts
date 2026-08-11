@@ -44,15 +44,20 @@ export function useChatRooms(limit: number = 20) {
   return query;
 }
 
-// 채팅방 생성 또는 조회
+/**
+ * 채팅방 생성 또는 조회
+ * 상품 상세에서 시작한 문의는 productId를 쿼리로 넘겨, 첫 메시지에 상품 컨텍스트가 붙도록 합니다.
+ */
 export function useCreateOrGetChatRoom() {
   const router = useRouter();
   const { showAlert } = useAlertStore();
 
   return useMutation({
-    mutationFn: (request: CreateChatRoomRequest) => chatApi.createOrGetChatRoom(request),
-    onSuccess: (data) => {
-      router.push(`/chat/${data.id}`);
+    mutationFn: ({ productId: _productId, ...request }: CreateChatRoomRequest & { productId?: string }) =>
+      chatApi.createOrGetChatRoom(request),
+    onSuccess: (data, variables) => {
+      const query = variables.productId ? `?productId=${variables.productId}` : "";
+      router.push(`/chat/${data.id}${query}`);
     },
     onError: (error) => {
       showAlert({
@@ -100,6 +105,49 @@ export function useMarkChatRoomAsRead() {
 
   return useMutation({
     mutationFn: (roomId: string) => chatApi.markChatRoomAsRead(roomId),
+    onError: (error) => {
+      showAlert({
+        type: "error",
+        title: "오류",
+        message: getApiMessage.error(error),
+      });
+    },
+  });
+}
+
+/**
+ * 사장님 연결 요청 (AI가 "모르겠어요"라고 답했을 때의 quick-reply)
+ * 전환 즉시 연결 확인 안내가 시스템 메시지로 도착합니다.
+ */
+export function useRequestHuman() {
+  const { showAlert } = useAlertStore();
+
+  return useMutation({
+    mutationFn: (roomId: string) => chatApi.requestHuman(roomId),
+    onError: (error) => {
+      showAlert({
+        type: "error",
+        title: "오류",
+        message: getApiMessage.error(error),
+      });
+    },
+  });
+}
+
+/** AI 답변 피드백 (👍/👎) */
+export function useSetMessageFeedback() {
+  const { showAlert } = useAlertStore();
+
+  return useMutation({
+    mutationFn: ({
+      roomId,
+      messageId,
+      rating,
+    }: {
+      roomId: string;
+      messageId: string;
+      rating: "positive" | "negative";
+    }) => chatApi.setMessageFeedback(roomId, messageId, rating),
     onError: (error) => {
       showAlert({
         type: "error",

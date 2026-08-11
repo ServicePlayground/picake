@@ -91,6 +91,8 @@ export interface Product {
   letteringMaxLength: number;
   imageUploadEnabled: ImageUploadEnabled;
   productType: ProductType;
+  /** 상담 후 가격 결정 — 가격을 미리 정하지 않고 요청별로 사장님이 견적을 제시 */
+  requiresQuote?: boolean;
   productCategoryTypes: ProductCategoryType[]; // 카테고리 (없거나 여러 개)
   searchTags: string[]; // 검색 태그 (없거나 여러 개)
   detailDescription?: string;
