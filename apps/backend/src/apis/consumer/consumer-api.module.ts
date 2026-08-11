@@ -34,6 +34,8 @@ import { ConsumerStoreEntryRequestController } from "@apps/backend/apis/consumer
 import { ChatModule } from "@apps/backend/modules/chat/chat.module";
 import { ConsumerChatController } from "@apps/backend/apis/consumer/controllers/chat.controller";
 import { AiAssistantModule } from "@apps/backend/modules/ai-assistant/ai-assistant.module";
+import { CustomOrderModule } from "@apps/backend/modules/custom-order/custom-order.module";
+import { ConsumerCustomOrderRequestController } from "@apps/backend/apis/consumer/controllers/custom-order-request.controller";
 
 /**
  * Consumer(구매자) API 모듈 — 경로 prefix `consumer`, JWT aud `consumer`
@@ -59,6 +61,7 @@ import { AiAssistantModule } from "@apps/backend/modules/ai-assistant/ai-assista
     StoreEntryRequestModule,
     ChatModule,
     AiAssistantModule,
+    CustomOrderModule,
   ],
   controllers: [
     ConsumerUploadController,
@@ -78,6 +81,7 @@ import { AiAssistantModule } from "@apps/backend/modules/ai-assistant/ai-assista
     ConsumerQnaController,
     ConsumerStoreEntryRequestController,
     ConsumerChatController,
+    ConsumerCustomOrderRequestController,
   ],
 })
 export class ConsumerApiModule {}

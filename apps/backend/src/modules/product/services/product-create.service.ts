@@ -93,6 +93,9 @@ export class ProductCreateService {
             letteringMaxLength: createProductDto.letteringMaxLength,
             imageUploadEnabled: createProductDto.imageUploadEnabled,
             productType,
+            // 상담 후 가격 결정은 커스텀 상품에서만 가능 (등록 시 가격을 정하지 않는 판매 방식)
+            requiresQuote:
+              productType === ProductType.CUSTOM_CAKE && Boolean(createProductDto.requiresQuote),
             productCategoryTypes: createProductDto.productCategoryTypes ?? [],
             searchTags: createProductDto.searchTags ?? [],
             detailDescription: createProductDto.detailDescription,

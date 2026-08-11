@@ -7,6 +7,7 @@ import {
   ValidateNested,
   IsOptional,
   IsEnum,
+  IsBoolean,
   Min,
 } from "class-validator";
 import { Type } from "class-transformer";
@@ -152,6 +153,15 @@ export class UpdateProductRequestDto {
   @IsOptional()
   @IsEnum(EnableStatus)
   imageUploadEnabled?: EnableStatus;
+
+  @ApiPropertyOptional({
+    description:
+      "상담 후 가격 결정 여부. 진행 중인 맞춤 주문 요청이 있으면 변경할 수 없습니다.",
+    example: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  requiresQuote?: boolean;
 
   @ApiPropertyOptional({
     description: "상세 설명 (HTML)",

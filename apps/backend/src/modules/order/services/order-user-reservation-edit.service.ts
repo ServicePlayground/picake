@@ -52,6 +52,8 @@ export class OrderUserReservationEditService {
       throw new BadRequestException(ORDER_ERROR_MESSAGES.INVALID_USER_ORDER_ACTION);
     }
 
+    await this.assertNotCustomQuoteOrder(orderId);
+
     const store = await this.prisma.store.findUnique({
       where: { id: order.storeId },
       select: {
@@ -108,6 +110,8 @@ export class OrderUserReservationEditService {
       );
       throw new BadRequestException(ORDER_ERROR_MESSAGES.INVALID_USER_ORDER_ACTION);
     }
+
+    await this.assertNotCustomQuoteOrder(orderId);
 
     const store = await this.prisma.store.findUnique({
       where: { id: order.storeId },
@@ -191,5 +195,21 @@ export class OrderUserReservationEditService {
     });
 
     return { id: orderId };
+  }
+
+  /**
+   * 맞춤 주문 견적으로 생성된 주문은 예약 변경(픽업일·항목)을 막습니다.
+   * 예약 변경은 상품 옵션 가격을 서버에서 재계산하는데, 견적 주문의 금액은 사장님이 직접 정한
+   * 값이라 재계산하면 견적가가 덮어써집니다. 변경이 필요하면 채팅으로 조율합니다.
+   */
+  private async assertNotCustomQuoteOrder(orderId: string): Promise<void> {
+    const customOrderRequest = await this.prisma.customOrderRequest.findUnique({
+      where: { orderId },
+      select: { id: true },
+    });
+    if (customOrderRequest) {
+      LoggerUtil.log(`예약 변경 실패: 맞춤 주문 견적 주문 - orderId: ${orderId}`);
+      throw new BadRequestException(ORDER_ERROR_MESSAGES.CUSTOM_QUOTE_ORDER_NOT_EDITABLE);
+    }
   }
 }

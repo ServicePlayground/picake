@@ -26,6 +26,8 @@ import { ChatModule } from "@apps/backend/modules/chat/chat.module";
 import { SellerChatController } from "@apps/backend/apis/seller/controllers/chat.controller";
 import { AiAssistantModule } from "@apps/backend/modules/ai-assistant/ai-assistant.module";
 import { SellerAiAssistantController } from "@apps/backend/apis/seller/controllers/ai-assistant.controller";
+import { CustomOrderModule } from "@apps/backend/modules/custom-order/custom-order.module";
+import { SellerCustomOrderRequestController } from "@apps/backend/apis/seller/controllers/custom-order-request.controller";
 
 /**
  * Seller API 모듈
@@ -47,6 +49,7 @@ import { SellerAiAssistantController } from "@apps/backend/apis/seller/controlle
     TermsModule,
     ChatModule,
     AiAssistantModule,
+    CustomOrderModule,
   ],
   controllers: [
     SellerUploadController,
@@ -63,6 +66,7 @@ import { SellerAiAssistantController } from "@apps/backend/apis/seller/controlle
     SellerTermsController,
     SellerChatController,
     SellerAiAssistantController,
+    SellerCustomOrderRequestController,
   ],
 })
 export class SellerApiModule {}

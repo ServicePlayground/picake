@@ -32,6 +32,6 @@ import { OrderLifecycleHookService } from "@apps/backend/modules/order/services/
     OrderUserListService,
     OrderService,
   ],
-  exports: [OrderService],
+  exports: [OrderService, OrderLifecycleHookService],
 })
 export class OrderModule {}
