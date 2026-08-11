@@ -4,6 +4,7 @@ import { customOrderApi } from "@/apps/web-seller/features/custom-order/apis/cus
 import { BaseButton as Button } from "@/apps/web-seller/common/components/buttons/BaseButton";
 import { NumberInput } from "@/apps/web-seller/common/components/inputs/NumberInput";
 import { Input } from "@/apps/web-seller/common/components/inputs/Input";
+import { Badge } from "@/apps/web-seller/common/components/badges/Badge";
 import { useAlertStore } from "@/apps/web-seller/common/store/alert.store";
 import getApiMessage from "@/apps/web-seller/common/utils/getApiMessage";
 
@@ -74,9 +75,9 @@ export const CustomOrderRequestCard: React.FC<Props> = ({ requestId }) => {
     <div className="max-w-[420px] rounded-lg border border-primary/40 bg-card p-3 shadow-sm">
       <div className="mb-2 flex items-center justify-between">
         <span className="text-sm font-semibold">맞춤 주문 요청</span>
-        <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-bold">
+        <Badge variant={request.status === "QUOTED" ? "default" : "secondary"}>
           {STATUS_LABEL[request.status] ?? request.status}
-        </span>
+        </Badge>
       </div>
 
       {request.images.length > 0 && (

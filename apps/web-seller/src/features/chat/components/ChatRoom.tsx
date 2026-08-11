@@ -9,6 +9,7 @@ import { BaseButton as Button } from "@/apps/web-seller/common/components/button
 import { Textarea } from "@/apps/web-seller/common/components/textareas/Textarea";
 import { useToggleRoomAi } from "@/apps/web-seller/features/ai-assistant/hooks/mutations/useAiAssistantMutation";
 import { CustomOrderRequestCard } from "@/apps/web-seller/features/custom-order/components/CustomOrderRequestCard";
+import { Badge } from "@/apps/web-seller/common/components/badges/Badge";
 import { cn } from "@/apps/web-seller/common/utils/classname.util";
 import { formatTime } from "@/apps/web-seller/common/utils/date.util";
 import { useInfiniteScroll } from "@/apps/web-seller/common/hooks/useInfiniteScroll";
@@ -174,7 +175,7 @@ export const ChatRoom: React.FC = () => {
         </span>
       </div>
       {isDirectResponse && (
-        <div className="border-b bg-amber-50 px-4 py-2 text-center text-xs font-medium text-amber-900">
+        <div className="border-b bg-amber-50 px-4 py-2 text-center text-xs font-medium text-amber-700">
           직접 응대 중 — AI 자동응답이 일시 중지되었습니다.
         </div>
       )}
@@ -232,9 +233,9 @@ export const ChatRoom: React.FC = () => {
                 >
                   <div className="flex max-w-[70%] flex-col items-end">
                     {message.isAiGenerated && (
-                      <span className="mb-1 rounded bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+                      <Badge variant="secondary" className="mb-1">
                         AI 자동응답
-                      </span>
+                      </Badge>
                     )}
                     <div
                       className={cn(
@@ -289,7 +290,7 @@ export const ChatRoom: React.FC = () => {
             </div>
           ) : (
             <div className="flex items-center justify-between">
-              <span className="flex items-center gap-1.5 text-xs text-amber-900">
+              <span className="flex items-center gap-1.5 text-xs text-amber-700">
                 <AlertTriangle className="h-3.5 w-3.5" />
                 AI 답변이 잘못됐나요?
               </span>

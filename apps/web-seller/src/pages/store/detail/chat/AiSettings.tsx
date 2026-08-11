@@ -93,8 +93,8 @@ export const StoreDetailAiSettingsPage: React.FC = () => {
             className={cn(
               "flex items-start gap-2 rounded-md border p-3 text-sm",
               storeInfoLinked
-                ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-                : "border-amber-200 bg-amber-50 text-amber-900",
+                ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                : "border-amber-200 bg-amber-50 text-amber-700",
             )}
           >
             {storeInfoLinked ? (
@@ -217,7 +217,7 @@ export const StoreDetailAiSettingsPage: React.FC = () => {
                     key={q}
                     type="button"
                     onClick={() => handleTest(q)}
-                    className="rounded-full border border-amber-300 bg-white px-2.5 py-1 text-xs text-amber-800 hover:bg-amber-100"
+                    className="rounded-full border border-amber-300 bg-white px-2.5 py-1 text-xs text-amber-700 hover:bg-amber-100"
                   >
                     {q}
                   </button>
@@ -240,14 +240,14 @@ export const StoreDetailAiSettingsPage: React.FC = () => {
                   "inline-block rounded px-2 py-0.5 text-xs font-bold",
                   testResult.canAnswer
                     ? "bg-primary/10 text-primary"
-                    : "bg-amber-200 text-amber-900",
+                    : "bg-amber-100 text-amber-800",
                 )}
               >
                 {testResult.canAnswer ? "AI 미리보기" : "모르는 질문 — 사장님 연결"}
               </span>
               <p className="mt-2 text-sm">{testResult.answer}</p>
               {!testResult.canAnswer && (
-                <p className="mt-2 text-xs text-amber-800">
+                <p className="mt-2 text-xs text-amber-700">
                   이런 질문이 자주 나온다면 응대 지침에 추가해보세요.
                 </p>
               )}

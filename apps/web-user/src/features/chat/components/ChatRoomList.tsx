@@ -21,10 +21,10 @@ export const ChatRoomList: React.FC<ChatRoomListProps> = ({ chatRooms }) => {
         <Link
           key={room.id}
           href={`/chat/${room.id}`}
-          className="flex cursor-pointer items-center gap-4 rounded-lg border bg-card p-4 transition-colors hover:bg-accent"
+          className="flex cursor-pointer items-center gap-4 rounded-lg border border-gray-100 bg-white p-4 transition-colors hover:bg-gray-50"
         >
           {/* 스토어 로고 이미지 */}
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-50">
             {room.store.logoImageUrl ? (
               <img
                 src={room.store.logoImageUrl}
@@ -32,7 +32,7 @@ export const ChatRoomList: React.FC<ChatRoomListProps> = ({ chatRooms }) => {
                 className="h-full w-full object-cover"
               />
             ) : (
-              <div className="text-lg font-semibold text-muted-foreground">
+              <div className="text-lg font-semibold text-gray-400">
                 {room.store.name[0]}
               </div>
             )}
@@ -43,17 +43,17 @@ export const ChatRoomList: React.FC<ChatRoomListProps> = ({ chatRooms }) => {
             <div className="flex items-center justify-between gap-2">
               <h3 className="truncate font-semibold">{room.store.name}</h3>
               {room.lastMessageAt && (
-                <span className="shrink-0 text-xs text-muted-foreground">
+                <span className="shrink-0 text-xs text-gray-400">
                   {formatRelativeTime(room.lastMessageAt)}
                 </span>
               )}
             </div>
             <div className="flex items-center justify-between gap-2">
-              <p className="truncate text-sm text-muted-foreground">
+              <p className="truncate text-sm text-gray-400">
                 {room.lastMessage || "메시지가 없습니다."}
               </p>
               {room.userUnread > 0 && (
-                <span className="shrink-0 rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-primary-foreground">
+                <span className="shrink-0 rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-white">
                   {room.userUnread}
                 </span>
               )}

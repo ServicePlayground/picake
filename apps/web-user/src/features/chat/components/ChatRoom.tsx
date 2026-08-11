@@ -149,7 +149,7 @@ export const ChatRoom: React.FC = () => {
       <div className="flex-1 space-y-4 overflow-y-auto p-4">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
-            <div className="text-muted-foreground">메시지를 불러오는 중...</div>
+            <div className="text-gray-400">메시지를 불러오는 중...</div>
           </div>
         ) : allMessages.length === 0 ? (
           <EmptyState message="메시지가 없습니다." />
@@ -162,7 +162,7 @@ export const ChatRoom: React.FC = () => {
                 className="flex min-h-[100px] items-center justify-center py-4"
               >
                 {isFetchingNextPage && (
-                  <div className="flex flex-col items-center gap-2 text-sm text-muted-foreground">
+                  <div className="flex flex-col items-center gap-2 text-sm text-gray-400">
                     <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                     <span>이전 메시지를 불러오는 중...</span>
                   </div>
@@ -183,7 +183,7 @@ export const ChatRoom: React.FC = () => {
               if (message.senderType === "system") {
                 return (
                   <div key={message.id} className="flex justify-center">
-                    <div className="max-w-[85%] rounded-lg bg-muted px-3 py-1.5 text-center text-xs text-muted-foreground">
+                    <div className="max-w-[85%] rounded-lg bg-gray-50 px-[12px] py-[6px] text-center text-xs text-gray-500">
                       {message.text}
                     </div>
                   </div>
@@ -196,31 +196,27 @@ export const ChatRoom: React.FC = () => {
                   key={message.id}
                   className={`flex ${isUser ? "justify-end" : "justify-start"}`}
                 >
-                  <div className="flex max-w-[70%] flex-col items-start">
+                  <div className={`flex max-w-[70%] flex-col ${isUser ? "items-end" : "items-start"}`}>
                     {/* AI라는 걸 숨기지 않는다 — 손님 화면에도 표시 */}
                     {message.isAiGenerated && (
-                      <span className="mb-1 rounded bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+                      <span className="mb-[3px] rounded bg-primary-50 px-[7px] py-[2px] text-xs font-bold text-primary">
                         AI 자동응답
                       </span>
                     )}
                     <div
-                      className={`rounded-lg px-4 py-2 ${
-                        isUser ? "bg-primary text-primary-foreground" : "bg-muted"
+                      className={`rounded-lg px-[14px] py-[9px] ${
+                        isUser ? "bg-primary text-white" : "bg-gray-50 text-gray-900"
                       }`}
                     >
                       <p className="text-sm">{message.text}</p>
-                      <p
-                        className={`mt-1 text-xs ${
-                          isUser ? "text-primary-foreground/70" : "text-muted-foreground"
-                        }`}
-                      >
+                      <p className={`mt-[3px] text-xs ${isUser ? "text-white/70" : "text-gray-400"}`}>
                         {formatTime(message.createdAt)}
                       </p>
                     </div>
 
                     {/* AI 답변 피드백 */}
                     {message.isAiGenerated && (
-                      <div className="mt-1 flex gap-1.5">
+                      <div className="mt-[4px] flex gap-[6px]">
                         {(["POSITIVE", "NEGATIVE"] as const).map((rating) => {
                           const isSelected = message.aiFeedback === rating;
                           return (
@@ -235,10 +231,10 @@ export const ChatRoom: React.FC = () => {
                                   rating: rating === "POSITIVE" ? "positive" : "negative",
                                 })
                               }
-                              className={`rounded border px-1.5 py-0.5 text-xs ${
+                              className={`rounded-md border px-[7px] py-[2px] text-xs ${
                                 isSelected
-                                  ? "border-primary bg-primary/10"
-                                  : "border-input bg-background disabled:opacity-40"
+                                  ? "border-primary bg-primary-50"
+                                  : "border-gray-100 bg-white disabled:opacity-40"
                               }`}
                             >
                               {rating === "POSITIVE" ? "👍" : "👎"}
@@ -254,7 +250,7 @@ export const ChatRoom: React.FC = () => {
                         type="button"
                         onClick={() => requestHumanMutation.mutate(roomId)}
                         disabled={requestHumanMutation.isPending}
-                        className="mt-1.5 rounded-full border-[1.5px] border-primary bg-background px-3 py-1.5 text-xs font-bold text-primary hover:bg-primary/5 disabled:opacity-50"
+                        className="mt-[6px] rounded-full border border-primary bg-white px-[13px] py-[7px] text-xs font-bold text-primary disabled:opacity-50"
                       >
                         네, 연결해주세요
                       </button>
@@ -268,24 +264,24 @@ export const ChatRoom: React.FC = () => {
       </div>
 
       {/* 입력 영역 */}
-      <div className="border-t bg-card p-4">
+      <div className="border-t border-gray-100 bg-white p-4">
         <div className="flex gap-2">
           <textarea
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="메시지를 입력하세요..."
-            className="flex min-h-[60px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex min-h-[60px] w-full rounded-md border border-gray-100 bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-200 disabled:cursor-not-allowed disabled:opacity-50"
             maxLength={1000}
           />
           <button
             onClick={handleSendMessage}
             disabled={!newMessage.trim()}
-            className="shrink-0 rounded-md bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+            className="shrink-0 rounded-md bg-primary px-4 py-2 text-white hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Send className="h-4 w-4" />
           </button>
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">{newMessage.length}/1000</p>
+        <p className="mt-1 text-xs text-gray-400">{newMessage.length}/1000</p>
       </div>
     </div>
   );
