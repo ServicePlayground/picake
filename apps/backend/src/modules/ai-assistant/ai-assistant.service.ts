@@ -263,10 +263,12 @@ export class AiAssistantService implements OnModuleInit, ChatMessageHook {
 
       if (result.canAnswer && result.answer) {
         await this.chatMessageCreateService.sendAiMessage(roomId, result.answer, storeId);
-        // AI가 응답했으므로 대기 상태 해제
+        // AI가 사장님 대신 응대를 마쳤으므로 대기 상태를 해제하고 판매자 미확인 카운트도 정리한다.
+        // (AI가 처리한 대화까지 안 읽음으로 남으면 뱃지가 계속 쌓여, 정말 사장님이 봐야 하는
+        //  이관된 대화와 구분되지 않는다 — 뱃지는 "확인이 필요한 대화"만 의미해야 함)
         await this.prisma.chatRoom.update({
           where: { id: roomId },
-          data: { awaitingSellerSince: null, awaitingSellerNudgeSentAt: null },
+          data: { awaitingSellerSince: null, awaitingSellerNudgeSentAt: null, storeUnread: 0 },
         });
       } else {
         // 모르겠어요 + 연결 제안 (이관은 손님이 동의해야 확정)
