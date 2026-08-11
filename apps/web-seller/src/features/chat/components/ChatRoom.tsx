@@ -4,9 +4,12 @@ import { useMessages } from "@/apps/web-seller/features/chat/hooks/queries/useCh
 import { useMarkChatRoomAsRead } from "@/apps/web-seller/features/chat/hooks/mutations/useChatMutation";
 import { chatSocketService } from "@/apps/web-seller/features/chat/services/chat-socket.service";
 import type { ChatMessageResponseDto } from "@/apps/web-seller/features/chat/types/chat.dto";
-import { Send } from "lucide-react";
+import { Send, AlertTriangle } from "lucide-react";
 import { BaseButton as Button } from "@/apps/web-seller/common/components/buttons/BaseButton";
 import { Textarea } from "@/apps/web-seller/common/components/textareas/Textarea";
+import { useToggleRoomAi } from "@/apps/web-seller/features/ai-assistant/hooks/mutations/useAiAssistantMutation";
+import { CustomOrderRequestCard } from "@/apps/web-seller/features/custom-order/components/CustomOrderRequestCard";
+import { cn } from "@/apps/web-seller/common/utils/classname.util";
 import { formatTime } from "@/apps/web-seller/common/utils/date.util";
 import { useInfiniteScroll } from "@/apps/web-seller/common/hooks/useInfiniteScroll";
 import { flattenAndDeduplicateInfiniteData } from "@/apps/web-seller/common/utils/pagination.util";
@@ -36,6 +39,15 @@ export const ChatRoom: React.FC = () => {
   const [newChatMessageResponseDto, setNewChatMessageResponseDto] = useState(""); // 새로운 메시지 입력
   const markAsReadMutation = useMarkChatRoomAsRead();
   const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  // 응대중 토글 — 켜면 이 방만 AI를 끄고 직접 응대
+  const [isDirectResponse, setIsDirectResponse] = useState(false);
+  const toggleAiMutation = useToggleRoomAi();
+  // AI 오답 정정 안내
+  const [isCorrectionOpen, setIsCorrectionOpen] = useState(false);
+  const [correctionText, setCorrectionText] = useState("");
+
+  const hasAiMessage = allChatMessageResponseDtos.some((message) => message.isAiGenerated);
 
   // 무한 스크롤 훅 사용 (위로 스크롤하여 이전 메시지 로드)
   useInfiniteScroll({
@@ -130,8 +142,43 @@ export const ChatRoom: React.FC = () => {
     return <div>채팅방을 찾을 수 없습니다.</div>;
   }
 
+  const handleToggleDirectResponse = () => {
+    const nextDirectResponse = !isDirectResponse;
+    setIsDirectResponse(nextDirectResponse);
+    // 직접 응대 중 = AI 끔
+    toggleAiMutation.mutate({ roomId, enabled: !nextDirectResponse });
+  };
+
+  const handleSendCorrection = async () => {
+    if (!correctionText.trim()) return;
+    await chatSocketService.sendMessage(roomId, correctionText);
+    setCorrectionText("");
+    setIsCorrectionOpen(false);
+  };
+
   return (
     <div className="flex h-[calc(100vh-200px)] flex-col">
+      {/* 응대중 토글 */}
+      <div className="flex items-center justify-between border-b bg-card px-4 py-2">
+        <label className="flex cursor-pointer items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            className="h-4 w-4 rounded border-input"
+            checked={isDirectResponse}
+            onChange={handleToggleDirectResponse}
+          />
+          <span className="font-medium">직접 응대 중</span>
+        </label>
+        <span className="text-xs text-muted-foreground">
+          {isDirectResponse ? "이 대화방의 AI 자동응답이 멈춰 있어요." : "AI가 1차로 답하고 있어요."}
+        </span>
+      </div>
+      {isDirectResponse && (
+        <div className="border-b bg-amber-50 px-4 py-2 text-center text-xs font-medium text-amber-900">
+          직접 응대 중 — AI 자동응답이 일시 중지되었습니다.
+        </div>
+      )}
+
       {/* 메시지 영역 */}
       <div className="flex-1 space-y-4 overflow-y-auto p-4">
         {isLoading ? (
@@ -157,25 +204,53 @@ export const ChatRoom: React.FC = () => {
               </div>
             )}
             {allChatMessageResponseDtos.map((message) => {
+              // 맞춤 주문 요청/견적은 카드로 렌더링
+              if (message.relatedCustomOrderRequestId) {
+                return (
+                  <div key={message.id} className="flex justify-start">
+                    <CustomOrderRequestCard requestId={message.relatedCustomOrderRequestId} />
+                  </div>
+                );
+              }
+
+              // 시스템 안내(무응답 안내, 이관 확인 등)는 가운데 정렬로 구분
+              if (message.senderType === "system") {
+                return (
+                  <div key={message.id} className="flex justify-center">
+                    <div className="max-w-[85%] rounded-lg bg-muted px-3 py-1.5 text-center text-xs text-muted-foreground">
+                      {message.text}
+                    </div>
+                  </div>
+                );
+              }
+
               const isStore = message.senderType === "store";
               return (
                 <div
                   key={message.id}
                   className={`flex ${isStore ? "justify-end" : "justify-start"}`}
                 >
-                  <div
-                    className={`max-w-[70%] rounded-lg px-4 py-2 ${
-                      isStore ? "bg-primary text-primary-foreground" : "bg-muted"
-                    }`}
-                  >
-                    <p className="text-sm">{message.text}</p>
-                    <p
-                      className={`mt-1 text-xs ${
-                        isStore ? "text-primary-foreground/70" : "text-muted-foreground"
-                      }`}
+                  <div className="flex max-w-[70%] flex-col items-end">
+                    {message.isAiGenerated && (
+                      <span className="mb-1 rounded bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+                        AI 자동응답
+                      </span>
+                    )}
+                    <div
+                      className={cn(
+                        "rounded-lg px-4 py-2",
+                        isStore ? "bg-primary text-primary-foreground" : "bg-muted",
+                      )}
                     >
-                      {formatTime(message.createdAt)}
-                    </p>
+                      <p className="text-sm">{message.text}</p>
+                      <p
+                        className={`mt-1 text-xs ${
+                          isStore ? "text-primary-foreground/70" : "text-muted-foreground"
+                        }`}
+                      >
+                        {formatTime(message.createdAt)}
+                      </p>
+                    </div>
                   </div>
                 </div>
               );
@@ -183,6 +258,48 @@ export const ChatRoom: React.FC = () => {
           </>
         )}
       </div>
+
+      {/* AI 오답 정정 안내 (AI 답변이 있는 대화방에만) */}
+      {hasAiMessage && (
+        <div className="border-t bg-amber-50/70 px-4 py-2">
+          {isCorrectionOpen ? (
+            <div className="space-y-2">
+              <Textarea
+                value={correctionText}
+                onChange={(e) => setCorrectionText(e.target.value)}
+                placeholder="손님에게 보낼 정정 내용을 적어주세요. 예: 앞선 안내에 착오가 있었어요. 정확한 내용은…"
+                className="min-h-[60px] resize-none bg-white"
+                maxLength={1000}
+              />
+              <div className="flex justify-end gap-2">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    setIsCorrectionOpen(false);
+                    setCorrectionText("");
+                  }}
+                >
+                  취소
+                </Button>
+                <Button size="sm" onClick={handleSendCorrection} disabled={!correctionText.trim()}>
+                  전송
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1.5 text-xs text-amber-900">
+                <AlertTriangle className="h-3.5 w-3.5" />
+                AI 답변이 잘못됐나요?
+              </span>
+              <Button size="sm" variant="outline" onClick={() => setIsCorrectionOpen(true)}>
+                수정 안내 보내기
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 입력 영역 */}
       <div className="border-t bg-card p-4">

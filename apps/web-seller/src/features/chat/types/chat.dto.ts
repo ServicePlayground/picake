@@ -37,7 +37,9 @@ export interface GetMessagesRequestDto {
   limit: number;
 }
 
-export type MessageSenderType = "consumer" | "store";
+export type MessageSenderType = "consumer" | "store" | "system";
+
+export type AiMessageFeedback = "POSITIVE" | "NEGATIVE";
 
 /** 메시지 단일 항목 (공통 MessageResponseDto와 구분) */
 export interface ChatMessageResponseDto {
@@ -46,6 +48,13 @@ export interface ChatMessageResponseDto {
   text: string;
   senderId: string;
   senderType: MessageSenderType;
+  /** AI가 생성한 메시지 (senderType은 store 유지, 화면에서 뱃지로 구분) */
+  isAiGenerated: boolean;
+  /** AI가 "모르겠어요, 연결해드릴까요?"라고 답한 메시지 */
+  aiSuggestsHandoff: boolean;
+  aiFeedback: AiMessageFeedback | null;
+  productId: string | null;
+  relatedCustomOrderRequestId: string | null;
   createdAt: Date;
 }
 

@@ -185,7 +185,19 @@ export const ProductCreationForm: React.FC<Props> = ({
   };
 
   const handleImageUploadEnabledChange = (value: EnableStatus) => {
-    const next = { ...form, imageUploadEnabled: value };
+    // 일반 상품으로 되돌리면 상담 후 가격 결정도 함께 해제 (커스텀 상품 전용 옵션)
+    const next = {
+      ...form,
+      imageUploadEnabled: value,
+      ...(value === EnableStatus.ENABLE ? {} : { requiresQuote: false }),
+    };
+    setForm(next);
+    onChange?.(next);
+  };
+
+  const handleRequiresQuoteChange = (value: boolean) => {
+    if (disabled) return;
+    const next = { ...form, requiresQuote: value };
     setForm(next);
     onChange?.(next);
   };
@@ -290,6 +302,7 @@ export const ProductCreationForm: React.FC<Props> = ({
                 onLetteringVisibleChange={handleLetteringVisibleChange}
                 onLetteringMaxLengthChange={handleLetteringMaxLengthChange}
                 onImageUploadEnabledChange={handleImageUploadEnabledChange}
+                onRequiresQuoteChange={handleRequiresQuoteChange}
                 disabled={disabled}
               />
             </TabsContent>

@@ -91,6 +91,22 @@ const StoreDetailStatisticsPage = lazyPage(
   () => import("@/apps/web-seller/pages/store/detail/statistics/Index"),
   "StoreDetailStatisticsPage",
 );
+const StoreDetailChatListPage = lazyPage(
+  () => import("@/apps/web-seller/pages/store/detail/chat/List"),
+  "StoreDetailChatListPage",
+);
+const StoreDetailChatRoomPage = lazyPage(
+  () => import("@/apps/web-seller/pages/store/detail/chat/Room"),
+  "StoreDetailChatRoomPage",
+);
+const StoreDetailAiSettingsPage = lazyPage(
+  () => import("@/apps/web-seller/pages/store/detail/chat/AiSettings"),
+  "StoreDetailAiSettingsPage",
+);
+const StoreDetailAiDashboardPage = lazyPage(
+  () => import("@/apps/web-seller/pages/store/detail/chat/AiDashboard"),
+  "StoreDetailAiDashboardPage",
+);
 
 // 인증 관련 경로 (AdminLayout 밖)
 export const AUTH_ROUTE_CONFIG = [
@@ -138,6 +154,14 @@ export const ADMIN_ROUTE_CONFIG = [
   {
     path: ROUTES.STORE_DETAIL_NOTIFICATIONS_SETTINGS(":storeId"),
     element: StoreDetailNotificationsSettingsPage,
+  },
+  // 채팅·AI 자동응답 (AI 설정/대시보드는 :roomId보다 먼저 — 고정 경로 우선 매칭)
+  { path: ROUTES.STORE_DETAIL_CHAT_LIST(":storeId"), element: StoreDetailChatListPage },
+  { path: ROUTES.STORE_DETAIL_AI_SETTINGS(":storeId"), element: StoreDetailAiSettingsPage },
+  { path: ROUTES.STORE_DETAIL_AI_DASHBOARD(":storeId"), element: StoreDetailAiDashboardPage },
+  {
+    path: ROUTES.STORE_DETAIL_CHAT_ROOM(":storeId", ":roomId"),
+    element: StoreDetailChatRoomPage,
   },
   { path: ROUTES.STORE_DETAIL_EDIT(":storeId"), element: StoreDetailEditPage },
   { path: ROUTES.STORE_DETAIL_CALENDAR(":storeId"), element: StoreDetailCalendarPage },

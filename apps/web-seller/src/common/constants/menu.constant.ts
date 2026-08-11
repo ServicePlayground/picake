@@ -1,5 +1,14 @@
 import React from "react";
-import { Home, Package, Store, FileText, ShoppingCart, Bell, BarChart3 } from "lucide-react";
+import {
+  Home,
+  Package,
+  Store,
+  FileText,
+  ShoppingCart,
+  Bell,
+  BarChart3,
+  MessageSquare,
+} from "lucide-react";
 import { ROUTES } from "./paths.constant";
 
 export interface MenuChildItem {
@@ -74,10 +83,14 @@ export function getMenuItems(storeId: string | null): MenuItem[] {
         { text: "알림 설정", path: ROUTES.STORE_DETAIL_NOTIFICATIONS_SETTINGS(storeId) },
       ],
     },
-    // {
-    //   text: "채팅",
-    //   icon: React.createElement(MessageSquare, { className: "w-5 h-5" }),
-    //   children: [{ text: "채팅 목록", path: ROUTES.STORE_DETAIL_CHAT_LIST(storeId) }],
-    // },
+    {
+      text: "채팅",
+      icon: React.createElement(MessageSquare, { className: "w-5 h-5" }),
+      children: [
+        { text: "채팅 목록", path: ROUTES.STORE_DETAIL_CHAT_LIST(storeId) },
+        { text: "AI 자동응답 설정", path: ROUTES.STORE_DETAIL_AI_SETTINGS(storeId) },
+        { text: "AI 처리 현황", path: ROUTES.STORE_DETAIL_AI_DASHBOARD(storeId) },
+      ],
+    },
   ];
 }

@@ -80,6 +80,8 @@ export interface CreateProductRequestDto {
   letteringVisible: EnableStatus;
   letteringMaxLength: number;
   imageUploadEnabled: EnableStatus;
+  /** 상담 후 가격 결정 — 등록 시 가격을 정하지 않고 요청별로 견적을 제시 (커스텀 상품만) */
+  requiresQuote?: boolean;
   productType?: ProductType;
   productCategoryTypes?: ProductCategoryType[];
   searchTags?: string[];

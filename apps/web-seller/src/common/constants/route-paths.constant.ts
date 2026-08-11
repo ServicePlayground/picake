@@ -23,6 +23,11 @@ export const ROUTES = {
   STORE_DETAIL_NOTIFICATIONS_LIST: (storeId: string) => `/stores/${storeId}/notifications`,
   STORE_DETAIL_NOTIFICATIONS_SETTINGS: (storeId: string) =>
     `/stores/${storeId}/notifications/settings`,
+  STORE_DETAIL_CHAT_LIST: (storeId: string) => `/stores/${storeId}/chat`,
+  STORE_DETAIL_CHAT_ROOM: (storeId: string, roomId: string) =>
+    `/stores/${storeId}/chat/${roomId}`,
+  STORE_DETAIL_AI_SETTINGS: (storeId: string) => `/stores/${storeId}/chat/ai-settings`,
+  STORE_DETAIL_AI_DASHBOARD: (storeId: string) => `/stores/${storeId}/chat/ai-dashboard`,
   STORE_DETAIL_EDIT: (storeId: string) => `/stores/${storeId}/edit`,
   STORE_DETAIL_CALENDAR: (storeId: string) => `/stores/${storeId}/calendar`,
   AUTH: {
