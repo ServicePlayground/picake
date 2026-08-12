@@ -94,6 +94,7 @@ export class NtsApiService {
       LoggerUtil.log(`[${this.nodeEnv}] 사업자등록번호 진위확인 건너뜀`);
       return;
 
+      /* 재활성화 시 아래 주석 해제
       // 사업자등록번호 정규화 (하이픈 제거)
       const normalizedBusinessNumber = validationDto.b_no.replace(/[-\s]/g, "");
 
@@ -136,6 +137,7 @@ export class NtsApiService {
         LoggerUtil.log(NTS_API_ERROR_MESSAGES.BUSINESS_STATUS_INACTIVE);
         throw new Error(NTS_API_ERROR_MESSAGES.BUSINESS_STATUS_INACTIVE);
       }
+      */
     } catch (error: any) {
       SentryUtil.captureException(error, "error", {
         module: "business",

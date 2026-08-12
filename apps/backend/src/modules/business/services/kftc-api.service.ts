@@ -98,6 +98,7 @@ export class KftcApiService {
       LoggerUtil.log(`[${this.nodeEnv}] 통신판매사업자 등록상세 조회 건너뜀`);
       return;
 
+      /* 재활성화 시 아래 주석 해제
       // 사업자등록번호 정규화 (하이픈 제거)
       const normalizedBusinessNumber = detailDto.brno.replace(/[-\s]/g, "");
 
@@ -134,6 +135,7 @@ export class KftcApiService {
       if (!detail.operSttusCdNm || detail.operSttusCdNm !== "정상영업") {
         throw new BadRequestException(KFTC_API_ERROR_MESSAGES.OPERATION_STATUS_NOT_NORMAL);
       }
+      */
     } catch (error: any) {
       SentryUtil.captureException(error, "error", {
         module: "business",
