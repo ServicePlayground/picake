@@ -8,7 +8,6 @@ import {
 } from "@apps/backend/modules/business/constants/business.contants";
 import { LoggerUtil } from "@apps/backend/common/utils/logger.util";
 import { SentryUtil } from "@apps/backend/common/utils/sentry.util";
-import { isProduction } from "@apps/backend/common/utils/environment.util";
 
 /**
  * 공정거래위원회 통신판매사업자 등록상세 조회 API 전용 서비스
@@ -95,12 +94,11 @@ export class KftcApiService {
         throw new Error("DATA_GO_KR_API_KEY가 설정되지 않았습니다.");
       }
 
-      // production 환경이 아닌 경우 검증 통과
-      if (!isProduction(this.nodeEnv)) {
-        LoggerUtil.log(`[${this.nodeEnv}] 통신판매사업자 등록상세 조회 건너뜀`);
-        return;
-      }
+      // TODO: 통신판매사업자 등록상세 조회 임시 비활성화 (추후 재활성화 예정)
+      LoggerUtil.log(`[${this.nodeEnv}] 통신판매사업자 등록상세 조회 건너뜀`);
+      return;
 
+      /* 재활성화 시 아래 주석 해제
       // 사업자등록번호 정규화 (하이픈 제거)
       const normalizedBusinessNumber = detailDto.brno.replace(/[-\s]/g, "");
 
@@ -137,6 +135,7 @@ export class KftcApiService {
       if (!detail.operSttusCdNm || detail.operSttusCdNm !== "정상영업") {
         throw new BadRequestException(KFTC_API_ERROR_MESSAGES.OPERATION_STATUS_NOT_NORMAL);
       }
+      */
     } catch (error: any) {
       SentryUtil.captureException(error, "error", {
         module: "business",

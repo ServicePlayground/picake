@@ -555,6 +555,13 @@ export class StoreListService {
    * STORE_REGION_DEPTHS 구조를 유지하면서
    * - 각 2depth 항목에 storeCount를 붙이고
    * - 각 1depth 항목에는 "전지역"에 해당하는 스토어 수(또는 2depth 합계)를 storeCount로 설정합니다.
+   *
+   * storeCount는 지역 선택 가능 여부(RegionSelectSheet)와 "비활성 지역" 판정(Header의
+   * matchAddressToRegion/findNearestActiveRegion)의 유일한 근거입니다. 그래서 스토어가
+   * 하나라도 있는지가 아니라 **노출 가능한 상품을 하나 이상 보유한 스토어가 있는지**를 기준으로
+   * 세야 합니다 — 안 그러면 상품 없이 스토어만 등록된 지역이 "활성 지역"으로 잡혀 사용자가
+   * 선택했을 때 홈 화면이 텅 비어 보입니다(2026-08 App Store 심사 반려의 실제 원인,
+   * `ios-app-review` skill 참고).
    */
   async getRegionCounts(): Promise<
     Array<{
@@ -562,6 +569,10 @@ export class StoreListService {
       depth2: Array<{ label: string; searchKeywords: readonly string[]; storeCount: number }>;
     }>
   > {
+    const hasVisibleProductFilter: Prisma.StoreWhereInput = {
+      products: { some: { visibilityStatus: EnableStatus.ENABLE } },
+    };
+
     const tasks: Promise<number>[] = [];
     for (const group of STORE_REGION_DEPTHS) {
       const depth1Keywords = [...group.depth1.searchKeywords];
@@ -569,9 +580,10 @@ export class StoreListService {
       const isNationwide = depth1Keywords.length === 1 && depth1Keywords[0] === "전지역";
       for (const d2 of group.depth2) {
         const depth2Keywords = d2.label === "전지역" ? [] : [...d2.searchKeywords];
-        const where = isNationwide
+        const regionWhere = isNationwide
           ? {}
           : buildStoreWhereForRegionKeywords(depth1Keywords, depth2Keywords);
+        const where: Prisma.StoreWhereInput = { AND: [regionWhere, hasVisibleProductFilter] };
         tasks.push(this.prisma.store.count({ where }));
       }
     }

@@ -37,10 +37,16 @@ function getAppleRedirectBaseUrl(): string {
  * 브라우저에서 애플 OAuth 로그인 시작 URL.
  * `scope=email` 요청 시 Apple이 `response_mode=form_post`를 강제하므로 인가 응답은 GET 쿼리가 아니라
  * `/auth/login/apple`(route.ts)로 POST 됩니다 — Google/Kakao와 달리 페이지가 아닌 route handler가 받습니다.
+ *
+ * `name`도 함께 요청합니다 — Apple은 **최초 인가 시 1회에 한해서만** `user`(이름) 파라미터를
+ * form_post 바디에 실어 보냅니다. 이걸 요청하지 않으면 회원가입 화면에서 이미 Apple이 알고 있는
+ * 이름을 사용자에게 다시 입력하라고 요구하게 되는데, 이는 Apple 심사 가이드라인 4(Sign in with
+ * Apple 디자인 요구사항) 위반으로 실제 반려된 사유입니다 — `route.ts`에서 이 `user` 값을 파싱해
+ * 회원가입 화면 "이름" 필드를 미리 채웁니다.
  */
 export function getAppleOAuthLoginUrl(): string | null {
   const clientId = process.env.NEXT_PUBLIC_APPLE_CLIENT_ID;
   if (!clientId) return null;
   const redirectUri = `${getAppleRedirectBaseUrl()}${PATHS.AUTH.APPLE_REDIRECT_URI}`;
-  return `https://appleid.apple.com/auth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&response_mode=form_post&scope=email`;
+  return `https://appleid.apple.com/auth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&response_mode=form_post&scope=${encodeURIComponent("name email")}`;
 }

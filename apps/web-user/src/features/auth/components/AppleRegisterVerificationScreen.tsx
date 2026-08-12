@@ -94,6 +94,12 @@ export function AppleRegisterVerificationScreen() {
       return;
     }
     setAppleLoginData({ appleId, appleEmail });
+    // Apple이 최초 인가 시 1회 한정으로 제공하는 이름 — 있으면 재입력을 요구하지 않도록 미리 채움
+    // (Apple 심사 가이드라인 4 — 이미 제공된 정보를 다시 입력시키지 말 것)
+    const appleName = searchParams.get("appleName")?.trim();
+    if (appleName) {
+      setDisplayName(appleName);
+    }
     setBooting(false);
     trackEvent("view_phone_verification", { provider: "apple" });
   }, [router, searchParams]);
