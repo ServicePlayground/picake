@@ -1,5 +1,5 @@
 ---
-name: data-report
+name: picake-data-report
 description: 사용자 데이터, 전환율, PostHog 지표, 회원수 등 Picake의 종합 데이터를 보여달라는 요청을 받으면 사용합니다. "사용자 데이터 보여줘", "전환율 어때", "이번 주 지표 알려줘", "회원수 몇 명이야" 같은 요청에 이 skill을 참고해 PostHog(행동 데이터)와 관리자 통계(DB 데이터)를 함께 조회해 리포트를 보여주세요.
 ---
 

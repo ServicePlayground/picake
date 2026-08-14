@@ -1,5 +1,5 @@
 ---
-name: ios-app-review
+name: picake-review-ios-app-store
 description: Picake web-user가 겉면만 Flutter로 감싼 웹뷰 앱으로 iOS 앱스토어 심사를 준비하거나 반려에 대응할 때 사용합니다. "iOS 심사 준비해줘", "심사노트 써줘", "리젝됐어 대응해야 돼", "애플 반려 사유 확인" 같은 요청에 이 skill을 따르세요. 이 저장소(web-user/backend)에 이미 구현된 심사 대응 장치(심사용 로그인, Apple 로그인, 계정삭제, 딥링크 수정)를 안내하고 App Store Connect 심사노트 문구 초안을 제공합니다. 네이티브 Flutter 앱 자체(별도 저장소)의 Info.plist·권한 문구·스크린샷·App Privacy 설문은 이 skill 범위 밖이며 앱담당자 확인이 필요합니다.
 ---
 
@@ -12,7 +12,7 @@ Picake web-user는 겉면만 Flutter로 감싼 **웹뷰 앱**입니다 — 로�
 - 네이티브 Flutter iOS 앱은 **별도 저장소**(이 모노레포에 없음, `find`로 확인해도 `.xcodeproj`/`pubspec.yaml`이 없음). 여기서 실제로 고칠 수 있는 건 web-user/backend 코드뿐입니다.
 - 다음 항목은 **앱담당자 확인이 필요** — 임의로 답하거나 추측해서 심사노트에 쓰지 않습니다:
   - Info.plist 권한 사용 설명 문구(위치·알림 등), 앱 아이콘, 스크린샷, 앱 이름/부제
-  - App Store Connect의 **App Privacy(개인정보 수집 항목 설문)** — 실제 수집 항목(휴대폰번호, 위치, 소셜 로그인 식별자 등, [[legal-terms]] skill의 개인정보처리방침 항목과 일치해야 함)과 어긋나면 그 자체로 반려 사유가 됨
+  - App Store Connect의 **App Privacy(개인정보 수집 항목 설문)** — 실제 수집 항목(휴대폰번호, 위치, 소셜 로그인 식별자 등, [[picake-legal-terms]] skill의 개인정보처리방침 항목과 일치해야 함)과 어긋나면 그 자체로 반려 사유가 됨
   - Associated Domains capability 설정 여부(현재 iOS는 Universal Links를 껐으므로 **켜져 있으면 안 됨** — 아래 §1의 딥링크 항목 참고)
 - 실제 반려/재현 이력: **4.8 (Sign in with Apple 누락)**, **Universal Links로 인한 iOS 자체 백그라운드 전환 버그**(크래시성 동작으로 반려·재현 가능성 있었음). 아래 §1에서 원인과 대응을 정리합니다.
 
@@ -23,13 +23,13 @@ Picake web-user는 겉면만 Flutter로 감싼 **웹뷰 앱**입니다 — 로�
 웹뷰 비중이 높은 앱에서 가장 흔한 반려 사유입니다. 이 앱이 단순 웹사이트 래핑이 아니라는 근거로 심사노트·질의응답에 쓸 수 있는 사실:
 
 - 네이티브 브릿지로 OS 기능을 실제로 사용: FCM 푸시 토큰 등록/해제(`requestFcmTokenUpsert`/`requestFcmTokenRemove`), 위치 정보 요청(`requestLocationFromWebView`, 앱 진입 시 자동 요청), OS 설정 화면 열기(`requestOpenAppSettings`) — 전부 `webview.bridge.ts`.
-- 커스텀 URL 스킴(`picake://`)으로 카카오 알림톡 등 외부에서 앱을 직접 열 수 있음 ([[app-deep-links]] skill).
+- 커스텀 URL 스킴(`picake://`)으로 카카오 알림톡 등 외부에서 앱을 직접 열 수 있음 ([[picake-link-app-deep-links]] skill).
 - 콘텐츠가 100% 웹 렌더링이 아니라 위치 기반 필터링, FCM 실시간 알림 등 디바이스 상태에 반응하는 기능이 있음.
 - **반려 근거로 계속 쓰였다면**: 웹뷰 비중을 줄이라는 요구일 수 있으므로, 반려 메일의 정확한 문구를 사용자에게 받아 어떤 하위 사유(4.2.1 기능 없음 / 4.2.2 사업성 등)인지 먼저 특정하세요 — 뭉뚱그려 "웹뷰라서"로 판단하지 않습니다.
 
 ### 4.8 Sign in with Apple — 실제 반려 이력 2건, 둘 다 대응 완료
 
-**1차 반려(2026-08-02)**: Google 로그인을 제공하면서 Apple 로그인 자체가 없었음. `apps/web-user`에 Apple 로그인 구현 완료 — 상세는 [[social-login]] skill §5, 작업 배경은 memory `project-apple-signin-web-user` 참고.
+**1차 반려(2026-08-02)**: Google 로그인을 제공하면서 Apple 로그인 자체가 없었음. `apps/web-user`에 Apple 로그인 구현 완료 — 상세는 [[picake-auth-social-login]] skill §5, 작업 배경은 memory `project-apple-signin-web-user` 참고.
 
 **2차 반려(2026-08-04, 가이드라인 4 — 디자인/UX 요구사항)**: "Apple로 로그인 사용 후 인증 프레임워크가 이미 제공한 이름/이메일을 사용자에게 다시 입력하도록 요구함." 원인은 Apple OAuth authorize URL이 `scope=email`만 요청해 Apple의 `user`(이름) 객체를 아예 안 받았고, 그래서 `AppleRegisterVerificationScreen.tsx`의 "이름" 필드가 항상 빈 채로 강제 입력을 요구했기 때문 — 이메일은 원래도 사용자에게 재입력을 요구하지 않았음(백엔드가 조용히 전달).
 **수정 완료(2026-08-04)**: `getAppleOAuthLoginUrl()`(`oauth-login-url.util.ts`)의 scope를 `name email`로 변경 → Apple이 **최초 인가 1회 한정**으로 보내는 `user` JSON(form_post 바디)을 `/auth/login/apple/route.ts`가 파싱(`extractAppleDisplayName`)해 `appleName` 쿼리로 콜백(`login/apple/callback/page.tsx`) → 회원가입 화면(`AppleRegisterVerificationScreen.tsx`)까지 전달, "이름" 필드를 미리 채워둠(수정은 여전히 가능 — Apple도 편집 가능한 pre-filled 필드는 허용). **재발 방지 포인트**: Apple은 두 번째 로그인부터는 `user`를 다시 안 보내므로(계정 재인가 등) 그때는 정상적으로 빈 입력을 받는 게 맞음 — "왜 이번엔 이름이 안 채워지지"라고 이걸 다시 버그로 오인하지 말 것.
@@ -37,7 +37,7 @@ Picake web-user는 겉면만 Flutter로 감싼 **웹뷰 앱**입니다 — 로�
 
 ### 5.1.1(v) 계정 삭제 — 대응 완료
 
-앱 내에서 고객센터 문의 없이 바로 탈퇴 가능해야 합니다. `apps/web-user/src/app/mypage/setting/account/page.tsx` + `WithdrawBottomSheet` + `useWithdraw` 훅으로 마이페이지 > 설정 > 계정에서 즉시 탈퇴 가능. Apple 계정으로 가입한 경우 탈퇴 시 `POST https://appleid.apple.com/auth/revoke`까지 호출([[social-login]] skill §5 "탈퇴 시 revoke 필수"). 진행 중인 주문이 있으면 탈퇴가 막히는데(`WITHDRAW_BLOCKED_ACTIVE_ORDERS`), 이건 정상 비즈니스 로직이지 심사 반려 사유가 아님 — 다만 심사관 계정에 진행 중 주문이 남아있으면 탈퇴 테스트가 막히니 심사 전 확인.
+앱 내에서 고객센터 문의 없이 바로 탈퇴 가능해야 합니다. `apps/web-user/src/app/mypage/setting/account/page.tsx` + `WithdrawBottomSheet` + `useWithdraw` 훅으로 마이페이지 > 설정 > 계정에서 즉시 탈퇴 가능. Apple 계정으로 가입한 경우 탈퇴 시 `POST https://appleid.apple.com/auth/revoke`까지 호출([[picake-auth-social-login]] skill §5 "탈퇴 시 revoke 필수"). 진행 중인 주문이 있으면 탈퇴가 막히는데(`WITHDRAW_BLOCKED_ACTIVE_ORDERS`), 이건 정상 비즈니스 로직이지 심사 반려 사유가 아님 — 다만 심사관 계정에 진행 중 주문이 남아있으면 탈퇴 테스트가 막히니 심사 전 확인.
 
 ### 2.1(a) 필요한 정보 / 데모 콘텐츠 — 실제 반려 이력, 근본 원인은 "활성 지역" 판정 버그, 대응 완료
 
@@ -58,11 +58,11 @@ Picake web-user는 겉면만 Flutter로 감싼 **웹뷰 앱**입니다 — 로�
 
 ### 3.1.1 / 3.1.5 인앱결제 — 구조상 해당 없음, 오해 방지용으로 심사노트에 명시 권장
 
-실제 결제 수단은 PG 카드결제가 아니라 **스토어 정산 계좌로의 계좌이체(무통장입금)**입니다 (`apps/backend/src/modules/order`, [[legal-terms]] skill §2 참고). 디지털 콘텐츠가 아니라 베이커리 등 실물/서비스 거래이므로 In-App Purchase 대상이 아니지만, 심사관이 "결제 버튼이 외부로 연결된다"고 오인해 3.1.1로 잘못 반려하는 경우가 있어 §3 심사노트 초안에 이 사실을 명시해 둡니다.
+실제 결제 수단은 PG 카드결제가 아니라 **스토어 정산 계좌로의 계좌이체(무통장입금)**입니다 (`apps/backend/src/modules/order`, [[picake-legal-terms]] skill §2 참고). 디지털 콘텐츠가 아니라 베이커리 등 실물/서비스 거래이므로 In-App Purchase 대상이 아니지만, 심사관이 "결제 버튼이 외부로 연결된다"고 오인해 3.1.1로 잘못 반려하는 경우가 있어 §3 심사노트 초안에 이 사실을 명시해 둡니다.
 
 ### Universal Links로 인한 iOS 백그라운드 전환 — 실제 버그, 대응 완료 (재활성화 금지)
 
-카카오톡 인앱브라우저 등에서 Universal Links로 앱이 열리면 진입 직후(~1초) iOS가 자체적으로 앱을 백그라운드로 내리고 Safari를 다시 띄우는 현상이 실기기에서 확인됐습니다(앱 쪽 코드에 외부 브라우저를 여는 경로 없음 확인, iOS 자체 동작으로 판단). 이런 동작은 심사관에게 "앱이 예기치 않게 종료/전환된다"는 인상을 줘 반려·재현 조사로 이어질 수 있습니다. 현재 iOS만 Universal Links를 끄고 커스텀 스킴으로 전환한 상태 — 상세와 재활성화 시 주의사항은 [[app-deep-links]] skill §2 참고. **AASA(`apple-app-site-association`)에 appID를 다시 채워 Universal Links를 켜는 작업은 이 버그의 원인 규명 없이 하지 않습니다.**
+카카오톡 인앱브라우저 등에서 Universal Links로 앱이 열리면 진입 직후(~1초) iOS가 자체적으로 앱을 백그라운드로 내리고 Safari를 다시 띄우는 현상이 실기기에서 확인됐습니다(앱 쪽 코드에 외부 브라우저를 여는 경로 없음 확인, iOS 자체 동작으로 판단). 이런 동작은 심사관에게 "앱이 예기치 않게 종료/전환된다"는 인상을 줘 반려·재현 조사로 이어질 수 있습니다. 현재 iOS만 Universal Links를 끄고 커스텀 스킴으로 전환한 상태 — 상세와 재활성화 시 주의사항은 [[picake-link-app-deep-links]] skill §2 참고. **AASA(`apple-app-site-association`)에 appID를 다시 채워 Universal Links를 켜는 작업은 이 버그의 원인 규명 없이 하지 않습니다.**
 
 ## 2. 심사관용 로그인 (Review Account)
 
@@ -139,5 +139,5 @@ If you have any questions, please contact us at picakeee@gmail.com.
 - [ ] 로그인 없이 홈/상품/스토어 진입이 실제로 되는지 확인 (강제 로그인 벽 없음)
 - [ ] 마이페이지 > 설정 > 계정에서 탈퇴가 실제로 끝까지 되는지 확인, 심사 계정에 진행 중 주문이 남아있지 않은지 확인
 - [ ] `curl https://picakes.com/.well-known/apple-app-site-association`가 `{ applinks: { details: [] } }`인지(Universal Links 비활성 유지) 확인
-- [ ] App Store Connect의 App Privacy 설문이 [[legal-terms]] skill의 개인정보처리방침(수집 항목)과 일치하는지 앱담당자에게 확인 요청
+- [ ] App Store Connect의 App Privacy 설문이 [[picake-legal-terms]] skill의 개인정보처리방침(수집 항목)과 일치하는지 앱담당자에게 확인 요청
 - [ ] §3 심사노트에 최신 코드 값·연락처를 채워 App Store Connect에 실제로 붙여넣기

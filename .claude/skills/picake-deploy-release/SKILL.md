@@ -1,5 +1,5 @@
 ---
-name: deploy
+name: picake-deploy-release
 description: Picake의 태그 기반 배포(backend는 AWS EC2, web-user/web-seller/web-admin은 Vercel)를 진행할 때 사용합니다. "배포해줘", "스테이징에 올려줘", "프로덕션 배포", "태그 만들어서 배포", "release" 같은 요청이면 이 skill을 반드시 사용하세요. 배포 실패 원인 파악이나 배포 상태 확인 요청에도 사용합니다.
 ---
 

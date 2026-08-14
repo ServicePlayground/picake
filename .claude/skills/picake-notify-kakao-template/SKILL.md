@@ -1,5 +1,5 @@
 ---
-name: kakao-template
+name: picake-notify-kakao-template
 description: Picake의 카카오 알림톡 템플릿을 SOLAPI에 새로 등록하거나 승인요청(검수 제출)할 때 사용합니다. "카카오 템플릿 만들어줘", "솔라피에 템플릿 등록해줘", "알림톡 템플릿 승인요청 해줘" 같은 요청에 이 skill을 따르세요.
 ---
 
