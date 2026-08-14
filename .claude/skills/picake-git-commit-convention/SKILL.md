@@ -1,5 +1,5 @@
 ---
-name: commit-convention
+name: picake-git-commit-convention
 description: Picake 저장소에 커밋 메시지를 작성할 때 사용합니다. "커밋해줘", "커밋 메시지 만들어줘" 같은 요청을 받으면 이 skill의 접두사 규칙을 따르세요.
 ---
 

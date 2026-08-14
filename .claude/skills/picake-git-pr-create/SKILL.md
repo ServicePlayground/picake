@@ -1,5 +1,5 @@
 ---
-name: pr-create
+name: picake-git-pr-create
 description: Picake 저장소에서 Pull Request를 생성할 때 사용합니다. "PR 만들어줘", "PR 올려줘", "PR 열어줘" 같은 요청을 받으면 이 skill을 따르세요.
 ---
 
@@ -37,7 +37,7 @@ git diff <base>...<head> --stat
 [APP1,APP2][TYPE]: 설명
 ```
 
-- **APP**: [[commit-convention]] skill과 동일한 기준으로 판단 (`git diff <base>...<head> --stat`로 변경 경로 확인)
+- **APP**: [[picake-git-commit-convention]] skill과 동일한 기준으로 판단 (`git diff <base>...<head> --stat`로 변경 경로 확인)
   - `WEB-USER` (`apps/web-user`), `WEB-SELLER` (`apps/web-seller`), `WEB-ADMIN` (`apps/web-admin`), `BE` (`apps/backend`), `COMMON` (특정 앱에 한정되지 않는 변경)
   - 여러 앱에 걸친 변경이면 콤마로 나열 (예: `[BE,WEB-USER]`)
 - **TYPE**: 변경 내용의 성격에 맞게 하나 선택

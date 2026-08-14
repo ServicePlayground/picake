@@ -1,6 +1,6 @@
 ---
-name: app-deep-links
-description: Picake web-user 도메인의 링크가 iOS/Android 네이티브 앱으로 바로 열리게(Universal Links / App Links) 설정하거나 수정할 때 사용합니다. "카카오 알림톡 버튼 iOS에서 앱으로 안 열려", "유니버설링크 설정해줘", "assetlinks/apple-app-site-association 수정" 같은 요청에 이 skill을 따르세요. SOLAPI 템플릿 등록 자체는 `kakao-template` skill을 쓰고, 이 skill은 그 템플릿 버튼 URL이 브라우저가 아니라 앱으로 열리게 하는 인프라만 다룹니다.
+name: picake-link-app-deep-links
+description: Picake web-user 도메인의 링크가 iOS/Android 네이티브 앱으로 바로 열리게(Universal Links / App Links) 설정하거나 수정할 때 사용합니다. "카카오 알림톡 버튼 iOS에서 앱으로 안 열려", "유니버설링크 설정해줘", "assetlinks/apple-app-site-association 수정" 같은 요청에 이 skill을 따르세요. SOLAPI 템플릿 등록 자체는 `picake-notify-kakao-template` skill을 쓰고, 이 skill은 그 템플릿 버튼 URL이 브라우저가 아니라 앱으로 열리게 하는 인프라만 다룹니다.
 ---
 
 # 앱 딥링크(Universal Links / App Links) 설정
@@ -40,7 +40,7 @@ description: Picake web-user 도메인의 링크가 iOS/Android 네이티브 앱
 - `app/mypage/reviews/write/page.tsx` — `/mypage/reviews/write`
 
 **iOS/Android가 근본적으로 다른 점(재활성화 시 참고)**:
-- **`appID` 형식은 `{Apple Team ID}.{Bundle ID}`** 한 문자열입니다. Team ID는 [[social-login]] skill의 Apple Sign-In 작업 때 이미 받은 값과 **같은 Apple Developer 계정**이면 재사용 가능합니다 — `apps/backend/src/modules/auth/constants/auth.constants.ts`의 `APPLE_PRIMARY_APP_ID`(`com.product.picake`)와 `S5AJRJ2DLR`(Team ID, 코드에는 상수로 없고 GitHub Secrets `APPLE_TEAM_ID`에 있음).
+- **`appID` 형식은 `{Apple Team ID}.{Bundle ID}`** 한 문자열입니다. Team ID는 [[picake-auth-social-login]] skill의 Apple Sign-In 작업 때 이미 받은 값과 **같은 Apple Developer 계정**이면 재사용 가능합니다 — `apps/backend/src/modules/auth/constants/auth.constants.ts`의 `APPLE_PRIMARY_APP_ID`(`com.product.picake`)와 `S5AJRJ2DLR`(Team ID, 코드에는 상수로 없고 GitHub Secrets `APPLE_TEAM_ID`에 있음).
 - **Bundle ID는 스테이징/프로덕션 구분 없이 `com.product.picake` 하나만 씁니다(확정, 2026-08-02).** Android처럼 `.staging` 접미사로 분리된 값은 없습니다. 같은 Bundle ID를 쓰면 iOS 특성상(Bundle ID = 기기당 앱 설치 슬롯 하나) 기기에 설치된 빌드가 무엇이든 staging/production 도메인 링크를 누르면 전부 그 앱으로 열립니다 — Android처럼 두 환경 앱을 한 기기에 나란히 설치해서 따로 테스트할 수 없습니다.
 - **`paths`(코드 상수명 `UNIVERSAL_LINK_COMPONENTS`)는 AASA에 직접 명시**해야 합니다 — Android처럼 네이티브 쪽에서 관리하지 않습니다.
 - Sign in with Apple(Services ID 도메인 검증)과 이 AASA 파일은 **완전히 다른 용도**입니다 — 혼동해서 같이 지우지 마세요.

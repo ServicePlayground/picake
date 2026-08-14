@@ -1,5 +1,5 @@
 ---
-name: file-exchange
+name: picake-util-file-exchange
 description: 사용자가 클립보드 복사/붙여넣기가 잘 안 될 때, 파일을 통해 텍스트를 주고받는 용도로 사용합니다. "파일에 써줘", "이거 파일로 줘", "교환 파일 확인해줘" 같은 요청이나, 복붙이 안 된다는 언급이 있으면 이 skill을 따르세요.
 ---
 
