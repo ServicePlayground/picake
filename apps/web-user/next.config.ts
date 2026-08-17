@@ -39,6 +39,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "static.picakes.com",
       },
+      {
+        protocol: "https",
+        hostname: "static-production.picakes.com",
+      },
     ],
   },
   webpack(config) {
