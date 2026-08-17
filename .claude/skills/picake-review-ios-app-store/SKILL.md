@@ -35,6 +35,16 @@ Picake web-user는 겉면만 Flutter로 감싼 **웹뷰 앱**입니다 — 로�
 **수정 완료(2026-08-04)**: `getAppleOAuthLoginUrl()`(`oauth-login-url.util.ts`)의 scope를 `name email`로 변경 → Apple이 **최초 인가 1회 한정**으로 보내는 `user` JSON(form_post 바디)을 `/auth/login/apple/route.ts`가 파싱(`extractAppleDisplayName`)해 `appleName` 쿼리로 콜백(`login/apple/callback/page.tsx`) → 회원가입 화면(`AppleRegisterVerificationScreen.tsx`)까지 전달, "이름" 필드를 미리 채워둠(수정은 여전히 가능 — Apple도 편집 가능한 pre-filled 필드는 허용). **재발 방지 포인트**: Apple은 두 번째 로그인부터는 `user`를 다시 안 보내므로(계정 재인가 등) 그때는 정상적으로 빈 입력을 받는 게 맞음 — "왜 이번엔 이름이 안 채워지지"라고 이걸 다시 버그로 오인하지 말 것.
 **제출 전 확인**: `NEXT_PUBLIC_APPLE_CLIENT_ID`가 `web-user-staging`/`web-user-production` Vercel 프로젝트에 실제로 설정돼 있는지, staging Return URL이 Apple 쪽에 등록됐는지 — 이 두 가지는 로컬에서 재현 불가능하므로 실기기/스테이징에서 **탈퇴 후 재가입** 등으로 최초 인가 상태를 만들어 이름이 실제로 채워지는지 검증하세요(같은 Apple 계정으로 이미 한 번 이 앱에 인가했다면 `user`가 다시 안 옴 — Apple ID 설정 > 로그인 및 보안 > Apple로 로그인 사용 중인 앱에서 Picake 연결을 해제해야 최초 인가 상태로 재현 가능).
 
+### 4 (Design) 위치 기능이 제3자 지도 앱으로만 연결됨 — 진행 중, 오진단했던 사례 주의
+
+**반려 내용(2026-08-17)**: "The app's location feature is not integrated with the built-in mapping functionality, which limits users to a third-party maps app." → "revise the app to give users the option to launch the native Apple Maps app." (원문 전체는 `.claude/exchange.md` 참고 — 이 반려는 심사관이 데모 계정으로 **주문을 한 번도 하지 않은 상태**에서 나온 지적임, 심사 계정에 주문 이력 없음이 확인됨.)
+
+**처음에 잘못 짚었던 지점**: 저장소에서 "외부 지도 앱으로 나가는" 코드는 `NavigationBottomSheet.tsx`(`apps/web-user/src/common/components/bottom-sheets/`) 하나뿐이라, 커밋 `a085d951`에서 여기에 Apple 지도(`maps.apple.com`) 옵션을 추가했음. **하지만 이 컴포넌트는 `ConfirmedOrderCard`/`OrderDetailView`/`PastOrderList`/`UpcomingOrderList`/`ReservationInfoSection` 등 전부 주문이 존재해야만 렌더링되는 화면에서만 쓰인다.** 심사 계정(§2의 리뷰 로그인 계정이든 구글 데모 계정이든)엔 사전 시딩된 주문이 없으므로(코드에도 주문 시딩 로직 없음, `prisma/seed.ts` 등 확인됨), 심사관이 실제로 결제까지 끝내지 않는 한 이 화면 자체를 볼 수 없다 — 즉 **이 수정은 심사관이 도달 불가능한 곳을 고친 것이라 이번 반려를 해결 못 했을 가능성이 높음.**
+
+**로그인/주문 없이 심사관이 실제로 도달 가능한 유일한 "위치 기능"**: 하단 내비게이션의 "지도" 탭(`/map`, `MapPageClient.tsx`). 카카오맵 JS SDK로 전체 화면 지도를 그리고, 마커 클릭 시 스토어 상세로 이동하거나(`MapStoreCard`) 입점 요청 카드가 뜰 뿐(`MapUnenteredStoreCard`), **여기에도 Apple 지도로 연결되는 지점이 전혀 없다.** 스토어 상세 페이지(`/store/[storeId]/page.tsx`)도 상품/후기/피드 탭뿐, "찾아오시는 길" 류의 지도 섹션 자체가 없음. 반려 문구가 정확히 뭘 가리키는지(지도 탭 자체를 MapKit으로 바꾸라는 건지, 카카오맵은 유지하되 "애플 지도에서 보기" 버튼만 추가하면 되는지, 한국 외 지역도 봐야 하는지)가 불명확해 **코드부터 고치지 말고 Apple에 먼저 질의하기로 함**(질문 초안은 `.claude/exchange.md` 맨 아래 "Reply to Apple (draft)" 참고, App Store Connect Resolution Center에 제출 예정).
+
+**다음 담당자가 이어받을 때 확인할 것**: Apple 답변이 왔으면 그 내용에 맞춰 `/map` 탭 쪽(MapStoreCard 등)에 실제 작업을 진행하고, 이 섹션과 §1의 4.8 인접 위치에 결과를 갱신할 것. `a085d951`(주문 화면의 Apple 지도 옵션)은 나쁜 수정은 아니지만 **이 반려의 해결책이라고 단정하지 말 것** — 별개로 유지해도 무방하나 재현/검증 없이 "완료"로 표시하지 않는다.
+
 ### 5.1.1(v) 계정 삭제 — 대응 완료
 
 앱 내에서 고객센터 문의 없이 바로 탈퇴 가능해야 합니다. `apps/web-user/src/app/mypage/setting/account/page.tsx` + `WithdrawBottomSheet` + `useWithdraw` 훅으로 마이페이지 > 설정 > 계정에서 즉시 탈퇴 가능. Apple 계정으로 가입한 경우 탈퇴 시 `POST https://appleid.apple.com/auth/revoke`까지 호출([[picake-auth-social-login]] skill §5 "탈퇴 시 revoke 필수"). 진행 중인 주문이 있으면 탈퇴가 막히는데(`WITHDRAW_BLOCKED_ACTIVE_ORDERS`), 이건 정상 비즈니스 로직이지 심사 반려 사유가 아님 — 다만 심사관 계정에 진행 중 주문이 남아있으면 탈퇴 테스트가 막히니 심사 전 확인.
@@ -51,6 +61,8 @@ Picake web-user는 겉면만 Flutter로 감싼 **웹뷰 앱**입니다 — 로�
 1. 프로덕션 DB에 `visibilityStatus: ENABLE` 상품을 가진 스토어가 실제로 존재하는지, 몇 개 지역에 분포하는지 확인 (관리자 페이지 또는 `db:studio` 등으로).
 2. 활성 지역이 극소수(예: 강남구 하나)라면, 심사관이 그 지역으로 자동/수동 유도되는지 실기기로 직접 검증 — 특히 GPS 위치가 한국이 아닌 경우(Apple 심사는 대체로 해외에서 진행) `Header.tsx`의 "outside" 분기(`handleOutsideConfirm`)가 기본 지역(강남구)으로 정상 리셋되는지 확인.
 3. 가능하면 활성 지역을 1곳보다 늘려서(실제 셀러 온보딩 또는 데모용 스토어/상품 등록) 심사관이 지역을 이리저리 눌러봐도 빈 화면을 안 만나게 하는 게 가장 안전합니다.
+
+**3차 반려(2026-08-17, 별개 사유 — 인증 코드 요구)**: 이번엔 "제공한 데모 계정 아이디/비밀번호만으로는 부족하고, 콘텐츠 접근·기능 검증을 위한 **인증 코드**가 추가로 필요하다"는 지적으로, 위 활성 지역 버그와는 다른 사유임(원문은 `.claude/exchange.md` 참고). Apple은 통화로 코드를 받거나, 데모 계정이 코드 검증을 건너뛰게 하거나, 고정 코드를 Review Notes에 적어달라고 제안함. 대응은 §2의 심사용 로그인(코드는 이미 고정값)을 안내하는 것으로 충분해 보이나, **이 반려가 왜 발생했는지(심사관이 §2의 탭-10회 진입법을 못 찾았는지, 아니면 구글 로그인 자체에서 2단계 인증을 요구했는지)는 확인되지 않음** — 재발 방지를 위해 심사노트(§3)에 §2의 로그인 방법을 반드시 명시하고, 구글 데모 계정(`picakeee@gmail.com`)도 함께 제공해 Apple에 재확인 요청함. Apple 응답이 오면 실제 원인을 여기 갱신할 것.
 
 ### 2.1 App Completeness — 로그인 없이 둘러보기 가능한지 확인 완료
 
