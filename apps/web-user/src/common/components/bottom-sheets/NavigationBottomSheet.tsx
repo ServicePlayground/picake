@@ -24,6 +24,11 @@ function openNaverNavigation(lat: number, lng: number, name: string) {
   );
 }
 
+function openAppleNavigation(lat: number, lng: number, name: string) {
+  const encodedName = encodeURIComponent(name);
+  window.open(`https://maps.apple.com/?daddr=${lat},${lng}&q=${encodedName}`, "_blank");
+}
+
 export function NavigationBottomSheet({
   isOpen,
   onClose,
@@ -64,6 +69,34 @@ export function NavigationBottomSheet({
             label: "카카오 지도",
             onClick: () => {
               openKakaoNavigation(latitude, longitude, storeName);
+              onClose();
+            },
+          },
+          {
+            icon: {
+              type: "element",
+              element: (
+                <div className="w-10 h-10 rounded-full bg-black flex items-center justify-center">
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7Z"
+                      fill="white"
+                    />
+                    <circle cx="12" cy="9" r="2.5" fill="black" />
+                  </svg>
+                </div>
+              ),
+            },
+            label: "Apple 지도",
+            onClick: () => {
+              openAppleNavigation(latitude, longitude, storeName);
               onClose();
             },
           },
