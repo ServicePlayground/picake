@@ -204,6 +204,7 @@ export default function MypagePage() {
         {[
           { label: "공지사항", href: PATHS.NOTICE },
           { label: "Q&A", href: PATHS.QNA },
+          { label: "고객센터", href: PATHS.SUPPORT },
         ].map(({ label, href }) => (
           <LinkListItem key={label} href={href} label={label} />
         ))}
