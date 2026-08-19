@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import type { ReactNode } from "react";
-import { Icon } from "@/apps/web-user/common/components/icons";
 
 const SUPPORT_EMAIL = "picakeee@gmail.com";
 const SUPPORT_PHONE = "010-3007-5647";
@@ -35,40 +34,18 @@ interface SupportRowProps {
   icon: ReactNode;
   label: string;
   value: string;
-  /** 생략 시 탭할 수 없는 단순 정보 표시 행(아이디/채널명 안내용) */
-  onClick?: () => void;
 }
 
-function SupportRow({ icon, label, value, onClick }: SupportRowProps) {
-  const content = (
-    <>
+/** 탭 동작 없이 라벨/값만 보여주는 정보 행 */
+function SupportRow({ icon, label, value }: SupportRowProps) {
+  return (
+    <div className="w-full flex items-center gap-3 px-5 py-4 border-b border-gray-100">
       <div className="w-6 h-6 shrink-0 flex items-center justify-center">{icon}</div>
       <div className="flex-1 text-left">
         <p className="text-sm font-bold text-gray-900">{label}</p>
         <p className="text-xs text-gray-500 mt-0.5">{value}</p>
       </div>
-      {onClick && (
-        <Icon name="arrow" width={20} height={20} className="text-gray-900 rotate-90 shrink-0" />
-      )}
-    </>
-  );
-
-  if (!onClick) {
-    return (
-      <div className="w-full flex items-center gap-3 px-5 py-4 border-b border-gray-100">
-        {content}
-      </div>
-    );
-  }
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="w-full flex items-center gap-3 px-5 py-4 border-b border-gray-100"
-    >
-      {content}
-    </button>
+    </div>
   );
 }
 
@@ -79,14 +56,7 @@ function SupportRow({ icon, label, value, onClick }: SupportRowProps) {
 export function CustomerSupportScreen() {
   return (
     <div className="pt-4 pb-10">
-      <SupportRow
-        icon={<MailIcon />}
-        label="이메일"
-        value={SUPPORT_EMAIL}
-        onClick={() => {
-          window.location.href = `mailto:${SUPPORT_EMAIL}`;
-        }}
-      />
+      <SupportRow icon={<MailIcon />} label="이메일" value={SUPPORT_EMAIL} />
       <SupportRow
         icon={
           <Image
@@ -99,9 +69,6 @@ export function CustomerSupportScreen() {
         }
         label="전화 문의"
         value={SUPPORT_PHONE}
-        onClick={() => {
-          window.location.href = `tel:${SUPPORT_PHONE.replace(/[^0-9+]/g, "")}`;
-        }}
       />
       <SupportRow
         icon={
