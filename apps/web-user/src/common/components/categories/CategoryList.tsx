@@ -33,9 +33,9 @@ export default function CategoryList() {
     const check = () => {
       const buttons = Array.from(el.querySelectorAll("button"));
       const totalButtonWidth = buttons.reduce((sum, btn) => sum + btn.offsetWidth, 0);
-      const gapTotal = 10 * (buttons.length - 1);
+
       const padding = 40; // 양쪽 20px
-      setIsOverflow(totalButtonWidth + gapTotal + padding > measure.clientWidth);
+      setIsOverflow(totalButtonWidth + padding > measure.clientWidth);
     };
 
     check();
@@ -61,7 +61,6 @@ export default function CategoryList() {
 
   return (
     <div ref={measureRef}>
-      {" "}
       {/* 너비 측정 전용 */}
       <div className={isOverflow ? "mx-[-24px]" : ""}>
         <div
