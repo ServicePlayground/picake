@@ -1,0 +1,289 @@
+name: Infra Monitoring (Daily Report)
+
+# 매일 1회 staging/production EC2 인프라 상태(디스크, 메모리, PM2, nginx, SSL 인증서, 헬스체크)를
+# 점검해서 디스코드로 요약 리포트를 보냅니다. 배포 트리거가 아니라 순수 모니터링용입니다.
+
+on:
+  schedule:
+    - cron: "0 0 * * *" # 매일 00:00 UTC = 09:00 KST
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup SSH keys
+        run: |
+          mkdir -p ~/.ssh
+          umask 077
+          printf '%s\n' "${{ secrets.STAGING_EC2_SSH_KEY }}" > ~/.ssh/staging.pem
+          printf '%s\n' "${{ secrets.PRODUCTION_EC2_SSH_KEY }}" > ~/.ssh/production.pem
+          chmod 600 ~/.ssh/staging.pem ~/.ssh/production.pem
+
+      - name: Gather staging EC2 status
+        id: staging
+        env:
+          HOST: ${{ secrets.STAGING_EC2_HOST }}
+        run: |
+          OUT=$(ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i ~/.ssh/staging.pem "ec2-user@${HOST}" '
+            UPTIME=$(uptime -p 2>/dev/null)
+            DISK_LINE=$(df -h / | tail -1)
+            DISK_PCT=$(echo "$DISK_LINE" | awk "{print \$5}" | tr -d "%")
+            DISK_HUMAN=$(echo "$DISK_LINE" | awk "{print \$3\"/\"\$2\" (\"\$5\")\"}")
+            MEM_HUMAN=$(free -h | awk "/Mem:/{print \$3\"/\"\$2}")
+            CERT_FILE="/etc/letsencrypt/live/api-staging.picakes.com/fullchain.pem"
+            if sudo test -f "$CERT_FILE"; then
+              NOT_AFTER=$(sudo openssl x509 -in "$CERT_FILE" -noout -enddate 2>/dev/null | cut -d= -f2)
+              EXP_EPOCH=$(date -d "$NOT_AFTER" +%s 2>/dev/null || echo 0)
+              SSL_DAYS=$(( (EXP_EPOCH - $(date +%s)) / 86400 ))
+            else
+              SSL_DAYS="NA"
+            fi
+            TIMER_ACTIVE=$(systemctl is-active certbot-renew.timer 2>/dev/null)
+            TIMER_ENABLED=$(systemctl is-enabled certbot-renew.timer 2>/dev/null)
+            NGINX_ACTIVE=$(systemctl is-active nginx 2>/dev/null)
+            PM2_JSON=$(pm2 jlist 2>/dev/null)
+            PM2_STATUS=$(echo "$PM2_JSON" | jq -r ".[] | select(.name==\"picake-backend-staging\") | .pm2_env.status" 2>/dev/null)
+            PM2_RESTARTS=$(echo "$PM2_JSON" | jq -r ".[] | select(.name==\"picake-backend-staging\") | .pm2_env.restart_time" 2>/dev/null)
+            LOCAL_HEALTH=$(curl -sf -o /dev/null -w "%{http_code}" http://localhost:8080/health 2>/dev/null)
+            echo "UPTIME=${UPTIME:-unknown}"
+            echo "DISK_PCT=${DISK_PCT:-NA}"
+            echo "DISK_HUMAN=${DISK_HUMAN:-NA}"
+            echo "MEM_HUMAN=${MEM_HUMAN:-NA}"
+            echo "SSL_DAYS=${SSL_DAYS:-NA}"
+            echo "TIMER_ACTIVE=${TIMER_ACTIVE:-unknown}"
+            echo "TIMER_ENABLED=${TIMER_ENABLED:-unknown}"
+            echo "NGINX_ACTIVE=${NGINX_ACTIVE:-unknown}"
+            echo "PM2_STATUS=${PM2_STATUS:-unknown}"
+            echo "PM2_RESTARTS=${PM2_RESTARTS:-NA}"
+            echo "LOCAL_HEALTH=${LOCAL_HEALTH:-000}"
+          ' 2>&1) || true
+          echo "$OUT"
+          echo "$OUT" | grep -E '^[A-Z0-9_]+=' >> "$GITHUB_OUTPUT"
+
+      - name: Gather production EC2 status
+        id: production
+        env:
+          HOST: ${{ secrets.PRODUCTION_EC2_HOST }}
+        run: |
+          OUT=$(ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i ~/.ssh/production.pem "ec2-user@${HOST}" '
+            UPTIME=$(uptime -p 2>/dev/null)
+            DISK_LINE=$(df -h / | tail -1)
+            DISK_PCT=$(echo "$DISK_LINE" | awk "{print \$5}" | tr -d "%")
+            DISK_HUMAN=$(echo "$DISK_LINE" | awk "{print \$3\"/\"\$2\" (\"\$5\")\"}")
+            MEM_HUMAN=$(free -h | awk "/Mem:/{print \$3\"/\"\$2}")
+            CERT_FILE="/etc/letsencrypt/live/api.picakes.com/fullchain.pem"
+            if sudo test -f "$CERT_FILE"; then
+              NOT_AFTER=$(sudo openssl x509 -in "$CERT_FILE" -noout -enddate 2>/dev/null | cut -d= -f2)
+              EXP_EPOCH=$(date -d "$NOT_AFTER" +%s 2>/dev/null || echo 0)
+              SSL_DAYS=$(( (EXP_EPOCH - $(date +%s)) / 86400 ))
+            else
+              SSL_DAYS="NA"
+            fi
+            TIMER_ACTIVE=$(systemctl is-active certbot-renew.timer 2>/dev/null)
+            TIMER_ENABLED=$(systemctl is-enabled certbot-renew.timer 2>/dev/null)
+            NGINX_ACTIVE=$(systemctl is-active nginx 2>/dev/null)
+            PM2_JSON=$(pm2 jlist 2>/dev/null)
+            PM2_STATUS=$(echo "$PM2_JSON" | jq -r ".[] | select(.name==\"picake-backend-production\") | .pm2_env.status" 2>/dev/null)
+            PM2_RESTARTS=$(echo "$PM2_JSON" | jq -r ".[] | select(.name==\"picake-backend-production\") | .pm2_env.restart_time" 2>/dev/null)
+            LOCAL_HEALTH=$(curl -sf -o /dev/null -w "%{http_code}" http://localhost:8080/health 2>/dev/null)
+            echo "UPTIME=${UPTIME:-unknown}"
+            echo "DISK_PCT=${DISK_PCT:-NA}"
+            echo "DISK_HUMAN=${DISK_HUMAN:-NA}"
+            echo "MEM_HUMAN=${MEM_HUMAN:-NA}"
+            echo "SSL_DAYS=${SSL_DAYS:-NA}"
+            echo "TIMER_ACTIVE=${TIMER_ACTIVE:-unknown}"
+            echo "TIMER_ENABLED=${TIMER_ENABLED:-unknown}"
+            echo "NGINX_ACTIVE=${NGINX_ACTIVE:-unknown}"
+            echo "PM2_STATUS=${PM2_STATUS:-unknown}"
+            echo "PM2_RESTARTS=${PM2_RESTARTS:-NA}"
+            echo "LOCAL_HEALTH=${LOCAL_HEALTH:-000}"
+          ' 2>&1) || true
+          echo "$OUT"
+          echo "$OUT" | grep -E '^[A-Z0-9_]+=' >> "$GITHUB_OUTPUT"
+
+      - name: External checks (SSL + frontend domains)
+        id: external
+        run: |
+          check_ssl() {
+            HOST=$1
+            EXP=$(echo | openssl s_client -connect "${HOST}:443" -servername "$HOST" 2>/dev/null | openssl x509 -noout -enddate 2>/dev/null | cut -d= -f2)
+            if [ -z "$EXP" ]; then echo "NA"; return; fi
+            EPOCH=$(date -d "$EXP" +%s 2>/dev/null || echo 0)
+            echo $(( (EPOCH - $(date +%s)) / 86400 ))
+          }
+          check_http() {
+            curl -sf -o /dev/null -w "%{http_code}" --connect-timeout 10 "https://$1" 2>/dev/null || echo 000
+          }
+          {
+            echo "STAGING_API_SSL_DAYS=$(check_ssl api-staging.picakes.com)"
+            echo "PROD_API_SSL_DAYS=$(check_ssl api.picakes.com)"
+            echo "STAGING_API_HEALTH=$(check_http api-staging.picakes.com/health)"
+            echo "PROD_API_HEALTH=$(check_http api.picakes.com/health)"
+            echo "STAGING_WEB_USER=$(check_http staging.picakes.com)"
+            echo "STAGING_WEB_SELLER=$(check_http seller-staging.picakes.com)"
+            echo "STAGING_WEB_ADMIN=$(check_http admin-staging.picakes.com)"
+            echo "PROD_WEB_USER=$(check_http picakes.com)"
+            echo "PROD_WEB_SELLER=$(check_http seller.picakes.com)"
+            echo "PROD_WEB_ADMIN=$(check_http admin.picakes.com)"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Build and send Discord report
+        if: always()
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL_INFRA_MONITORING }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          S_UPTIME: ${{ steps.staging.outputs.UPTIME }}
+          S_DISK_PCT: ${{ steps.staging.outputs.DISK_PCT }}
+          S_DISK_HUMAN: ${{ steps.staging.outputs.DISK_HUMAN }}
+          S_MEM: ${{ steps.staging.outputs.MEM_HUMAN }}
+          S_SSL_DAYS: ${{ steps.staging.outputs.SSL_DAYS }}
+          S_TIMER_ACTIVE: ${{ steps.staging.outputs.TIMER_ACTIVE }}
+          S_TIMER_ENABLED: ${{ steps.staging.outputs.TIMER_ENABLED }}
+          S_NGINX: ${{ steps.staging.outputs.NGINX_ACTIVE }}
+          S_PM2_STATUS: ${{ steps.staging.outputs.PM2_STATUS }}
+          S_PM2_RESTARTS: ${{ steps.staging.outputs.PM2_RESTARTS }}
+          S_LOCAL_HEALTH: ${{ steps.staging.outputs.LOCAL_HEALTH }}
+          P_UPTIME: ${{ steps.production.outputs.UPTIME }}
+          P_DISK_PCT: ${{ steps.production.outputs.DISK_PCT }}
+          P_DISK_HUMAN: ${{ steps.production.outputs.DISK_HUMAN }}
+          P_MEM: ${{ steps.production.outputs.MEM_HUMAN }}
+          P_SSL_DAYS: ${{ steps.production.outputs.SSL_DAYS }}
+          P_TIMER_ACTIVE: ${{ steps.production.outputs.TIMER_ACTIVE }}
+          P_TIMER_ENABLED: ${{ steps.production.outputs.TIMER_ENABLED }}
+          P_NGINX: ${{ steps.production.outputs.NGINX_ACTIVE }}
+          P_PM2_STATUS: ${{ steps.production.outputs.PM2_STATUS }}
+          P_PM2_RESTARTS: ${{ steps.production.outputs.PM2_RESTARTS }}
+          P_LOCAL_HEALTH: ${{ steps.production.outputs.LOCAL_HEALTH }}
+          E_S_API_SSL: ${{ steps.external.outputs.STAGING_API_SSL_DAYS }}
+          E_P_API_SSL: ${{ steps.external.outputs.PROD_API_SSL_DAYS }}
+          E_S_API_HEALTH: ${{ steps.external.outputs.STAGING_API_HEALTH }}
+          E_P_API_HEALTH: ${{ steps.external.outputs.PROD_API_HEALTH }}
+          E_S_WEB_USER: ${{ steps.external.outputs.STAGING_WEB_USER }}
+          E_S_WEB_SELLER: ${{ steps.external.outputs.STAGING_WEB_SELLER }}
+          E_S_WEB_ADMIN: ${{ steps.external.outputs.STAGING_WEB_ADMIN }}
+          E_P_WEB_USER: ${{ steps.external.outputs.PROD_WEB_USER }}
+          E_P_WEB_SELLER: ${{ steps.external.outputs.PROD_WEB_SELLER }}
+          E_P_WEB_ADMIN: ${{ steps.external.outputs.PROD_WEB_ADMIN }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "⚠️ DISCORD_WEBHOOK_URL_INFRA_MONITORING is not set — skipping notification"
+            exit 0
+          fi
+
+          check_days() {
+            local d="$1"
+            if [ -z "$d" ] || [ "$d" = "NA" ]; then echo "❓ 확인불가"; return; fi
+            if [ "$d" -lt 0 ] 2>/dev/null; then echo "❌ 만료됨 (${d}일 경과)";
+            elif [ "$d" -le 14 ] 2>/dev/null; then echo "⚠️ ${d}일 남음";
+            else echo "✅ ${d}일 남음"; fi
+          }
+          check_http_status() {
+            local code="$1"
+            if [ "$code" = "200" ]; then echo "✅ 200"; else echo "❌ ${code:-000}"; fi
+          }
+          check_pm2() {
+            local st="$1"
+            if [ "$st" = "online" ]; then echo "✅ online"; else echo "❌ ${st:-unknown}"; fi
+          }
+          check_timer() {
+            local active="$1" enabled="$2"
+            if [ "$active" = "active" ] && [ "$enabled" = "enabled" ]; then echo "✅ active/enabled";
+            else echo "⚠️ active=${active:-?}, enabled=${enabled:-?}"; fi
+          }
+          check_active() {
+            local st="$1"
+            if [ "$st" = "active" ]; then echo "✅ active"; else echo "❌ ${st:-unknown}"; fi
+          }
+          check_disk() {
+            local pct="$1" human="$2"
+            if [ -z "$pct" ] || [ "$pct" = "NA" ]; then echo "❓ ${human:-확인불가}"; return; fi
+            if [ "$pct" -ge 90 ] 2>/dev/null; then echo "❌ ${human}";
+            elif [ "$pct" -ge 75 ] 2>/dev/null; then echo "⚠️ ${human}";
+            else echo "✅ ${human}"; fi
+          }
+
+          S_SSL_F=$(check_days "$S_SSL_DAYS")
+          P_SSL_F=$(check_days "$P_SSL_DAYS")
+          S_HEALTH_F=$(check_http_status "$S_LOCAL_HEALTH")
+          P_HEALTH_F=$(check_http_status "$P_LOCAL_HEALTH")
+          S_PM2_F=$(check_pm2 "$S_PM2_STATUS")
+          P_PM2_F=$(check_pm2 "$P_PM2_STATUS")
+          S_TIMER_F=$(check_timer "$S_TIMER_ACTIVE" "$S_TIMER_ENABLED")
+          P_TIMER_F=$(check_timer "$P_TIMER_ACTIVE" "$P_TIMER_ENABLED")
+          S_NGINX_F=$(check_active "$S_NGINX")
+          P_NGINX_F=$(check_active "$P_NGINX")
+          S_DISK_F=$(check_disk "$S_DISK_PCT" "$S_DISK_HUMAN")
+          P_DISK_F=$(check_disk "$P_DISK_PCT" "$P_DISK_HUMAN")
+
+          E_S_API_SSL_F=$(check_days "$E_S_API_SSL")
+          E_P_API_SSL_F=$(check_days "$E_P_API_SSL")
+          E_S_API_HEALTH_F=$(check_http_status "$E_S_API_HEALTH")
+          E_P_API_HEALTH_F=$(check_http_status "$E_P_API_HEALTH")
+          E_S_WEB_USER_F=$(check_http_status "$E_S_WEB_USER")
+          E_S_WEB_SELLER_F=$(check_http_status "$E_S_WEB_SELLER")
+          E_S_WEB_ADMIN_F=$(check_http_status "$E_S_WEB_ADMIN")
+          E_P_WEB_USER_F=$(check_http_status "$E_P_WEB_USER")
+          E_P_WEB_SELLER_F=$(check_http_status "$E_P_WEB_SELLER")
+          E_P_WEB_ADMIN_F=$(check_http_status "$E_P_WEB_ADMIN")
+
+          ALL_TEXT="$S_SSL_F $P_SSL_F $S_HEALTH_F $P_HEALTH_F $S_PM2_F $P_PM2_F $S_TIMER_F $P_TIMER_F $S_NGINX_F $P_NGINX_F $S_DISK_F $P_DISK_F $E_S_API_SSL_F $E_P_API_SSL_F $E_S_API_HEALTH_F $E_P_API_HEALTH_F $E_S_WEB_USER_F $E_S_WEB_SELLER_F $E_S_WEB_ADMIN_F $E_P_WEB_USER_F $E_P_WEB_SELLER_F $E_P_WEB_ADMIN_F"
+
+          if echo "$ALL_TEXT" | grep -qE '❌|❓'; then
+            TITLE="🚨 인프라 모니터링 — 확인 필요"
+            COLOR=15548997
+          elif echo "$ALL_TEXT" | grep -q '⚠️'; then
+            TITLE="⚠️ 인프라 모니터링 — 주의"
+            COLOR=16776960
+          else
+            TITLE="✅ 인프라 모니터링 — 정상"
+            COLOR=5763719
+          fi
+
+          E_S_WEB="user: ${E_S_WEB_USER_F} / seller: ${E_S_WEB_SELLER_F} / admin: ${E_S_WEB_ADMIN_F}"
+          E_P_WEB="user: ${E_P_WEB_USER_F} / seller: ${E_P_WEB_SELLER_F} / admin: ${E_P_WEB_ADMIN_F}"
+
+          PAYLOAD=$(jq -n \
+            --arg title "$TITLE" \
+            --argjson color "$COLOR" \
+            --arg run_url "$RUN_URL" \
+            --arg s_uptime "${S_UPTIME:-unknown}" --arg s_disk "$S_DISK_F" --arg s_mem "${S_MEM:-NA}" \
+            --arg s_ssl "$S_SSL_F" --arg s_timer "$S_TIMER_F" --arg s_nginx "$S_NGINX_F" \
+            --arg s_pm2 "$S_PM2_F" --arg s_restarts "${S_PM2_RESTARTS:-NA}" --arg s_health "$S_HEALTH_F" \
+            --arg s_api_ssl "$E_S_API_SSL_F" --arg s_api_health "$E_S_API_HEALTH_F" --arg s_web "$E_S_WEB" \
+            --arg p_uptime "${P_UPTIME:-unknown}" --arg p_disk "$P_DISK_F" --arg p_mem "${P_MEM:-NA}" \
+            --arg p_ssl "$P_SSL_F" --arg p_timer "$P_TIMER_F" --arg p_nginx "$P_NGINX_F" \
+            --arg p_pm2 "$P_PM2_F" --arg p_restarts "${P_PM2_RESTARTS:-NA}" --arg p_health "$P_HEALTH_F" \
+            --arg p_api_ssl "$E_P_API_SSL_F" --arg p_api_health "$E_P_API_HEALTH_F" --arg p_web "$E_P_WEB" \
+            '{
+              embeds: [{
+                title: $title,
+                color: $color,
+                fields: [
+                  { name: "🟡 Staging — EC2 (api-staging.picakes.com)", value: ("가동시간: " + $s_uptime + "\n디스크: " + $s_disk + "\n메모리: " + $s_mem + "\nnginx: " + $s_nginx + "\npm2(backend): " + $s_pm2 + " (restart " + $s_restarts + "회)\nlocalhost 헬스체크: " + $s_health), inline: false },
+                  { name: "🟡 Staging — SSL/외부 접근", value: ("EC2 로컬 SSL: " + $s_ssl + "\ncertbot 타이머: " + $s_timer + "\n외부 SSL(api-staging): " + $s_api_ssl + "\n외부 헬스체크(api-staging): " + $s_api_health + "\n프론트 상태: " + $s_web), inline: false },
+                  { name: "🔴 Production — EC2 (api.picakes.com)", value: ("가동시간: " + $p_uptime + "\n디스크: " + $p_disk + "\n메모리: " + $p_mem + "\nnginx: " + $p_nginx + "\npm2(backend): " + $p_pm2 + " (restart " + $p_restarts + "회)\nlocalhost 헬스체크: " + $p_health), inline: false },
+                  { name: "🔴 Production — SSL/외부 접근", value: ("EC2 로컬 SSL: " + $p_ssl + "\ncertbot 타이머: " + $p_timer + "\n외부 SSL(api): " + $p_api_ssl + "\n외부 헬스체크(api): " + $p_api_health + "\n프론트 상태: " + $p_web), inline: false },
+                  { name: "GitHub Actions", value: ("[워크플로우 로그](" + $run_url + ")"), inline: false }
+                ],
+                timestamp: (now | strftime("%Y-%m-%dT%H:%M:%SZ"))
+              }]
+            }')
+
+          HTTP_STATUS=$(curl -s -o /tmp/discord_response.txt -w "%{http_code}" \
+            -X POST \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD" \
+            "$DISCORD_WEBHOOK_URL")
+
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
+            echo "✅ Discord notification sent (HTTP $HTTP_STATUS)"
+          else
+            echo "⚠️ Discord notification failed (HTTP $HTTP_STATUS)"
+            cat /tmp/discord_response.txt
+            exit 1
+          fi
