@@ -83,8 +83,8 @@ ssh -i picake-backend-staging-key.pem ec2-user@<EC2_PUBLIC_IP>
 # 시스템 업데이트
 sudo dnf update -y
 
-# Node.js 20 설치 (NodeSource 저장소 사용)
-curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
+# Node.js 24 설치 (NodeSource 저장소 사용)
+curl -fsSL https://rpm.nodesource.com/setup_24.x | sudo bash -
 sudo dnf install -y nodejs
 
 # PM2 설치 (프로세스 매니저)
@@ -108,7 +108,7 @@ sudo corepack prepare yarn@4.9.4 --activate
 
 ```bash
 # Node.js 버전 확인
-node --version  # v20.x.x
+node --version  # v24.x.x
 
 # Yarn 버전 확인
 yarn --version  # 4.9.4
