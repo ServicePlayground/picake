@@ -6,7 +6,7 @@ Yarn Berry + Workspace 기반 모노레포 프로젝트로 구성된 디저트 �
 
 ### 필수 요구사항
 
-- Node.js (v20.19 이상)
+- Node.js (v24 이상)
 - Yarn (v4.9.4 이상)
 
 ### 로컬 개발 환경변수 설정

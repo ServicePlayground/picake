@@ -22,7 +22,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "24"
 
       # packageManager: yarn@4.x — setup-node의 cache: yarn은 Corepack 전 Yarn 1.x를 호출해 실패함
       - name: Enable Corepack

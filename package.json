@@ -1,6 +1,9 @@
 {
   "name": "Picake",
   "private": true,
+  "engines": {
+    "node": ">=24"
+  },
   "packageManager": "yarn@4.9.4",
   "workspaces": [
     "apps/*/*",
