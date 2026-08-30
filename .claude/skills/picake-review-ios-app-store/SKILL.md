@@ -5,6 +5,8 @@ description: Picake web-user가 겉면만 Flutter로 감싼 웹뷰 앱으로 iOS
 
 # iOS 앱스토어 심사 대응
 
+> **현재 상태(2026-08-30 기준): 심사 승인 완료, iOS 앱스토어 배포 성공.** 4차 반려(§1의 2.1(a)+1.5, §3-2)까지 대응한 재심사에서 통과됨. 이 문서는 이력 참고용으로 계속 유지하고, 새 반려가 오면 §4 절차대로 대응해 §1에 이어서 기록하세요.
+
 Picake web-user는 겉면만 Flutter로 감싼 **웹뷰 앱**입니다 — 로그인부터 주문·결제까지 대부분의 로직이 `apps/web-user`(Next.js)와 `apps/backend`에 있고, 네이티브 Flutter 쪽은 스플래시, FCM 푸시 토큰, 위치 브릿지(`window.mylocation`), 딥링크 스킴 처리 정도만 담당합니다(`apps/web-user/src/common/utils/webview.bridge.ts` 참고). 이 구조 자체가 Apple 심사에서 반복적으로 걸리는 지점이므로, **반려 메일을 받으면 먼저 이 문서에서 해당 가이드라인 번호를 찾아 이미 구현된 대응이 있는지 확인하고, 없는 부분만 새로 작업하세요.**
 
 ## 0. 이 저장소에서 할 수 있는 일 vs 없는 일
@@ -64,28 +66,31 @@ Picake web-user는 겉면만 Flutter로 감싼 **웹뷰 앱**입니다 — 로�
 
 **3차 반려(2026-08-17, 별개 사유 — 인증 코드 요구)**: 이번엔 "제공한 데모 계정 아이디/비밀번호만으로는 부족하고, 콘텐츠 접근·기능 검증을 위한 **인증 코드**가 추가로 필요하다"는 지적으로, 위 활성 지역 버그와는 다른 사유임(원문은 `.claude/exchange.md` 참고). Apple은 통화로 코드를 받거나, 데모 계정이 코드 검증을 건너뛰게 하거나, 고정 코드를 Review Notes에 적어달라고 제안함. 대응은 §2의 심사용 로그인(코드는 이미 고정값)을 안내하는 것으로 충분해 보이나, **이 반려가 왜 발생했는지(심사관이 §2의 탭-10회 진입법을 못 찾았는지, 아니면 구글 로그인 자체에서 2단계 인증을 요구했는지)는 확인되지 않음** — 재발 방지를 위해 심사노트(§3)에 §2의 로그인 방법을 반드시 명시하고, 구글 데모 계정(`picakeee@gmail.com`)도 함께 제공해 Apple에 재확인 요청함. Apple 응답이 오면 실제 원인을 여기 갱신할 것.
 
-**4차 반려(2026-08-18 리뷰, Submission ID `ce18c36d-a87a-48d5-b722-60c43c98a365`, 빌드 1.0.0 (16)) — 이번엔 명확히 "Sign in with Apple 과정"으로 한정**: 메일 원문: "in addition to the demo account username and password you provided, we need an authentication code to complete the **Sign in with Apple** process." 3차와 달리 이번엔 범용 문구가 아니라 Apple 로그인 플로우로 특정됨. Apple이 제시한 3가지 해결책 중 우리 구조와 가장 맞는 건 **"a demonstration mode that exhibits the app's full features and functionality"** — 이건 이미 만들어둔 §2 심사용 로그인(REVIEW_ACCOUNT 바이패스) 그 자체다. 유력한 원인: 심사관이 Apple 로그인 버튼을 직접 눌러 iOS 네이티브 Apple ID 로그인 시트로 진입했고, 거기서 Apple 자체 2단계 인증 코드(우리가 절대 줄 수 없는, 신뢰할 수 있는 기기로 전송되는 코드)를 요구받은 것으로 추정 — 이건 우리 앱/백엔드 코드로 우회할 수 없는 Apple 계정 자체의 보안 절차다. **코드를 고치는 문제가 아니라 App Store Connect 제출 정보(Review Notes / App Review Information의 Sign-In Required 데모 계정 필드)의 문제일 가능성이 높음**:
-- App Review Information에 등록된 데모 계정이 실제 Apple ID(2FA 걸린 개인 계정)인지 앱담당자에게 확인 — 그렇다면 그 계정으로 로그인을 시도하게 유도한 것 자체가 원인이므로 삭제/교체 대상.
-- 재제출 시 Review Notes 맨 앞에 "Sign in with Apple/Google 등 소셜 로그인을 시도할 필요 없이, 아래 데모 모드로 모든 기능을 확인할 수 있습니다"를 §3 템플릿보다 더 명시적으로 못박을 것 — §3 초안은 이미 순서상 1번으로 데모 로그인을 안내하고 있으니, **문구 자체보다 "이번 제출에 이 노트가 실제로 붙여넣어졌는지"부터 의심**(§4 절차 2번).
-- 코드로 할 수 있는 일은 없음 — REVIEW_LOGIN_CODE 최신값 재확인(§2)과 Review Notes 재점검/재제출이 전부.
+**4차 반려(2026-08-18 리뷰, Submission ID `ce18c36d-a87a-48d5-b722-60c43c98a365`, 빌드 1.0.0 (16)) — 이번엔 명확히 "Sign in with Apple 과정"으로 한정**: 메일 원문: "in addition to the demo account username and password you provided, we need an authentication code to complete the **Sign in with Apple** process."
+
+**원인 조사 과정**: 처음엔 백엔드 코드(`auth-apple-oauth.service.ts:240` — 신규 `appleId`는 휴대폰 SMS 인증번호 화면으로 빠짐)가 원인이라 보고 "계정을 미리 가입시켜두면 해결"이라 판단했으나, 사용자가 실제로 신규 Apple ID를 만들어 로그인해보니 **Apple 계정 자체의 2단계 인증(신뢰 기기로만 전송되는 코드)**이 진짜 원인이었음이 확인됨. 동일 문제가 Google 계정에서도 재현됨(새 환경 로그인 시 "인증 방법 선택" 챌린지) — **Google/Apple 둘 다 낯선 기기 로그인 시 계정 소유자에게만 코드/알림을 보내는 구조**라, 어떤 소셜 계정을 제공해도(미리 가입시켜놔도) 심사관은 로그인을 완주할 수 없다. Apple Developer Forums에도 동일 사례가 다수 확인됨(다른 개발자들도 Google 데모 계정이 리뷰어 로그인 시 "suspicious activity"로 막혀 통화로 대응한 사례) — https://developer.apple.com/forums/thread/127987
+
+**최종 대응(2026-08-23, Apple에 회신 완료)**: §2 심사용 로그인(소셜 로그인을 아예 안 거치는 REVIEW_ACCOUNT 바이패스)을 1순위로 안내하되, Google 데모 계정(`picakeee@gmail.com`)도 백업으로 제공하고 Google 2단계 인증 화면이 뜨면 실시간으로 인증코드를 전달해줄 연락처(국제전화 형식 `+82 10-9001-1211`)를 함께 명시해 회신함. App Store Connect의 App Review Information 전화번호 필드는 팀원 번호라 그대로 두고, 실제 연락 가능한 번호는 Notes 텍스트에만 별도로 적음 — 이 경우 Apple의 공식 "call me" 절차가 Notes 속 번호를 쓸 거란 보장은 없다는 점을 사용자에게 안내했고, 그 상태로 진행하기로 함.
+
+**보낸 회신 원문(영문)**은 아래 §3-2에 보관.
+
+**재발 방지**: App Review Information/Review Notes에 실제 Google·Apple 계정을 등록/안내할 땐 이 구조적 한계를 항상 먼저 고려할 것 — "계정을 미리 가입시켜두면 되지 않을까"는 함정이다(낯선 기기 2FA는 계정 상태와 무관하게 항상 뜬다). 코드로 할 수 있는 일은 없음 — REVIEW_LOGIN_CODE 최신값 재확인(§2)과 Review Notes 재점검/재제출이 전부.
 
 ### 2.1 App Completeness — 로그인 없이 둘러보기 가능한지 확인 완료
 
 홈/상품/스토어 상세는 로그인 없이 열람 가능 (`useRequireLogin`은 주문 상세(`useOrderDetail.ts`) 등 사용자 전용 데이터에만 적용, 홈 목록/검색/지도에는 없음). 심사관이 로그인 없이 앱을 처음 켰을 때 빈 화면이나 강제 로그인 벽을 만나지 않는지 실제로 확인하세요.
 
-### 1.5 Safety — Support URL이 실제 지원 페이지로 연결되지 않음 — 신규, 미해결
+### 1.5 Safety — Support URL이 실제 지원 페이지로 연결되지 않음 — 코드 대응 완료
 
 **반려 내용(2026-08-18)**: "The Support URL provided in App Store Connect, http://picakes.com, does not direct to a website with information users can use to ask questions and request support." → Support URL을 실제 지원 정보가 있는 페이지로 바꾸라는 요구.
 
-**확인된 사실**: `http://picakes.com`은 App Store Connect의 "Support URL" 메타데이터 필드 값이며(이 필드 자체는 네이티브 앱 담당자가 App Store Connect에서 직접 관리 — §0), 도메인 루트는 web-user 앱의 홈 화면(상품/스토어 목록)이 그대로 뜬다 — 별도 마케팅 랜딩 페이지가 없는 구조라서 지원/문의 페이지로는 전혀 기능하지 않는다. 저장소 전체를 확인했을 때 "고객센터"·"문의"·연락처(이메일/전화)를 로그인 없이 볼 수 있는 페이지가 **하나도 없다**:
-- `/mypage/qna` (`apps/web-user/src/app/mypage/qna/page.tsx`) — 로그인 없이 접근 가능(백엔드 `/v1/consumer/qnas`가 `@Auth({ isPublic: true })`)하고 관리자가 등록한 FAQ 아코디언을 보여주긴 하지만, 연락처나 "질문하기" 수단이 이 화면 자체엔 없음.
-- `/mypage/terms/terms-of-service` 등 약관 페이지는 DB에 저장된 콘텐츠([[picake-legal-terms]] skill §1 — 상호/대표자/고객센터 이메일 `picakeee@gmail.com`/전화 `010-3007-5647` 포함)를 렌더링하지만, 법적 고지문 안에 묻혀 있어 Apple이 원하는 "지원 페이지"로 보기엔 부적합.
+**원인**: `http://picakes.com`은 App Store Connect의 "Support URL" 메타데이터 필드 값인데, 도메인 루트는 web-user 앱의 홈 화면(상품/스토어 목록)이 그대로 뜰 뿐 지원/문의 페이지로는 전혀 기능하지 않았음. 로그인 없이 볼 수 있는 고객센터/연락처 페이지 자체가 저장소에 없었음.
 
-**해결 방향(둘 다 필요, 아직 미착수)**:
-1. **App Store Connect 메타데이터** — Support URL 필드를 실제 지원 페이지 경로로 교체 (예: `https://picakes.com/mypage/qna` 또는 아래 2번으로 만들 전용 지원 페이지). 이건 앱담당자가 App Store Connect에서 직접 수정해야 함, 이 저장소로 할 수 없음.
-2. **web-user 코드** — 로그인 없이 접근 가능한 전용 지원 페이지(가칭 `/support`)를 만들어 고객센터 이메일(`picakeee@gmail.com`)·전화(`010-3007-5647`)를 눈에 띄게 노출하고, 필요하면 기존 `/mypage/qna` FAQ를 그 안에 링크하는 걸 권장 — `/mypage/qna` 하나만 Support URL로 지정해도 통과될 순 있지만 "ask questions" 요건(질문할 수 있는 연락 수단)이 약해서 재반려 리스크가 있음.
+**대응 완료(2026-08-19, PR #159·#160)**: 마이페이지 > 고객 서비스에 "고객센터" 메뉴 추가 → `/mypage/support` 신설(로그인 불필요). `CustomerSupportScreen.tsx`에 이메일(`picakeee@gmail.com`)·전화(`010-3007-5647`)·카카오톡 채널("픽케이크")·인스타그램(`@picake_app`)을 라벨+값 형태로 노출(전부 탭 불가능한 단순 정보 행으로 통일, 카카오 채널은 실제 URL 미확보로 텍스트만). staging(`web-user/staging-v0.0.225`)·production(`web-user/production-v0.0.13`) 배포 완료.
 
-**진행 전 사용자 확인 필요**: 연락처 값을 픽션으로 지어내지 않는다(§0 원칙과 동일) — 위 이메일/전화는 [[picake-legal-terms]] skill 표에 있는 기존 확인값을 그대로 재사용한 것이며, 최신값인지 재확인 후 페이지를 만들 것.
+**App Store Connect 쪽 대응**: Support URL 필드 자체(`https://picakes.com/mypage/support`로 교체)는 앱담당자가 App Store Connect에서 직접 수정해야 하는 부분이라 이 저장소로는 할 수 없었지만, §3-2 회신 시점에 앱담당자가 실제로 교체 완료(회신문에 "We have also updated the Support URL field..."로 명시). 재심사에서 승인됨 — 상세는 §3-2 결과 참고.
+
+**남겨진 TODO**: 카카오톡 채널의 실제 `pf.kakao.com` URL을 확보하면 `CustomerSupportScreen.tsx`의 텍스트 표시를 클릭 가능한 링크로 바꿀 수 있음 (현재는 URL을 몰라 지어내지 않고 텍스트만 표시 — §0 원칙과 동일).
 
 ### 3.1.1 / 3.1.5 인앱결제 — 구조상 해당 없음, 오해 방지용으로 심사노트에 명시 권장
 
@@ -154,6 +159,55 @@ back to a default region (Gangnam-gu, Seoul) with cake products available.
 If you have any questions, please contact us at picakeee@gmail.com.
 ```
 
+## 3-2. 4차 반려(2.1(a) + 1.5)에 실제로 보낸 회신 (2026-08-23)
+
+Resolution Center에 아래 영문으로 회신 완료. Google 데모 계정 비밀번호는 평문으로 남기지만, 이건 심사용 계정이라 실 서비스 계정과 무관 — Apple 쪽에 계속 유지할 계정이므로 **비밀번호를 바꾸면 이 문서도 같이 갱신**할 것. 연락처(`+82 10-9001-1211`)는 사용자 개인 번호이며 App Store Connect의 App Review Information 필드(팀원 번호)와는 별개로 Notes 텍스트에만 적어 보냄.
+
+```
+Hello,
+
+Thank you for the feedback. Please find our response to both items below.
+
+Guideline 2.1(a) - Information Needed
+
+1. Sign in with Apple
+Sign in with Apple is already implemented in our app and is offered alongside
+our other social login options (Google, etc.).
+
+2. Social login demo account
+For review purposes, we are providing a Google OAuth demo account:
+- Email: picakeee@gmail.com
+- Password: vlrzpdlzm12
+
+Per Google's own policy, the sign-in flow may present a 2-step verification
+screen (asking you to choose a verification method). If you encounter this
+screen, please contact us at any time at +82 10-9001-1211 and we will relay
+the verification code to you in real time.
+
+3. Verifying the full app without any social login
+We also provide a built-in reviewer login that lets you verify the entire app
+experience without going through any social login flow: go to My Page > App
+Version, tap the "App Version" label 10 times within 2 seconds to reveal a
+review-login sheet, then enter the code "482915" to sign in.
+
+Guideline 1.5 - Safety
+
+We have updated our Support URL destination. It now points to a dedicated
+in-app support page (https://picakes.com/mypage/support) that lists our
+contact information — email, phone number, KakaoTalk channel, and Instagram —
+so users can reach us with questions directly. This page is accessible
+without signing in.
+
+We have also updated the Support URL field in App Store Connect to point to
+this page.
+
+Please let us know if you need any further information.
+
+Thank you.
+```
+
+**결과(2026-08-30 기준): 위 회신에 대한 재심사에서 승인되어 iOS 앱스토어 배포 성공.** 4차 반려(2.1(a) 소셜 로그인 2FA + 1.5 Support URL)는 §2 심사용 로그인 안내 + `/mypage/support` 페이지 신설 + Support URL 필드 교체로 최종 해결됨. 이후 새 반려가 오면 이 사이클과 별개의 새 항목으로 §1에 추가할 것 — 위 대응이 "검증된 해결책"이라고 해서 향후 재현 없이 재사용하지 말고, §4 절차대로 매번 원인부터 재확인.
+
 ## 4. 반려 메일을 받았을 때 대응 절차
 
 1. 반려 메일의 **가이드라인 번호와 정확한 문구**를 사용자에게 그대로 받습니다 — 요약하지 말고 원문 그대로.
@@ -172,5 +226,5 @@ If you have any questions, please contact us at picakeee@gmail.com.
 - [ ] `curl https://picakes.com/.well-known/apple-app-site-association`가 `{ applinks: { details: [] } }`인지(Universal Links 비활성 유지) 확인
 - [ ] App Store Connect의 App Privacy 설문이 [[picake-legal-terms]] skill의 개인정보처리방침(수집 항목)과 일치하는지 앱담당자에게 확인 요청
 - [ ] §3 심사노트에 최신 코드 값·연락처를 채워 App Store Connect에 실제로 붙여넣기
-- [ ] App Review Information의 Sign-In Required 데모 계정이 개인 Apple ID(2FA 있음)가 아닌지 확인 — Sign in with Apple을 직접 시도하게 유도하는 값이면 제거/교체 (§1의 2.1(a) 4차 반려 항목 참고)
-- [ ] App Store Connect의 Support URL이 실제 지원/문의 정보가 있는 페이지를 가리키는지 확인 (§1의 1.5 항목 참고 — 현재 `http://picakes.com`은 앱 홈 화면일 뿐이라 미해결)
+- [ ] Review Notes에 §2 심사용 로그인을 1순위로 명시했는지, 소셜 로그인 데모 계정(구글 등)을 백업으로 쓸 경우 2단계 인증 대응 연락처를 함께 적었는지 확인 — 소셜 계정은 낯선 기기 로그인 시 계정 소유자에게만 코드가 가는 구조라 계정을 미리 가입시켜놔도 못 피함 (§1의 2.1(a) 4차 반려 항목, §3-2 참고)
+- [ ] App Store Connect의 Support URL이 실제 지원/문의 정보가 있는 페이지(`https://picakes.com/mypage/support`)를 가리키는지 확인 (§1의 1.5 항목 참고 — 4차 반려 재심사에서 승인 확인됨, 이후 필드가 다시 바뀌지 않았는지만 재확인)
