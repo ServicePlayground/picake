@@ -63,7 +63,7 @@ jobs:
             echo "LOCAL_HEALTH=${LOCAL_HEALTH:-000}"
           ' 2>&1) || true
           echo "$OUT"
-          echo "$OUT" | grep -E '^[A-Z_]+=' >> "$GITHUB_OUTPUT"
+          echo "$OUT" | grep -E '^[A-Z0-9_]+=' >> "$GITHUB_OUTPUT"
 
       - name: Gather production EC2 status
         id: production
@@ -104,7 +104,7 @@ jobs:
             echo "LOCAL_HEALTH=${LOCAL_HEALTH:-000}"
           ' 2>&1) || true
           echo "$OUT"
-          echo "$OUT" | grep -E '^[A-Z_]+=' >> "$GITHUB_OUTPUT"
+          echo "$OUT" | grep -E '^[A-Z0-9_]+=' >> "$GITHUB_OUTPUT"
 
       - name: External checks (SSL + frontend domains)
         id: external
