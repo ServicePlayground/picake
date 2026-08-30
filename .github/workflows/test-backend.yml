@@ -1,0 +1,47 @@
+name: Test Backend
+
+# staging/main으로 향하는 PR에서만 실행 (머지 전 게이트).
+# 이 워크플로우 자체는 브랜치 보호 규칙과 함께 설정해야 실제로 머지를 막을 수 있습니다.
+on:
+  pull_request:
+    branches: [staging, main]
+    paths:
+      - "apps/backend/**"
+      - ".github/workflows/test-backend.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      # packageManager: yarn@4.x — setup-node의 cache: yarn은 Corepack 전 Yarn 1.x를 호출해 실패함
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Get Yarn cache directory
+        id: yarn-cache-dir
+        run: echo "dir=$(yarn config get cacheFolder)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Yarn dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.yarn-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Run backend tests
+        run: yarn workspace @picake/backend test
