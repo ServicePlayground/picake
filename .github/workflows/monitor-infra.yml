@@ -1,7 +1,16 @@
 name: Infra Monitoring (Daily Report)
 
-# 매일 1회 staging/production EC2 인프라 상태(디스크, 메모리, PM2, nginx, SSL 인증서, 헬스체크)를
-# 점검해서 디스코드로 요약 리포트를 보냅니다. 배포 트리거가 아니라 순수 모니터링용입니다.
+# 매일 1회 staging/production EC2 인프라 상태(CPU, 메모리, 디스크, Postgres, PM2, nginx, SSL 인증서, 헬스체크)를
+# SSH로 점검하고, CloudWatch(EC2 CPU)·Cost Explorer(이번 달 누적 비용)로 SSH와 무관한 교차검증까지 더해
+# 디스코드로 요약 리포트를 보냅니다. 배포 트리거가 아니라 순수 모니터링용입니다.
+#
+# 임계치는 사내 "Backend 업그레이드/모니터링" 문서 기준(CPU 80%, 메모리 80~90%, 디스크 80%)을 따르고,
+# 같은 문서의 5단계 업그레이드 사다리(EC2 단일 → 인스턴스 확장 → RDS → ALB+ASG → Redis)를 기준으로
+# "지금 뭘 해야 하는지"까지 리포트에 함께 표시합니다(디스크/CPU/메모리는 조건부 자동 경고, RDS 이후
+# 단계는 사업 판단이 필요해 고정 안내문으로만 노출).
+#
+# CPU는 GitHub Actions cron이 하루 한 번 도는 구조라 진짜 "지속" 여부는 못 보고, 실행 시점의
+# 1분 load average를 vCPU 수로 나눈 스냅샷 근사치입니다 — 참고용이며 사이렌은 아닙니다.
 
 on:
   schedule:
@@ -30,11 +39,17 @@ jobs:
           HOST: ${{ secrets.STAGING_EC2_HOST }}
         run: |
           OUT=$(ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i ~/.ssh/staging.pem "ec2-user@${HOST}" '
+            IMDS_TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 60" 2>/dev/null)
+            INSTANCE_TYPE=$(curl -s -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" http://169.254.169.254/latest/meta-data/instance-type 2>/dev/null)
+            INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" http://169.254.169.254/latest/meta-data/instance-id 2>/dev/null)
             UPTIME=$(uptime -p 2>/dev/null)
+            VCPUS=$(nproc 2>/dev/null)
+            CPU_LOAD1=$(awk "{print \$1}" /proc/loadavg 2>/dev/null)
             DISK_LINE=$(df -h / | tail -1)
             DISK_PCT=$(echo "$DISK_LINE" | awk "{print \$5}" | tr -d "%")
             DISK_HUMAN=$(echo "$DISK_LINE" | awk "{print \$3\"/\"\$2\" (\"\$5\")\"}")
             MEM_HUMAN=$(free -h | awk "/Mem:/{print \$3\"/\"\$2}")
+            MEM_PCT=$(free | awk "/Mem:/{printf \"%.0f\", \$3/\$2*100}")
             CERT_FILE="/etc/letsencrypt/live/api-staging.picakes.com/fullchain.pem"
             if sudo test -f "$CERT_FILE"; then
               NOT_AFTER=$(sudo openssl x509 -in "$CERT_FILE" -noout -enddate 2>/dev/null | cut -d= -f2)
@@ -50,10 +65,18 @@ jobs:
             PM2_STATUS=$(echo "$PM2_JSON" | jq -r ".[] | select(.name==\"picake-backend-staging\") | .pm2_env.status" 2>/dev/null)
             PM2_RESTARTS=$(echo "$PM2_JSON" | jq -r ".[] | select(.name==\"picake-backend-staging\") | .pm2_env.restart_time" 2>/dev/null)
             LOCAL_HEALTH=$(curl -sf -o /dev/null -w "%{http_code}" http://localhost:8080/health 2>/dev/null)
+            PG_ACTIVE=$(systemctl is-active postgresql 2>/dev/null)
+            PG_CONNECTIONS=$(sudo -u postgres psql -tAc "SELECT count(*) FROM pg_stat_activity;" 2>/dev/null | tr -d "[:space:]")
+            PG_STAT_EXT=$(sudo -u postgres psql -d picake_staging_db -tAc "SELECT 1 FROM pg_extension WHERE extname='"'"'pg_stat_statements'"'"';" 2>/dev/null | tr -d "[:space:]")
+            echo "INSTANCE_TYPE=${INSTANCE_TYPE:-unknown}"
+            echo "INSTANCE_ID=${INSTANCE_ID:-unknown}"
             echo "UPTIME=${UPTIME:-unknown}"
+            echo "VCPUS=${VCPUS:-NA}"
+            echo "CPU_LOAD1=${CPU_LOAD1:-NA}"
             echo "DISK_PCT=${DISK_PCT:-NA}"
             echo "DISK_HUMAN=${DISK_HUMAN:-NA}"
             echo "MEM_HUMAN=${MEM_HUMAN:-NA}"
+            echo "MEM_PCT=${MEM_PCT:-NA}"
             echo "SSL_DAYS=${SSL_DAYS:-NA}"
             echo "TIMER_ACTIVE=${TIMER_ACTIVE:-unknown}"
             echo "TIMER_ENABLED=${TIMER_ENABLED:-unknown}"
@@ -61,6 +84,9 @@ jobs:
             echo "PM2_STATUS=${PM2_STATUS:-unknown}"
             echo "PM2_RESTARTS=${PM2_RESTARTS:-NA}"
             echo "LOCAL_HEALTH=${LOCAL_HEALTH:-000}"
+            echo "PG_ACTIVE=${PG_ACTIVE:-unknown}"
+            echo "PG_CONNECTIONS=${PG_CONNECTIONS:-NA}"
+            echo "PG_STAT_EXT=${PG_STAT_EXT:-0}"
           ' 2>&1) || true
           echo "$OUT"
           echo "$OUT" | grep -E '^[A-Z0-9_]+=' >> "$GITHUB_OUTPUT"
@@ -71,11 +97,17 @@ jobs:
           HOST: ${{ secrets.PRODUCTION_EC2_HOST }}
         run: |
           OUT=$(ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i ~/.ssh/production.pem "ec2-user@${HOST}" '
+            IMDS_TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 60" 2>/dev/null)
+            INSTANCE_TYPE=$(curl -s -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" http://169.254.169.254/latest/meta-data/instance-type 2>/dev/null)
+            INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" http://169.254.169.254/latest/meta-data/instance-id 2>/dev/null)
             UPTIME=$(uptime -p 2>/dev/null)
+            VCPUS=$(nproc 2>/dev/null)
+            CPU_LOAD1=$(awk "{print \$1}" /proc/loadavg 2>/dev/null)
             DISK_LINE=$(df -h / | tail -1)
             DISK_PCT=$(echo "$DISK_LINE" | awk "{print \$5}" | tr -d "%")
             DISK_HUMAN=$(echo "$DISK_LINE" | awk "{print \$3\"/\"\$2\" (\"\$5\")\"}")
             MEM_HUMAN=$(free -h | awk "/Mem:/{print \$3\"/\"\$2}")
+            MEM_PCT=$(free | awk "/Mem:/{printf \"%.0f\", \$3/\$2*100}")
             CERT_FILE="/etc/letsencrypt/live/api.picakes.com/fullchain.pem"
             if sudo test -f "$CERT_FILE"; then
               NOT_AFTER=$(sudo openssl x509 -in "$CERT_FILE" -noout -enddate 2>/dev/null | cut -d= -f2)
@@ -91,10 +123,18 @@ jobs:
             PM2_STATUS=$(echo "$PM2_JSON" | jq -r ".[] | select(.name==\"picake-backend-production\") | .pm2_env.status" 2>/dev/null)
             PM2_RESTARTS=$(echo "$PM2_JSON" | jq -r ".[] | select(.name==\"picake-backend-production\") | .pm2_env.restart_time" 2>/dev/null)
             LOCAL_HEALTH=$(curl -sf -o /dev/null -w "%{http_code}" http://localhost:8080/health 2>/dev/null)
+            PG_ACTIVE=$(systemctl is-active postgresql 2>/dev/null)
+            PG_CONNECTIONS=$(sudo -u postgres psql -tAc "SELECT count(*) FROM pg_stat_activity;" 2>/dev/null | tr -d "[:space:]")
+            PG_STAT_EXT=$(sudo -u postgres psql -d picake_production_db -tAc "SELECT 1 FROM pg_extension WHERE extname='"'"'pg_stat_statements'"'"';" 2>/dev/null | tr -d "[:space:]")
+            echo "INSTANCE_TYPE=${INSTANCE_TYPE:-unknown}"
+            echo "INSTANCE_ID=${INSTANCE_ID:-unknown}"
             echo "UPTIME=${UPTIME:-unknown}"
+            echo "VCPUS=${VCPUS:-NA}"
+            echo "CPU_LOAD1=${CPU_LOAD1:-NA}"
             echo "DISK_PCT=${DISK_PCT:-NA}"
             echo "DISK_HUMAN=${DISK_HUMAN:-NA}"
             echo "MEM_HUMAN=${MEM_HUMAN:-NA}"
+            echo "MEM_PCT=${MEM_PCT:-NA}"
             echo "SSL_DAYS=${SSL_DAYS:-NA}"
             echo "TIMER_ACTIVE=${TIMER_ACTIVE:-unknown}"
             echo "TIMER_ENABLED=${TIMER_ENABLED:-unknown}"
@@ -102,6 +142,9 @@ jobs:
             echo "PM2_STATUS=${PM2_STATUS:-unknown}"
             echo "PM2_RESTARTS=${PM2_RESTARTS:-NA}"
             echo "LOCAL_HEALTH=${LOCAL_HEALTH:-000}"
+            echo "PG_ACTIVE=${PG_ACTIVE:-unknown}"
+            echo "PG_CONNECTIONS=${PG_CONNECTIONS:-NA}"
+            echo "PG_STAT_EXT=${PG_STAT_EXT:-0}"
           ' 2>&1) || true
           echo "$OUT"
           echo "$OUT" | grep -E '^[A-Z0-9_]+=' >> "$GITHUB_OUTPUT"
@@ -132,15 +175,70 @@ jobs:
             echo "PROD_WEB_ADMIN=$(check_http admin.picakes.com)"
           } >> "$GITHUB_OUTPUT"
 
+      - name: Gather AWS CloudWatch & Cost Explorer metrics
+        id: aws
+        if: always()
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
+          S_INSTANCE_ID: ${{ steps.staging.outputs.INSTANCE_ID }}
+          P_INSTANCE_ID: ${{ steps.production.outputs.INSTANCE_ID }}
+        run: |
+          # SSH가 안 되는 상황에서도 상태를 볼 수 있도록 CloudWatch로 교차 검증(3시간 평균/최대 CPU).
+          # CloudWatch Agent는 설치돼 있지 않아 메모리·디스크는 여기서 못 봄 — EC2 기본 지표(CPU)만 가능.
+          cw_cpu() {
+            local instance_id="$1"
+            if [ -z "$instance_id" ] || [ "$instance_id" = "unknown" ]; then echo "NA|NA"; return; fi
+            local result
+            result=$(aws cloudwatch get-metric-statistics \
+              --region ap-northeast-2 \
+              --namespace AWS/EC2 \
+              --metric-name CPUUtilization \
+              --dimensions Name=InstanceId,Value="$instance_id" \
+              --start-time "$(date -u -d '3 hours ago' +%Y-%m-%dT%H:%M:%S)" \
+              --end-time "$(date -u +%Y-%m-%dT%H:%M:%S)" \
+              --period 10800 \
+              --statistics Average Maximum \
+              --query 'Datapoints[0].[Average,Maximum]' \
+              --output text 2>/dev/null)
+            if [ -z "$result" ] || [ "$result" = "None" ]; then echo "NA|NA"; return; fi
+            echo "$result" | awk '{printf "%.0f|%.0f", $1, $2}'
+          }
+
+          S_CW=$(cw_cpu "$S_INSTANCE_ID")
+          P_CW=$(cw_cpu "$P_INSTANCE_ID")
+
+          # Cost Explorer는 us-east-1 엔드포인트 고정(리소스 리전과 무관), 데이터는 하루 정도 지연될 수 있음.
+          MTD_COST=$(aws ce get-cost-and-usage \
+            --time-period Start="$(date -u +%Y-%m-01)",End="$(date -u +%Y-%m-%d)" \
+            --granularity MONTHLY \
+            --metrics UnblendedCost \
+            --region us-east-1 \
+            --query 'ResultsByTime[0].Total.UnblendedCost.Amount' \
+            --output text 2>/dev/null)
+
+          {
+            echo "S_CW_CPU_AVG=$(echo "$S_CW" | cut -d'|' -f1)"
+            echo "S_CW_CPU_MAX=$(echo "$S_CW" | cut -d'|' -f2)"
+            echo "P_CW_CPU_AVG=$(echo "$P_CW" | cut -d'|' -f1)"
+            echo "P_CW_CPU_MAX=$(echo "$P_CW" | cut -d'|' -f2)"
+            echo "MTD_COST=${MTD_COST:-NA}"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Build and send Discord report
         if: always()
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL_INFRA_MONITORING }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          S_INSTANCE_TYPE: ${{ steps.staging.outputs.INSTANCE_TYPE }}
           S_UPTIME: ${{ steps.staging.outputs.UPTIME }}
+          S_VCPUS: ${{ steps.staging.outputs.VCPUS }}
+          S_CPU_LOAD1: ${{ steps.staging.outputs.CPU_LOAD1 }}
           S_DISK_PCT: ${{ steps.staging.outputs.DISK_PCT }}
           S_DISK_HUMAN: ${{ steps.staging.outputs.DISK_HUMAN }}
           S_MEM: ${{ steps.staging.outputs.MEM_HUMAN }}
+          S_MEM_PCT: ${{ steps.staging.outputs.MEM_PCT }}
           S_SSL_DAYS: ${{ steps.staging.outputs.SSL_DAYS }}
           S_TIMER_ACTIVE: ${{ steps.staging.outputs.TIMER_ACTIVE }}
           S_TIMER_ENABLED: ${{ steps.staging.outputs.TIMER_ENABLED }}
@@ -148,10 +246,17 @@ jobs:
           S_PM2_STATUS: ${{ steps.staging.outputs.PM2_STATUS }}
           S_PM2_RESTARTS: ${{ steps.staging.outputs.PM2_RESTARTS }}
           S_LOCAL_HEALTH: ${{ steps.staging.outputs.LOCAL_HEALTH }}
+          S_PG_ACTIVE: ${{ steps.staging.outputs.PG_ACTIVE }}
+          S_PG_CONNECTIONS: ${{ steps.staging.outputs.PG_CONNECTIONS }}
+          S_PG_STAT_EXT: ${{ steps.staging.outputs.PG_STAT_EXT }}
+          P_INSTANCE_TYPE: ${{ steps.production.outputs.INSTANCE_TYPE }}
           P_UPTIME: ${{ steps.production.outputs.UPTIME }}
+          P_VCPUS: ${{ steps.production.outputs.VCPUS }}
+          P_CPU_LOAD1: ${{ steps.production.outputs.CPU_LOAD1 }}
           P_DISK_PCT: ${{ steps.production.outputs.DISK_PCT }}
           P_DISK_HUMAN: ${{ steps.production.outputs.DISK_HUMAN }}
           P_MEM: ${{ steps.production.outputs.MEM_HUMAN }}
+          P_MEM_PCT: ${{ steps.production.outputs.MEM_PCT }}
           P_SSL_DAYS: ${{ steps.production.outputs.SSL_DAYS }}
           P_TIMER_ACTIVE: ${{ steps.production.outputs.TIMER_ACTIVE }}
           P_TIMER_ENABLED: ${{ steps.production.outputs.TIMER_ENABLED }}
@@ -159,6 +264,9 @@ jobs:
           P_PM2_STATUS: ${{ steps.production.outputs.PM2_STATUS }}
           P_PM2_RESTARTS: ${{ steps.production.outputs.PM2_RESTARTS }}
           P_LOCAL_HEALTH: ${{ steps.production.outputs.LOCAL_HEALTH }}
+          P_PG_ACTIVE: ${{ steps.production.outputs.PG_ACTIVE }}
+          P_PG_CONNECTIONS: ${{ steps.production.outputs.PG_CONNECTIONS }}
+          P_PG_STAT_EXT: ${{ steps.production.outputs.PG_STAT_EXT }}
           E_S_API_SSL: ${{ steps.external.outputs.STAGING_API_SSL_DAYS }}
           E_P_API_SSL: ${{ steps.external.outputs.PROD_API_SSL_DAYS }}
           E_S_API_HEALTH: ${{ steps.external.outputs.STAGING_API_HEALTH }}
@@ -169,6 +277,11 @@ jobs:
           E_P_WEB_USER: ${{ steps.external.outputs.PROD_WEB_USER }}
           E_P_WEB_SELLER: ${{ steps.external.outputs.PROD_WEB_SELLER }}
           E_P_WEB_ADMIN: ${{ steps.external.outputs.PROD_WEB_ADMIN }}
+          S_CW_CPU_AVG: ${{ steps.aws.outputs.S_CW_CPU_AVG }}
+          S_CW_CPU_MAX: ${{ steps.aws.outputs.S_CW_CPU_MAX }}
+          P_CW_CPU_AVG: ${{ steps.aws.outputs.P_CW_CPU_AVG }}
+          P_CW_CPU_MAX: ${{ steps.aws.outputs.P_CW_CPU_MAX }}
+          MTD_COST: ${{ steps.aws.outputs.MTD_COST }}
         run: |
           if [ -z "$DISCORD_WEBHOOK_URL" ]; then
             echo "⚠️ DISCORD_WEBHOOK_URL_INFRA_MONITORING is not set — skipping notification"
@@ -186,39 +299,138 @@ jobs:
             local code="$1"
             if [ "$code" = "200" ]; then echo "✅ 200"; else echo "❌ ${code:-000}"; fi
           }
-          check_pm2() {
+          # --- 인라인 그리드용 짧은 배지 (한 줄, 3열 나열 목적) ---
+          badge_pm2() {
             local st="$1"
             if [ "$st" = "online" ]; then echo "✅ online"; else echo "❌ ${st:-unknown}"; fi
           }
-          check_timer() {
-            local active="$1" enabled="$2"
-            if [ "$active" = "active" ] && [ "$enabled" = "enabled" ]; then echo "✅ active/enabled";
-            else echo "⚠️ active=${active:-?}, enabled=${enabled:-?}"; fi
-          }
-          check_active() {
+          badge_active() {
             local st="$1"
             if [ "$st" = "active" ]; then echo "✅ active"; else echo "❌ ${st:-unknown}"; fi
           }
-          check_disk() {
-            local pct="$1" human="$2"
-            if [ -z "$pct" ] || [ "$pct" = "NA" ]; then echo "❓ ${human:-확인불가}"; return; fi
-            if [ "$pct" -ge 90 ] 2>/dev/null; then echo "❌ ${human}";
-            elif [ "$pct" -ge 75 ] 2>/dev/null; then echo "⚠️ ${human}";
-            else echo "✅ ${human}"; fi
+          # 디스크 80% 이상 = 증설 검토(사내 문서 기준), 90% 이상 = 심각
+          badge_disk() {
+            local pct="$1"
+            if [ -z "$pct" ] || [ "$pct" = "NA" ]; then echo "❓ 확인불가"; return; fi
+            if [ "$pct" -ge 90 ] 2>/dev/null; then echo "❌ ${pct}%";
+            elif [ "$pct" -ge 80 ] 2>/dev/null; then echo "⚠️ ${pct}%";
+            else echo "✅ ${pct}%"; fi
+          }
+          # 메모리 80~90% 이상 지속 = 주의(사내 문서 기준)
+          badge_mem() {
+            local pct="$1"
+            if [ -z "$pct" ] || [ "$pct" = "NA" ]; then echo "❓ 확인불가"; return; fi
+            if [ "$pct" -ge 90 ] 2>/dev/null; then echo "❌ ${pct}%";
+            elif [ "$pct" -ge 80 ] 2>/dev/null; then echo "⚠️ ${pct}%";
+            else echo "✅ ${pct}%"; fi
+          }
+          # CPU 80% 이상 = 주의(사내 문서 기준). 하루 1회 스냅샷이라 "지속"은 못 보고 1분 load만 봄 — 참고용.
+          badge_cpu() {
+            local load1="$1" vcpus="$2"
+            if [ -z "$load1" ] || [ -z "$vcpus" ] || [ "$vcpus" = "NA" ]; then echo "❓ 확인불가"; return; fi
+            local pct
+            pct=$(awk -v l="$load1" -v v="$vcpus" 'BEGIN{printf "%.0f", (l/v)*100}')
+            if [ "$pct" -ge 80 ] 2>/dev/null; then echo "⚠️ ${pct}%";
+            else echo "✅ ${pct}%"; fi
+          }
+          badge_pg() {
+            local active="$1"
+            if [ "$active" = "active" ]; then echo "✅ active"; else echo "❌ ${active:-unknown}"; fi
           }
 
           S_SSL_F=$(check_days "$S_SSL_DAYS")
           P_SSL_F=$(check_days "$P_SSL_DAYS")
           S_HEALTH_F=$(check_http_status "$S_LOCAL_HEALTH")
           P_HEALTH_F=$(check_http_status "$P_LOCAL_HEALTH")
-          S_PM2_F=$(check_pm2 "$S_PM2_STATUS")
-          P_PM2_F=$(check_pm2 "$P_PM2_STATUS")
-          S_TIMER_F=$(check_timer "$S_TIMER_ACTIVE" "$S_TIMER_ENABLED")
-          P_TIMER_F=$(check_timer "$P_TIMER_ACTIVE" "$P_TIMER_ENABLED")
-          S_NGINX_F=$(check_active "$S_NGINX")
-          P_NGINX_F=$(check_active "$P_NGINX")
-          S_DISK_F=$(check_disk "$S_DISK_PCT" "$S_DISK_HUMAN")
-          P_DISK_F=$(check_disk "$P_DISK_PCT" "$P_DISK_HUMAN")
+          S_PM2_F=$(badge_pm2 "$S_PM2_STATUS")
+          P_PM2_F=$(badge_pm2 "$P_PM2_STATUS")
+          S_NGINX_F=$(badge_active "$S_NGINX")
+          P_NGINX_F=$(badge_active "$P_NGINX")
+          S_DISK_F=$(badge_disk "$S_DISK_PCT")
+          P_DISK_F=$(badge_disk "$P_DISK_PCT")
+          S_MEM_F=$(badge_mem "$S_MEM_PCT")
+          P_MEM_F=$(badge_mem "$P_MEM_PCT")
+          S_CPU_F=$(badge_cpu "$S_CPU_LOAD1" "$S_VCPUS")
+          P_CPU_F=$(badge_cpu "$P_CPU_LOAD1" "$P_VCPUS")
+          S_PG_F=$(badge_pg "$S_PG_ACTIVE")
+          P_PG_F=$(badge_pg "$P_PG_ACTIVE")
+
+          # certbot 타이머 상태 — 상세 블록용 한 줄
+          timer_line() {
+            local active="$1" enabled="$2"
+            if [ "$active" = "active" ] && [ "$enabled" = "enabled" ]; then echo "✅ active/enabled";
+            else echo "⚠️ active=${active:-?}, enabled=${enabled:-?}"; fi
+          }
+          S_TIMER_F=$(timer_line "$S_TIMER_ACTIVE" "$S_TIMER_ENABLED")
+          P_TIMER_F=$(timer_line "$P_TIMER_ACTIVE" "$P_TIMER_ENABLED")
+
+          # Postgres 상세 한 줄 (연결 수 · pg_stat_statements 여부)
+          pg_detail() {
+            local conns="$1" stat_ext="$2"
+            local ext_note="pg_stat_statements 미설치"
+            if [ "$stat_ext" = "1" ]; then ext_note="pg_stat_statements ✓"; fi
+            echo "연결 ${conns:-?}개 · ${ext_note}"
+          }
+          S_PG_DETAIL=$(pg_detail "$S_PG_CONNECTIONS" "$S_PG_STAT_EXT")
+          P_PG_DETAIL=$(pg_detail "$P_PG_CONNECTIONS" "$P_PG_STAT_EXT")
+
+          # CPU 부하율(%) — 업그레이드 가이드 조건 판단에 재사용 (check_cpu는 표시용 문자열만 반환하므로 별도 계산)
+          cpu_pct() {
+            local load1="$1" vcpus="$2"
+            if [ -z "$load1" ] || [ -z "$vcpus" ] || [ "$vcpus" = "NA" ]; then echo 0; return; fi
+            awk -v l="$load1" -v v="$vcpus" 'BEGIN{printf "%.0f", (l/v)*100}'
+          }
+          S_CPU_PCT=$(cpu_pct "$S_CPU_LOAD1" "$S_VCPUS")
+          P_CPU_PCT=$(cpu_pct "$P_CPU_LOAD1" "$P_VCPUS")
+
+          # 업그레이드 가이드 (사내 "Backend 업그레이드/모니터링" 문서 기준 5단계 사다리)
+          # 디스크→EBS 증설, CPU/메모리→인스턴스 업그레이드(t4g.medium)는 지표로 실제 판단 가능해서 조건부로 뜸.
+          # RDS/ALB+ASG/Redis는 사업적 판단(DB 성장 계획, 트래픽 패턴, 쿼리 패턴)이 필요해 지표 하나로 자동 감지 불가 —
+          # 고정 안내문으로만 노출(Redis는 pg_stat_statements가 있어야 실제 판단 근거가 생김).
+          NL=$'\n'
+
+          # 인스턴스 타입에서 현재 단계 유추(1단계=t4g.small류, 2단계=t4g.medium류) — 하드코딩 대신 실제 조회값 사용.
+          # staging/production이 서로 다른 인스턴스 타입일 수 있어 환경별로 각각 표시(예: production만 먼저 업그레이드된 경우).
+          current_stage_label() {
+            case "$1" in
+              *medium*|*large*|*xlarge*) echo "2단계" ;;
+              *) echo "1단계" ;;
+            esac
+          }
+          S_STAGE_LABEL=$(current_stage_label "$S_INSTANCE_TYPE")
+          P_STAGE_LABEL=$(current_stage_label "$P_INSTANCE_TYPE")
+
+          # CPU/메모리 부하 시 조언 — 이미 2단계(medium 이상)인데도 부하가 높으면 "medium 전환"은 틀린 조언이라 단계별로 분기.
+          cpu_mem_advice() {
+            local stage_label="$1"
+            if [ "$stage_label" = "1단계" ]; then
+              echo "t4g.medium 전환 검토 (2단계)"
+            else
+              echo "이미 2단계 — 구조 확장(3단계 RDS/4단계 ALB+ASG) 검토 필요"
+            fi
+          }
+
+          UPGRADE_LINES=""
+          if [ "$S_DISK_PCT" -ge 80 ] 2>/dev/null; then
+            UPGRADE_LINES="${UPGRADE_LINES}⚠️ Staging 디스크 ${S_DISK_PCT}% — EBS 볼륨 증설 검토${NL}"
+          fi
+          if [ "$P_DISK_PCT" -ge 80 ] 2>/dev/null; then
+            UPGRADE_LINES="${UPGRADE_LINES}⚠️ Production 디스크 ${P_DISK_PCT}% — EBS 볼륨 증설 검토${NL}"
+          fi
+          if { [ "$S_MEM_PCT" -ge 80 ] 2>/dev/null; } || { [ "$S_CPU_PCT" -ge 80 ] 2>/dev/null; }; then
+            UPGRADE_LINES="${UPGRADE_LINES}⚠️ Staging CPU/메모리 부하 — $(cpu_mem_advice "$S_STAGE_LABEL")${NL}"
+          fi
+          if { [ "$P_MEM_PCT" -ge 80 ] 2>/dev/null; } || { [ "$P_CPU_PCT" -ge 80 ] 2>/dev/null; }; then
+            UPGRADE_LINES="${UPGRADE_LINES}⚠️ Production CPU/메모리 부하 — $(cpu_mem_advice "$P_STAGE_LABEL")${NL}"
+          fi
+          if [ -z "$UPGRADE_LINES" ]; then
+            UPGRADE_LINES="✅  지표 기준 즉시 조치가 필요한 항목이 없습니다.${NL}"
+          fi
+          REDIS_NOTE=""
+          if [ "$S_PG_STAT_EXT" != "1" ] && [ "$P_PG_STAT_EXT" != "1" ]; then
+            REDIS_NOTE="${NL}-# 5단계(Redis) 판단 근거 없음 — pg_stat_statements 미설치, 위 Postgres 항목 참고"
+          fi
+          UPGRADE_GUIDE="**현재 단계**${NL}Staging · ${S_STAGE_LABEL} — EC2 단일 인스턴스(\`${S_INSTANCE_TYPE:-unknown}\`)${NL}Production · ${P_STAGE_LABEL} — EC2 단일 인스턴스(\`${P_INSTANCE_TYPE:-unknown}\`)${NL}${NL}${UPGRADE_LINES}${NL}**다음 단계 판단 기준** _(사업 판단 필요 · 지표로 자동 감지 안 됨)_${NL}• DB 커짐 · 자동백업 관리 필요 · 다중 서버 계획 → **3단계 RDS**${NL}• 무중단 배포 필요 · 트래픽 변동 심함 → **4단계 ALB+ASG**${NL}• DB CPU 높음 · SELECT 과다 · 인기데이터 반복조회 · 응답 느림 → **5단계 Redis**${REDIS_NOTE}"
 
           E_S_API_SSL_F=$(check_days "$E_S_API_SSL")
           E_P_API_SSL_F=$(check_days "$E_P_API_SSL")
@@ -231,45 +443,116 @@ jobs:
           E_P_WEB_SELLER_F=$(check_http_status "$E_P_WEB_SELLER")
           E_P_WEB_ADMIN_F=$(check_http_status "$E_P_WEB_ADMIN")
 
-          ALL_TEXT="$S_SSL_F $P_SSL_F $S_HEALTH_F $P_HEALTH_F $S_PM2_F $P_PM2_F $S_TIMER_F $P_TIMER_F $S_NGINX_F $P_NGINX_F $S_DISK_F $P_DISK_F $E_S_API_SSL_F $E_P_API_SSL_F $E_S_API_HEALTH_F $E_P_API_HEALTH_F $E_S_WEB_USER_F $E_S_WEB_SELLER_F $E_S_WEB_ADMIN_F $E_P_WEB_USER_F $E_P_WEB_SELLER_F $E_P_WEB_ADMIN_F"
+          ALL_TEXT="$S_SSL_F $P_SSL_F $S_HEALTH_F $P_HEALTH_F $S_PM2_F $P_PM2_F $S_TIMER_F $P_TIMER_F $S_NGINX_F $P_NGINX_F $S_DISK_F $P_DISK_F $S_MEM_F $P_MEM_F $S_CPU_F $P_CPU_F $S_PG_F $P_PG_F $E_S_API_SSL_F $E_P_API_SSL_F $E_S_API_HEALTH_F $E_P_API_HEALTH_F $E_S_WEB_USER_F $E_S_WEB_SELLER_F $E_S_WEB_ADMIN_F $E_P_WEB_USER_F $E_P_WEB_SELLER_F $E_P_WEB_ADMIN_F"
 
-          if echo "$ALL_TEXT" | grep -qE '❌|❓'; then
-            TITLE="🚨 인프라 모니터링 — 확인 필요"
+          BAD_COUNT=$(echo "$ALL_TEXT" | grep -oE '❌|❓' | wc -l | tr -d ' ')
+          WARN_COUNT=$(echo "$ALL_TEXT" | grep -oE '⚠️' | wc -l | tr -d ' ')
+
+          if [ "$BAD_COUNT" -gt 0 ] 2>/dev/null; then
+            TITLE="🔴  인프라 모니터링 — 확인 필요"
             COLOR=15548997
-          elif echo "$ALL_TEXT" | grep -q '⚠️'; then
-            TITLE="⚠️ 인프라 모니터링 — 주의"
+            SUMMARY="${BAD_COUNT}개 항목이 비정상입니다. 아래를 바로 확인해주세요."
+          elif [ "$WARN_COUNT" -gt 0 ] 2>/dev/null; then
+            TITLE="🟠  인프라 모니터링 — 주의"
             COLOR=16776960
+            SUMMARY="${WARN_COUNT}개 항목이 임계치에 근접했습니다."
           else
-            TITLE="✅ 인프라 모니터링 — 정상"
+            TITLE="🟢  인프라 모니터링 — 정상"
             COLOR=5763719
+            SUMMARY="모든 항목이 정상입니다."
+          fi
+          DESCRIPTION="**${SUMMARY}**${NL}[📄 워크플로우 로그 보기](${RUN_URL})"
+
+          E_S_WEB="user ${E_S_WEB_USER_F} · seller ${E_S_WEB_SELLER_F} · admin ${E_S_WEB_ADMIN_F}"
+          E_P_WEB="user ${E_P_WEB_USER_F} · seller ${E_P_WEB_SELLER_F} · admin ${E_P_WEB_ADMIN_F}"
+
+          # 각 환경 상세 한 줄 (인라인 배지 3열 아래에 붙는 보조 정보)
+          S_DETAIL="가동시간 ${S_UPTIME:-unknown} · 메모리 ${S_MEM:-NA} · 디스크 ${S_DISK_HUMAN:-NA} · pm2 재시작 ${S_PM2_RESTARTS:-NA}회 · Postgres ${S_PG_DETAIL}"
+          P_DETAIL="가동시간 ${P_UPTIME:-unknown} · 메모리 ${P_MEM:-NA} · 디스크 ${P_DISK_HUMAN:-NA} · pm2 재시작 ${P_PM2_RESTARTS:-NA}회 · Postgres ${P_PG_DETAIL}"
+
+          S_SSL_BLOCK="EC2 로컬 SSL ${S_SSL_F} · certbot ${S_TIMER_F}${NL}외부 SSL(api-staging) ${E_S_API_SSL_F} · 외부 헬스체크 ${E_S_API_HEALTH_F} · localhost 헬스체크 ${S_HEALTH_F}"
+          P_SSL_BLOCK="EC2 로컬 SSL ${P_SSL_F} · certbot ${P_TIMER_F}${NL}외부 SSL(api) ${E_P_API_SSL_F} · 외부 헬스체크 ${E_P_API_HEALTH_F} · localhost 헬스체크 ${P_HEALTH_F}"
+
+          # CloudWatch CPU(3h 평균/최대) — SSH와 무관한 교차검증용. Agent 미설치라 메모리·디스크는 여기서 못 봄.
+          cw_cpu_line() {
+            local avg="$1" max="$2"
+            if [ -z "$avg" ] || [ "$avg" = "NA" ]; then echo "❓ 조회 불가 (IAM 권한 또는 데이터 없음)"; return; fi
+            echo "평균 \`${avg}%\` · 최대 \`${max}%\`"
+          }
+          S_CW_LINE=$(cw_cpu_line "$S_CW_CPU_AVG" "$S_CW_CPU_MAX")
+          P_CW_LINE=$(cw_cpu_line "$P_CW_CPU_AVG" "$P_CW_CPU_MAX")
+
+          # Cost Explorer 이번 달 누적 비용 — us-east-1 고정 조회, 최대 하루 지연 가능.
+          cost_line() {
+            local amount="$1"
+            if [ -z "$amount" ] || [ "$amount" = "NA" ]; then echo "❓ 조회 불가 (Cost Explorer IAM 권한 없음)"; return; fi
+            awk -v a="$amount" 'BEGIN{printf "`$%.2f`", a}'
+          }
+          COST_LINE=$(cost_line "$MTD_COST")
+
+          # EC2 타입 표기 — staging/production이 같은 타입이면 한 번만, 다르면 각각 표시(둘 다 S_INSTANCE_TYPE만 쓰면 부정확).
+          if [ "$S_INSTANCE_TYPE" = "$P_INSTANCE_TYPE" ]; then
+            EC2_TYPES_LABEL="${S_INSTANCE_TYPE:-unknown} × 2"
+          else
+            EC2_TYPES_LABEL="staging ${S_INSTANCE_TYPE:-unknown} · production ${P_INSTANCE_TYPE:-unknown}"
           fi
 
-          E_S_WEB="user: ${E_S_WEB_USER_F} / seller: ${E_S_WEB_SELLER_F} / admin: ${E_S_WEB_ADMIN_F}"
-          E_P_WEB="user: ${E_P_WEB_USER_F} / seller: ${E_P_WEB_SELLER_F} / admin: ${E_P_WEB_ADMIN_F}"
+          # AWS 사용 현황 — 서비스 구성은 고정 텍스트(자주 안 바뀜), CPU·비용은 실시간 API 조회값. 소제목으로 구획을 나눠 가독성 확보.
+          AWS_USAGE="**사용 서비스**  \`EC2\`(${EC2_TYPES_LABEL}) · \`Route53\` · \`CloudFront\` · \`S3\` · \`Let's Encrypt\`${NL}${NL}**CloudWatch CPU** _(최근 3시간)_${NL}staging ${S_CW_LINE}${NL}production ${P_CW_LINE}${NL}${NL}**이번 달 누적 비용** _(Cost Explorer)_${NL}${COST_LINE}${NL}-# CloudWatch는 CPU만 제공(Agent 미설치로 메모리·디스크는 SSH로만 확인) · 위 두 지표는 SSH 무관 교차검증용"
+
+          DIVIDER="▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
 
           PAYLOAD=$(jq -n \
             --arg title "$TITLE" \
             --argjson color "$COLOR" \
-            --arg run_url "$RUN_URL" \
-            --arg s_uptime "${S_UPTIME:-unknown}" --arg s_disk "$S_DISK_F" --arg s_mem "${S_MEM:-NA}" \
-            --arg s_ssl "$S_SSL_F" --arg s_timer "$S_TIMER_F" --arg s_nginx "$S_NGINX_F" \
-            --arg s_pm2 "$S_PM2_F" --arg s_restarts "${S_PM2_RESTARTS:-NA}" --arg s_health "$S_HEALTH_F" \
-            --arg s_api_ssl "$E_S_API_SSL_F" --arg s_api_health "$E_S_API_HEALTH_F" --arg s_web "$E_S_WEB" \
-            --arg p_uptime "${P_UPTIME:-unknown}" --arg p_disk "$P_DISK_F" --arg p_mem "${P_MEM:-NA}" \
-            --arg p_ssl "$P_SSL_F" --arg p_timer "$P_TIMER_F" --arg p_nginx "$P_NGINX_F" \
-            --arg p_pm2 "$P_PM2_F" --arg p_restarts "${P_PM2_RESTARTS:-NA}" --arg p_health "$P_HEALTH_F" \
-            --arg p_api_ssl "$E_P_API_SSL_F" --arg p_api_health "$E_P_API_HEALTH_F" --arg p_web "$E_P_WEB" \
+            --arg description "$DESCRIPTION" \
+            --arg divider "$DIVIDER" \
+            --arg s_type "${S_INSTANCE_TYPE:-unknown}" \
+            --arg s_cpu "$S_CPU_F" --arg s_disk "$S_DISK_F" --arg s_mem "$S_MEM_F" \
+            --arg s_pg "$S_PG_F" --arg s_pm2 "$S_PM2_F" --arg s_nginx "$S_NGINX_F" \
+            --arg s_detail "$S_DETAIL" --arg s_ssl_block "$S_SSL_BLOCK" --arg s_web "$E_S_WEB" \
+            --arg p_type "${P_INSTANCE_TYPE:-unknown}" \
+            --arg p_cpu "$P_CPU_F" --arg p_disk "$P_DISK_F" --arg p_mem "$P_MEM_F" \
+            --arg p_pg "$P_PG_F" --arg p_pm2 "$P_PM2_F" --arg p_nginx "$P_NGINX_F" \
+            --arg p_detail "$P_DETAIL" --arg p_ssl_block "$P_SSL_BLOCK" --arg p_web "$E_P_WEB" \
+            --arg upgrade_guide "$UPGRADE_GUIDE" \
+            --arg aws_usage "$AWS_USAGE" \
             '{
               embeds: [{
                 title: $title,
+                description: $description,
                 color: $color,
                 fields: [
-                  { name: "🟡 Staging — EC2 (api-staging.picakes.com)", value: ("가동시간: " + $s_uptime + "\n디스크: " + $s_disk + "\n메모리: " + $s_mem + "\nnginx: " + $s_nginx + "\npm2(backend): " + $s_pm2 + " (restart " + $s_restarts + "회)\nlocalhost 헬스체크: " + $s_health), inline: false },
-                  { name: "🟡 Staging — SSL/외부 접근", value: ("EC2 로컬 SSL: " + $s_ssl + "\ncertbot 타이머: " + $s_timer + "\n외부 SSL(api-staging): " + $s_api_ssl + "\n외부 헬스체크(api-staging): " + $s_api_health + "\n프론트 상태: " + $s_web), inline: false },
-                  { name: "🔴 Production — EC2 (api.picakes.com)", value: ("가동시간: " + $p_uptime + "\n디스크: " + $p_disk + "\n메모리: " + $p_mem + "\nnginx: " + $p_nginx + "\npm2(backend): " + $p_pm2 + " (restart " + $p_restarts + "회)\nlocalhost 헬스체크: " + $p_health), inline: false },
-                  { name: "🔴 Production — SSL/외부 접근", value: ("EC2 로컬 SSL: " + $p_ssl + "\ncertbot 타이머: " + $p_timer + "\n외부 SSL(api): " + $p_api_ssl + "\n외부 헬스체크(api): " + $p_api_health + "\n프론트 상태: " + $p_web), inline: false },
-                  { name: "GitHub Actions", value: ("[워크플로우 로그](" + $run_url + ")"), inline: false }
+                  { name: "🟡 STAGING · \($s_type)", value: "`api-staging.picakes.com`", inline: false },
+                  { name: "CPU", value: $s_cpu, inline: true },
+                  { name: "메모리", value: $s_mem, inline: true },
+                  { name: "디스크", value: $s_disk, inline: true },
+                  { name: "Postgres", value: $s_pg, inline: true },
+                  { name: "PM2", value: $s_pm2, inline: true },
+                  { name: "nginx", value: $s_nginx, inline: true },
+                  { name: "상세", value: $s_detail, inline: false },
+                  { name: "SSL · 헬스체크", value: $s_ssl_block, inline: false },
+                  { name: "프론트엔드", value: $s_web, inline: false },
+
+                  { name: "​", value: $divider, inline: false },
+
+                  { name: "🔴 PRODUCTION · \($p_type)", value: "`api.picakes.com`", inline: false },
+                  { name: "CPU", value: $p_cpu, inline: true },
+                  { name: "메모리", value: $p_mem, inline: true },
+                  { name: "디스크", value: $p_disk, inline: true },
+                  { name: "Postgres", value: $p_pg, inline: true },
+                  { name: "PM2", value: $p_pm2, inline: true },
+                  { name: "nginx", value: $p_nginx, inline: true },
+                  { name: "상세", value: $p_detail, inline: false },
+                  { name: "SSL · 헬스체크", value: $p_ssl_block, inline: false },
+                  { name: "프론트엔드", value: $p_web, inline: false },
+
+                  { name: "​", value: $divider, inline: false },
+
+                  { name: "📈 업그레이드 가이드", value: $upgrade_guide, inline: false },
+                  { name: "☁️ AWS 사용 현황", value: $aws_usage, inline: false }
                 ],
+                footer: { text: "Picake Infra Monitor · 매일 09:00 KST" },
                 timestamp: (now | strftime("%Y-%m-%dT%H:%M:%SZ"))
               }]
             }')
