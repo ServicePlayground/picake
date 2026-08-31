@@ -22,8 +22,11 @@ export const metadata: Metadata = {
 
 export default function AppDownloadAndroidPage() {
   return (
-    <main className="min-h-screen flex flex-col justify-between px-5 pt-[100px] pb-8">
-      <div className="flex flex-col items-center text-center">
+    // 100vh가 아니라 100dvh — 모바일 브라우저의 100vh는 주소창에 가려지는 영역까지 포함해서
+    // 실제 보이는 높이보다 큽니다. 그대로 두면 하단 버튼이 접혀서 스크롤해야 보입니다.
+    <main className="min-h-[100dvh] flex flex-col px-5 pt-6 pb-8">
+      {/* flex-1 + justify-center: 버튼 위 남는 공간의 세로 중앙에 안내를 배치 */}
+      <div className="flex-1 flex flex-col items-center justify-center text-center">
         <Icon name="logoPicake" width={80} height={80} />
 
         <h1 className="mt-6 text-xl font-bold text-gray-900">안드로이드 앱은 준비 중이에요</h1>
