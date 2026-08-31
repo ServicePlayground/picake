@@ -1,9 +1,14 @@
 name: Infra Monitoring (Daily Report)
 
 # 매일 1회 staging/production EC2 인프라 상태(CPU, 메모리, 디스크, Postgres, PM2, nginx, SSL 인증서, 헬스체크)를
-# 점검해서 디스코드로 요약 리포트를 보냅니다. 배포 트리거가 아니라 순수 모니터링용입니다.
+# SSH로 점검하고, CloudWatch(EC2 CPU)·Cost Explorer(이번 달 누적 비용)로 SSH와 무관한 교차검증까지 더해
+# 디스코드로 요약 리포트를 보냅니다. 배포 트리거가 아니라 순수 모니터링용입니다.
 #
-# 임계치는 사내 "Backend 업그레이드/모니터링" 문서 기준(CPU 80%, 메모리 80~90%, 디스크 80%)을 따릅니다.
+# 임계치는 사내 "Backend 업그레이드/모니터링" 문서 기준(CPU 80%, 메모리 80~90%, 디스크 80%)을 따르고,
+# 같은 문서의 5단계 업그레이드 사다리(EC2 단일 → 인스턴스 확장 → RDS → ALB+ASG → Redis)를 기준으로
+# "지금 뭘 해야 하는지"까지 리포트에 함께 표시합니다(디스크/CPU/메모리는 조건부 자동 경고, RDS 이후
+# 단계는 사업 판단이 필요해 고정 안내문으로만 노출).
+#
 # CPU는 GitHub Actions cron이 하루 한 번 도는 구조라 진짜 "지속" 여부는 못 보고, 실행 시점의
 # 1분 load average를 vCPU 수로 나눈 스냅샷 근사치입니다 — 참고용이며 사이렌은 아닙니다.
 
@@ -383,6 +388,28 @@ jobs:
           # RDS/ALB+ASG/Redis는 사업적 판단(DB 성장 계획, 트래픽 패턴, 쿼리 패턴)이 필요해 지표 하나로 자동 감지 불가 —
           # 고정 안내문으로만 노출(Redis는 pg_stat_statements가 있어야 실제 판단 근거가 생김).
           NL=$'\n'
+
+          # 인스턴스 타입에서 현재 단계 유추(1단계=t4g.small류, 2단계=t4g.medium류) — 하드코딩 대신 실제 조회값 사용.
+          # staging/production이 서로 다른 인스턴스 타입일 수 있어 환경별로 각각 표시(예: production만 먼저 업그레이드된 경우).
+          current_stage_label() {
+            case "$1" in
+              *medium*|*large*|*xlarge*) echo "2단계" ;;
+              *) echo "1단계" ;;
+            esac
+          }
+          S_STAGE_LABEL=$(current_stage_label "$S_INSTANCE_TYPE")
+          P_STAGE_LABEL=$(current_stage_label "$P_INSTANCE_TYPE")
+
+          # CPU/메모리 부하 시 조언 — 이미 2단계(medium 이상)인데도 부하가 높으면 "medium 전환"은 틀린 조언이라 단계별로 분기.
+          cpu_mem_advice() {
+            local stage_label="$1"
+            if [ "$stage_label" = "1단계" ]; then
+              echo "t4g.medium 전환 검토 (2단계)"
+            else
+              echo "이미 2단계 — 구조 확장(3단계 RDS/4단계 ALB+ASG) 검토 필요"
+            fi
+          }
+
           UPGRADE_LINES=""
           if [ "$S_DISK_PCT" -ge 80 ] 2>/dev/null; then
             UPGRADE_LINES="${UPGRADE_LINES}⚠️ Staging 디스크 ${S_DISK_PCT}% — EBS 볼륨 증설 검토${NL}"
@@ -391,18 +418,19 @@ jobs:
             UPGRADE_LINES="${UPGRADE_LINES}⚠️ Production 디스크 ${P_DISK_PCT}% — EBS 볼륨 증설 검토${NL}"
           fi
           if { [ "$S_MEM_PCT" -ge 80 ] 2>/dev/null; } || { [ "$S_CPU_PCT" -ge 80 ] 2>/dev/null; }; then
-            UPGRADE_LINES="${UPGRADE_LINES}⚠️ Staging CPU/메모리 부하 — t4g.medium 전환 검토 (2단계)${NL}"
+            UPGRADE_LINES="${UPGRADE_LINES}⚠️ Staging CPU/메모리 부하 — $(cpu_mem_advice "$S_STAGE_LABEL")${NL}"
           fi
           if { [ "$P_MEM_PCT" -ge 80 ] 2>/dev/null; } || { [ "$P_CPU_PCT" -ge 80 ] 2>/dev/null; }; then
-            UPGRADE_LINES="${UPGRADE_LINES}⚠️ Production CPU/메모리 부하 — t4g.medium 전환 검토 (2단계)${NL}"
+            UPGRADE_LINES="${UPGRADE_LINES}⚠️ Production CPU/메모리 부하 — $(cpu_mem_advice "$P_STAGE_LABEL")${NL}"
           fi
           if [ -z "$UPGRADE_LINES" ]; then
-            UPGRADE_LINES="✅ 지표 기준 즉시 조치 필요한 항목 없음${NL}"
+            UPGRADE_LINES="✅  지표 기준 즉시 조치가 필요한 항목이 없습니다.${NL}"
           fi
-          UPGRADE_GUIDE="현재 단계: 1단계 — EC2 단일 인스턴스(t4g.small)${NL}${NL}${UPGRADE_LINES}${NL}다음 단계는 지표만으로 자동 판단 안 됨(사업 판단 필요):${NL}• DB 커짐·자동백업·다중 서버 계획 → 3단계 RDS${NL}• 무중단 배포·트래픽 변동 심함 → 4단계 ALB+ASG${NL}• DB CPU 높음/SELECT 과다/인기데이터 반복조회/응답 느림 → 5단계 Redis"
+          REDIS_NOTE=""
           if [ "$S_PG_STAT_EXT" != "1" ] && [ "$P_PG_STAT_EXT" != "1" ]; then
-            UPGRADE_GUIDE="${UPGRADE_GUIDE}${NL}  (Redis 판단 근거 없음 — pg_stat_statements 미설치, 위 Postgres 항목 참고)"
+            REDIS_NOTE="${NL}-# 5단계(Redis) 판단 근거 없음 — pg_stat_statements 미설치, 위 Postgres 항목 참고"
           fi
+          UPGRADE_GUIDE="**현재 단계**${NL}Staging · ${S_STAGE_LABEL} — EC2 단일 인스턴스(\`${S_INSTANCE_TYPE:-unknown}\`)${NL}Production · ${P_STAGE_LABEL} — EC2 단일 인스턴스(\`${P_INSTANCE_TYPE:-unknown}\`)${NL}${NL}${UPGRADE_LINES}${NL}**다음 단계 판단 기준** _(사업 판단 필요 · 지표로 자동 감지 안 됨)_${NL}• DB 커짐 · 자동백업 관리 필요 · 다중 서버 계획 → **3단계 RDS**${NL}• 무중단 배포 필요 · 트래픽 변동 심함 → **4단계 ALB+ASG**${NL}• DB CPU 높음 · SELECT 과다 · 인기데이터 반복조회 · 응답 느림 → **5단계 Redis**${REDIS_NOTE}"
 
           E_S_API_SSL_F=$(check_days "$E_S_API_SSL")
           E_P_API_SSL_F=$(check_days "$E_P_API_SSL")
@@ -448,8 +476,8 @@ jobs:
           # CloudWatch CPU(3h 평균/최대) — SSH와 무관한 교차검증용. Agent 미설치라 메모리·디스크는 여기서 못 봄.
           cw_cpu_line() {
             local avg="$1" max="$2"
-            if [ -z "$avg" ] || [ "$avg" = "NA" ]; then echo "조회 불가(IAM 권한 또는 데이터 없음)"; return; fi
-            echo "평균 ${avg}% · 최대 ${max}%"
+            if [ -z "$avg" ] || [ "$avg" = "NA" ]; then echo "❓ 조회 불가 (IAM 권한 또는 데이터 없음)"; return; fi
+            echo "평균 \`${avg}%\` · 최대 \`${max}%\`"
           }
           S_CW_LINE=$(cw_cpu_line "$S_CW_CPU_AVG" "$S_CW_CPU_MAX")
           P_CW_LINE=$(cw_cpu_line "$P_CW_CPU_AVG" "$P_CW_CPU_MAX")
@@ -457,13 +485,20 @@ jobs:
           # Cost Explorer 이번 달 누적 비용 — us-east-1 고정 조회, 최대 하루 지연 가능.
           cost_line() {
             local amount="$1"
-            if [ -z "$amount" ] || [ "$amount" = "NA" ]; then echo "조회 불가(Cost Explorer IAM 권한 없음)"; return; fi
-            awk -v a="$amount" 'BEGIN{printf "$%.2f", a}'
+            if [ -z "$amount" ] || [ "$amount" = "NA" ]; then echo "❓ 조회 불가 (Cost Explorer IAM 권한 없음)"; return; fi
+            awk -v a="$amount" 'BEGIN{printf "`$%.2f`", a}'
           }
           COST_LINE=$(cost_line "$MTD_COST")
 
-          # AWS 사용 현황 — 서비스 구성은 고정 텍스트(자주 안 바뀜), CPU·비용은 실시간 API 조회값.
-          AWS_USAGE="\`EC2\`(${S_INSTANCE_TYPE:-unknown}) staging/production 각 1대 · \`Route53\`(picakes.com) · \`CloudFront\`+\`S3\`(정적 리소스) · \`Let's Encrypt\`(SSL, EC2 자체 갱신)${NL}CloudWatch CPU(3h) — staging ${S_CW_LINE} · production ${P_CW_LINE}${NL}이번 달 누적 비용(Cost Explorer): ${COST_LINE}${NL}-# CloudWatch는 CPU만 제공(Agent 미설치로 메모리·디스크는 SSH로만 확인 가능) · 위 두 지표는 SSH 무관 교차검증용"
+          # EC2 타입 표기 — staging/production이 같은 타입이면 한 번만, 다르면 각각 표시(둘 다 S_INSTANCE_TYPE만 쓰면 부정확).
+          if [ "$S_INSTANCE_TYPE" = "$P_INSTANCE_TYPE" ]; then
+            EC2_TYPES_LABEL="${S_INSTANCE_TYPE:-unknown} × 2"
+          else
+            EC2_TYPES_LABEL="staging ${S_INSTANCE_TYPE:-unknown} · production ${P_INSTANCE_TYPE:-unknown}"
+          fi
+
+          # AWS 사용 현황 — 서비스 구성은 고정 텍스트(자주 안 바뀜), CPU·비용은 실시간 API 조회값. 소제목으로 구획을 나눠 가독성 확보.
+          AWS_USAGE="**사용 서비스**  \`EC2\`(${EC2_TYPES_LABEL}) · \`Route53\` · \`CloudFront\` · \`S3\` · \`Let's Encrypt\`${NL}${NL}**CloudWatch CPU** _(최근 3시간)_${NL}staging ${S_CW_LINE}${NL}production ${P_CW_LINE}${NL}${NL}**이번 달 누적 비용** _(Cost Explorer)_${NL}${COST_LINE}${NL}-# CloudWatch는 CPU만 제공(Agent 미설치로 메모리·디스크는 SSH로만 확인) · 위 두 지표는 SSH 무관 교차검증용"
 
           DIVIDER="▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
 
