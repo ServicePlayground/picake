@@ -22,6 +22,23 @@ jobs:
   test-backend:
     runs-on: ubuntu-latest
 
+    # DB 통합테스트(yarn test:integration)가 실제로 붙는 Postgres.
+    # backend 변경이 없는 PR에서는 이 컨테이너도 그냥 띄워지기만 하고 안 쓰입니다(비용 미미).
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: picake_backend_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
     steps:
       # fetch-depth: 0 — 기본 체크아웃은 shallow라 base 브랜치와 diff를 뜰 수 없음
       - uses: actions/checkout@v4
@@ -72,6 +89,22 @@ jobs:
         if: steps.changes.outputs.backend == 'true'
         run: yarn install --immutable
 
-      - name: Run backend tests
+      - name: Run backend unit tests
         if: steps.changes.outputs.backend == 'true'
         run: yarn workspace @picake/backend test
+
+      # .env.test는 .gitignore 대상(.env.*)이라 로컬처럼 CI에서도 실행 직전에 만들어줌.
+      # 위 services.postgres 컨테이너를 가리키도록 구성.
+      - name: Create .env.test for DB integration tests
+        if: steps.changes.outputs.backend == 'true'
+        working-directory: apps/backend
+        run: |
+          cat > .env.test <<'EOF'
+          NODE_ENV=test
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/picake_backend_test?schema=public"
+          EOF
+
+      # test:integration 스크립트 자체가 db:migrate:test를 먼저 실행함
+      - name: Run backend DB integration tests
+        if: steps.changes.outputs.backend == 'true'
+        run: yarn workspace @picake/backend test:integration

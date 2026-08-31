@@ -18,8 +18,10 @@
     "db:seed:dev": "dotenv -e ./.env.development -- ts-node -r tsconfig-paths/register -O '{\"module\":\"CommonJS\"}' src/infra/database/prisma/seed.ts",
     "db:seed:staging": "dotenv -e ./.env.staging -- ts-node -r tsconfig-paths/register -O '{\"module\":\"CommonJS\"}' src/infra/database/prisma/seed.ts",
     "db:studio:dev": "dotenv -e ./.env.development -- prisma studio --schema ./src/infra/database/prisma/schema.prisma",
+    "db:migrate:test": "dotenv -e ./.env.test -- prisma migrate deploy --schema ./src/infra/database/prisma/schema.prisma",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:integration": "yarn db:migrate:test && dotenv -e ./.env.test -- vitest run -c vitest.integration.config.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.922.0",
