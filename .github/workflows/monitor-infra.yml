@@ -61,7 +61,7 @@ jobs:
             LOCAL_HEALTH=$(curl -sf -o /dev/null -w "%{http_code}" http://localhost:8080/health 2>/dev/null)
             PG_ACTIVE=$(systemctl is-active postgresql 2>/dev/null)
             PG_CONNECTIONS=$(sudo -u postgres psql -tAc "SELECT count(*) FROM pg_stat_activity;" 2>/dev/null | tr -d "[:space:]")
-            PG_STAT_EXT=$(sudo -u postgres psql -tAc "SELECT 1 FROM pg_extension WHERE extname='"'"'pg_stat_statements'"'"';" 2>/dev/null | tr -d "[:space:]")
+            PG_STAT_EXT=$(sudo -u postgres psql -d picake_staging_db -tAc "SELECT 1 FROM pg_extension WHERE extname='"'"'pg_stat_statements'"'"';" 2>/dev/null | tr -d "[:space:]")
             echo "INSTANCE_TYPE=${INSTANCE_TYPE:-unknown}"
             echo "UPTIME=${UPTIME:-unknown}"
             echo "VCPUS=${VCPUS:-NA}"
@@ -117,7 +117,7 @@ jobs:
             LOCAL_HEALTH=$(curl -sf -o /dev/null -w "%{http_code}" http://localhost:8080/health 2>/dev/null)
             PG_ACTIVE=$(systemctl is-active postgresql 2>/dev/null)
             PG_CONNECTIONS=$(sudo -u postgres psql -tAc "SELECT count(*) FROM pg_stat_activity;" 2>/dev/null | tr -d "[:space:]")
-            PG_STAT_EXT=$(sudo -u postgres psql -tAc "SELECT 1 FROM pg_extension WHERE extname='"'"'pg_stat_statements'"'"';" 2>/dev/null | tr -d "[:space:]")
+            PG_STAT_EXT=$(sudo -u postgres psql -d picake_production_db -tAc "SELECT 1 FROM pg_extension WHERE extname='"'"'pg_stat_statements'"'"';" 2>/dev/null | tr -d "[:space:]")
             echo "INSTANCE_TYPE=${INSTANCE_TYPE:-unknown}"
             echo "UPTIME=${UPTIME:-unknown}"
             echo "VCPUS=${VCPUS:-NA}"
