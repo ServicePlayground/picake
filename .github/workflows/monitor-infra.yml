@@ -187,6 +187,7 @@ jobs:
             if [ -z "$instance_id" ] || [ "$instance_id" = "unknown" ]; then echo "NA|NA"; return; fi
             local result
             result=$(aws cloudwatch get-metric-statistics \
+              --region ap-northeast-2 \
               --namespace AWS/EC2 \
               --metric-name CPUUtilization \
               --dimensions Name=InstanceId,Value="$instance_id" \
