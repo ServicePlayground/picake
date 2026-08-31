@@ -1,16 +1,23 @@
 name: Infra Monitoring (Daily Report)
 
-# 매일 1회 staging/production EC2 인프라 상태(CPU, 메모리, 디스크, Postgres, PM2, nginx, SSL 인증서, 헬스체크)를
-# SSH로 점검하고, CloudWatch(EC2 CPU)·Cost Explorer(이번 달 누적 비용)로 SSH와 무관한 교차검증까지 더해
-# 디스코드로 요약 리포트를 보냅니다. 배포 트리거가 아니라 순수 모니터링용입니다.
+# 매일 1회 staging/production EC2 인프라 상태(CPU, 메모리, 디스크, Postgres, PM2, nginx, 응답시간,
+# SSL 인증서, 헬스체크)를 SSH로 점검하고, CloudWatch(EC2 CPU)·Cost Explorer(이번 달 누적 비용)로
+# SSH와 무관한 교차검증까지 더해 디스코드로 요약 리포트를 보냅니다. 배포 트리거가 아니라 순수
+# 모니터링용입니다.
 #
 # 임계치는 사내 "Backend 업그레이드/모니터링" 문서 기준(CPU 80%, 메모리 80~90%, 디스크 80%)을 따르고,
 # 같은 문서의 5단계 업그레이드 사다리(EC2 단일 → 인스턴스 확장 → RDS → ALB+ASG → Redis)를 기준으로
-# "지금 뭘 해야 하는지"까지 리포트에 함께 표시합니다(디스크/CPU/메모리는 조건부 자동 경고, RDS 이후
-# 단계는 사업 판단이 필요해 고정 안내문으로만 노출).
+# "지금 뭘 해야 하는지"까지 리포트에 함께 표시합니다(디스크/CPU/메모리/응답시간은 조건부 자동 경고,
+# RDS 이후 단계는 사업 판단이 필요해 고정 안내문으로만 노출).
 #
 # CPU는 GitHub Actions cron이 하루 한 번 도는 구조라 진짜 "지속" 여부는 못 보고, 실행 시점의
 # 1분 load average를 vCPU 수로 나눈 스냅샷 근사치입니다 — 참고용이며 사이렌은 아닙니다.
+#
+# 응답시간(latency)은 CPU/메모리와 달리 "느려짐"을 직접 보여주는 지표(SRE golden signal)입니다.
+# nginx access log의 $request_time(rt=)을 최근 최대 5000건 샘플링해 평균/p95를 계산합니다 — 정확한
+# 시간창(예: "최근 1시간")이 아니라 트래픽량에 따라 샘플 구간 길이가 달라지는 근사치이며, 이 또한
+# 실행 시점 스냅샷이라 참고용입니다. Sentry Performance는 이 프로젝트에서 비활성화(tracesSampleRate: 0)
+# 되어 있어 사용하지 않고, nginx 로그만으로 별도 APM 없이 측정합니다.
 
 on:
   schedule:
@@ -68,6 +75,15 @@ jobs:
             PG_ACTIVE=$(systemctl is-active postgresql 2>/dev/null)
             PG_CONNECTIONS=$(sudo -u postgres psql -tAc "SELECT count(*) FROM pg_stat_activity;" 2>/dev/null | tr -d "[:space:]")
             PG_STAT_EXT=$(sudo -u postgres psql -d picake_staging_db -tAc "SELECT 1 FROM pg_extension WHERE extname='"'"'pg_stat_statements'"'"';" 2>/dev/null | tr -d "[:space:]")
+            RT_VALUES=$(sudo tail -n 5000 /var/log/nginx/picake-backend-staging-access.log 2>/dev/null | grep -oP "rt=\K[0-9.]+")
+            RT_COUNT=$(printf "%s\n" "$RT_VALUES" | sed "/^\$/d" | wc -l | tr -d "[:space:]")
+            if [ "$RT_COUNT" -gt 0 ] 2>/dev/null; then
+              RT_AVG_MS=$(echo "$RT_VALUES" | awk "{sum+=\$1; n++} END{if(n>0) printf \"%.0f\", (sum/n)*1000}")
+              RT_P95_MS=$(echo "$RT_VALUES" | sort -n | awk -v n="$RT_COUNT" "BEGIN{idx=int(n*0.95); if(idx<1)idx=1} NR==idx{printf \"%.0f\", \$1*1000}")
+            else
+              RT_AVG_MS="NA"
+              RT_P95_MS="NA"
+            fi
             echo "INSTANCE_TYPE=${INSTANCE_TYPE:-unknown}"
             echo "INSTANCE_ID=${INSTANCE_ID:-unknown}"
             echo "UPTIME=${UPTIME:-unknown}"
@@ -87,6 +103,9 @@ jobs:
             echo "PG_ACTIVE=${PG_ACTIVE:-unknown}"
             echo "PG_CONNECTIONS=${PG_CONNECTIONS:-NA}"
             echo "PG_STAT_EXT=${PG_STAT_EXT:-0}"
+            echo "RT_AVG_MS=${RT_AVG_MS:-NA}"
+            echo "RT_P95_MS=${RT_P95_MS:-NA}"
+            echo "RT_COUNT=${RT_COUNT:-0}"
           ' 2>&1) || true
           echo "$OUT"
           echo "$OUT" | grep -E '^[A-Z0-9_]+=' >> "$GITHUB_OUTPUT"
@@ -126,6 +145,15 @@ jobs:
             PG_ACTIVE=$(systemctl is-active postgresql 2>/dev/null)
             PG_CONNECTIONS=$(sudo -u postgres psql -tAc "SELECT count(*) FROM pg_stat_activity;" 2>/dev/null | tr -d "[:space:]")
             PG_STAT_EXT=$(sudo -u postgres psql -d picake_production_db -tAc "SELECT 1 FROM pg_extension WHERE extname='"'"'pg_stat_statements'"'"';" 2>/dev/null | tr -d "[:space:]")
+            RT_VALUES=$(sudo tail -n 5000 /var/log/nginx/picake-backend-production-access.log 2>/dev/null | grep -oP "rt=\K[0-9.]+")
+            RT_COUNT=$(printf "%s\n" "$RT_VALUES" | sed "/^\$/d" | wc -l | tr -d "[:space:]")
+            if [ "$RT_COUNT" -gt 0 ] 2>/dev/null; then
+              RT_AVG_MS=$(echo "$RT_VALUES" | awk "{sum+=\$1; n++} END{if(n>0) printf \"%.0f\", (sum/n)*1000}")
+              RT_P95_MS=$(echo "$RT_VALUES" | sort -n | awk -v n="$RT_COUNT" "BEGIN{idx=int(n*0.95); if(idx<1)idx=1} NR==idx{printf \"%.0f\", \$1*1000}")
+            else
+              RT_AVG_MS="NA"
+              RT_P95_MS="NA"
+            fi
             echo "INSTANCE_TYPE=${INSTANCE_TYPE:-unknown}"
             echo "INSTANCE_ID=${INSTANCE_ID:-unknown}"
             echo "UPTIME=${UPTIME:-unknown}"
@@ -145,6 +173,9 @@ jobs:
             echo "PG_ACTIVE=${PG_ACTIVE:-unknown}"
             echo "PG_CONNECTIONS=${PG_CONNECTIONS:-NA}"
             echo "PG_STAT_EXT=${PG_STAT_EXT:-0}"
+            echo "RT_AVG_MS=${RT_AVG_MS:-NA}"
+            echo "RT_P95_MS=${RT_P95_MS:-NA}"
+            echo "RT_COUNT=${RT_COUNT:-0}"
           ' 2>&1) || true
           echo "$OUT"
           echo "$OUT" | grep -E '^[A-Z0-9_]+=' >> "$GITHUB_OUTPUT"
@@ -249,6 +280,9 @@ jobs:
           S_PG_ACTIVE: ${{ steps.staging.outputs.PG_ACTIVE }}
           S_PG_CONNECTIONS: ${{ steps.staging.outputs.PG_CONNECTIONS }}
           S_PG_STAT_EXT: ${{ steps.staging.outputs.PG_STAT_EXT }}
+          S_RT_AVG_MS: ${{ steps.staging.outputs.RT_AVG_MS }}
+          S_RT_P95_MS: ${{ steps.staging.outputs.RT_P95_MS }}
+          S_RT_COUNT: ${{ steps.staging.outputs.RT_COUNT }}
           P_INSTANCE_TYPE: ${{ steps.production.outputs.INSTANCE_TYPE }}
           P_UPTIME: ${{ steps.production.outputs.UPTIME }}
           P_VCPUS: ${{ steps.production.outputs.VCPUS }}
@@ -267,6 +301,9 @@ jobs:
           P_PG_ACTIVE: ${{ steps.production.outputs.PG_ACTIVE }}
           P_PG_CONNECTIONS: ${{ steps.production.outputs.PG_CONNECTIONS }}
           P_PG_STAT_EXT: ${{ steps.production.outputs.PG_STAT_EXT }}
+          P_RT_AVG_MS: ${{ steps.production.outputs.RT_AVG_MS }}
+          P_RT_P95_MS: ${{ steps.production.outputs.RT_P95_MS }}
+          P_RT_COUNT: ${{ steps.production.outputs.RT_COUNT }}
           E_S_API_SSL: ${{ steps.external.outputs.STAGING_API_SSL_DAYS }}
           E_P_API_SSL: ${{ steps.external.outputs.PROD_API_SSL_DAYS }}
           E_S_API_HEALTH: ${{ steps.external.outputs.STAGING_API_HEALTH }}
@@ -337,6 +374,23 @@ jobs:
             local active="$1"
             if [ "$active" = "active" ]; then echo "✅ active"; else echo "❌ ${active:-unknown}"; fi
           }
+          # 응답시간(latency) — nginx $request_time 기반. 평균 300ms / p95 800ms 이상 = 주의,
+          # 평균 800ms / p95 2000ms 이상 = 심각 (일반적인 API 응답 기준 참고치).
+          # 표본 0건은 "실패"가 아니라 "해당 구간 트래픽 없음"이므로 ❓/❌ 등 경보성 기호 대신 ➖를 써서
+          # BAD_COUNT/WARN_COUNT 집계에서 제외한다.
+          badge_rt() {
+            local avg="$1" p95="$2" count="$3"
+            if [ -z "$avg" ] || [ "$avg" = "NA" ] || [ -z "$count" ] || [ "$count" = "0" ]; then
+              echo "➖ 표본 없음"; return
+            fi
+            if { [ "$avg" -ge 800 ] 2>/dev/null; } || { [ "$p95" -ge 2000 ] 2>/dev/null; }; then
+              echo "❌ 평균 ${avg}ms · p95 ${p95}ms";
+            elif { [ "$avg" -ge 300 ] 2>/dev/null; } || { [ "$p95" -ge 800 ] 2>/dev/null; }; then
+              echo "⚠️ 평균 ${avg}ms · p95 ${p95}ms";
+            else
+              echo "✅ 평균 ${avg}ms · p95 ${p95}ms";
+            fi
+          }
 
           S_SSL_F=$(check_days "$S_SSL_DAYS")
           P_SSL_F=$(check_days "$P_SSL_DAYS")
@@ -354,6 +408,8 @@ jobs:
           P_CPU_F=$(badge_cpu "$P_CPU_LOAD1" "$P_VCPUS")
           S_PG_F=$(badge_pg "$S_PG_ACTIVE")
           P_PG_F=$(badge_pg "$P_PG_ACTIVE")
+          S_RT_F=$(badge_rt "$S_RT_AVG_MS" "$S_RT_P95_MS" "$S_RT_COUNT")
+          P_RT_F=$(badge_rt "$P_RT_AVG_MS" "$P_RT_P95_MS" "$P_RT_COUNT")
 
           # certbot 타이머 상태 — 상세 블록용 한 줄
           timer_line() {
@@ -423,6 +479,12 @@ jobs:
           if { [ "$P_MEM_PCT" -ge 80 ] 2>/dev/null; } || { [ "$P_CPU_PCT" -ge 80 ] 2>/dev/null; }; then
             UPGRADE_LINES="${UPGRADE_LINES}⚠️ Production CPU/메모리 부하 — $(cpu_mem_advice "$P_STAGE_LABEL")${NL}"
           fi
+          if { [ "$S_RT_AVG_MS" -ge 300 ] 2>/dev/null; } || { [ "$S_RT_P95_MS" -ge 800 ] 2>/dev/null; }; then
+            UPGRADE_LINES="${UPGRADE_LINES}⚠️ Staging 응답시간 평균 ${S_RT_AVG_MS}ms · p95 ${S_RT_P95_MS}ms — $(cpu_mem_advice "$S_STAGE_LABEL")${NL}"
+          fi
+          if { [ "$P_RT_AVG_MS" -ge 300 ] 2>/dev/null; } || { [ "$P_RT_P95_MS" -ge 800 ] 2>/dev/null; }; then
+            UPGRADE_LINES="${UPGRADE_LINES}⚠️ Production 응답시간 평균 ${P_RT_AVG_MS}ms · p95 ${P_RT_P95_MS}ms — $(cpu_mem_advice "$P_STAGE_LABEL")${NL}"
+          fi
           if [ -z "$UPGRADE_LINES" ]; then
             UPGRADE_LINES="✅  지표 기준 즉시 조치가 필요한 항목이 없습니다.${NL}"
           fi
@@ -443,7 +505,7 @@ jobs:
           E_P_WEB_SELLER_F=$(check_http_status "$E_P_WEB_SELLER")
           E_P_WEB_ADMIN_F=$(check_http_status "$E_P_WEB_ADMIN")
 
-          ALL_TEXT="$S_SSL_F $P_SSL_F $S_HEALTH_F $P_HEALTH_F $S_PM2_F $P_PM2_F $S_TIMER_F $P_TIMER_F $S_NGINX_F $P_NGINX_F $S_DISK_F $P_DISK_F $S_MEM_F $P_MEM_F $S_CPU_F $P_CPU_F $S_PG_F $P_PG_F $E_S_API_SSL_F $E_P_API_SSL_F $E_S_API_HEALTH_F $E_P_API_HEALTH_F $E_S_WEB_USER_F $E_S_WEB_SELLER_F $E_S_WEB_ADMIN_F $E_P_WEB_USER_F $E_P_WEB_SELLER_F $E_P_WEB_ADMIN_F"
+          ALL_TEXT="$S_SSL_F $P_SSL_F $S_HEALTH_F $P_HEALTH_F $S_PM2_F $P_PM2_F $S_TIMER_F $P_TIMER_F $S_NGINX_F $P_NGINX_F $S_DISK_F $P_DISK_F $S_MEM_F $P_MEM_F $S_CPU_F $P_CPU_F $S_PG_F $P_PG_F $S_RT_F $P_RT_F $E_S_API_SSL_F $E_P_API_SSL_F $E_S_API_HEALTH_F $E_P_API_HEALTH_F $E_S_WEB_USER_F $E_S_WEB_SELLER_F $E_S_WEB_ADMIN_F $E_P_WEB_USER_F $E_P_WEB_SELLER_F $E_P_WEB_ADMIN_F"
 
           BAD_COUNT=$(echo "$ALL_TEXT" | grep -oE '❌|❓' | wc -l | tr -d ' ')
           WARN_COUNT=$(echo "$ALL_TEXT" | grep -oE '⚠️' | wc -l | tr -d ' ')
@@ -467,8 +529,8 @@ jobs:
           E_P_WEB="user ${E_P_WEB_USER_F} · seller ${E_P_WEB_SELLER_F} · admin ${E_P_WEB_ADMIN_F}"
 
           # 각 환경 상세 한 줄 (인라인 배지 3열 아래에 붙는 보조 정보)
-          S_DETAIL="가동시간 ${S_UPTIME:-unknown} · 메모리 ${S_MEM:-NA} · 디스크 ${S_DISK_HUMAN:-NA} · pm2 재시작 ${S_PM2_RESTARTS:-NA}회 · Postgres ${S_PG_DETAIL}"
-          P_DETAIL="가동시간 ${P_UPTIME:-unknown} · 메모리 ${P_MEM:-NA} · 디스크 ${P_DISK_HUMAN:-NA} · pm2 재시작 ${P_PM2_RESTARTS:-NA}회 · Postgres ${P_PG_DETAIL}"
+          S_DETAIL="가동시간 ${S_UPTIME:-unknown} · 메모리 ${S_MEM:-NA} · 디스크 ${S_DISK_HUMAN:-NA} · pm2 재시작 ${S_PM2_RESTARTS:-NA}회 · Postgres ${S_PG_DETAIL}${NL}응답시간 ${S_RT_F} (최근 로그 표본 ${S_RT_COUNT:-0}건)"
+          P_DETAIL="가동시간 ${P_UPTIME:-unknown} · 메모리 ${P_MEM:-NA} · 디스크 ${P_DISK_HUMAN:-NA} · pm2 재시작 ${P_PM2_RESTARTS:-NA}회 · Postgres ${P_PG_DETAIL}${NL}응답시간 ${P_RT_F} (최근 로그 표본 ${P_RT_COUNT:-0}건)"
 
           S_SSL_BLOCK="EC2 로컬 SSL ${S_SSL_F} · certbot ${S_TIMER_F}${NL}외부 SSL(api-staging) ${E_S_API_SSL_F} · 외부 헬스체크 ${E_S_API_HEALTH_F} · localhost 헬스체크 ${S_HEALTH_F}"
           P_SSL_BLOCK="EC2 로컬 SSL ${P_SSL_F} · certbot ${P_TIMER_F}${NL}외부 SSL(api) ${E_P_API_SSL_F} · 외부 헬스체크 ${E_P_API_HEALTH_F} · localhost 헬스체크 ${P_HEALTH_F}"
