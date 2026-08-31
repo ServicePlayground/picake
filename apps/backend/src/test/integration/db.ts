@@ -9,7 +9,7 @@ let prisma: PrismaService | undefined;
  * 실수로 dev/staging/production DB에 대고 TRUNCATE를 날리는 사고를 막기 위한 안전장치.
  * 반드시 `dotenv -e ./.env.test`로 실행해서 DATABASE_URL이 테스트 DB를 가리키도록 해야 함.
  */
-function assertTestDatabase(): void {
+export function assertTestDatabase(): void {
   const url = process.env.DATABASE_URL ?? "";
   if (!url.includes("_test")) {
     throw new Error(
