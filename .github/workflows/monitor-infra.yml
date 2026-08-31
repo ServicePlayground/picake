@@ -196,8 +196,7 @@ jobs:
               --period 10800 \
               --statistics Average Maximum \
               --query 'Datapoints[0].[Average,Maximum]' \
-              --output text)
-            echo "DEBUG cw_cpu($instance_id) result=[$result]" >&2
+              --output text 2>/dev/null)
             if [ -z "$result" ] || [ "$result" = "None" ]; then echo "NA|NA"; return; fi
             echo "$result" | awk '{printf "%.0f|%.0f", $1, $2}'
           }
