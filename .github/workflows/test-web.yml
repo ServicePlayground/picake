@@ -47,6 +47,13 @@ jobs:
             echo "::notice::${{ matrix.app }} 변경 없음 또는 test 스크립트 없음 — 건너뜁니다"
           fi
 
+          # Storybook interaction test(브라우저 기반)를 쓰는 앱만 Playwright 브라우저가 필요함
+          HAS_PLAYWRIGHT=false
+          if node -e "const p=require('./apps/${{ matrix.app }}/package.json'); process.exit((p.devDependencies?.playwright || p.dependencies?.playwright) ? 0 : 1)"; then
+            HAS_PLAYWRIGHT=true
+          fi
+          echo "needs-playwright=$HAS_PLAYWRIGHT" >> "$GITHUB_OUTPUT"
+
       - name: Setup Node.js
         if: steps.changes.outputs.run == 'true'
         uses: actions/setup-node@v4
@@ -75,6 +82,25 @@ jobs:
       - name: Install dependencies
         if: steps.changes.outputs.run == 'true'
         run: yarn install --immutable
+
+      - name: Get installed Playwright version
+        if: steps.changes.outputs.run == 'true' && steps.changes.outputs.needs-playwright == 'true'
+        id: playwright-version
+        run: echo "version=$(node -p "require('./apps/${{ matrix.app }}/package.json').devDependencies?.playwright || require('./apps/${{ matrix.app }}/package.json').dependencies?.playwright")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        if: steps.changes.outputs.run == 'true' && steps.changes.outputs.needs-playwright == 'true'
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.version }}
+
+      # 캐시 히트여도 --with-deps가 설치하는 OS 레벨 라이브러리는 캐시되지 않으므로 매번 실행.
+      # 브라우저 바이너리 자체는 캐시가 있으면 재다운로드하지 않음.
+      - name: Install Playwright Chromium
+        if: steps.changes.outputs.run == 'true' && steps.changes.outputs.needs-playwright == 'true'
+        run: npx playwright install --with-deps chromium
 
       - name: Run ${{ matrix.app }} tests
         if: steps.changes.outputs.run == 'true'

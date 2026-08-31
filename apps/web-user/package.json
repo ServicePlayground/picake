@@ -11,8 +11,10 @@
     "start": "next start",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "test": "vitest run --project=unit",
-    "test:watch": "vitest --project=unit"
+    "test": "vitest run",
+    "test:watch": "vitest --project=unit",
+    "test:unit": "vitest run --project=unit",
+    "test:storybook": "vitest run --project=storybook"
   },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.12",
