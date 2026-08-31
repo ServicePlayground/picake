@@ -36,6 +36,7 @@ jobs:
           OUT=$(ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i ~/.ssh/staging.pem "ec2-user@${HOST}" '
             IMDS_TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 60" 2>/dev/null)
             INSTANCE_TYPE=$(curl -s -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" http://169.254.169.254/latest/meta-data/instance-type 2>/dev/null)
+            INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" http://169.254.169.254/latest/meta-data/instance-id 2>/dev/null)
             UPTIME=$(uptime -p 2>/dev/null)
             VCPUS=$(nproc 2>/dev/null)
             CPU_LOAD1=$(awk "{print \$1}" /proc/loadavg 2>/dev/null)
@@ -63,6 +64,7 @@ jobs:
             PG_CONNECTIONS=$(sudo -u postgres psql -tAc "SELECT count(*) FROM pg_stat_activity;" 2>/dev/null | tr -d "[:space:]")
             PG_STAT_EXT=$(sudo -u postgres psql -d picake_staging_db -tAc "SELECT 1 FROM pg_extension WHERE extname='"'"'pg_stat_statements'"'"';" 2>/dev/null | tr -d "[:space:]")
             echo "INSTANCE_TYPE=${INSTANCE_TYPE:-unknown}"
+            echo "INSTANCE_ID=${INSTANCE_ID:-unknown}"
             echo "UPTIME=${UPTIME:-unknown}"
             echo "VCPUS=${VCPUS:-NA}"
             echo "CPU_LOAD1=${CPU_LOAD1:-NA}"
@@ -92,6 +94,7 @@ jobs:
           OUT=$(ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i ~/.ssh/production.pem "ec2-user@${HOST}" '
             IMDS_TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 60" 2>/dev/null)
             INSTANCE_TYPE=$(curl -s -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" http://169.254.169.254/latest/meta-data/instance-type 2>/dev/null)
+            INSTANCE_ID=$(curl -s -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" http://169.254.169.254/latest/meta-data/instance-id 2>/dev/null)
             UPTIME=$(uptime -p 2>/dev/null)
             VCPUS=$(nproc 2>/dev/null)
             CPU_LOAD1=$(awk "{print \$1}" /proc/loadavg 2>/dev/null)
@@ -119,6 +122,7 @@ jobs:
             PG_CONNECTIONS=$(sudo -u postgres psql -tAc "SELECT count(*) FROM pg_stat_activity;" 2>/dev/null | tr -d "[:space:]")
             PG_STAT_EXT=$(sudo -u postgres psql -d picake_production_db -tAc "SELECT 1 FROM pg_extension WHERE extname='"'"'pg_stat_statements'"'"';" 2>/dev/null | tr -d "[:space:]")
             echo "INSTANCE_TYPE=${INSTANCE_TYPE:-unknown}"
+            echo "INSTANCE_ID=${INSTANCE_ID:-unknown}"
             echo "UPTIME=${UPTIME:-unknown}"
             echo "VCPUS=${VCPUS:-NA}"
             echo "CPU_LOAD1=${CPU_LOAD1:-NA}"
@@ -164,6 +168,56 @@ jobs:
             echo "PROD_WEB_USER=$(check_http picakes.com)"
             echo "PROD_WEB_SELLER=$(check_http seller.picakes.com)"
             echo "PROD_WEB_ADMIN=$(check_http admin.picakes.com)"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Gather AWS CloudWatch & Cost Explorer metrics
+        id: aws
+        if: always()
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
+          S_INSTANCE_ID: ${{ steps.staging.outputs.INSTANCE_ID }}
+          P_INSTANCE_ID: ${{ steps.production.outputs.INSTANCE_ID }}
+        run: |
+          # SSH가 안 되는 상황에서도 상태를 볼 수 있도록 CloudWatch로 교차 검증(3시간 평균/최대 CPU).
+          # CloudWatch Agent는 설치돼 있지 않아 메모리·디스크는 여기서 못 봄 — EC2 기본 지표(CPU)만 가능.
+          cw_cpu() {
+            local instance_id="$1"
+            if [ -z "$instance_id" ] || [ "$instance_id" = "unknown" ]; then echo "NA|NA"; return; fi
+            local result
+            result=$(aws cloudwatch get-metric-statistics \
+              --namespace AWS/EC2 \
+              --metric-name CPUUtilization \
+              --dimensions Name=InstanceId,Value="$instance_id" \
+              --start-time "$(date -u -d '3 hours ago' +%Y-%m-%dT%H:%M:%S)" \
+              --end-time "$(date -u +%Y-%m-%dT%H:%M:%S)" \
+              --period 10800 \
+              --statistics Average Maximum \
+              --query 'Datapoints[0].[Average,Maximum]' \
+              --output text 2>/dev/null)
+            if [ -z "$result" ] || [ "$result" = "None" ]; then echo "NA|NA"; return; fi
+            echo "$result" | awk '{printf "%.0f|%.0f", $1, $2}'
+          }
+
+          S_CW=$(cw_cpu "$S_INSTANCE_ID")
+          P_CW=$(cw_cpu "$P_INSTANCE_ID")
+
+          # Cost Explorer는 us-east-1 엔드포인트 고정(리소스 리전과 무관), 데이터는 하루 정도 지연될 수 있음.
+          MTD_COST=$(aws ce get-cost-and-usage \
+            --time-period Start="$(date -u +%Y-%m-01)",End="$(date -u +%Y-%m-%d)" \
+            --granularity MONTHLY \
+            --metrics UnblendedCost \
+            --region us-east-1 \
+            --query 'ResultsByTime[0].Total.UnblendedCost.Amount' \
+            --output text 2>/dev/null)
+
+          {
+            echo "S_CW_CPU_AVG=$(echo "$S_CW" | cut -d'|' -f1)"
+            echo "S_CW_CPU_MAX=$(echo "$S_CW" | cut -d'|' -f2)"
+            echo "P_CW_CPU_AVG=$(echo "$P_CW" | cut -d'|' -f1)"
+            echo "P_CW_CPU_MAX=$(echo "$P_CW" | cut -d'|' -f2)"
+            echo "MTD_COST=${MTD_COST:-NA}"
           } >> "$GITHUB_OUTPUT"
 
       - name: Build and send Discord report
@@ -217,6 +271,11 @@ jobs:
           E_P_WEB_USER: ${{ steps.external.outputs.PROD_WEB_USER }}
           E_P_WEB_SELLER: ${{ steps.external.outputs.PROD_WEB_SELLER }}
           E_P_WEB_ADMIN: ${{ steps.external.outputs.PROD_WEB_ADMIN }}
+          S_CW_CPU_AVG: ${{ steps.aws.outputs.S_CW_CPU_AVG }}
+          S_CW_CPU_MAX: ${{ steps.aws.outputs.S_CW_CPU_MAX }}
+          P_CW_CPU_AVG: ${{ steps.aws.outputs.P_CW_CPU_AVG }}
+          P_CW_CPU_MAX: ${{ steps.aws.outputs.P_CW_CPU_MAX }}
+          MTD_COST: ${{ steps.aws.outputs.MTD_COST }}
         run: |
           if [ -z "$DISCORD_WEBHOOK_URL" ]; then
             echo "⚠️ DISCORD_WEBHOOK_URL_INFRA_MONITORING is not set — skipping notification"
@@ -385,9 +444,25 @@ jobs:
           S_SSL_BLOCK="EC2 로컬 SSL ${S_SSL_F} · certbot ${S_TIMER_F}${NL}외부 SSL(api-staging) ${E_S_API_SSL_F} · 외부 헬스체크 ${E_S_API_HEALTH_F} · localhost 헬스체크 ${S_HEALTH_F}"
           P_SSL_BLOCK="EC2 로컬 SSL ${P_SSL_F} · certbot ${P_TIMER_F}${NL}외부 SSL(api) ${E_P_API_SSL_F} · 외부 헬스체크 ${E_P_API_HEALTH_F} · localhost 헬스체크 ${P_HEALTH_F}"
 
-          # AWS 사용 현황 — 실시간 API 조회가 아니라 현재 알려진 구성을 고정 텍스트로 안내(자주 안 바뀌는 정보).
-          # 구성이 바뀌면(리전 이전, 서비스 추가 등) 이 문자열도 같이 고쳐야 함.
-          AWS_USAGE="\`EC2\`(${S_INSTANCE_TYPE:-unknown}) staging/production 각 1대 · \`Route53\`(picakes.com) · \`CloudFront\`+\`S3\`(정적 리소스) · \`Let's Encrypt\`(SSL, EC2 자체 갱신)${NL}-# Cost Explorer/CloudWatch 연동 없음 · 이 리포트는 SSH 기반이라 인스턴스 자체가 죽으면 값이 안 나옴"
+          # CloudWatch CPU(3h 평균/최대) — SSH와 무관한 교차검증용. Agent 미설치라 메모리·디스크는 여기서 못 봄.
+          cw_cpu_line() {
+            local avg="$1" max="$2"
+            if [ -z "$avg" ] || [ "$avg" = "NA" ]; then echo "조회 불가(IAM 권한 또는 데이터 없음)"; return; fi
+            echo "평균 ${avg}% · 최대 ${max}%"
+          }
+          S_CW_LINE=$(cw_cpu_line "$S_CW_CPU_AVG" "$S_CW_CPU_MAX")
+          P_CW_LINE=$(cw_cpu_line "$P_CW_CPU_AVG" "$P_CW_CPU_MAX")
+
+          # Cost Explorer 이번 달 누적 비용 — us-east-1 고정 조회, 최대 하루 지연 가능.
+          cost_line() {
+            local amount="$1"
+            if [ -z "$amount" ] || [ "$amount" = "NA" ]; then echo "조회 불가(Cost Explorer IAM 권한 없음)"; return; fi
+            awk -v a="$amount" 'BEGIN{printf "$%.2f", a}'
+          }
+          COST_LINE=$(cost_line "$MTD_COST")
+
+          # AWS 사용 현황 — 서비스 구성은 고정 텍스트(자주 안 바뀜), CPU·비용은 실시간 API 조회값.
+          AWS_USAGE="\`EC2\`(${S_INSTANCE_TYPE:-unknown}) staging/production 각 1대 · \`Route53\`(picakes.com) · \`CloudFront\`+\`S3\`(정적 리소스) · \`Let's Encrypt\`(SSL, EC2 자체 갱신)${NL}CloudWatch CPU(3h) — staging ${S_CW_LINE} · production ${P_CW_LINE}${NL}이번 달 누적 비용(Cost Explorer): ${COST_LINE}${NL}-# CloudWatch는 CPU만 제공(Agent 미설치로 메모리·디스크는 SSH로만 확인 가능) · 위 두 지표는 SSH 무관 교차검증용"
 
           DIVIDER="▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
 
