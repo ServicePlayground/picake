@@ -68,6 +68,14 @@ export const PATHS = {
   // QA/테스트 전용 페이지
   QA: "/qa",
 
+  /**
+   * 앱 다운로드 진입점 — 명함 QR에 넣는 주소(`https://picakes.com/app`).
+   * UA에 따라 App Store / Play Store / 웹으로 분기합니다.
+   */
+  APP_DOWNLOAD: "/app",
+  /** Play Store 미입점 동안 Android가 보게 되는 안내 페이지 */
+  APP_DOWNLOAD_ANDROID: "/app/android",
+
   AUTH: {
     /** 로그인 화면 (로그인이 필요한 상황에서 이동) */
     LOGIN: "/auth/login",
