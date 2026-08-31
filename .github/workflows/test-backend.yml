@@ -1,13 +1,19 @@
 name: Test Backend
 
-# staging/main으로 향하는 PR에서만 실행 (머지 전 게이트).
+# staging/main으로 향하는 PR에서 실행 (머지 전 게이트).
 # 이 워크플로우 자체는 브랜치 보호 규칙과 함께 설정해야 실제로 머지를 막을 수 있습니다.
+#
+# ⚠️ 트리거에 `paths:` 필터를 넣지 마세요.
+# 이 job은 브랜치 보호의 **필수 체크**로 지정돼 있습니다. 필수 체크는 해당 이름의 체크가
+# 성공을 보고할 때까지 기다리는데, `paths:`로 걸러지면 워크플로우가 아예 뜨지 않아 아무것도
+# 보고되지 않습니다. 그러면 PR은 `Expected — Waiting for status to be reported` 상태로
+# 영구히 머지 불가가 됩니다(웹 전용 PR에서 실제로 발생 — #165).
+# 그래서 트리거는 항상 걸고, 백엔드 변경 여부는 아래 `Check backend changes`에서 판단해
+# 각 단계를 건너뜁니다. CI 시간을 아끼려는 원래 의도는 그대로 유지되면서(백엔드 변경이 없으면
+# 체크아웃+판단만 하고 종료), 체크는 정상적으로 성공을 보고합니다.
 on:
   pull_request:
     branches: [staging, main]
-    paths:
-      - "apps/backend/**"
-      - ".github/workflows/test-backend.yml"
 
 permissions:
   contents: read
@@ -17,22 +23,44 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # fetch-depth: 0 — 기본 체크아웃은 shallow라 base 브랜치와 diff를 뜰 수 없음
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # 트리거 `paths:`를 대체하는 판단 단계 (위 주석 참고).
+      # 워크플로우 자신을 포함하는 것도 기존 `paths:`와 동일 — 이 파일을 고칠 때는 테스트가 실제로 돌아야 함.
+      - name: Check backend changes
+        id: changes
+        run: |
+          set -euo pipefail
+          CHANGED=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")
+          echo "$CHANGED"
+          if echo "$CHANGED" | grep -qE '^apps/backend/|^\.github/workflows/test-backend\.yml$'; then
+            echo "backend=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "backend=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::백엔드 변경 없음 — 테스트를 건너뜁니다"
+          fi
 
       - name: Setup Node.js
+        if: steps.changes.outputs.backend == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: "24"
 
       # packageManager: yarn@4.x — setup-node의 cache: yarn은 Corepack 전 Yarn 1.x를 호출해 실패함
       - name: Enable Corepack
+        if: steps.changes.outputs.backend == 'true'
         run: corepack enable
 
       - name: Get Yarn cache directory
+        if: steps.changes.outputs.backend == 'true'
         id: yarn-cache-dir
         run: echo "dir=$(yarn config get cacheFolder)" >> "$GITHUB_OUTPUT"
 
       - name: Cache Yarn dependencies
+        if: steps.changes.outputs.backend == 'true'
         uses: actions/cache@v4
         with:
           path: ${{ steps.yarn-cache-dir.outputs.dir }}
@@ -41,7 +69,9 @@ jobs:
             ${{ runner.os }}-yarn-
 
       - name: Install dependencies
+        if: steps.changes.outputs.backend == 'true'
         run: yarn install --immutable
 
       - name: Run backend tests
+        if: steps.changes.outputs.backend == 'true'
         run: yarn workspace @picake/backend test
