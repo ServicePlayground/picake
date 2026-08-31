@@ -234,70 +234,80 @@ jobs:
             local code="$1"
             if [ "$code" = "200" ]; then echo "✅ 200"; else echo "❌ ${code:-000}"; fi
           }
-          check_pm2() {
+          # --- 인라인 그리드용 짧은 배지 (한 줄, 3열 나열 목적) ---
+          badge_pm2() {
             local st="$1"
             if [ "$st" = "online" ]; then echo "✅ online"; else echo "❌ ${st:-unknown}"; fi
           }
-          check_timer() {
-            local active="$1" enabled="$2"
-            if [ "$active" = "active" ] && [ "$enabled" = "enabled" ]; then echo "✅ active/enabled";
-            else echo "⚠️ active=${active:-?}, enabled=${enabled:-?}"; fi
-          }
-          check_active() {
+          badge_active() {
             local st="$1"
             if [ "$st" = "active" ]; then echo "✅ active"; else echo "❌ ${st:-unknown}"; fi
           }
           # 디스크 80% 이상 = 증설 검토(사내 문서 기준), 90% 이상 = 심각
-          check_disk() {
-            local pct="$1" human="$2"
-            if [ -z "$pct" ] || [ "$pct" = "NA" ]; then echo "❓ ${human:-확인불가}"; return; fi
-            if [ "$pct" -ge 90 ] 2>/dev/null; then echo "❌ ${human}";
-            elif [ "$pct" -ge 80 ] 2>/dev/null; then echo "⚠️ ${human}";
-            else echo "✅ ${human}"; fi
+          badge_disk() {
+            local pct="$1"
+            if [ -z "$pct" ] || [ "$pct" = "NA" ]; then echo "❓ 확인불가"; return; fi
+            if [ "$pct" -ge 90 ] 2>/dev/null; then echo "❌ ${pct}%";
+            elif [ "$pct" -ge 80 ] 2>/dev/null; then echo "⚠️ ${pct}%";
+            else echo "✅ ${pct}%"; fi
           }
           # 메모리 80~90% 이상 지속 = 주의(사내 문서 기준)
-          check_mem() {
-            local pct="$1" human="$2"
-            if [ -z "$pct" ] || [ "$pct" = "NA" ]; then echo "❓ ${human:-확인불가}"; return; fi
-            if [ "$pct" -ge 90 ] 2>/dev/null; then echo "❌ ${human} (${pct}%)";
-            elif [ "$pct" -ge 80 ] 2>/dev/null; then echo "⚠️ ${human} (${pct}%)";
-            else echo "✅ ${human} (${pct}%)"; fi
+          badge_mem() {
+            local pct="$1"
+            if [ -z "$pct" ] || [ "$pct" = "NA" ]; then echo "❓ 확인불가"; return; fi
+            if [ "$pct" -ge 90 ] 2>/dev/null; then echo "❌ ${pct}%";
+            elif [ "$pct" -ge 80 ] 2>/dev/null; then echo "⚠️ ${pct}%";
+            else echo "✅ ${pct}%"; fi
           }
           # CPU 80% 이상 = 주의(사내 문서 기준). 하루 1회 스냅샷이라 "지속"은 못 보고 1분 load만 봄 — 참고용.
-          check_cpu() {
+          badge_cpu() {
             local load1="$1" vcpus="$2"
             if [ -z "$load1" ] || [ -z "$vcpus" ] || [ "$vcpus" = "NA" ]; then echo "❓ 확인불가"; return; fi
             local pct
             pct=$(awk -v l="$load1" -v v="$vcpus" 'BEGIN{printf "%.0f", (l/v)*100}')
-            if [ "$pct" -ge 80 ] 2>/dev/null; then echo "⚠️ load ${load1} (${pct}%, ${vcpus}vCPU, 스냅샷)";
-            else echo "✅ load ${load1} (${pct}%, ${vcpus}vCPU, 스냅샷)"; fi
+            if [ "$pct" -ge 80 ] 2>/dev/null; then echo "⚠️ ${pct}%";
+            else echo "✅ ${pct}%"; fi
           }
-          check_pg() {
-            local active="$1" conns="$2" stat_ext="$3"
-            local ext_note="pg_stat_statements 미설치"
-            if [ "$stat_ext" = "1" ]; then ext_note="pg_stat_statements ✓"; fi
-            if [ "$active" = "active" ]; then echo "✅ active (연결 ${conns:-?}개, ${ext_note})";
-            else echo "❌ ${active:-unknown}"; fi
+          badge_pg() {
+            local active="$1"
+            if [ "$active" = "active" ]; then echo "✅ active"; else echo "❌ ${active:-unknown}"; fi
           }
 
           S_SSL_F=$(check_days "$S_SSL_DAYS")
           P_SSL_F=$(check_days "$P_SSL_DAYS")
           S_HEALTH_F=$(check_http_status "$S_LOCAL_HEALTH")
           P_HEALTH_F=$(check_http_status "$P_LOCAL_HEALTH")
-          S_PM2_F=$(check_pm2 "$S_PM2_STATUS")
-          P_PM2_F=$(check_pm2 "$P_PM2_STATUS")
-          S_TIMER_F=$(check_timer "$S_TIMER_ACTIVE" "$S_TIMER_ENABLED")
-          P_TIMER_F=$(check_timer "$P_TIMER_ACTIVE" "$P_TIMER_ENABLED")
-          S_NGINX_F=$(check_active "$S_NGINX")
-          P_NGINX_F=$(check_active "$P_NGINX")
-          S_DISK_F=$(check_disk "$S_DISK_PCT" "$S_DISK_HUMAN")
-          P_DISK_F=$(check_disk "$P_DISK_PCT" "$P_DISK_HUMAN")
-          S_MEM_F=$(check_mem "$S_MEM_PCT" "$S_MEM")
-          P_MEM_F=$(check_mem "$P_MEM_PCT" "$P_MEM")
-          S_CPU_F=$(check_cpu "$S_CPU_LOAD1" "$S_VCPUS")
-          P_CPU_F=$(check_cpu "$P_CPU_LOAD1" "$P_VCPUS")
-          S_PG_F=$(check_pg "$S_PG_ACTIVE" "$S_PG_CONNECTIONS" "$S_PG_STAT_EXT")
-          P_PG_F=$(check_pg "$P_PG_ACTIVE" "$P_PG_CONNECTIONS" "$P_PG_STAT_EXT")
+          S_PM2_F=$(badge_pm2 "$S_PM2_STATUS")
+          P_PM2_F=$(badge_pm2 "$P_PM2_STATUS")
+          S_NGINX_F=$(badge_active "$S_NGINX")
+          P_NGINX_F=$(badge_active "$P_NGINX")
+          S_DISK_F=$(badge_disk "$S_DISK_PCT")
+          P_DISK_F=$(badge_disk "$P_DISK_PCT")
+          S_MEM_F=$(badge_mem "$S_MEM_PCT")
+          P_MEM_F=$(badge_mem "$P_MEM_PCT")
+          S_CPU_F=$(badge_cpu "$S_CPU_LOAD1" "$S_VCPUS")
+          P_CPU_F=$(badge_cpu "$P_CPU_LOAD1" "$P_VCPUS")
+          S_PG_F=$(badge_pg "$S_PG_ACTIVE")
+          P_PG_F=$(badge_pg "$P_PG_ACTIVE")
+
+          # certbot 타이머 상태 — 상세 블록용 한 줄
+          timer_line() {
+            local active="$1" enabled="$2"
+            if [ "$active" = "active" ] && [ "$enabled" = "enabled" ]; then echo "✅ active/enabled";
+            else echo "⚠️ active=${active:-?}, enabled=${enabled:-?}"; fi
+          }
+          S_TIMER_F=$(timer_line "$S_TIMER_ACTIVE" "$S_TIMER_ENABLED")
+          P_TIMER_F=$(timer_line "$P_TIMER_ACTIVE" "$P_TIMER_ENABLED")
+
+          # Postgres 상세 한 줄 (연결 수 · pg_stat_statements 여부)
+          pg_detail() {
+            local conns="$1" stat_ext="$2"
+            local ext_note="pg_stat_statements 미설치"
+            if [ "$stat_ext" = "1" ]; then ext_note="pg_stat_statements ✓"; fi
+            echo "연결 ${conns:-?}개 · ${ext_note}"
+          }
+          S_PG_DETAIL=$(pg_detail "$S_PG_CONNECTIONS" "$S_PG_STAT_EXT")
+          P_PG_DETAIL=$(pg_detail "$P_PG_CONNECTIONS" "$P_PG_STAT_EXT")
 
           # CPU 부하율(%) — 업그레이드 가이드 조건 판단에 재사용 (check_cpu는 표시용 문자열만 반환하므로 별도 계산)
           cpu_pct() {
@@ -347,55 +357,91 @@ jobs:
 
           ALL_TEXT="$S_SSL_F $P_SSL_F $S_HEALTH_F $P_HEALTH_F $S_PM2_F $P_PM2_F $S_TIMER_F $P_TIMER_F $S_NGINX_F $P_NGINX_F $S_DISK_F $P_DISK_F $S_MEM_F $P_MEM_F $S_CPU_F $P_CPU_F $S_PG_F $P_PG_F $E_S_API_SSL_F $E_P_API_SSL_F $E_S_API_HEALTH_F $E_P_API_HEALTH_F $E_S_WEB_USER_F $E_S_WEB_SELLER_F $E_S_WEB_ADMIN_F $E_P_WEB_USER_F $E_P_WEB_SELLER_F $E_P_WEB_ADMIN_F"
 
-          if echo "$ALL_TEXT" | grep -qE '❌|❓'; then
-            TITLE="🚨 인프라 모니터링 — 확인 필요"
-            COLOR=15548997
-          elif echo "$ALL_TEXT" | grep -q '⚠️'; then
-            TITLE="⚠️ 인프라 모니터링 — 주의"
-            COLOR=16776960
-          else
-            TITLE="✅ 인프라 모니터링 — 정상"
-            COLOR=5763719
-          fi
+          BAD_COUNT=$(echo "$ALL_TEXT" | grep -oE '❌|❓' | wc -l | tr -d ' ')
+          WARN_COUNT=$(echo "$ALL_TEXT" | grep -oE '⚠️' | wc -l | tr -d ' ')
 
-          E_S_WEB="user: ${E_S_WEB_USER_F} / seller: ${E_S_WEB_SELLER_F} / admin: ${E_S_WEB_ADMIN_F}"
-          E_P_WEB="user: ${E_P_WEB_USER_F} / seller: ${E_P_WEB_SELLER_F} / admin: ${E_P_WEB_ADMIN_F}"
+          if [ "$BAD_COUNT" -gt 0 ] 2>/dev/null; then
+            TITLE="🔴  인프라 모니터링 — 확인 필요"
+            COLOR=15548997
+            SUMMARY="${BAD_COUNT}개 항목이 비정상입니다. 아래를 바로 확인해주세요."
+          elif [ "$WARN_COUNT" -gt 0 ] 2>/dev/null; then
+            TITLE="🟠  인프라 모니터링 — 주의"
+            COLOR=16776960
+            SUMMARY="${WARN_COUNT}개 항목이 임계치에 근접했습니다."
+          else
+            TITLE="🟢  인프라 모니터링 — 정상"
+            COLOR=5763719
+            SUMMARY="모든 항목이 정상입니다."
+          fi
+          DESCRIPTION="**${SUMMARY}**${NL}[📄 워크플로우 로그 보기](${RUN_URL})"
+
+          E_S_WEB="user ${E_S_WEB_USER_F} · seller ${E_S_WEB_SELLER_F} · admin ${E_S_WEB_ADMIN_F}"
+          E_P_WEB="user ${E_P_WEB_USER_F} · seller ${E_P_WEB_SELLER_F} · admin ${E_P_WEB_ADMIN_F}"
+
+          # 각 환경 상세 한 줄 (인라인 배지 3열 아래에 붙는 보조 정보)
+          S_DETAIL="가동시간 ${S_UPTIME:-unknown} · 메모리 ${S_MEM:-NA} · 디스크 ${S_DISK_HUMAN:-NA} · pm2 재시작 ${S_PM2_RESTARTS:-NA}회 · Postgres ${S_PG_DETAIL}"
+          P_DETAIL="가동시간 ${P_UPTIME:-unknown} · 메모리 ${P_MEM:-NA} · 디스크 ${P_DISK_HUMAN:-NA} · pm2 재시작 ${P_PM2_RESTARTS:-NA}회 · Postgres ${P_PG_DETAIL}"
+
+          S_SSL_BLOCK="EC2 로컬 SSL ${S_SSL_F} · certbot ${S_TIMER_F}${NL}외부 SSL(api-staging) ${E_S_API_SSL_F} · 외부 헬스체크 ${E_S_API_HEALTH_F} · localhost 헬스체크 ${S_HEALTH_F}"
+          P_SSL_BLOCK="EC2 로컬 SSL ${P_SSL_F} · certbot ${P_TIMER_F}${NL}외부 SSL(api) ${E_P_API_SSL_F} · 외부 헬스체크 ${E_P_API_HEALTH_F} · localhost 헬스체크 ${P_HEALTH_F}"
 
           # AWS 사용 현황 — 실시간 API 조회가 아니라 현재 알려진 구성을 고정 텍스트로 안내(자주 안 바뀌는 정보).
           # 구성이 바뀌면(리전 이전, 서비스 추가 등) 이 문자열도 같이 고쳐야 함.
-          AWS_USAGE="EC2(${S_INSTANCE_TYPE:-unknown}) staging/production 각 1대 · Route53(picakes.com 도메인) · CloudFront+S3(정적 리소스) · Let's Encrypt(SSL, EC2 자체 갱신, ACM 아님)${NL}Cost Explorer/CloudWatch 연동은 아직 없음 — 이 리포트는 SSH 기반이라 인스턴스 자체가 안 죽어야 값이 나옴"
+          AWS_USAGE="\`EC2\`(${S_INSTANCE_TYPE:-unknown}) staging/production 각 1대 · \`Route53\`(picakes.com) · \`CloudFront\`+\`S3\`(정적 리소스) · \`Let's Encrypt\`(SSL, EC2 자체 갱신)${NL}-# Cost Explorer/CloudWatch 연동 없음 · 이 리포트는 SSH 기반이라 인스턴스 자체가 죽으면 값이 안 나옴"
+
+          DIVIDER="▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬"
 
           PAYLOAD=$(jq -n \
             --arg title "$TITLE" \
             --argjson color "$COLOR" \
-            --arg run_url "$RUN_URL" \
+            --arg description "$DESCRIPTION" \
+            --arg divider "$DIVIDER" \
             --arg s_type "${S_INSTANCE_TYPE:-unknown}" \
-            --arg s_uptime "${S_UPTIME:-unknown}" --arg s_cpu "$S_CPU_F" --arg s_disk "$S_DISK_F" --arg s_mem "$S_MEM_F" \
-            --arg s_pg "$S_PG_F" \
-            --arg s_ssl "$S_SSL_F" --arg s_timer "$S_TIMER_F" --arg s_nginx "$S_NGINX_F" \
-            --arg s_pm2 "$S_PM2_F" --arg s_restarts "${S_PM2_RESTARTS:-NA}" --arg s_health "$S_HEALTH_F" \
-            --arg s_api_ssl "$E_S_API_SSL_F" --arg s_api_health "$E_S_API_HEALTH_F" --arg s_web "$E_S_WEB" \
+            --arg s_cpu "$S_CPU_F" --arg s_disk "$S_DISK_F" --arg s_mem "$S_MEM_F" \
+            --arg s_pg "$S_PG_F" --arg s_pm2 "$S_PM2_F" --arg s_nginx "$S_NGINX_F" \
+            --arg s_detail "$S_DETAIL" --arg s_ssl_block "$S_SSL_BLOCK" --arg s_web "$E_S_WEB" \
             --arg p_type "${P_INSTANCE_TYPE:-unknown}" \
-            --arg p_uptime "${P_UPTIME:-unknown}" --arg p_cpu "$P_CPU_F" --arg p_disk "$P_DISK_F" --arg p_mem "$P_MEM_F" \
-            --arg p_pg "$P_PG_F" \
-            --arg p_ssl "$P_SSL_F" --arg p_timer "$P_TIMER_F" --arg p_nginx "$P_NGINX_F" \
-            --arg p_pm2 "$P_PM2_F" --arg p_restarts "${P_PM2_RESTARTS:-NA}" --arg p_health "$P_HEALTH_F" \
-            --arg p_api_ssl "$E_P_API_SSL_F" --arg p_api_health "$E_P_API_HEALTH_F" --arg p_web "$E_P_WEB" \
+            --arg p_cpu "$P_CPU_F" --arg p_disk "$P_DISK_F" --arg p_mem "$P_MEM_F" \
+            --arg p_pg "$P_PG_F" --arg p_pm2 "$P_PM2_F" --arg p_nginx "$P_NGINX_F" \
+            --arg p_detail "$P_DETAIL" --arg p_ssl_block "$P_SSL_BLOCK" --arg p_web "$E_P_WEB" \
             --arg upgrade_guide "$UPGRADE_GUIDE" \
             --arg aws_usage "$AWS_USAGE" \
             '{
               embeds: [{
                 title: $title,
+                description: $description,
                 color: $color,
                 fields: [
-                  { name: "🟡 Staging — EC2 (\($s_type)) (api-staging.picakes.com)", value: ("가동시간: " + $s_uptime + "\nCPU: " + $s_cpu + "\n디스크: " + $s_disk + "\n메모리: " + $s_mem + "\nPostgres: " + $s_pg + "\nnginx: " + $s_nginx + "\npm2(backend): " + $s_pm2 + " (restart " + $s_restarts + "회)\nlocalhost 헬스체크: " + $s_health), inline: false },
-                  { name: "🟡 Staging — SSL/외부 접근", value: ("EC2 로컬 SSL: " + $s_ssl + "\ncertbot 타이머: " + $s_timer + "\n외부 SSL(api-staging): " + $s_api_ssl + "\n외부 헬스체크(api-staging): " + $s_api_health + "\n프론트 상태: " + $s_web), inline: false },
-                  { name: "🔴 Production — EC2 (\($p_type)) (api.picakes.com)", value: ("가동시간: " + $p_uptime + "\nCPU: " + $p_cpu + "\n디스크: " + $p_disk + "\n메모리: " + $p_mem + "\nPostgres: " + $p_pg + "\nnginx: " + $p_nginx + "\npm2(backend): " + $p_pm2 + " (restart " + $p_restarts + "회)\nlocalhost 헬스체크: " + $p_health), inline: false },
-                  { name: "🔴 Production — SSL/외부 접근", value: ("EC2 로컬 SSL: " + $p_ssl + "\ncertbot 타이머: " + $p_timer + "\n외부 SSL(api): " + $p_api_ssl + "\n외부 헬스체크(api): " + $p_api_health + "\n프론트 상태: " + $p_web), inline: false },
-                  { name: "📈 업그레이드 가이드 (사내 문서 기준)", value: $upgrade_guide, inline: false },
-                  { name: "☁️ AWS 사용 현황", value: $aws_usage, inline: false },
-                  { name: "GitHub Actions", value: ("[워크플로우 로그](" + $run_url + ")"), inline: false }
+                  { name: "🟡 STAGING · \($s_type)", value: "`api-staging.picakes.com`", inline: false },
+                  { name: "CPU", value: $s_cpu, inline: true },
+                  { name: "메모리", value: $s_mem, inline: true },
+                  { name: "디스크", value: $s_disk, inline: true },
+                  { name: "Postgres", value: $s_pg, inline: true },
+                  { name: "PM2", value: $s_pm2, inline: true },
+                  { name: "nginx", value: $s_nginx, inline: true },
+                  { name: "상세", value: $s_detail, inline: false },
+                  { name: "SSL · 헬스체크", value: $s_ssl_block, inline: false },
+                  { name: "프론트엔드", value: $s_web, inline: false },
+
+                  { name: "​", value: $divider, inline: false },
+
+                  { name: "🔴 PRODUCTION · \($p_type)", value: "`api.picakes.com`", inline: false },
+                  { name: "CPU", value: $p_cpu, inline: true },
+                  { name: "메모리", value: $p_mem, inline: true },
+                  { name: "디스크", value: $p_disk, inline: true },
+                  { name: "Postgres", value: $p_pg, inline: true },
+                  { name: "PM2", value: $p_pm2, inline: true },
+                  { name: "nginx", value: $p_nginx, inline: true },
+                  { name: "상세", value: $p_detail, inline: false },
+                  { name: "SSL · 헬스체크", value: $p_ssl_block, inline: false },
+                  { name: "프론트엔드", value: $p_web, inline: false },
+
+                  { name: "​", value: $divider, inline: false },
+
+                  { name: "📈 업그레이드 가이드", value: $upgrade_guide, inline: false },
+                  { name: "☁️ AWS 사용 현황", value: $aws_usage, inline: false }
                 ],
+                footer: { text: "Picake Infra Monitor · 매일 09:00 KST" },
                 timestamp: (now | strftime("%Y-%m-%dT%H:%M:%SZ"))
               }]
             }')
