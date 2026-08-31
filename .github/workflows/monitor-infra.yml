@@ -34,6 +34,8 @@ jobs:
           HOST: ${{ secrets.STAGING_EC2_HOST }}
         run: |
           OUT=$(ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i ~/.ssh/staging.pem "ec2-user@${HOST}" '
+            IMDS_TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 60" 2>/dev/null)
+            INSTANCE_TYPE=$(curl -s -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" http://169.254.169.254/latest/meta-data/instance-type 2>/dev/null)
             UPTIME=$(uptime -p 2>/dev/null)
             VCPUS=$(nproc 2>/dev/null)
             CPU_LOAD1=$(awk "{print \$1}" /proc/loadavg 2>/dev/null)
@@ -60,6 +62,7 @@ jobs:
             PG_ACTIVE=$(systemctl is-active postgresql 2>/dev/null)
             PG_CONNECTIONS=$(sudo -u postgres psql -tAc "SELECT count(*) FROM pg_stat_activity;" 2>/dev/null | tr -d "[:space:]")
             PG_STAT_EXT=$(sudo -u postgres psql -tAc "SELECT 1 FROM pg_extension WHERE extname='"'"'pg_stat_statements'"'"';" 2>/dev/null | tr -d "[:space:]")
+            echo "INSTANCE_TYPE=${INSTANCE_TYPE:-unknown}"
             echo "UPTIME=${UPTIME:-unknown}"
             echo "VCPUS=${VCPUS:-NA}"
             echo "CPU_LOAD1=${CPU_LOAD1:-NA}"
@@ -87,6 +90,8 @@ jobs:
           HOST: ${{ secrets.PRODUCTION_EC2_HOST }}
         run: |
           OUT=$(ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 -i ~/.ssh/production.pem "ec2-user@${HOST}" '
+            IMDS_TOKEN=$(curl -s -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 60" 2>/dev/null)
+            INSTANCE_TYPE=$(curl -s -H "X-aws-ec2-metadata-token: $IMDS_TOKEN" http://169.254.169.254/latest/meta-data/instance-type 2>/dev/null)
             UPTIME=$(uptime -p 2>/dev/null)
             VCPUS=$(nproc 2>/dev/null)
             CPU_LOAD1=$(awk "{print \$1}" /proc/loadavg 2>/dev/null)
@@ -113,6 +118,7 @@ jobs:
             PG_ACTIVE=$(systemctl is-active postgresql 2>/dev/null)
             PG_CONNECTIONS=$(sudo -u postgres psql -tAc "SELECT count(*) FROM pg_stat_activity;" 2>/dev/null | tr -d "[:space:]")
             PG_STAT_EXT=$(sudo -u postgres psql -tAc "SELECT 1 FROM pg_extension WHERE extname='"'"'pg_stat_statements'"'"';" 2>/dev/null | tr -d "[:space:]")
+            echo "INSTANCE_TYPE=${INSTANCE_TYPE:-unknown}"
             echo "UPTIME=${UPTIME:-unknown}"
             echo "VCPUS=${VCPUS:-NA}"
             echo "CPU_LOAD1=${CPU_LOAD1:-NA}"
@@ -165,6 +171,7 @@ jobs:
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL_INFRA_MONITORING }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          S_INSTANCE_TYPE: ${{ steps.staging.outputs.INSTANCE_TYPE }}
           S_UPTIME: ${{ steps.staging.outputs.UPTIME }}
           S_VCPUS: ${{ steps.staging.outputs.VCPUS }}
           S_CPU_LOAD1: ${{ steps.staging.outputs.CPU_LOAD1 }}
@@ -182,6 +189,7 @@ jobs:
           S_PG_ACTIVE: ${{ steps.staging.outputs.PG_ACTIVE }}
           S_PG_CONNECTIONS: ${{ steps.staging.outputs.PG_CONNECTIONS }}
           S_PG_STAT_EXT: ${{ steps.staging.outputs.PG_STAT_EXT }}
+          P_INSTANCE_TYPE: ${{ steps.production.outputs.INSTANCE_TYPE }}
           P_UPTIME: ${{ steps.production.outputs.UPTIME }}
           P_VCPUS: ${{ steps.production.outputs.VCPUS }}
           P_CPU_LOAD1: ${{ steps.production.outputs.CPU_LOAD1 }}
@@ -291,6 +299,41 @@ jobs:
           S_PG_F=$(check_pg "$S_PG_ACTIVE" "$S_PG_CONNECTIONS" "$S_PG_STAT_EXT")
           P_PG_F=$(check_pg "$P_PG_ACTIVE" "$P_PG_CONNECTIONS" "$P_PG_STAT_EXT")
 
+          # CPU 부하율(%) — 업그레이드 가이드 조건 판단에 재사용 (check_cpu는 표시용 문자열만 반환하므로 별도 계산)
+          cpu_pct() {
+            local load1="$1" vcpus="$2"
+            if [ -z "$load1" ] || [ -z "$vcpus" ] || [ "$vcpus" = "NA" ]; then echo 0; return; fi
+            awk -v l="$load1" -v v="$vcpus" 'BEGIN{printf "%.0f", (l/v)*100}'
+          }
+          S_CPU_PCT=$(cpu_pct "$S_CPU_LOAD1" "$S_VCPUS")
+          P_CPU_PCT=$(cpu_pct "$P_CPU_LOAD1" "$P_VCPUS")
+
+          # 업그레이드 가이드 (사내 "Backend 업그레이드/모니터링" 문서 기준 5단계 사다리)
+          # 디스크→EBS 증설, CPU/메모리→인스턴스 업그레이드(t4g.medium)는 지표로 실제 판단 가능해서 조건부로 뜸.
+          # RDS/ALB+ASG/Redis는 사업적 판단(DB 성장 계획, 트래픽 패턴, 쿼리 패턴)이 필요해 지표 하나로 자동 감지 불가 —
+          # 고정 안내문으로만 노출(Redis는 pg_stat_statements가 있어야 실제 판단 근거가 생김).
+          NL=$'\n'
+          UPGRADE_LINES=""
+          if [ "$S_DISK_PCT" -ge 80 ] 2>/dev/null; then
+            UPGRADE_LINES="${UPGRADE_LINES}⚠️ Staging 디스크 ${S_DISK_PCT}% — EBS 볼륨 증설 검토${NL}"
+          fi
+          if [ "$P_DISK_PCT" -ge 80 ] 2>/dev/null; then
+            UPGRADE_LINES="${UPGRADE_LINES}⚠️ Production 디스크 ${P_DISK_PCT}% — EBS 볼륨 증설 검토${NL}"
+          fi
+          if { [ "$S_MEM_PCT" -ge 80 ] 2>/dev/null; } || { [ "$S_CPU_PCT" -ge 80 ] 2>/dev/null; }; then
+            UPGRADE_LINES="${UPGRADE_LINES}⚠️ Staging CPU/메모리 부하 — t4g.medium 전환 검토 (2단계)${NL}"
+          fi
+          if { [ "$P_MEM_PCT" -ge 80 ] 2>/dev/null; } || { [ "$P_CPU_PCT" -ge 80 ] 2>/dev/null; }; then
+            UPGRADE_LINES="${UPGRADE_LINES}⚠️ Production CPU/메모리 부하 — t4g.medium 전환 검토 (2단계)${NL}"
+          fi
+          if [ -z "$UPGRADE_LINES" ]; then
+            UPGRADE_LINES="✅ 지표 기준 즉시 조치 필요한 항목 없음${NL}"
+          fi
+          UPGRADE_GUIDE="현재 단계: 1단계 — EC2 단일 인스턴스(t4g.small)${NL}${NL}${UPGRADE_LINES}${NL}다음 단계는 지표만으로 자동 판단 안 됨(사업 판단 필요):${NL}• DB 커짐·자동백업·다중 서버 계획 → 3단계 RDS${NL}• 무중단 배포·트래픽 변동 심함 → 4단계 ALB+ASG${NL}• DB CPU 높음/SELECT 과다/인기데이터 반복조회/응답 느림 → 5단계 Redis"
+          if [ "$S_PG_STAT_EXT" != "1" ] && [ "$P_PG_STAT_EXT" != "1" ]; then
+            UPGRADE_GUIDE="${UPGRADE_GUIDE}${NL}  (Redis 판단 근거 없음 — pg_stat_statements 미설치, 위 Postgres 항목 참고)"
+          fi
+
           E_S_API_SSL_F=$(check_days "$E_S_API_SSL")
           E_P_API_SSL_F=$(check_days "$E_P_API_SSL")
           E_S_API_HEALTH_F=$(check_http_status "$E_S_API_HEALTH")
@@ -318,29 +361,39 @@ jobs:
           E_S_WEB="user: ${E_S_WEB_USER_F} / seller: ${E_S_WEB_SELLER_F} / admin: ${E_S_WEB_ADMIN_F}"
           E_P_WEB="user: ${E_P_WEB_USER_F} / seller: ${E_P_WEB_SELLER_F} / admin: ${E_P_WEB_ADMIN_F}"
 
+          # AWS 사용 현황 — 실시간 API 조회가 아니라 현재 알려진 구성을 고정 텍스트로 안내(자주 안 바뀌는 정보).
+          # 구성이 바뀌면(리전 이전, 서비스 추가 등) 이 문자열도 같이 고쳐야 함.
+          AWS_USAGE="EC2(${S_INSTANCE_TYPE:-unknown}) staging/production 각 1대 · Route53(picakes.com 도메인) · CloudFront+S3(정적 리소스) · Let's Encrypt(SSL, EC2 자체 갱신, ACM 아님)${NL}Cost Explorer/CloudWatch 연동은 아직 없음 — 이 리포트는 SSH 기반이라 인스턴스 자체가 안 죽어야 값이 나옴"
+
           PAYLOAD=$(jq -n \
             --arg title "$TITLE" \
             --argjson color "$COLOR" \
             --arg run_url "$RUN_URL" \
+            --arg s_type "${S_INSTANCE_TYPE:-unknown}" \
             --arg s_uptime "${S_UPTIME:-unknown}" --arg s_cpu "$S_CPU_F" --arg s_disk "$S_DISK_F" --arg s_mem "$S_MEM_F" \
             --arg s_pg "$S_PG_F" \
             --arg s_ssl "$S_SSL_F" --arg s_timer "$S_TIMER_F" --arg s_nginx "$S_NGINX_F" \
             --arg s_pm2 "$S_PM2_F" --arg s_restarts "${S_PM2_RESTARTS:-NA}" --arg s_health "$S_HEALTH_F" \
             --arg s_api_ssl "$E_S_API_SSL_F" --arg s_api_health "$E_S_API_HEALTH_F" --arg s_web "$E_S_WEB" \
+            --arg p_type "${P_INSTANCE_TYPE:-unknown}" \
             --arg p_uptime "${P_UPTIME:-unknown}" --arg p_cpu "$P_CPU_F" --arg p_disk "$P_DISK_F" --arg p_mem "$P_MEM_F" \
             --arg p_pg "$P_PG_F" \
             --arg p_ssl "$P_SSL_F" --arg p_timer "$P_TIMER_F" --arg p_nginx "$P_NGINX_F" \
             --arg p_pm2 "$P_PM2_F" --arg p_restarts "${P_PM2_RESTARTS:-NA}" --arg p_health "$P_HEALTH_F" \
             --arg p_api_ssl "$E_P_API_SSL_F" --arg p_api_health "$E_P_API_HEALTH_F" --arg p_web "$E_P_WEB" \
+            --arg upgrade_guide "$UPGRADE_GUIDE" \
+            --arg aws_usage "$AWS_USAGE" \
             '{
               embeds: [{
                 title: $title,
                 color: $color,
                 fields: [
-                  { name: "🟡 Staging — EC2 (api-staging.picakes.com)", value: ("가동시간: " + $s_uptime + "\nCPU: " + $s_cpu + "\n디스크: " + $s_disk + "\n메모리: " + $s_mem + "\nPostgres: " + $s_pg + "\nnginx: " + $s_nginx + "\npm2(backend): " + $s_pm2 + " (restart " + $s_restarts + "회)\nlocalhost 헬스체크: " + $s_health), inline: false },
+                  { name: "🟡 Staging — EC2 (\($s_type)) (api-staging.picakes.com)", value: ("가동시간: " + $s_uptime + "\nCPU: " + $s_cpu + "\n디스크: " + $s_disk + "\n메모리: " + $s_mem + "\nPostgres: " + $s_pg + "\nnginx: " + $s_nginx + "\npm2(backend): " + $s_pm2 + " (restart " + $s_restarts + "회)\nlocalhost 헬스체크: " + $s_health), inline: false },
                   { name: "🟡 Staging — SSL/외부 접근", value: ("EC2 로컬 SSL: " + $s_ssl + "\ncertbot 타이머: " + $s_timer + "\n외부 SSL(api-staging): " + $s_api_ssl + "\n외부 헬스체크(api-staging): " + $s_api_health + "\n프론트 상태: " + $s_web), inline: false },
-                  { name: "🔴 Production — EC2 (api.picakes.com)", value: ("가동시간: " + $p_uptime + "\nCPU: " + $p_cpu + "\n디스크: " + $p_disk + "\n메모리: " + $p_mem + "\nPostgres: " + $p_pg + "\nnginx: " + $p_nginx + "\npm2(backend): " + $p_pm2 + " (restart " + $p_restarts + "회)\nlocalhost 헬스체크: " + $p_health), inline: false },
+                  { name: "🔴 Production — EC2 (\($p_type)) (api.picakes.com)", value: ("가동시간: " + $p_uptime + "\nCPU: " + $p_cpu + "\n디스크: " + $p_disk + "\n메모리: " + $p_mem + "\nPostgres: " + $p_pg + "\nnginx: " + $p_nginx + "\npm2(backend): " + $p_pm2 + " (restart " + $p_restarts + "회)\nlocalhost 헬스체크: " + $p_health), inline: false },
                   { name: "🔴 Production — SSL/외부 접근", value: ("EC2 로컬 SSL: " + $p_ssl + "\ncertbot 타이머: " + $p_timer + "\n외부 SSL(api): " + $p_api_ssl + "\n외부 헬스체크(api): " + $p_api_health + "\n프론트 상태: " + $p_web), inline: false },
+                  { name: "📈 업그레이드 가이드 (사내 문서 기준)", value: $upgrade_guide, inline: false },
+                  { name: "☁️ AWS 사용 현황", value: $aws_usage, inline: false },
                   { name: "GitHub Actions", value: ("[워크플로우 로그](" + $run_url + ")"), inline: false }
                 ],
                 timestamp: (now | strftime("%Y-%m-%dT%H:%M:%SZ"))
