@@ -36,6 +36,27 @@ model Admin {
   @@map("admins")
 }
 
+/// 관리자 API 키 (사람 로그인 없이 자동화/AI가 관리자 API를 호출하기 위한 전용 토큰)
+/// 발급·폐기는 항상 사람 관리자(JWT) 로그인으로만 가능 — API 키 스스로 다른 API 키를 발급/폐기할 수 없음
+model AdminApiKey {
+  id        String    @id @default(cuid())
+  /// 용도 식별용 이름 (예: "일일 데이터 리포트 자동화")
+  label     String
+  /// 원문 키는 저장하지 않음 — SHA-256 해시만 저장 (키 자체가 고엔트로피 랜덤값이라 별도 salt 불필요)
+  keyHash   String    @unique @map("key_hash")
+  /// 목록에서 키를 식별하기 위한 앞부분 일부 (원문 노출 없이 어떤 키인지 구분하는 용도)
+  keyPrefix String    @map("key_prefix")
+  isActive  Boolean   @default(true) @map("is_active")
+  /// 발급한 관리자 계정 id — Admin 삭제 이력과 무관하게 감사 로그로 남기기 위해 FK 관계 없이 값만 저장
+  createdByAdminId String? @map("created_by_admin_id")
+  lastUsedAt DateTime? @map("last_used_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+  revokedAt DateTime? @map("revoked_at")
+
+  @@index([isActive])
+  @@map("admin_api_keys")
+}
+
 /// 관리자 전역 설정 (싱글톤 — id = "default")
 model AdminConfig {
   id              String   @id @default("default")

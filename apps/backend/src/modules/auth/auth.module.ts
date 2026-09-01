@@ -3,6 +3,7 @@ import { JwtModule } from "@nestjs/jwt";
 import { PassportModule } from "@nestjs/passport";
 import { ConfigService } from "@nestjs/config";
 import { AdminManagementModule } from "@apps/backend/modules/admin-management/admin-management.module";
+import { AdminApiKeyModule } from "@apps/backend/modules/admin-api-key/admin-api-key.module";
 import { TermsModule } from "@apps/backend/modules/terms/terms.module";
 import { SolapiModule } from "@apps/backend/modules/solapi/solapi.module";
 import { AuthService } from "@apps/backend/modules/auth/auth.service";
@@ -19,6 +20,7 @@ import { AuthAdminService } from "@apps/backend/modules/auth/services/auth-admin
 import { AuthReviewLoginService } from "@apps/backend/modules/auth/services/auth-review-login.service";
 import { JwtUtil } from "@apps/backend/modules/auth/utils/jwt.util";
 import { JwtStrategy } from "@apps/backend/modules/auth/strategies/jwt.strategy";
+import { AdminApiKeyStrategy } from "@apps/backend/modules/auth/strategies/admin-api-key.strategy";
 import { AuthGuard } from "@apps/backend/modules/auth/guards/auth.guard";
 import { TokenEncryptionUtil } from "@apps/backend/common/utils/token-encryption.util";
 
@@ -29,6 +31,7 @@ import { TokenEncryptionUtil } from "@apps/backend/common/utils/token-encryption
 @Module({
   imports: [
     AdminManagementModule,
+    AdminApiKeyModule,
     TermsModule,
     SolapiModule,
     PassportModule,
@@ -54,6 +57,7 @@ import { TokenEncryptionUtil } from "@apps/backend/common/utils/token-encryption
     AuthReviewLoginService,
     JwtUtil,
     JwtStrategy,
+    AdminApiKeyStrategy,
     AuthGuard,
     TokenEncryptionUtil,
   ],

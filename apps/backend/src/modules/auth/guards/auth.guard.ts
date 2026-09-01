@@ -13,6 +13,7 @@ import {
   TOKEN_TYPES,
   type AudienceConst,
 } from "@apps/backend/modules/auth/constants/auth.constants";
+import { ADMIN_API_KEY_HEADER } from "@apps/backend/modules/admin-api-key/constants/admin-api-key.constants";
 import { LoggerUtil } from "@apps/backend/common/utils/logger.util";
 
 export const AUTH_METADATA_KEY = "auth";
@@ -29,7 +30,7 @@ export interface AuthMetadata {
  * JWT 인증과 역할 기반 권한을 통합하여 처리합니다.
  */
 @Injectable()
-export class AuthGuard extends BaseAuthGuard("jwt") implements CanActivate {
+export class AuthGuard extends BaseAuthGuard(["jwt", "admin-api-key"]) implements CanActivate {
   constructor(private reflector: Reflector) {
     super();
   }
@@ -88,8 +89,11 @@ export class AuthGuard extends BaseAuthGuard("jwt") implements CanActivate {
         throw err;
       }
 
+      // 여러 전략(["jwt", "admin-api-key"])을 체이닝하면 passport가 `info`를 각 전략의 실패
+      // 사유를 모은 배열로 넘겨준다 (단일 전략일 때는 객체 하나) — 두 경우 모두 처리한다.
+      const infoList = Array.isArray(info) ? info : [info];
       // Passport가 전달하는 info는 Error 객체일 수 있음(TokenExpiredError, JsonWebTokenError 등)
-      const errorName = info?.name || err?.name;
+      const errorName = infoList.find((i) => i?.name)?.name || err?.name;
 
       if (errorName === "TokenExpiredError") {
         LoggerUtil.log(`인증 실패: 토큰 만료 - errorName: ${errorName}`);
@@ -107,6 +111,12 @@ export class AuthGuard extends BaseAuthGuard("jwt") implements CanActivate {
       const authHeader = request.headers?.authorization;
       const hasToken =
         authHeader && authHeader.startsWith("Bearer ") && authHeader.substring(7).trim();
+      const apiKeyHeader = request.headers?.[ADMIN_API_KEY_HEADER];
+
+      if (!hasToken && apiKeyHeader) {
+        LoggerUtil.log(`인증 실패: 관리자 API 키 무효`);
+        throw new UnauthorizedException(AUTH_ERROR_MESSAGES.ADMIN_API_KEY_INVALID);
+      }
 
       if (!hasToken) {
         LoggerUtil.log(`인증 실패: 토큰 없음`);

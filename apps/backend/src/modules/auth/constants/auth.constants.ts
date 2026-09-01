@@ -41,6 +41,10 @@ export const AUTH_ERROR_MESSAGES = {
   ADMIN_ACCOUNT_NOT_FOUND: "계정을 찾을 수 없습니다.",
   TOTP_SETUP_REQUIRED: "먼저 TOTP 설정을 시작해주세요.",
   OTP_CODE_INVALID: "OTP 코드가 올바르지 않습니다.",
+  ADMIN_API_KEY_INVALID: "유효하지 않거나 비활성화된 관리자 API 키입니다.",
+  ADMIN_API_KEY_MANAGEMENT_HUMAN_ONLY:
+    "API 키로는 API 키를 관리(발급/폐기)할 수 없습니다. 관리자 계정으로 로그인해주세요.",
+  ADMIN_API_KEY_NOT_FOUND: "해당 API 키를 찾을 수 없습니다.",
   /* --------------------------------- 토큰 관련 에러 메시지 (반드시 401으로 사용) (주의: 프론트호환성을 위해, 여기 외에 401 오류가 있으면 안됨) --------------------------------- */
   REFRESH_TOKEN_EXPIRED:
     "[REFRESH_TOKEN_INVALID] 리프레시 토큰이 만료되었습니다. 다시 로그인해주세요.",
