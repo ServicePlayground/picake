@@ -15,7 +15,10 @@ import { Tabs } from "@/apps/web-user/common/components/tabs/Tabs";
 import { ProductDetailSizeFlavorSection } from "@/apps/web-user/features/product/components/sections/ProductDetailSizeFlavorSection";
 import { Icon } from "@/apps/web-user/common/components/icons";
 import { Button } from "@/apps/web-user/common/components/buttons/Button";
-import { ReservationBottomSheet } from "@/apps/web-user/features/product/components/sections/reservation-bottom-sheet";
+import {
+  ReservationBottomSheet,
+  preloadReservationBottomSheet,
+} from "@/apps/web-user/features/product/components/sections/reservation-bottom-sheet";
 import { ProductType } from "@/apps/web-user/features/product/types/product.type";
 import { ProductDetailSkeleton } from "@/apps/web-user/common/components/skeleton/ProductDetailSkeleton";
 import { useStoreDetail } from "@/apps/web-user/features/store/hooks/queries/useStoreDetail";
@@ -74,6 +77,21 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
     }
     setIsBottomSheetOpen(true);
   };
+
+  /**
+   * 예약 시트 청크는 초기 렌더 경로에서 빼되(아래 조건부 렌더),
+   * 브라우저가 한가할 때 미리 받아둬 "예약하기"를 눌렀을 때 지연이 없도록 한다.
+   */
+  useEffect(() => {
+    const idle = window.requestIdleCallback;
+    if (typeof idle === "function") {
+      const id = idle(() => preloadReservationBottomSheet());
+      return () => window.cancelIdleCallback?.(id);
+    }
+    // requestIdleCallback 미지원(iOS Safari 16.3 이하) 대비
+    const timer = window.setTimeout(preloadReservationBottomSheet, 2000);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   // 상품 상세 페이지 노출
   const isDataLoaded = !!data;
@@ -190,39 +208,45 @@ export default function ProductDetailPage({ params }: ProductDetailPageProps) {
             <span className="text-xs text-gray-900 font-bold">{data.likeCount}</span>
           </button>
           <span className="flex-1">
-            <Button onClick={handleReservationClick}>
+            <Button
+              onClick={handleReservationClick}
+              onMouseEnter={preloadReservationBottomSheet}
+              onTouchStart={preloadReservationBottomSheet}
+            >
               {data.productType === ProductType.BASIC_CAKE ? "예약하기" : "예약신청"}
             </Button>
           </span>
         </div>
       </div>
 
-      {/* 예약 바텀시트 */}
-      <ReservationBottomSheet
-        isOpen={isBottomSheetOpen}
-        productId={productId}
-        price={data.salePrice}
-        cakeTitle={data.name}
-        cakeImageUrl={data.images[0] ?? ""}
-        cakeImages={data.images}
-        cakeSizeOptions={data.cakeSizeOptions}
-        cakeFlavorOptions={data.cakeFlavorOptions}
-        productType={data.productType}
-        productNoticeProducer={data.productNoticeProducer}
-        productNoticeAddress={data.productNoticeAddress}
-        storeName={data.storeName}
-        pickupAddress={data.pickupAddress}
-        pickupRoadAddress={data.pickupRoadAddress}
-        pickupDetailAddress={data.pickupDetailAddress}
-        pickupZonecode={data.pickupZonecode}
-        pickupLatitude={data.pickupLatitude}
-        pickupLongitude={data.pickupLongitude}
-        imageUploadEnabled={data.imageUploadEnabled}
-        letteringMaxLength={data.letteringMaxLength}
-        businessCalendar={storeDetail?.businessCalendar}
-        refundCancellationPolicy={data.storeRefundCancellationPolicy}
-        onClose={() => setIsBottomSheetOpen(false)}
-      />
+      {/* 예약 바텀시트 — 열릴 때만 마운트해 상세 진입 시 청크 선다운로드를 막는다 */}
+      {isBottomSheetOpen && (
+        <ReservationBottomSheet
+          isOpen={isBottomSheetOpen}
+          productId={productId}
+          price={data.salePrice}
+          cakeTitle={data.name}
+          cakeImageUrl={data.images[0] ?? ""}
+          cakeImages={data.images}
+          cakeSizeOptions={data.cakeSizeOptions}
+          cakeFlavorOptions={data.cakeFlavorOptions}
+          productType={data.productType}
+          productNoticeProducer={data.productNoticeProducer}
+          productNoticeAddress={data.productNoticeAddress}
+          storeName={data.storeName}
+          pickupAddress={data.pickupAddress}
+          pickupRoadAddress={data.pickupRoadAddress}
+          pickupDetailAddress={data.pickupDetailAddress}
+          pickupZonecode={data.pickupZonecode}
+          pickupLatitude={data.pickupLatitude}
+          pickupLongitude={data.pickupLongitude}
+          imageUploadEnabled={data.imageUploadEnabled}
+          letteringMaxLength={data.letteringMaxLength}
+          businessCalendar={storeDetail?.businessCalendar}
+          refundCancellationPolicy={data.storeRefundCancellationPolicy}
+          onClose={() => setIsBottomSheetOpen(false)}
+        />
+      )}
     </div>
   );
 }

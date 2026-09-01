@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { BottomSheet } from "@/apps/web-user/common/components/bottom-sheets/BottomSheet";
 import { Spinner } from "@/apps/web-user/common/components/spinners/Spinner";
 import { Modal } from "@/apps/web-user/common/components/modals/Modal";
@@ -45,6 +45,18 @@ export function ReservationBottomSheet({
   // 클릭 즉시 잠그기 위한 제출 락 (이미지 업로드 → 주문 생성 전 구간 포함)
   // useCreateOrder의 isPending은 업로드가 끝난 뒤에야 true가 되므로 단독으로는 더블클릭을 막지 못함
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  /**
+   * 주문 제출 중에는 시트를 닫지 않는다.
+   * 시트는 열릴 때만 마운트되므로, 제출 중에 닫히면 컴포넌트가 언마운트되어
+   * useCreateOrder의 onSuccess(완료 페이지 이동)가 실행되지 않는다.
+   * 그 경우 서버에는 주문이 생성된 채 화면만 상품 상세에 남는다.
+   */
+  const handleGuardedClose = useCallback(() => {
+    if (isSubmitting) return;
+    onClose();
+  }, [isSubmitting, onClose]);
+
   const {
     view,
     setView,
@@ -114,7 +126,7 @@ export function ReservationBottomSheet({
     productType,
     cakeSizeOptions,
     cakeFlavorOptions,
-    onClose,
+    onClose: handleGuardedClose,
   });
 
   // 모바일 키보드가 올라오면 옵션 선택 뷰의 하단 버튼(취소/선택완료) 숨김
