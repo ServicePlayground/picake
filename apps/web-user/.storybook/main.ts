@@ -21,7 +21,21 @@ const config: StorybookConfig = {
     getAbsolutePath("@storybook/addon-docs"),
     getAbsolutePath("@storybook/addon-onboarding"),
   ],
-  framework: getAbsolutePath("@storybook/nextjs-vite"),
+  framework: {
+    name: getAbsolutePath("@storybook/nextjs-vite"),
+    options: {
+      // 이 프로젝트는 next.config.js의 @svgr/webpack 규칙 때문에 .svg를 항상(쿼리
+      // 스트링 없이도) React 컴포넌트로 import한다. @storybook/nextjs-vite의 Next
+      // Image 처리는 기본적으로 "*.svg?react"만 SVGR에 양보하므로, 그대로 두면
+      // 일반 .svg import가 SVGR 컴포넌트가 아니라 Next Image 객체({width,height})로
+      // 해석돼 렌더링이 깨진다 (Icon 컴포넌트에서 실측 확인).
+      // 주의: 옵션 키는 `exclude`가 아니라 `excludeFiles` — 타입 정의
+      // (@storybook/nextjs-vite/dist/node/index.d.ts)로 실측 확인.
+      image: {
+        excludeFiles: ["**/*.svg"],
+      },
+    },
+  },
   docs: {
     autodocs: true,
   },

@@ -22,6 +22,23 @@ jobs:
   test-backend:
     runs-on: ubuntu-latest
 
+    # DB 통합테스트(yarn test:integration)가 실제로 붙는 Postgres.
+    # backend 변경이 없는 PR에서는 이 컨테이너도 그냥 띄워지기만 하고 안 쓰입니다(비용 미미).
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: picake_backend_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
     steps:
       # fetch-depth: 0 — 기본 체크아웃은 shallow라 base 브랜치와 diff를 뜰 수 없음
       - uses: actions/checkout@v4
@@ -72,6 +89,46 @@ jobs:
         if: steps.changes.outputs.backend == 'true'
         run: yarn install --immutable
 
-      - name: Run backend tests
+      - name: Run backend unit tests
         if: steps.changes.outputs.backend == 'true'
         run: yarn workspace @picake/backend test
+
+      # .env.test는 .gitignore 대상(.env.*)이라 로컬처럼 CI에서도 실행 직전에 만들어줌.
+      # 위 services.postgres 컨테이너를 가리키도록 구성.
+      #
+      # DB 통합테스트는 DATABASE_URL만 있으면 되지만, E2E 테스트는 AppModule을 통째로
+      # 띄우기 때문에 생성자에서 값이 없으면 즉시 throw(또는 크래시)하는 provider들
+      # (JwtStrategy, UploadCreateService, KftcApiService/NtsApiService,
+      # TokenEncryptionUtil, AuthAppleOauthService)에 값을 채워줘야 부팅이 된다.
+      # 실제로 그 값으로 외부 API를 호출하는 경로는 테스트에서 안 타므로 가짜 값으로 충분하다.
+      # (GOOGLE/KAKAO/FIREBASE 등 나머지는 미설정 시 생성자에서 조용히 비활성화되는
+      # 방식으로 코드가 짜여 있어 값이 없어도 부팅에 지장 없음 — 로컬에서 값을 하나씩
+      # 빼보며 실제로 검증했다)
+      - name: Create .env.test for DB integration / E2E tests
+        if: steps.changes.outputs.backend == 'true'
+        working-directory: apps/backend
+        run: |
+          cat > .env.test <<EOF
+          NODE_ENV=test
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/picake_backend_test?schema=public"
+          JWT_SECRET=ci-test-jwt-secret-do-not-use-in-real-env
+          DATA_GO_KR_API_KEY=ci-test-fake-key
+          AWS_REGION=ap-northeast-2
+          AWS_ACCESS_KEY_ID=ci-test-fake-access-key-id
+          AWS_SECRET_ACCESS_KEY=ci-test-fake-secret-access-key
+          S3_BUCKET=ci-test-fake-bucket
+          APPLE_TEAM_ID=ci-test-team-id
+          APPLE_KEY_ID=ci-test-key-id
+          APPLE_PRIVATE_KEY=ci-test-fake-private-key
+          APPLE_CLIENT_ID=ci-test-client-id
+          APPLE_REFRESH_TOKEN_ENCRYPTION_KEY=$(openssl rand -hex 32)
+          EOF
+
+      # test:integration 스크립트 자체가 db:migrate:test를 먼저 실행함
+      - name: Run backend DB integration tests
+        if: steps.changes.outputs.backend == 'true'
+        run: yarn workspace @picake/backend test:integration
+
+      - name: Run backend API E2E tests
+        if: steps.changes.outputs.backend == 'true'
+        run: yarn workspace @picake/backend test:e2e
