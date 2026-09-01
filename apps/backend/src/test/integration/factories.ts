@@ -1,4 +1,4 @@
-import { randomUUID } from "crypto";
+import { randomInt, randomUUID } from "crypto";
 
 import { PrismaService } from "@apps/backend/infra/database/prisma.service";
 import { OrderStatus } from "@apps/backend/modules/order/constants/order.constants";
@@ -9,13 +9,18 @@ import { EnableStatus } from "@apps/backend/modules/product/constants/product.co
  * 법적 고시정보처럼 테스트 대상 로직과 무관한 NOT NULL 필드는 더미 값으로 채웁니다.
  */
 
+/** 항상 정확히 8자리 숫자를 반환 (UUID에서 숫자만 필터링하는 방식과 달리 자릿수가 흔들리지 않음) */
+function randomPhoneSuffix(): string {
+  return String(randomInt(0, 100_000_000)).padStart(8, "0");
+}
+
 export async function createTestConsumer(
   prisma: PrismaService,
   overrides: Partial<Parameters<PrismaService["consumer"]["create"]>[0]["data"]> = {},
 ) {
   return prisma.consumer.create({
     data: {
-      phone: `010${randomUUID().replace(/\D/g, "").slice(0, 8)}`,
+      phone: `010${randomPhoneSuffix()}`,
       name: "테스트 소비자",
       isPhoneVerified: true,
       ...overrides,
@@ -29,7 +34,7 @@ export async function createTestSeller(
 ) {
   return prisma.seller.create({
     data: {
-      phone: `010${randomUUID().replace(/\D/g, "").slice(0, 8)}`,
+      phone: `010${randomPhoneSuffix()}`,
       name: "테스트 판매자",
       isPhoneVerified: true,
       ...overrides,

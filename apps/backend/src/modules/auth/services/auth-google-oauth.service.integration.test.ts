@@ -1,3 +1,5 @@
+import { randomUUID } from "crypto";
+
 import { ConflictException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 
@@ -43,7 +45,7 @@ describe("AuthGoogleOauthService.consumerGoogleRegisterWithPhone (integration)",
 
   function buildDto(overrides: Partial<GoogleRegisterRequestDto> = {}): GoogleRegisterRequestDto {
     return {
-      googleId: `google-${Math.random().toString(36).slice(2)}`,
+      googleId: `google-${randomUUID()}`,
       googleEmail: "test@example.com",
       name: "테스트유저",
       phone: "01012345678",

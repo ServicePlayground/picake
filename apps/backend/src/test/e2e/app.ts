@@ -7,6 +7,7 @@ import { API_PREFIX } from "@apps/backend/common/constants/app.constants";
 import { SentryUtil } from "@apps/backend/common/utils/sentry.util";
 import { NotificationOrderDispatchService } from "@apps/backend/modules/notification/services/notification-order-dispatch.service";
 import { assertTestDatabase } from "@apps/backend/test/integration/db";
+import { createNotificationOrderDispatchNoopMock } from "@apps/backend/test/mocks";
 
 let app: INestApplication | undefined;
 
@@ -28,7 +29,7 @@ export async function createTestApp(): Promise<INestApplication> {
     imports: [AppModule],
   })
     .overrideProvider(NotificationOrderDispatchService)
-    .useValue({ handleOrderStatusTransition: async () => {} })
+    .useValue(createNotificationOrderDispatchNoopMock())
     .compile();
 
   app = moduleRef.createNestApplication();

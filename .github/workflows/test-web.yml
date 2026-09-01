@@ -83,10 +83,15 @@ jobs:
         if: steps.changes.outputs.run == 'true'
         run: yarn install --immutable
 
+      # package.json의 semver range(예: "^1.57.0")가 아니라 실제로 설치된 버전을 키로 써야
+      # 캐시가 항상 딱 맞는 브라우저 빌드를 가리킴. Yarn workspaces가 루트 node_modules로
+      # 호이스팅하므로 상대 경로 대신, 앱 디렉터리에서 bare specifier로 require해
+      # Node의 상위 디렉터리 탐색에 맡긴다 (호이스팅 여부와 무관하게 항상 찾음).
       - name: Get installed Playwright version
         if: steps.changes.outputs.run == 'true' && steps.changes.outputs.needs-playwright == 'true'
         id: playwright-version
-        run: echo "version=$(node -p "require('./apps/${{ matrix.app }}/package.json').devDependencies?.playwright || require('./apps/${{ matrix.app }}/package.json').dependencies?.playwright")" >> "$GITHUB_OUTPUT"
+        working-directory: apps/${{ matrix.app }}
+        run: echo "version=$(node -p "require('playwright/package.json').version")" >> "$GITHUB_OUTPUT"
 
       - name: Cache Playwright browsers
         if: steps.changes.outputs.run == 'true' && steps.changes.outputs.needs-playwright == 'true'
