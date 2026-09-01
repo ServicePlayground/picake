@@ -29,9 +29,10 @@ export async function connectTestDb(): Promise<PrismaService> {
     providers: [PrismaService],
   }).compile();
 
-  prisma = moduleRef.get(PrismaService);
+  const instance = moduleRef.get(PrismaService);
+  prisma = instance;
   await moduleRef.init();
-  return prisma;
+  return instance;
 }
 
 export async function disconnectTestDb(): Promise<void> {
