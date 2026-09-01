@@ -99,6 +99,8 @@ export const DatesBeforeMinDateAreDisabled: Story = {
 
     await userEvent.click(beforeMinDate, { pointerEventsCheck: 0 });
 
-    expect(args.onDateSelect).not.toHaveBeenCalledWith(new Date(2026, 0, 5));
+    // toHaveBeenCalledWith(다른 날짜)가 아니라 not.toHaveBeenCalled()로 검증 — 클릭이
+    // "5일이 아닌 다른 날짜로" 잘못 선택되는 회귀는 전자로 놓칠 수 있다.
+    expect(args.onDateSelect).not.toHaveBeenCalled();
   },
 };

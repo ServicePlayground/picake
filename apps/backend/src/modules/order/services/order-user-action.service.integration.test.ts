@@ -4,7 +4,6 @@ import { OrderStatus } from "@apps/backend/modules/order/constants/order.constan
 import { OrderAutomationService } from "@apps/backend/modules/order/services/order-automation.service";
 import type { OrderLifecycleHookService } from "@apps/backend/modules/order/services/order-lifecycle-hook.service";
 import { OrderUserActionService } from "@apps/backend/modules/order/services/order-user-action.service";
-import type { NotificationOrderDispatchService } from "@apps/backend/modules/notification/services/notification-order-dispatch.service";
 import { StoreBankName } from "@apps/backend/modules/store/constants/store.constants";
 import { getTestPrisma } from "@apps/backend/test/integration/db";
 import {
@@ -14,6 +13,7 @@ import {
   createTestSeller,
   createTestStore,
 } from "@apps/backend/test/integration/factories";
+import { createNotificationOrderDispatchNoopMock } from "@apps/backend/test/mocks";
 
 /**
  * 유닛테스트는 Prisma를 전부 mock 처리해서 "이 상태에서 어떤 예외를 던지는가" 같은
@@ -42,7 +42,7 @@ describe("주문 상태 전이 (취소/환불) (integration)", () => {
 
   function buildUserActionService(lifecycleHook = buildLifecycleHookMock()) {
     const prisma = getTestPrisma();
-    const notificationDispatch = {} as unknown as NotificationOrderDispatchService;
+    const notificationDispatch = createNotificationOrderDispatchNoopMock();
     const automation = new OrderAutomationService(prisma, lifecycleHook, notificationDispatch);
     const service = new OrderUserActionService(prisma, automation, lifecycleHook);
     return { service, lifecycleHook };
@@ -104,7 +104,7 @@ describe("주문 상태 전이 (취소/환불) (integration)", () => {
       paymentPendingDeadlineAt: new Date(Date.now() - 1000), // 이미 만료됨
     });
     const lifecycleHook = buildLifecycleHookMock();
-    const notificationDispatch = {} as unknown as NotificationOrderDispatchService;
+    const notificationDispatch = createNotificationOrderDispatchNoopMock();
     const automation = new OrderAutomationService(prisma, lifecycleHook, notificationDispatch);
 
     // syncOrderLifecycleById는 사용자의 여러 액션(입금완료 처리, 취소, 환불 요청 등) 진입 시마다
