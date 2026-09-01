@@ -1,0 +1,112 @@
+name: Test Web
+
+# staging/main으로 향하는 PR에서 실행 (머지 전 게이트).
+# web-user/web-seller/web-admin 중 test 스크립트가 있고 실제로 변경된 앱만 돈다.
+#
+# ⚠️ 트리거에 `paths:` 필터를 넣지 마세요 — test-backend.yml과 동일한 이유(#165)로,
+# 이 워크플로우를 브랜치 보호 필수 체크로 쓸 경우 paths 필터 때문에 워크플로우 자체가
+# 안 뜨면 PR이 영구히 "Waiting for status to be reported"에 머무를 수 있습니다.
+# 그래서 트리거는 항상 걸고, 앱별 변경 여부는 아래 `Check <app> changes` 단계에서 판단합니다.
+on:
+  pull_request:
+    branches: [staging, main]
+
+permissions:
+  contents: read
+
+jobs:
+  test-web:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [web-user, web-seller, web-admin]
+
+    steps:
+      # fetch-depth: 0 — 기본 체크아웃은 shallow라 base 브랜치와 diff를 뜰 수 없음
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check ${{ matrix.app }} changes and test script
+        id: changes
+        run: |
+          set -euo pipefail
+          CHANGED=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")
+          echo "$CHANGED"
+
+          HAS_TEST_SCRIPT=false
+          if node -e "process.exit(require('./apps/${{ matrix.app }}/package.json').scripts?.test ? 0 : 1)"; then
+            HAS_TEST_SCRIPT=true
+          fi
+
+          if echo "$CHANGED" | grep -qE "^apps/${{ matrix.app }}/|^\.github/workflows/test-web\.yml$" && [ "$HAS_TEST_SCRIPT" = "true" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::${{ matrix.app }} 변경 없음 또는 test 스크립트 없음 — 건너뜁니다"
+          fi
+
+          # Storybook interaction test(브라우저 기반)를 쓰는 앱만 Playwright 브라우저가 필요함
+          HAS_PLAYWRIGHT=false
+          if node -e "const p=require('./apps/${{ matrix.app }}/package.json'); process.exit((p.devDependencies?.playwright || p.dependencies?.playwright) ? 0 : 1)"; then
+            HAS_PLAYWRIGHT=true
+          fi
+          echo "needs-playwright=$HAS_PLAYWRIGHT" >> "$GITHUB_OUTPUT"
+
+      - name: Setup Node.js
+        if: steps.changes.outputs.run == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      # packageManager: yarn@4.x — setup-node의 cache: yarn은 Corepack 전 Yarn 1.x를 호출해 실패함
+      - name: Enable Corepack
+        if: steps.changes.outputs.run == 'true'
+        run: corepack enable
+
+      - name: Get Yarn cache directory
+        if: steps.changes.outputs.run == 'true'
+        id: yarn-cache-dir
+        run: echo "dir=$(yarn config get cacheFolder)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Yarn dependencies
+        if: steps.changes.outputs.run == 'true'
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.yarn-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      - name: Install dependencies
+        if: steps.changes.outputs.run == 'true'
+        run: yarn install --immutable
+
+      # package.json의 semver range(예: "^1.57.0")가 아니라 실제로 설치된 버전을 키로 써야
+      # 캐시가 항상 딱 맞는 브라우저 빌드를 가리킴. Yarn workspaces가 루트 node_modules로
+      # 호이스팅하므로 상대 경로 대신, 앱 디렉터리에서 bare specifier로 require해
+      # Node의 상위 디렉터리 탐색에 맡긴다 (호이스팅 여부와 무관하게 항상 찾음).
+      - name: Get installed Playwright version
+        if: steps.changes.outputs.run == 'true' && steps.changes.outputs.needs-playwright == 'true'
+        id: playwright-version
+        working-directory: apps/${{ matrix.app }}
+        run: echo "version=$(node -p "require('playwright/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        if: steps.changes.outputs.run == 'true' && steps.changes.outputs.needs-playwright == 'true'
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.version }}
+
+      # 캐시 히트여도 --with-deps가 설치하는 OS 레벨 라이브러리는 캐시되지 않으므로 매번 실행.
+      # 브라우저 바이너리 자체는 캐시가 있으면 재다운로드하지 않음.
+      - name: Install Playwright Chromium
+        if: steps.changes.outputs.run == 'true' && steps.changes.outputs.needs-playwright == 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Run ${{ matrix.app }} tests
+        if: steps.changes.outputs.run == 'true'
+        run: yarn workspace @picake/${{ matrix.app }} test

@@ -35,6 +35,8 @@ export interface AuthenticatedUser extends JwtVerifiedPayload {
   sellerVerificationStatus?: "REGISTERED" | "BUSINESS_VERIFIED";
   /** aud === "admin" 일 때만 */
   username?: string;
+  /** true: 사람 로그인(JWT)이 아니라 관리자 API 키로 인증된 요청 — API 키 자체의 발급/폐기 등 사람 전용 작업에서 차단하는 데 사용 */
+  isApiKey?: boolean;
 }
 
 /**

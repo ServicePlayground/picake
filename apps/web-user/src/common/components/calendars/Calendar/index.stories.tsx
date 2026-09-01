@@ -1,4 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import { expect, fn, userEvent, within } from "storybook/test";
+
 import { Calendar } from ".";
 
 const meta: Meta<typeof Calendar> = {
@@ -61,5 +63,44 @@ export const Default: Story = {
         initialMonth={convertToDate(args.initialMonth) || new Date()}
       />
     );
+  },
+};
+
+// 실제 로직 검증: 활성화된 날짜를 클릭하면 onDateSelect가 그 날짜로 호출된다.
+// 픽업일 선택 등 실서비스 플로우에서 가장 핵심적인 상호작용이라 인터랙션 테스트로 고정.
+export const ClickSelectsDate: Story = {
+  args: {
+    onDateSelect: fn(),
+    initialMonth: new Date(2026, 0, 1), // 2026년 1월 (월 고정 — 날짜 중복 없이 안정적으로 조회)
+    selectedDate: new Date(2026, 0, 1), // 이미 선택된 날짜가 있어 마운트 시 자동선택 이펙트가 개입하지 않게 함
+  },
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+
+    await userEvent.click(canvas.getByRole("button", { name: "20" }));
+
+    expect(args.onDateSelect).toHaveBeenCalledWith(new Date(2026, 0, 20));
+  },
+};
+
+// 실제 로직 검증: minDate 이전 날짜는 비활성화되어 클릭해도 선택되지 않는다.
+export const DatesBeforeMinDateAreDisabled: Story = {
+  args: {
+    onDateSelect: fn(),
+    initialMonth: new Date(2026, 0, 1),
+    selectedDate: new Date(2026, 0, 10),
+    minDate: new Date(2026, 0, 10),
+  },
+  play: async ({ canvasElement, args }) => {
+    const canvas = within(canvasElement);
+
+    const beforeMinDate = canvas.getByRole("button", { name: "5" });
+    expect(beforeMinDate).toBeDisabled();
+
+    await userEvent.click(beforeMinDate, { pointerEventsCheck: 0 });
+
+    // toHaveBeenCalledWith(다른 날짜)가 아니라 not.toHaveBeenCalled()로 검증 — 클릭이
+    // "5일이 아닌 다른 날짜로" 잘못 선택되는 회귀는 전자로 놓칠 수 있다.
+    expect(args.onDateSelect).not.toHaveBeenCalled();
   },
 };
