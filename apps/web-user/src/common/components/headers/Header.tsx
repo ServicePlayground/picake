@@ -21,8 +21,8 @@ import { RegionSelectSheet } from "@/apps/web-user/common/components/headers/Reg
 import { useAlarmUnreadCount } from "@/apps/web-user/features/alarm/hooks/queries/useAlarmUnreadCount";
 import { isProduction } from "@/apps/web-user/common/utils/environment.util";
 import { trackEvent } from "@/apps/web-user/common/utils/analytics.util";
+import { REGION_STORAGE_KEY } from "@/apps/web-user/common/utils/region-storage.util";
 
-const REGION_STORAGE_KEY = "picake:selected-region";
 const showQaButton = !isProduction(process.env.NEXT_PUBLIC_NODE_ENV);
 
 interface HeaderProps {

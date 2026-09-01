@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { UploadModule } from "@apps/backend/modules/upload/upload.module";
 import { AuthModule } from "@apps/backend/modules/auth/auth.module";
 import { AdminManagementModule } from "@apps/backend/modules/admin-management/admin-management.module";
+import { AdminApiKeyModule } from "@apps/backend/modules/admin-api-key/admin-api-key.module";
 import { MemberManagementModule } from "@apps/backend/modules/member-management/member-management.module";
 import { OrderModule } from "@apps/backend/modules/order/order.module";
 import { StoreManagementModule } from "@apps/backend/modules/store-management/store-management.module";
@@ -16,6 +17,7 @@ import { AdminUploadController } from "@apps/backend/apis/admin/controllers/uplo
 import { AdminAuthController } from "@apps/backend/apis/admin/controllers/auth.controller";
 import { AdminMypageController } from "@apps/backend/apis/admin/controllers/mypage.controller";
 import { AdminManagementController } from "@apps/backend/apis/admin/controllers/admin-management.controller";
+import { AdminApiKeyManagementController } from "@apps/backend/apis/admin/controllers/api-key-management.controller";
 import { AdminHomeBannerController } from "@apps/backend/apis/admin/controllers/home-banner.controller";
 import { AdminTermsController } from "@apps/backend/apis/admin/controllers/terms.controller";
 import { AdminNoticeController } from "@apps/backend/apis/admin/controllers/notice.controller";
@@ -37,6 +39,7 @@ import { AdminSellerSegmentManagementController } from "@apps/backend/apis/admin
     UploadModule,
     AuthModule,
     AdminManagementModule,
+    AdminApiKeyModule,
     HomeBannerModule,
     TermsModule,
     NoticeModule,
@@ -53,6 +56,7 @@ import { AdminSellerSegmentManagementController } from "@apps/backend/apis/admin
     AdminAuthController,
     AdminMypageController,
     AdminManagementController,
+    AdminApiKeyManagementController,
     AdminHomeBannerController,
     AdminTermsController,
     AdminNoticeController,

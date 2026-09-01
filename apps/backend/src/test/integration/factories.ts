@@ -1,6 +1,7 @@
 import { randomInt, randomUUID } from "crypto";
 
 import { PrismaService } from "@apps/backend/infra/database/prisma.service";
+import { Prisma } from "@apps/backend/infra/database/prisma/generated/client";
 import { OrderStatus } from "@apps/backend/modules/order/constants/order.constants";
 import { EnableStatus } from "@apps/backend/modules/product/constants/product.constants";
 
@@ -45,7 +46,7 @@ export async function createTestSeller(
 export async function createTestStore(
   prisma: PrismaService,
   sellerId: string,
-  overrides: Partial<Parameters<PrismaService["store"]["create"]>[0]["data"]> = {},
+  overrides: Partial<Prisma.StoreUncheckedCreateInput> = {},
 ) {
   return prisma.store.create({
     data: {
@@ -67,7 +68,7 @@ export async function createTestStore(
 export async function createTestProduct(
   prisma: PrismaService,
   storeId: string,
-  overrides: Partial<Parameters<PrismaService["product"]["create"]>[0]["data"]> = {},
+  overrides: Partial<Prisma.ProductUncheckedCreateInput> = {},
 ) {
   return prisma.product.create({
     data: {
@@ -103,7 +104,7 @@ export async function createTestProduct(
 export async function createTestOrder(
   prisma: PrismaService,
   refs: { consumerId: string; productId: string; storeId: string },
-  overrides: Partial<Parameters<PrismaService["order"]["create"]>[0]["data"]> = {},
+  overrides: Partial<Prisma.OrderUncheckedCreateInput> = {},
 ) {
   return prisma.order.create({
     data: {
