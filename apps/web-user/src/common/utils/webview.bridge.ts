@@ -9,6 +9,7 @@ import { useEffect } from "react";
 import { useAuthStore } from "@/apps/web-user/common/store/auth.store";
 import { useUserCurrentLocationStore } from "@/apps/web-user/common/store/user-current-location.store";
 import { reverseGeocode } from "@/apps/web-user/common/utils/kakao-geocode.util";
+import { REGION_STORAGE_KEY } from "@/apps/web-user/common/utils/region-storage.util";
 import { useRemoveConsumerFcmToken } from "@/apps/web-user/features/fcm/hooks/mutations/useRemoveConsumerFcmToken";
 import { useUpsertConsumerFcmToken } from "@/apps/web-user/features/fcm/hooks/mutations/useUpsertConsumerFcmToken";
 import type { FcmToken } from "@/apps/web-user/features/fcm/types/fcm.type";
@@ -199,7 +200,7 @@ export function useWebViewBridge() {
     };
 
     // 환경에 따라 자동으로 위치 요청 (자동 요청은 userInitiated=false → 거부 시 모달 안 띄움)
-    const hasStoredRegion = !!localStorage.getItem("picake:selected-region");
+    const hasStoredRegion = !!localStorage.getItem(REGION_STORAGE_KEY);
 
     if (isWebViewEnvironment()) {
       requestLocationFromWebView();
