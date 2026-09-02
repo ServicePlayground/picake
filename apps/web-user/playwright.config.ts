@@ -31,14 +31,17 @@ export default defineConfig({
         "yarn workspace @picake/backend db:migrate:test && yarn workspace @picake/backend seed:e2e-fixture && yarn workspace @picake/backend start:test",
       cwd: repoRoot,
       url: "http://localhost:3000/v1/consumer/products?sortBy=popular&page=1&limit=1",
-      reuseExistingServer: !process.env.CI,
+      // CI에서는 워크플로우가 이 커맨드를 별도 단계로 먼저 실행해 로그를 남기고 기동까지
+      // 끝내둔다(두 webServer를 병렬로 새로 띄우면 한쪽이 죽어도 원인 로그가 거의 안 남는
+      // 문제가 있어서 CI 쪽만 분리했다) — 여기서는 이미 떠 있으면 그대로 재사용한다.
+      reuseExistingServer: true,
       timeout: 120_000,
     },
     {
       command: "yarn dev",
       cwd: __dirname,
       url: "http://localhost:3001",
-      reuseExistingServer: !process.env.CI,
+      reuseExistingServer: true,
       timeout: 60_000,
     },
   ],

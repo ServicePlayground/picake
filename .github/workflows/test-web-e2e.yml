@@ -113,8 +113,62 @@ jobs:
           NEXT_PUBLIC_API_DOMAIN=http://localhost:3000
           EOF
 
+      - name: Migrate test database
+        working-directory: apps/backend
+        run: yarn db:migrate:test
+
+      - name: Seed E2E fixture (seller/store/product)
+        working-directory: apps/backend
+        run: yarn seed:e2e-fixture
+
+      # playwright.config.ts의 webServer가 backend·web-user 두 프로세스를 병렬로 새로
+      # 띄우면, 한쪽이 죽었을 때 무슨 이유인지 로그가 거의 안 남는 문제가 있었다(둘 다
+      # 아직 stdout을 별로 안 쓴 시점에 죽으면 Playwright가 이유 없이 "Exit code: 1"만
+      # 찍음). 그래서 CI에서는 두 서버를 별도 단계로 직접 기동해 각자 로그를 남기고,
+      # 이미 응답하는지 확인한 뒤에만 Playwright를 돌린다(reuseExistingServer: true라
+      # 이미 떠 있으면 Playwright가 새로 안 띄우고 그대로 재사용).
+      - name: Start backend (test mode)
+        working-directory: apps/backend
+        run: |
+          nohup yarn start:test > /tmp/backend.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -s -o /dev/null "http://localhost:3000/v1/consumer/products?sortBy=popular&page=1&limit=1"; then
+              echo "backend is up (약 $((i * 2))초 후)"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::backend가 기동하지 않음 — 로그:"
+          cat /tmp/backend.log
+          exit 1
+
+      - name: Start web-user (dev)
+        working-directory: apps/web-user
+        run: |
+          nohup yarn dev > /tmp/web-user.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -s -o /dev/null "http://localhost:3001"; then
+              echo "web-user is up"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::web-user가 기동하지 않음 — 로그:"
+          cat /tmp/web-user.log
+          exit 1
+
       - name: Run web-user Playwright E2E
         run: yarn workspace @picake/web-user test:e2e
+
+      - name: Show backend/web-user server logs
+        if: failure()
+        run: |
+          echo "::group::backend.log"
+          cat /tmp/backend.log || true
+          echo "::endgroup::"
+          echo "::group::web-user.log"
+          cat /tmp/web-user.log || true
+          echo "::endgroup::"
 
       - name: Upload Playwright report
         if: failure()
