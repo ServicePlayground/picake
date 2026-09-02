@@ -1,0 +1,125 @@
+name: Test Web E2E
+
+# web-user의 Playwright 브라우저 E2E(apps/web-user/e2e)는 실제 화면을 클릭/입력하며
+# backend까지 함께 띄워야 해서, vitest만 도는 test-web.yml과 분리했다.
+# 아직 브랜치 보호 필수 체크로 지정하지 않았다 — 결과만 보고(브라우저 E2E라 unit보다
+# 플레이키할 여지가 있어, 당분간 안정성을 지켜본 뒤 필수 체크로 승격할지 판단한다).
+on:
+  pull_request:
+    branches: [staging, main]
+    paths:
+      - "apps/web-user/**"
+      - "apps/backend/**"
+      - ".github/workflows/test-web-e2e.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  test-web-e2e:
+    runs-on: ubuntu-latest
+
+    # apps/web-user/playwright.config.ts의 webServer가 backend를 test:e2e/test:integration과
+    # 동일한 방식(.env.test)으로 직접 기동(마이그레이션 → 픽스처 시딩 → 서버 실행)하므로,
+    # 이 job은 Postgres만 띄워주면 된다.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: picake_backend_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      # packageManager: yarn@4.x — setup-node의 cache: yarn은 Corepack 전 Yarn 1.x를 호출해 실패함
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Get Yarn cache directory
+        id: yarn-cache-dir
+        run: echo "dir=$(yarn config get cacheFolder)" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Yarn dependencies
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.yarn-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-yarn-
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      # package.json의 semver range가 아니라 실제로 설치된 버전을 키로 써야 캐시가
+      # 항상 딱 맞는 브라우저 빌드를 가리킴 (test-web.yml과 동일 이유)
+      - name: Get installed Playwright version
+        id: playwright-version
+        working-directory: apps/web-user
+        run: echo "version=$(node -p "require('playwright/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.version }}
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      # backend를 test:e2e/test:integration과 동일한 방식(.env.test)으로 띄우기 위한 값.
+      # test-backend.yml과 동일한 값 — 실제 값이 필요한 외부 API 호출 경로는 이 E2E도 안 탄다.
+      - name: Create .env.test for backend
+        working-directory: apps/backend
+        run: |
+          cat > .env.test <<EOF
+          NODE_ENV=test
+          DATABASE_URL="postgresql://postgres:postgres@localhost:5432/picake_backend_test?schema=public"
+          JWT_SECRET=ci-test-jwt-secret-do-not-use-in-real-env
+          DATA_GO_KR_API_KEY=ci-test-fake-key
+          AWS_REGION=ap-northeast-2
+          AWS_ACCESS_KEY_ID=ci-test-fake-access-key-id
+          AWS_SECRET_ACCESS_KEY=ci-test-fake-secret-access-key
+          S3_BUCKET=ci-test-fake-bucket
+          APPLE_TEAM_ID=ci-test-team-id
+          APPLE_KEY_ID=ci-test-key-id
+          APPLE_PRIVATE_KEY=ci-test-fake-private-key
+          APPLE_CLIENT_ID=ci-test-client-id
+          APPLE_REFRESH_TOKEN_ENCRYPTION_KEY=$(openssl rand -hex 32)
+          EOF
+
+      # web-user dev 서버(next dev)가 읽는 값. NEXT_PUBLIC_API_DOMAIN만 있으면 리뷰
+      # 로그인·예약 생성 플로우는 충분하고(OAuth 로그인 버튼 등은 이 E2E가 다루지 않음),
+      # Sentry/PostHog 등은 키가 없으면 조용히 비활성화된다(로컬에서 실제로 빈 값으로 검증함).
+      - name: Create .env.development for web-user
+        working-directory: apps/web-user
+        run: |
+          cat > .env.development <<EOF
+          NEXT_PUBLIC_NODE_ENV=development
+          NEXT_PUBLIC_API_DOMAIN=http://localhost:3000
+          EOF
+
+      - name: Run web-user Playwright E2E
+        run: yarn workspace @picake/web-user test:e2e
+
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/web-user/playwright-report/
+          retention-days: 7
