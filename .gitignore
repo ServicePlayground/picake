@@ -122,6 +122,11 @@ coverage/
 .nyc_output/
 junit.xml
 
+# Playwright
+playwright-report/
+test-results/
+blob-report/
+
 *storybook.log
 
 # Claude Code 파일 기반 텍스트 교환 스크래치 (file-exchange skill)

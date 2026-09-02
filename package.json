@@ -32,6 +32,7 @@
     "web-user:build": "yarn workspace @picake/web-user build",
     "web-user:storybook": "yarn workspace @picake/web-user storybook",
     "web-user:storybook:build": "yarn workspace @picake/web-user build-storybook",
+    "web-user:test:e2e": "yarn workspace @picake/web-user test:e2e",
     "web-seller:dev": "yarn workspace @picake/web-seller dev",
     "web-seller:build": "yarn workspace @picake/web-seller build",
     "web-seller:storybook": "yarn workspace @picake/web-seller storybook",
