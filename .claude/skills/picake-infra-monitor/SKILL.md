@@ -175,6 +175,8 @@ check_http() { curl -sf -o /dev/null -w "%{http_code}" --connect-timeout 10 "htt
 ```
 확인 대상: `api-staging.picakes.com`/`api.picakes.com`(SSL + `/health`), `staging.picakes.com`/`picakes.com`(web-user), `seller-staging.picakes.com`/`seller.picakes.com`(web-seller), `admin-staging.picakes.com`/`admin.picakes.com`(web-admin).
 
+**알려진 환경 제약 (2026-09-02 첫 실행에서 발견)**: 이 클라우드 루틴 샌드박스는 아웃바운드 TLS가 내부 프록시를 거쳐서, `openssl s_client`로 받은 인증서가 실제 도메인 인증서가 아니라 프록시 인증서로 나옵니다 — 8개 도메인 SSL 만료일이 전부 똑같이 나오면(예: 전부 "30일") 이 문제입니다. `check_http`(HTTP 상태코드)는 정상적으로 실제 서버까지 도달하므로 영향 없습니다. **SSL 만료일은 이 외부 체크 대신 1번(SSM 호스트 체크)의 `SSL_DAYS` 값(실서버 로컬 인증서 파일을 직접 읽음, 프록시 영향 없음)을 사용하세요** — api-staging/api 도메인은 이미 커버됩니다. web-user/seller/admin 프론트엔드(Vercel, Let's Encrypt 아님)는 SSM 대상이 아니라 SSL 만료일을 볼 방법이 없으니 그냥 건너뛰고 HTTP 상태코드만 보고하세요.
+
 ## 7. 리포트 형식
 
 `.github/workflows/monitor-infra.yml`의 배지 로직(✅/⚠️/❌, 임계치)을 그대로 따라 staging/production 상태를 표시하세요. 그 위에 아래를 추가합니다:
