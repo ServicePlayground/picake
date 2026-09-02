@@ -54,7 +54,8 @@ function formatDateTime(date: Date | null): string {
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-    hour12: false,
+    // hour12: false만 쓰면 일부 ICU가 자정대(00:00~00:59)를 "24:00~24:59"로 표시한다.
+    hourCycle: "h23",
   }).format(date);
 }
 

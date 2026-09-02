@@ -21,7 +21,9 @@ function getSeoulWallClockForPickup(pickupUtc: Date): {
     day: "2-digit",
     hour: "2-digit",
     minute: "2-digit",
-    hour12: false,
+    // hour12: false만 쓰면 일부 ICU가 자정대(00:00~00:59)를 "24:00~24:59"로 포맷해
+    // minuteOfDay가 1440대로 계산되는 문제가 있어 hourCycle로 직접 고정한다.
+    hourCycle: "h23",
     weekday: "short",
   }).formatToParts(pickupUtc);
 

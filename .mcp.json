@@ -12,13 +12,14 @@
       "type": "http",
       "url": "https://mcp.sentry.dev/mcp"
     },
-    "awslabs.aws-api-mcp-server": {
+    "aws-mcp": {
       "command": "uvx",
-      "args": ["awslabs.aws-api-mcp-server@latest"],
-      "env": {
-        "AWS_REGION": "ap-northeast-2",
-        "FASTMCP_LOG_LEVEL": "ERROR"
-      }
+      "args": [
+        "mcp-proxy-for-aws@1.6.4",
+        "https://aws-mcp.us-east-1.api.aws/mcp",
+        "--profile", "claude-aws-mcp",
+        "--metadata", "AWS_REGION=ap-northeast-2"
+      ]
     },
     "kakao-playmcp": {
       "type": "http",
