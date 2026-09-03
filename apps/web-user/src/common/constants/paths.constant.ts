@@ -76,6 +76,12 @@ export const PATHS = {
   /** Play Store 미입점 동안 Android가 보게 되는 안내 페이지 */
   APP_DOWNLOAD_ANDROID: "/app/android",
 
+  /**
+   * 입점 안내 진입점 — 사장님께 보여주는 QR에 넣는 주소(`https://picakes.com/partner`).
+   * 판매자 운영 페이지와 사전 수요조사 설문으로 연결합니다.
+   */
+  PARTNER: "/partner",
+
   AUTH: {
     /** 로그인 화면 (로그인이 필요한 상황에서 이동) */
     LOGIN: "/auth/login",
