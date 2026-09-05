@@ -37,12 +37,12 @@ git diff --name-only "$LAST"..HEAD | awk -F/ '/^apps\//{print $2}' | sort -u
 
 `apps/` 밖(루트 설정 등)만 바뀌면 결과가 비어 나옵니다.
 
-| 변경 경로 | 프로젝트 |
-| --- | --- |
-| `apps/web-user/**` | `web-user` |
+| 변경 경로            | 프로젝트     |
+| -------------------- | ------------ |
+| `apps/web-user/**`   | `web-user`   |
 | `apps/web-seller/**` | `web-seller` |
-| `apps/web-admin/**` | `web-admin` |
-| `apps/backend/**` | `backend` |
+| `apps/web-admin/**`  | `web-admin`  |
+| `apps/backend/**`    | `backend`    |
 
 루트 설정만 바뀐 경우엔 어느 앱을 배포할지 사용자에게 확인합니다.
 
