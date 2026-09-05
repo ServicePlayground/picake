@@ -35,8 +35,7 @@ export default function AppDownloadAndroidPage() {
           Picake 안드로이드 앱은 곧 Google Play에 출시돼요.
           <br />
           그때까지는 모바일 웹에서 앱과 똑같이
-          <br />
-          내 주변 케이크를 찾고 주문할 수 있어요.
+          <br />내 주변 케이크를 찾고 주문할 수 있어요.
         </p>
       </div>
 
