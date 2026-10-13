@@ -14,9 +14,9 @@ description: Picake web-user 도메인의 링크가 iOS/Android 네이티브 앱
 
 ## 1. Android (App Links) — 이미 구성되어 있음, 참고용 패턴
 
-| 파일 | 역할 |
-| --- | --- |
-| `apps/web-user/src/app/.well-known/assetlinks.json/route.ts` | `getAndroidAssetLinks()`를 JSON으로 반환하는 route handler |
+| 파일                                                                 | 역할                                                                                                                                                                                                |
+| -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/web-user/src/app/.well-known/assetlinks.json/route.ts`         | `getAndroidAssetLinks()`를 JSON으로 반환하는 route handler                                                                                                                                          |
 | `apps/web-user/src/common/constants/android-asset-links.constant.ts` | 환경별(`ANDROID_ASSET_LINKS_BY_ENV`) `package_name` + `sha256_cert_fingerprints`. `NEXT_PUBLIC_NODE_ENV` 기준으로 분기(`getAndroidAssetLinks`), fingerprint가 비어 있으면 해당 환경은 응답에서 제외 |
 
 - staging: `package_name: "com.pickage.package.staging"`
@@ -28,18 +28,20 @@ description: Picake web-user 도메인의 링크가 iOS/Android 네이티브 앱
 
 **Universal Links를 켜지 마세요.** Universal Links로 앱이 열리면 웹뷰 네비게이션 직후(~1초) iOS가 자체적으로 앱을 백그라운드로 내리고 Safari를 다시 띄우는 현상이 실기기에서 확인됐습니다(앱담당자 진단: 카카오톡 인앱브라우저·메모 앱 등 진입 경로 무관하게 재현, 앱 쪽 코드엔 외부 브라우저를 여는 경로가 없음 확인 — iOS 자체 동작으로 판단, `restorationHandler` true 반환 등으로도 해결 안 됨). 그래서 iOS만 Universal Links를 끄고 커스텀 URL 스킴으로 전환했습니다. Android는 영향 없음(App Links 계속 정상 사용).
 
-| 파일 | 역할 |
-| --- | --- |
-| `apps/web-user/src/app/.well-known/apple-app-site-association/route.ts` | AASA를 JSON으로 반환하는 route(그대로 유지 — 파일 자체를 지우지 않음). **확장자 없는 파일 + `application/json` + 리다이렉트 없음이 필수**(Apple 사양) |
-| `apps/web-user/src/common/constants/ios-universal-links.constant.ts` | `IOS_APP_ID_BY_ENV`를 **양쪽 다 빈 문자열**로 둬서 AASA가 `{ applinks: { details: [] } }`(appID 자체 미선언)를 반환하도록 함. `IOS_APP_ID`(Team ID+Bundle ID 값)와 `UNIVERSAL_LINK_COMPONENTS`(경로 목록)는 재활성화 대비용으로 코드에 남겨둠(현재 미사용) |
-| `apps/web-user/src/common/components/deep-link/IosCustomSchemeRedirect.tsx` | 실제 딥링크 처리 담당. `useEffect`로 iOS UA 감지 후 `location.href = "picake://" + pathname.slice(1) + search`로 리다이렉트. **iframe 방식 금지**(iOS 사파리가 iframe에서 커스텀 스킴 호출을 차단) — 반드시 `location.href` |
+| 파일                                                                        | 역할                                                                                                                                                                                                                                                       |
+| --------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/web-user/src/app/.well-known/apple-app-site-association/route.ts`     | AASA를 JSON으로 반환하는 route(그대로 유지 — 파일 자체를 지우지 않음). **확장자 없는 파일 + `application/json` + 리다이렉트 없음이 필수**(Apple 사양)                                                                                                      |
+| `apps/web-user/src/common/constants/ios-universal-links.constant.ts`        | `IOS_APP_ID_BY_ENV`를 **양쪽 다 빈 문자열**로 둬서 AASA가 `{ applinks: { details: [] } }`(appID 자체 미선언)를 반환하도록 함. `IOS_APP_ID`(Team ID+Bundle ID 값)와 `UNIVERSAL_LINK_COMPONENTS`(경로 목록)는 재활성화 대비용으로 코드에 남겨둠(현재 미사용) |
+| `apps/web-user/src/common/components/deep-link/IosCustomSchemeRedirect.tsx` | 실제 딥링크 처리 담당. `useEffect`로 iOS UA 감지 후 `location.href = "picake://" + pathname.slice(1) + search`로 리다이렉트. **iframe 방식 금지**(iOS 사파리가 iframe에서 커스텀 스킴 호출을 차단) — 반드시 `location.href`                                |
 
 **커스텀 스킴을 마운트한 곳** (경로가 하나라도 추가되면 여기도 같이 추가):
+
 - `app/order/layout.tsx` — `/order/*` 전체(상세·취소 등) 커버
 - `app/mypage/order/page.tsx` — `/mypage/order`
 - `app/mypage/reviews/write/page.tsx` — `/mypage/reviews/write`
 
 **iOS/Android가 근본적으로 다른 점(재활성화 시 참고)**:
+
 - **`appID` 형식은 `{Apple Team ID}.{Bundle ID}`** 한 문자열입니다. Team ID는 [[picake-auth-social-login]] skill의 Apple Sign-In 작업 때 이미 받은 값과 **같은 Apple Developer 계정**이면 재사용 가능합니다 — `apps/backend/src/modules/auth/constants/auth.constants.ts`의 `APPLE_PRIMARY_APP_ID`(`com.product.picake`)와 `S5AJRJ2DLR`(Team ID, 코드에는 상수로 없고 GitHub Secrets `APPLE_TEAM_ID`에 있음).
 - **Bundle ID는 스테이징/프로덕션 구분 없이 `com.product.picake` 하나만 씁니다(확정, 2026-08-02).** Android처럼 `.staging` 접미사로 분리된 값은 없습니다. 같은 Bundle ID를 쓰면 iOS 특성상(Bundle ID = 기기당 앱 설치 슬롯 하나) 기기에 설치된 빌드가 무엇이든 staging/production 도메인 링크를 누르면 전부 그 앱으로 열립니다 — Android처럼 두 환경 앱을 한 기기에 나란히 설치해서 따로 테스트할 수 없습니다.
 - **`paths`(코드 상수명 `UNIVERSAL_LINK_COMPONENTS`)는 AASA에 직접 명시**해야 합니다 — Android처럼 네이티브 쪽에서 관리하지 않습니다.

@@ -165,9 +165,7 @@ export const RefundCandidatesListPage: React.FC = () => {
               <Card className={LIST_CARD}>
                 <RefundCandidateTable items={items} onRevert={setTarget} isBusy={isBusy} />
               </Card>
-              {meta && (
-                <OrderManagementPagination page={page} meta={meta} onPageChange={setPage} />
-              )}
+              {meta && <OrderManagementPagination page={page} meta={meta} onPageChange={setPage} />}
             </>
           )}
         </>

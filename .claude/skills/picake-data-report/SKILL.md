@@ -49,20 +49,20 @@ PostHog 프로젝트는 **development/staging/production이 하나로 공용**�
 
 팀이 이미 아래 Insight들을 만들어뒀습니다 (`system.insights`, PostHog 프로젝트 497749). DAU/WAU/MAU/Pageviews처럼 이미 위에서 직접 쿼리하는 것 말고, 아래는 **매 리포트마다 기본으로 함께 조회**해서 대시보드에 포함하세요 — 새로 설계할 필요 없이 팀이 만들어둔 정의를 그대로 재실행하면 됩니다.
 
-| 묶음 | Insight | short_id |
-| --- | --- | --- |
-| 페이지·유입 | Most Popular Landing Pages | `KUrqDhTL` |
+| 묶음        | Insight                         | short_id   |
+| ----------- | ------------------------------- | ---------- |
+| 페이지·유입 | Most Popular Landing Pages      | `KUrqDhTL` |
 | 페이지·유입 | Unique Users on Landing Page(s) | `t2MZ0Nxm` |
-| 페이지·유입 | Referring Domains | `Yg8lWuRy` |
-| 페이지·유입 | Top referrers | `Af8TydUi` |
-| 페이지·유입 | New & Returning Users | `bfwMElLX` |
-| 사용자 환경 | Unique Users by Device Type | `L0xOeUjj` |
-| 사용자 환경 | Unique Users by Browser | `bm0V59iK` |
-| 사용자 환경 | Which country are users from? | `AeWquiKN` |
-| 참여도 | Pages Per Session | `OA1xCy7l` |
-| 참여도 | Average Session Duration | `376jcwtB` |
-| 참여도 | Unique Sessions Trend | `7hT84UAa` |
-| 참여도 | Retention | `9bhduJEN` |
+| 페이지·유입 | Referring Domains               | `Yg8lWuRy` |
+| 페이지·유입 | Top referrers                   | `Af8TydUi` |
+| 페이지·유입 | New & Returning Users           | `bfwMElLX` |
+| 사용자 환경 | Unique Users by Device Type     | `L0xOeUjj` |
+| 사용자 환경 | Unique Users by Browser         | `bm0V59iK` |
+| 사용자 환경 | Which country are users from?   | `AeWquiKN` |
+| 참여도      | Pages Per Session               | `OA1xCy7l` |
+| 참여도      | Average Session Duration        | `376jcwtB` |
+| 참여도      | Unique Sessions Trend           | `7hT84UAa` |
+| 참여도      | Retention                       | `9bhduJEN` |
 
 - 조회 방법: `system.insights`에서 `short_id`로 쿼리 정의를 가져오거나(`insight` 관련 도구로 `retrieve`), 이름으로 검색해도 됩니다. short_id는 UI가 바뀌어도 안정적이니 우선 사용하세요.
 - **환경 필터는 저장된 정의에 없을 수 있습니다.** 위 "환경 필터링" 규칙이 여기에도 그대로 적용됩니다 — 원본 그대로 인용하지 말고, 쿼리 정의를 가져온 뒤 `environment` 속성 필터를 추가해 선택된 환경으로 재실행하세요.
@@ -125,16 +125,17 @@ PostHog 프로젝트는 **development/staging/production이 하나로 공용**�
 
 `apps/backend/src/apis/admin/`에는 `statistics` 말고도 12개 컨트롤러가 더 있습니다(2026-08-03 기준). 기본 리포트엔 위 5개 statistics 엔드포인트로 충분하지만, 사용자가 더 상세한 관리자 데이터를 요청하면 아래도 조회하세요:
 
-| 컨트롤러 | 주요 엔드포인트 | 비고 |
-| --- | --- | --- |
-| `member-management` | `consumers`, `sellers` (목록) | **개인정보 원문 포함** (이름·전화번호·이메일) — 아래 PII 규칙 필수 |
-| `store-management` | `stores`, `stores/:id` | 상세는 GMV·상태별 주문·`topProductsByRevenue` 포함 (매출 랭킹은 여기서만 나옴) |
-| `store-entry-request-management` | `requests`, `requests/:id` | place 스냅샷(상호명·주소 등 공개된 사업자 정보) + 요청자 정보(PII) |
-| `seller-segment-management` | `segments` | 세그먼트 정의 + 인원수, PII 아님 |
-| `admin-management` | `accounts`, `requests` | 관리자 계정 자체에 대한 데이터라 사용자 대상 리포트와 무관, 보통 스킵 |
-| 콘텐츠 CRUD | `home-banners`, `notices`, `qnas`, `terms` | 건수만 세면 됨, PII 아님 |
+| 컨트롤러                         | 주요 엔드포인트                            | 비고                                                                           |
+| -------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------ |
+| `member-management`              | `consumers`, `sellers` (목록)              | **개인정보 원문 포함** (이름·전화번호·이메일) — 아래 PII 규칙 필수             |
+| `store-management`               | `stores`, `stores/:id`                     | 상세는 GMV·상태별 주문·`topProductsByRevenue` 포함 (매출 랭킹은 여기서만 나옴) |
+| `store-entry-request-management` | `requests`, `requests/:id`                 | place 스냅샷(상호명·주소 등 공개된 사업자 정보) + 요청자 정보(PII)             |
+| `seller-segment-management`      | `segments`                                 | 세그먼트 정의 + 인원수, PII 아님                                               |
+| `admin-management`               | `accounts`, `requests`                     | 관리자 계정 자체에 대한 데이터라 사용자 대상 리포트와 무관, 보통 스킵          |
+| 콘텐츠 CRUD                      | `home-banners`, `notices`, `qnas`, `terms` | 건수만 세면 됨, PII 아님                                                       |
 
 **PII 규칙 (필수)**: `member-management/consumers`·`sellers`, `store-entry-request-management` 응답에는 실제 이름·전화번호·이메일이 원문으로 들어있습니다. **Artifact나 채팅 답변에 이 원문을 그대로 올리지 마세요** — Artifact는 나중에 공유될 수 있는 페이지입니다. 대신:
+
 - 개수·비율 같은 집계만 표시 ("구매자 2명 조회됨 — 원문 미포함" 식으로 명시).
 - 사업자명·주소처럼 원래 공개된 정보(카카오맵 등)는 노출해도 무방합니다 — 개인 연락처와는 다릅니다.
 - 요청자 phone 필드가 `"REVIEW_ACCOUNT"`처럼 명백히 심사용 테스트 계정 마커인 경우는 그 사실 자체(진성 사용자가 아닐 수 있음)를 알려주는 게 유용하니 언급하세요.
@@ -157,4 +158,5 @@ PostHog 프로젝트는 **development/staging/production이 하나로 공용**�
    - 세션 리플레이 · 개인정보 보호 점검 (PII·세션 리플레이를 물을 때)
 
    섹션이 늘어나면 성격이 다른 그룹(비즈니스 현황/DB, 행동 데이터/PostHog, 엔지니어링 QA)끼리 시각적으로 묶어서 구분하세요 — DB 지표와 PostHog 지표를 순서 없이 섞어놓으면(예: ①②③ DB → ④ PostHog → ⑤ DB → ...) 산만해집니다. 섹션을 추가/재배치할 때마다 번호가 실제로 순서대로 매겨져 있는지(중간에 번호 빠진 무제목 섹션이 생기지 않는지) 반드시 다시 확인하세요.
+
 3. 채팅 답변에는 대시보드와 별도로 핵심 하이라이트 3~5개(눈에 띄는 수치, 전일/전주 대비 변화 등)를 텍스트로 짧게 요약하세요.

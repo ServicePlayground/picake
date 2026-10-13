@@ -32,7 +32,11 @@ import {
  * 모든 엔드포인트에서 `req.user.isApiKey`를 확인해 차단합니다.
  */
 @ApiTags("[관리자] API 키 관리")
-@ApiExtraModels(AdminApiKeyCreatedResponseDto, AdminApiKeyItemResponseDto, AdminApiKeyListResponseDto)
+@ApiExtraModels(
+  AdminApiKeyCreatedResponseDto,
+  AdminApiKeyItemResponseDto,
+  AdminApiKeyListResponseDto,
+)
 @Controller(`${AUDIENCE.ADMIN}/api-keys`)
 @Auth({ isPublic: false, audiences: [AUDIENCE.ADMIN] })
 export class AdminApiKeyManagementController {
@@ -53,10 +57,7 @@ export class AdminApiKeyManagementController {
   })
   @SwaggerResponse(201, { dataDto: AdminApiKeyCreatedResponseDto })
   @SwaggerAuthResponses()
-  async create(
-    @Request() req: { user: AuthenticatedUser },
-    @Body() dto: CreateAdminApiKeyDto,
-  ) {
+  async create(@Request() req: { user: AuthenticatedUser }, @Body() dto: CreateAdminApiKeyDto) {
     this.assertHumanAdmin(req.user);
     return await this.adminApiKeyService.create(dto.label, req.user.id);
   }

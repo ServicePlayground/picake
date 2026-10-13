@@ -26,7 +26,8 @@ export class AdminApiKeyCreatedResponseDto {
   label: string;
 
   @ApiProperty({
-    description: "발급된 API 키 원문 — 지금 이 응답에서만 확인 가능하며 서버에는 해시만 저장됩니다. 안전한 곳에 즉시 보관하세요.",
+    description:
+      "발급된 API 키 원문 — 지금 이 응답에서만 확인 가능하며 서버에는 해시만 저장됩니다. 안전한 곳에 즉시 보관하세요.",
     example: "admk_9f8c2a1b3d4e5f60718293a4b5c6d7e8f9a0b1c2d3e4f5061728394a5b6c7d8",
   })
   apiKey: string;
