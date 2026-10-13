@@ -1,9 +1,8 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Icon } from "@/apps/web-user/common/components/icons";
-import {
-  PARTNER_SURVEY_URL,
-  SELLER_CONSOLE_URL,
-} from "@/apps/web-user/common/constants/partner.constants";
+import { PARTNER_SURVEY_URL } from "@/apps/web-user/common/constants/partner.constants";
+import { PATHS } from "@/apps/web-user/common/constants/paths.constant";
 
 /**
  * 오프라인에서 만나는 입점 희망 사장님께 보여주는 QR 진입점(`https://picakes.com/partner`).
@@ -57,18 +56,12 @@ export default function PartnerPage() {
           입점 사전 수요조사 참여하기
         </a>
 
-        <a
-          href={SELLER_CONSOLE_URL}
-          target="_blank"
-          rel="noopener noreferrer"
+        <Link
+          href={PATHS.PARTNER_ABOUT}
           className="w-full h-[52px] flex items-center justify-center bg-white text-gray-900 text-base font-bold border border-gray-100 rounded-lg transition-all duration-200"
         >
-          판매자 페이지 바로가기
-        </a>
-
-        <p className="mt-1 text-center text-xs text-gray-400">
-          이미 입점하셨다면 판매자 페이지로 로그인해 주세요.
-        </p>
+          소개페이지 바로가기
+        </Link>
       </div>
     </main>
   );
