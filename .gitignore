@@ -131,3 +131,18 @@ blob-report/
 
 # Claude Code 파일 기반 텍스트 교환 스크래치 (file-exchange skill)
 .claude/exchange.md
+
+# Claude Code 기기별 설정 (공유 설정은 .claude/settings.json)
+.claude/settings.local.json
+
+# Playwright MCP 스크래치 (콘솔 로그·페이지 스냅샷)
+.playwright-mcp/
+
+# impeccable 설치물과 생성물.
+# scripts/만 16MB라 clone이 무거워집니다. 쓰시는 분이 각자 설치하세요.
+.claude/skills/impeccable/
+.claude/agents/impeccable-*.md
+apps/web-user/PRODUCT.md
+
+# 개인용 로컬 셋업 메모
+SETUP-LOCAL.md
